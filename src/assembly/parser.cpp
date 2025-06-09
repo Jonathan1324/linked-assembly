@@ -146,6 +146,7 @@ Parsed parseAssembly(std::istream& input)
             std::string operandsStr = trim(trimmed.substr(spacePos + 1));
 
             size_t start = 0;
+            //TODO: add string support
             while (true) {
                 size_t commaPos = operandsStr.find(',', start);
                 std::string operand = trim(operandsStr.substr(start, commaPos - start));
