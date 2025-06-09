@@ -17,6 +17,9 @@ r:      dq      0x53a
 res:    rest    0
         resb    5
 test:   dd      9
+oneByte:db      0
+secByte:db      0
+str:    db      "Hello, World!"
 
 section .text
 ; test function

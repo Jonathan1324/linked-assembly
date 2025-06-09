@@ -2,7 +2,6 @@
 #include <fstream>
 
 #include "parser.hpp"
-#include "symbol_res.hpp"
 
 int main(int argc, const char *argv[])
 {
@@ -35,9 +34,6 @@ int main(int argc, const char *argv[])
 
     Parsed parsed = parseAssembly(file);
 
-    resolveSymbols(parsed);
-
-    /*
     std::cout << "Globals" << std::endl;
     for (size_t i = 0; i < parsed.globals.size(); i++)
     {
@@ -99,7 +95,6 @@ int main(int argc, const char *argv[])
             }
         }
     }
-    */
 
     return 0;
 }
