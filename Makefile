@@ -1,7 +1,4 @@
-CC = gcc
-CFLAGS = -Wall -Wextra -O2 -g
-AS = nasm
-ASFLAGS = -f elf64
+include build_scripts/config.mk
 
 SRC_DIR = src
 BUILD_DIR = build
