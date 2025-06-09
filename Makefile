@@ -12,8 +12,9 @@ all: assembly
 
 assembly:
 	@$(MAKE) -C $(SRC_DIR)/assembly 		\
-		CC=$(CC) CFLAGS="$(CFLAGS)" 		\
 		AS=$(AS) ASFLAGS="$(ASFLAGS)"		\
+		CC=$(CC) CFLAGS="$(CFLAGS)" 		\
+		CXX=$(CXX) CXXFLAGS="$(CXXFLAGS)"	\
 		SRC_DIR=$(SRC_DIR)/assembly 		\
 		BUILD_DIR=$(BUILD_DIR)/assembly
 
