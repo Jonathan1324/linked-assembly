@@ -11,13 +11,9 @@ enum class BitMode { Bits16, Bits32, Bits64 };
 struct Instruction {
     std::string mnemonic;
     std::vector<std::string> operands;
-    int lineNumber;
     BitMode mode;
-};
 
-struct Label {
-    std::string name;
-    size_t instructionIndex;
+    int lineNumber;
 };
 
 struct DataDefinition {
@@ -25,6 +21,13 @@ struct DataDefinition {
     std::string type;
     std::vector<std::string> values;
     bool reserved;
+
+    int lineNumber;
+};
+
+struct Label {
+    std::string name;
+    size_t instructionIndex;
 };
 
 using SectionEntry = std::variant<Instruction, DataDefinition>;

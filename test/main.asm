@@ -5,6 +5,9 @@ extern testExtern
 global rone
 rone:
     mov eax, 1
+    jmp done
+    dq 0
+.done:
     ret
 
 section .data
@@ -23,3 +26,7 @@ test:
     mov eax, 0      ; test comment
     call rone
     mov [res], eax
+
+tommy:
+    add eax, ebx
+    ret

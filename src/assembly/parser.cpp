@@ -34,6 +34,8 @@ Parsed parseAssembly(std::istream& input)
             continue;
         }
 
+        //TODO: equ
+
         // Bit mode
         if (trimmed.find("bits ") == 0)
         {
@@ -127,7 +129,7 @@ Parsed parseAssembly(std::istream& input)
 
             bool isReserved = type.rfind("res", 0) == 0;
 
-            currentSection->entries.push_back(DataDefinition{labelName, type, values, isReserved});
+            currentSection->entries.push_back(DataDefinition{labelName, type, values, isReserved, lineNumber});
             continue;
         }
 
@@ -158,8 +160,8 @@ Parsed parseAssembly(std::istream& input)
         currentSection->entries.push_back(Instruction{
             mnemonic,
             operands,
-            lineNumber,
-            mode
+            mode,
+            lineNumber
         });
     }
 

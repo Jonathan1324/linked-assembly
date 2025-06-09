@@ -2,6 +2,7 @@
 #include <fstream>
 
 #include "parser.hpp"
+#include "symbol_res.hpp"
 
 int main(int argc, const char *argv[])
 {
@@ -34,6 +35,9 @@ int main(int argc, const char *argv[])
 
     Parsed parsed = parseAssembly(file);
 
+    resolveSymbols(parsed);
+
+    /*
     std::cout << "Globals" << std::endl;
     for (size_t i = 0; i < parsed.globals.size(); i++)
     {
@@ -87,7 +91,7 @@ int main(int argc, const char *argv[])
             else if (std::holds_alternative<DataDefinition>(entry))
             {
                 DataDefinition data = std::get<DataDefinition>(entry);
-                std::cout << (data.reserved ? "\tReserved" : "\tData") << data.name << " of type " << data.type << std::endl;
+                std::cout << (data.reserved ? "\tReserved" : "\tData") << data.name << " of type " << data.type << " at line " << data.lineNumber << std::endl;
                 for (size_t a = 0; a < data.values.size(); a++)
                 {
                     std::cout << "\t\t" << data.values.at(a) << std::endl;
@@ -95,6 +99,7 @@ int main(int argc, const char *argv[])
             }
         }
     }
+    */
 
     return 0;
 }
