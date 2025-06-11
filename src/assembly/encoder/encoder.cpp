@@ -49,7 +49,7 @@ Encoded encode(Parsed& parsed)
             
             if (std::holds_alternative<Instruction>(s.entries[i]))
             {
-
+                //TODO: add instructions
             }
             else if (std::holds_alternative<DataDefinition>(s.entries[i]))
             {
