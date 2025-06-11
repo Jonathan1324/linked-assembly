@@ -36,8 +36,10 @@ enum class Type {
 struct Relocation {
     std::string sectionName;
     size_t offsetInSection;
+    uint8_t size;
     std::string labelName;
     Type type;
+    int64_t addend = 0;
 };
 
 struct Encoded {
