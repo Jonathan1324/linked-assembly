@@ -4,6 +4,9 @@
 #include "parser.hpp"
 #include "symbol.hpp"
 #include "encoder/encoder.hpp"
+#include "architecture/architecture.hpp"
+
+#include "util/string.hpp"
 
 #include "debug.hpp"
 
@@ -18,10 +21,67 @@ int main(int argc, const char *argv[])
     std::string input_path = "";
     std::string output_path = "out.o";
 
+    BitMode bitMode = BitMode::Bits64; // Default
+    #ifdef __x86_64__
+        bitMode = BitMode::Bits64;
+    #elif defined(__i386__)
+        bitMode = BitMode::Bits32;
+    #elif defined(__arm__)
+        bitMode = BitMode::Bits32;
+    #elif defined(__aarch64__)
+        bitMode = BitMode::Bits64;
+    #endif
+
+    Architecture arch = Architecture::x86; // Default
+    #if defined(__aarch64__) || defined(__arm__) || defined(_M_ARM)
+        arch = Architecture::ARM;
+    #elif defined(__riscv)
+        arch = Architecture::RISC_V;
+    #endif
+
     for (int i = 1; i < argc; ++i)
     {
-        if (std::string(argv[i]) == "-o" && i + 1 < argc) {
+        if (std::string(argv[i]).compare("-o") == 0 && i + 1 < argc) {
             output_path = argv[++i];
+        }
+        else if (std::string(argv[i]).compare("-arch") == 0 && i + 1 < argc) {
+            std::string archStr = toLower(argv[++i]);
+            archStr = trim(archStr);
+
+            if (archStr.compare("x86") == 0
+             || archStr.compare("x86_64") == 0
+             || archStr.compare("x86-64") == 0)
+            {
+                arch = Architecture::x86;
+            }
+            else if (archStr.compare("arm") == 0
+                  || archStr.compare("aarch") == 0
+                  || archStr.compare("aarch64") == 0)
+            {
+                arch = Architecture::ARM;
+            }
+            else if (archStr.compare("riscv") == 0
+                  || archStr.compare("risc-v") == 0
+                  || archStr.compare("risc_v") == 0)
+            {
+                arch = Architecture::RISC_V;
+            }
+            else
+            {
+                std::cerr << "Unknown architecture: " << archStr << std::endl;
+                return 1;
+            }
+        }
+        else if (std::string(argv[i]).find("-m") == 0)
+        {
+            std::string modeStr = std::string(argv[i]).substr(2);
+            if (modeStr == "16") bitMode = BitMode::Bits16;
+            else if (modeStr == "32") bitMode = BitMode::Bits32;
+            else if (modeStr == "64") bitMode = BitMode::Bits64;
+            else {
+                std::cerr << "Unknown bit mode: " << modeStr << std::endl;
+                return 1;
+            }
         }
 
         else
@@ -44,7 +104,7 @@ int main(int argc, const char *argv[])
         return 1;
     }
 
-    Parsed parsed = parseAssembly(file);
+    Parsed parsed = parseAssembly(file, bitMode);
 
     file.close();
 
@@ -60,7 +120,7 @@ int main(int argc, const char *argv[])
         return 1;
     }
 
-    Encoded encoded = encode(parsed);
+    Encoded encoded = encode(parsed, arch);
 
     out.close();
 

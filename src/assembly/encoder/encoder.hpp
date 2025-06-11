@@ -47,4 +47,4 @@ struct Encoded {
     std::vector<Relocation> relocations;
 };
 
-Encoded encode(Parsed& parsed);
+Encoded encode(Parsed& parsed, Architecture arch);

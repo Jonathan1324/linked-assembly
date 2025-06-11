@@ -1,7 +1,7 @@
 #include "parser.hpp"
 #include "util/string.hpp"
 
-Parsed parseAssembly(std::istream& input)
+Parsed parseAssembly(std::istream& input, BitMode bits)
 {
     Parsed parsed;
 
@@ -11,7 +11,7 @@ Parsed parseAssembly(std::istream& input)
     std::string line;
     int lineNumber = 0;
 
-    BitMode currentBitMode = BitMode::Bits32; //TODO
+    BitMode currentBitMode = bits;
     std::string currentLabel;
 
     while (std::getline(input, line))

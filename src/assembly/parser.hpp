@@ -5,12 +5,7 @@
 #include <unordered_map>
 #include <fstream>
 #include <variant>
-
-enum class BitMode {
-    Bits16,
-    Bits32,
-    Bits64
-};
+#include "architecture/architecture.hpp"
 
 struct Instruction {
     std::string mnemonic;
@@ -64,4 +59,4 @@ struct Parsed {
     std::unordered_map<std::string, ConstantDefinition> constants;
 };
 
-Parsed parseAssembly(std::istream& input);
+Parsed parseAssembly(std::istream& input, BitMode bits);

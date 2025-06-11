@@ -30,7 +30,7 @@ void printEncoded(const Encoded& encoded, int indent = 0) {
     }
 }
 
-Encoded encode(Parsed& parsed)
+Encoded encode(Parsed& parsed, Architecture arch)
 {
     Encoded encoded;
 
