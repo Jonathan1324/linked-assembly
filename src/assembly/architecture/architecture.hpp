@@ -11,3 +11,9 @@ enum class BitMode {
     Bits32,
     Bits64
 };
+
+enum class Format {
+    ELF,
+    COFF,
+    MACHO,
+};

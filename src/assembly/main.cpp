@@ -23,13 +23,13 @@ int main(int argc, const char *argv[])
 
     BitMode bitMode = BitMode::Bits64; // Default
     #ifdef __x86_64__
-        bitMode = BitMode::Bits64;
+        // 64 bit - bitMode = BitMode::Bits64;
     #elif defined(__i386__)
         bitMode = BitMode::Bits32;
     #elif defined(__arm__)
         bitMode = BitMode::Bits32;
     #elif defined(__aarch64__)
-        bitMode = BitMode::Bits64;
+        // 64 bit - bitMode = BitMode::Bits64;
     #endif
 
     Architecture arch = Architecture::x86; // Default
@@ -37,6 +37,17 @@ int main(int argc, const char *argv[])
         arch = Architecture::ARM;
     #elif defined(__riscv)
         arch = Architecture::RISC_V;
+    #endif
+
+    Format format = Format::ELF;
+    #if defined(_WIN32) || defined(_WIN64)
+        format = Format::COFF;
+    #elif defined(__APPLE__) && defined(__MACH__)
+        format = Format::MACHO;
+    #elif defined(__linux__)
+        // ELF - format = Format::ELF;
+    #elif defined(__unix__)
+        // ELF - format = Format::ELF;
     #endif
 
     for (int i = 1; i < argc; ++i)
