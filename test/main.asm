@@ -1,35 +1,9 @@
-bits 16
-
-section .text
-extern testExtern
-global rone
-rone:
-    mov eax, 1
-    jmp done
-    dq 0
-.done:
-    ret
+[bits 32]
 
 section .data
-t:      db      0x0
-a:      dw      0x1
-r:      dq      0x53a
-res:    rest    0
-        resb    5
-test:   dd      9
-oneByte:db      0
-secByte:db      0
-str:    db      "Hello, World!"
+d1:             db 0x10
+d2:             dq 2
 
-section .text
-; test function
-global test
-test:
-    bits 32
-    mov eax, 0      ; test comment
-    call rone
-    mov [res], eax
-
-tommy:
-    add eax, ebx
-    ret
+res1:           resb 10
+d3:             db 0x65
+res2:           rest 0x20

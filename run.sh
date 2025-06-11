@@ -1,3 +1,5 @@
 make all
 chmod +x build/assembly/assembly
-build/assembly/assembly test/main.asm -o build/test.o
+chmod +x test/compile.sh
+cd test
+source compile.sh
