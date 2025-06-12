@@ -71,7 +71,7 @@ void printParsed(Parsed parsed)
     }
 }
 
-void printEncoded(const Encoded& encoded, int indent = 0)
+void printEncoded(const Encoded& encoded, int indent)
 {
     std::string tab(indent, '\t');
 

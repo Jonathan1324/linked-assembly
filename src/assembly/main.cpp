@@ -5,7 +5,7 @@
 #include "symbol.hpp"
 #include "encoder/encoder.hpp"
 #include "architecture/architecture.hpp"
-#include "elf/header.hpp"
+#include "elf/elf.hpp"
 
 #include "util/string.hpp"
 

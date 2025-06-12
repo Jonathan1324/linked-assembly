@@ -100,7 +100,7 @@ namespace ELF {
             if (is64Bit()) bits64.SectionHeaderTablePosition = val;
             else bits32.SectionHeaderTablePosition = static_cast<uint32_t>(val);
         }
-    };
+    } __attribute__((packed));
 
     enum class SectionType : uint32_t {
         Null            = 0,        // Unbenutzte Section
@@ -137,7 +137,7 @@ namespace ELF {
 
         uint64_t addressAlignment;
         uint64_t entrySize;
-    };
+    } __attribute__((packed));
 
     struct SectionHeader32 {
         uint32_t offsetInSectionNameStringTable;
@@ -153,7 +153,7 @@ namespace ELF {
 
         uint32_t addressAlignment;
         uint32_t entrySize;
-    };
+    } __attribute__((packed));
 
     struct ELFSection {
         std::string name;
