@@ -1,5 +1,5 @@
 #include "relocation.hpp"
-#include "../util/buffer.hpp"
+#include "../../util/buffer.hpp"
 
 namespace ELF {
     sectionBuffer encodeRelocations(std::vector<Relocation> relocations, Bitness bits)

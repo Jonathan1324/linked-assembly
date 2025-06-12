@@ -3,8 +3,8 @@
 #include <cinttypes>
 #include <string>
 
-#include "../architecture/architecture.hpp"
-#include "../encoder/encoder.hpp"
+#include "../../architecture/architecture.hpp"
+#include "../../encoder/encoder.hpp"
 
 namespace ELF {
     enum class Bitness : uint8_t {

@@ -5,7 +5,7 @@
 #include "symbol.hpp"
 #include "encoder/encoder.hpp"
 #include "architecture/architecture.hpp"
-#include "elf/elf.hpp"
+#include "object/object.hpp"
 
 #include "util/string.hpp"
 
@@ -51,12 +51,15 @@ int main(int argc, const char *argv[])
         // ELF - format = Format::ELF;
     #endif
 
+
+    bool debug = false;
+
     for (int i = 1; i < argc; ++i)
     {
         if (std::string(argv[i]).compare("-o") == 0 && i + 1 < argc) {
             output_path = argv[++i];
         }
-        else if (std::string(argv[i]).compare("-arch") == 0 && i + 1 < argc) {
+        else if (std::string(argv[i]).compare("--arch") == 0 && i + 1 < argc) {
             std::string archStr = toLower(argv[++i]);
             archStr = trim(archStr);
 
@@ -84,6 +87,31 @@ int main(int argc, const char *argv[])
                 return 1;
             }
         }
+        else if (std::string(argv[i]).compare("--format") == 0 && i + 1 < argc) {
+            std::string formatStr = toLower(argv[++i]);
+            formatStr = trim(formatStr);
+
+            if (formatStr.find("elf") == 0)
+            {
+                format = Format::ELF;
+            }
+            else if (formatStr.find("macho") == 0
+                  || formatStr.find("mach_o") == 0
+                  || formatStr.find("mach-o") == 0)
+            {
+                format = Format::MACHO;
+            }
+            else if (formatStr.find("coff") == 0
+                  || formatStr.find("pe") == 0)
+            {
+                format = Format::COFF;
+            }
+            else
+            {
+                std::cerr << "Unknown Format: " << formatStr << std::endl;
+                return 1;
+            }
+        }
         else if (std::string(argv[i]).find("-m") == 0)
         {
             std::string modeStr = std::string(argv[i]).substr(2);
@@ -94,6 +122,11 @@ int main(int argc, const char *argv[])
                 std::cerr << "Unknown bit mode: " << modeStr << std::endl;
                 return 1;
             }
+        }
+
+        else if (std::string(argv[i]).find("--debug") == 0)
+        {
+            debug = true;
         }
 
         else
@@ -127,6 +160,9 @@ int main(int argc, const char *argv[])
 
     resolveParsed(parsed);
 
+    if (debug)
+        printParsed(parsed);
+
     std::ofstream objectFile(output_path, std::ios::out | std::ios::trunc);
     if (!objectFile)
     {
@@ -136,11 +172,10 @@ int main(int argc, const char *argv[])
 
     Encoded encoded = encode(parsed, arch);
 
-    ELF::Data elfData = ELF::createELF(bitMode, arch, encoded, parsed);
+    if (debug)
+        printEncoded(encoded);
 
-    printElf(elfData);
-
-    ELF::writeElf(objectFile, elfData);
+    createFile(format, objectFile, bitMode, arch, encoded, parsed, debug);
 
     objectFile.close();
 

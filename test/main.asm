@@ -1,20 +1,13 @@
 section .text
-    extern testExtern
-    extern testExtern2
-    extern testExtern3
+    global _start
 
-label:          resb 0x10
-test:           db 1
-tesw:           dw 0
-t:              db 11
-lol:            resw 1
-lolol:          db 0
-lolol2:         db 0
-
-section .data
-
-d:              rest 10
-d2:             rest 10
-d3:             rest 10
-longverylongdataNamejustForT3st:    dw 1
-anotherlongName:                    dw 2
+_start:
+    xor eax, eax
+.loop:
+    inc eax
+    cmp eax, 100
+    jl .loop
+.done:
+    mov ebx, 0
+    mov eax, 1
+    int 0x80

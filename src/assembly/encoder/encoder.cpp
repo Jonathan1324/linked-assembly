@@ -1,6 +1,10 @@
 #include "encoder.hpp"
 #include "data.hpp"
 
+#include "arch/x86.hpp"
+#include "arch/arm.hpp"
+#include "arch/riscv.hpp"
+
 Encoded encode(Parsed& parsed, Architecture arch)
 {
     Encoded encoded;
@@ -20,7 +24,31 @@ Encoded encode(Parsed& parsed, Architecture arch)
             
             if (std::holds_alternative<Instruction>(s.entries[i]))
             {
-                //TODO: add instructions
+                Instruction instruction = std::get<Instruction>(s.entries[i]);
+                size_t padding = (instruction.alignment > 0) ? 
+                    ( (instruction.alignment - (currentOffset % instruction.alignment)) % instruction.alignment ) : 0;
+
+                if (padding != 0)
+                {
+                    section.buffer.insert(section.buffer.end(), padding, 0x00);
+                    currentOffset += padding;
+                }
+
+                switch (arch)
+                {
+                    case Architecture::x86:
+                        currentOffset += x86::encodeInstruction(instruction, section);
+                        break;
+                    case Architecture::ARM:
+                        currentOffset += arm::encodeInstruction(instruction, section);
+                        break;
+                    case Architecture::RISC_V:
+                        currentOffset += riscv::encodeInstruction(instruction, section);
+                        break;
+                    default:
+                        std::cerr << "Unknown architecture (encoder)" << std::endl;
+                        break;
+                }
             }
             else if (std::holds_alternative<DataDefinition>(s.entries[i]))
             {
@@ -34,7 +62,7 @@ Encoded encode(Parsed& parsed, Architecture arch)
                     currentOffset += padding;
                 }
 
-                currentOffset += encodeData(data, section.buffer, encoded);
+                currentOffset += encodeData(data, section, encoded);
             }
             else
             {

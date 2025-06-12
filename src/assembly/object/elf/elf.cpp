@@ -3,7 +3,7 @@
 #include "relocation.hpp"
 #include "symbols.hpp"
 
-#include "../util/buffer.hpp"
+#include "../../util/buffer.hpp"
 #include "util.hpp"
 
 namespace ELF {
@@ -104,9 +104,19 @@ namespace ELF {
         ELFSection nullSection;
         nullSection.name = "";
         nullSection.buffer = {};
-        SectionHeader64 nullHeader{};
-        nullHeader.Type = SectionType::Null;
-        nullSection.header = nullHeader;
+        
+        if(data.header.Bitness == Bitness::Bits64)
+        {
+            SectionHeader64 nullHeader{};
+            nullHeader.Type = SectionType::Null;
+            nullSection.header = nullHeader;
+        }
+        else
+        {
+            SectionHeader32 nullHeader{};
+            nullHeader.Type = SectionType::Null;
+            nullSection.header = nullHeader;
+        }
 
         data.sections.push_back(std::move(nullSection));  // Index 0
         data.sections.push_back(std::move(dummy1));       // Index 1
@@ -349,6 +359,7 @@ namespace ELF {
                             sym.sectionIndex = sectionIndex;
                             sym.value = localLabel.offset;
                             sym.size = 0;
+                            localSymbolCount++;
                             writeToBuffer(localSymtabBuffer, sym);
                         } else {
                             Sym32 sym;
@@ -358,6 +369,7 @@ namespace ELF {
                             sym.sectionIndex = sectionIndex;
                             sym.value = localLabel.offset;
                             sym.size = 0;
+                            localSymbolCount++;
                             writeToBuffer(localSymtabBuffer, sym);
                         }
                     }
@@ -471,7 +483,7 @@ namespace ELF {
             SectionHeader32 header;
 
             header.offsetInSectionNameStringTable = nameOffsets[shstrtab.name];
-            header.Type = SectionType::SymTabShndx;
+            header.Type = SectionType::StrTab;
             header.Flags = 0;
             header.virtualAddress = 0;
             header.fileOffset = 0;
@@ -498,30 +510,28 @@ namespace ELF {
     }
 
 
-    uint64_t writeElfHeader(std::ofstream& out, Header header)
+    uint64_t writeElfHeader(std::ofstream& out, const Header& header)
     {
-        uint64_t offset = 24;
         out.write(reinterpret_cast<const char*>(&header), 24);
+        uint64_t offset = 24;
 
         if (header.Bitness == Bitness::Bits64)
         {
-            offset += 8 * 3;
             out.write(reinterpret_cast<const char*>(&header.bits64.ProgramEntryPosition), 8);
             out.write(reinterpret_cast<const char*>(&header.bits64.ProgramHeaderTablePosition), 8);
             out.write(reinterpret_cast<const char*>(&header.bits64.SectionHeaderTablePosition), 8);
+            offset += 8 * 3;
         }
         else
         {
-            offset += 4 * 3;
             out.write(reinterpret_cast<const char*>(&header.bits32.ProgramEntryPosition), 4);
             out.write(reinterpret_cast<const char*>(&header.bits32.ProgramHeaderTablePosition), 4);
             out.write(reinterpret_cast<const char*>(&header.bits32.SectionHeaderTablePosition), 4);
+            offset += 4 * 3;
         }
 
+        out.write(reinterpret_cast<const char*>(&header) + (sizeof(Header) - 16), 16);
         offset += 16;
-        out.write(reinterpret_cast<const char*>(
-            reinterpret_cast<const char*>(&header) + (sizeof(Header) - 16)
-        ), 16);
 
         return offset;
     }
@@ -530,24 +540,29 @@ namespace ELF {
     {
         uint64_t offset = writeElfHeader(out, data.header);
 
+        std::unordered_map<std::string, uint64_t> offsets;
+
         for (const auto& section : data.sections)
         {
             out.write(reinterpret_cast<const char*>(section.buffer.data()), section.buffer.size());
+            offsets[section.name] = offset;
             offset += section.buffer.size();
         }
 
         data.header.setSectionHeaderTablePosition(offset);
 
-        for (const auto& section : data.sections)
+        for (auto& section : data.sections)
         {
             if (std::holds_alternative<SectionHeader64>(section.header))
             {
-                SectionHeader64 hdr = std::get<SectionHeader64>(section.header);
+                SectionHeader64& hdr = std::get<SectionHeader64>(section.header);
+                hdr.fileOffset = offsets[section.name];
                 out.write(reinterpret_cast<const char*>(&hdr), sizeof(SectionHeader64));
             }
             else
             {
-                SectionHeader32 hdr = std::get<SectionHeader32>(section.header);
+                SectionHeader32& hdr = std::get<SectionHeader32>(section.header);
+                hdr.fileOffset = offsets[section.name];
                 out.write(reinterpret_cast<const char*>(&hdr), sizeof(SectionHeader32));
             }
         }

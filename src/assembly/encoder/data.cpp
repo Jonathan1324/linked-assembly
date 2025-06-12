@@ -1,7 +1,16 @@
 #include "data.hpp"
 
-size_t encodeData(const DataDefinition& data, sectionBuffer& buffer, Encoded& encoded)
+size_t evaluate(std::__1::string value, EncodedSection& section, Encoded& encoded)
 {
+    (void)section;
+    (void)encoded;
+    //TODO
+    return std::stoul(value, nullptr, 0);
+}
+
+size_t encodeData(const DataDefinition& data, EncodedSection& section, Encoded& encoded)
+{
+    sectionBuffer& buffer = section.buffer;
     size_t bytesWritten = 0;
 
     size_t typeSize = 1;
@@ -17,8 +26,8 @@ size_t encodeData(const DataDefinition& data, sectionBuffer& buffer, Encoded& en
 
     if (data.reserved)
     {
-        //TODO: add evaluator
-        size_t count = std::stoul(data.values[0], nullptr, 0);
+        //TODO
+        size_t count = evaluate(data.values[0], section, encoded);
         buffer.insert(buffer.end(), count * typeSize, 0x00);
         bytesWritten = count * typeSize;
     }
@@ -26,8 +35,7 @@ size_t encodeData(const DataDefinition& data, sectionBuffer& buffer, Encoded& en
     {
         for (const auto& valStr : data.values)
         {
-            //TODO: add evaluator
-            unsigned long val = std::stoul(valStr, nullptr, 0);
+            unsigned long val = evaluate(valStr, section, encoded);
 
             if (typeSize == 10)
             {

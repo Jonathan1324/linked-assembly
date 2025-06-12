@@ -2,4 +2,4 @@
 
 #include "encoder.hpp"
 
-size_t encodeData(const DataDefinition& data, sectionBuffer& buffer, Encoded& encoded);
+size_t encodeData(const DataDefinition& data, EncodedSection& section, Encoded& encoded);
