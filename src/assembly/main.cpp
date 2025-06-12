@@ -5,6 +5,7 @@
 #include "symbol.hpp"
 #include "encoder/encoder.hpp"
 #include "architecture/architecture.hpp"
+#include "elf/header.hpp"
 
 #include "util/string.hpp"
 
@@ -132,6 +133,8 @@ int main(int argc, const char *argv[])
     }
 
     Encoded encoded = encode(parsed, arch);
+
+    ELF::Data elfData = ELF::createELF(bitMode, arch, encoded, parsed);
 
     out.close();
 

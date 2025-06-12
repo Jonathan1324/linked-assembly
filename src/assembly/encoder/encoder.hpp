@@ -19,12 +19,6 @@ struct EncodedLabel {
     bool isGlobal = false;
 };
 
-struct EncodedSection {
-    std::string name;
-    sectionBuffer buffer;
-    std::unordered_map<std::string, EncodedLabel> labels;
-};
-
 enum class Type {
     Absolute,
     Relative,
@@ -34,7 +28,6 @@ enum class Type {
 };
 
 struct Relocation {
-    std::string sectionName;
     size_t offsetInSection;
     uint8_t size;
     std::string labelName;
@@ -42,9 +35,15 @@ struct Relocation {
     int64_t addend = 0;
 };
 
+struct EncodedSection {
+    std::string name;
+    sectionBuffer buffer;
+    std::unordered_map<std::string, EncodedLabel> labels;
+    std::vector<Relocation> relocations;
+};
+
 struct Encoded {
     std::unordered_map<std::string, EncodedSection> sections;
-    std::vector<Relocation> relocations;
 };
 
 Encoded encode(Parsed& parsed, Architecture arch);

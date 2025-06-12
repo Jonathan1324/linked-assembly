@@ -4,3 +4,4 @@ chmod +x test/compile.sh
 cd test
 source compile.sh
 cd ..
+objdump --all-headers test/build/test.o
