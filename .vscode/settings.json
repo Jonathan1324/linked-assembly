@@ -1,5 +1,6 @@
 {
     "files.associations": {
+        "Runescript": "plaintext",
         "__bit_reference": "cpp",
         "__config": "cpp",
         "__locale": "cpp",
@@ -39,6 +40,8 @@
         "ratio": "cpp",
         "sstream": "cpp",
         "variant": "cpp",
-        "algorithm": "cpp"
-    }
+        "algorithm": "cpp",
+        "fstream": "cpp"
+    },
+    "makefile.configureOnOpen": false
 }

@@ -75,6 +75,7 @@ namespace ELF {
 
     Data createELF(BitMode bits, Architecture arch, Encoded encoded, Parsed parsed)
     {
+        //TODO: not really working
         Data data;
         data.header = createHeader(bits, arch);
 
@@ -433,12 +434,12 @@ namespace ELF {
             nameOffsets[section.name] = shstrtab.buffer.size();
             // Namen als null-terminierte Strings anfügen
             shstrtab.buffer.insert(shstrtab.buffer.end(), section.name.begin(), section.name.end());
-            shstrtab.buffer.push_back(0);
+            shstrtab.buffer.push_back('\0');
         }
 
         nameOffsets[shstrtab.name] = shstrtab.buffer.size();
         shstrtab.buffer.insert(shstrtab.buffer.end(), shstrtab.name.begin(), shstrtab.name.end());
-        shstrtab.buffer.push_back(0);
+        shstrtab.buffer.push_back('\0');
 
         // Jetzt setze in jedem SectionHeader das offsetInSectionNameStringTable auf den ermittelten Wert:
         for (auto& section : data.sections) {
@@ -493,43 +494,65 @@ namespace ELF {
         
         data.header.SectionHeaderTableEntryCount = data.sections.size();
 
+        return data;
+    }
 
-        //TODO: debug print
+
+    uint64_t writeElfHeader(std::ofstream& out, Header header)
+    {
+        uint64_t offset = 24;
+        out.write(reinterpret_cast<const char*>(&header), 24);
+
+        if (header.Bitness == Bitness::Bits64)
+        {
+            offset += 8 * 3;
+            out.write(reinterpret_cast<const char*>(&header.bits64.ProgramEntryPosition), 8);
+            out.write(reinterpret_cast<const char*>(&header.bits64.ProgramHeaderTablePosition), 8);
+            out.write(reinterpret_cast<const char*>(&header.bits64.SectionHeaderTablePosition), 8);
+        }
+        else
+        {
+            offset += 4 * 3;
+            out.write(reinterpret_cast<const char*>(&header.bits32.ProgramEntryPosition), 4);
+            out.write(reinterpret_cast<const char*>(&header.bits32.ProgramHeaderTablePosition), 4);
+            out.write(reinterpret_cast<const char*>(&header.bits32.SectionHeaderTablePosition), 4);
+        }
+
+        offset += 16;
+        out.write(reinterpret_cast<const char*>(
+            reinterpret_cast<const char*>(&header) + (sizeof(Header) - 16)
+        ), 16);
+
+        return offset;
+    }
+
+    void writeElf(std::ofstream& out, Data& data)
+    {
+        uint64_t offset = writeElfHeader(out, data.header);
+
         for (const auto& section : data.sections)
         {
-            std::cout << "Section: " << section.name << std::endl;
-            if (std::holds_alternative<SectionHeader32>(section.header))
+            out.write(reinterpret_cast<const char*>(section.buffer.data()), section.buffer.size());
+            offset += section.buffer.size();
+        }
+
+        data.header.setSectionHeaderTablePosition(offset);
+
+        for (const auto& section : data.sections)
+        {
+            if (std::holds_alternative<SectionHeader64>(section.header))
             {
-                const SectionHeader32& hdr32 = std::get<SectionHeader32>(section.header);
-                std::cout << "\tOffset in shstrtab: " << hdr32.offsetInSectionNameStringTable << std::endl;
-                std::cout << "\tSection size: " << hdr32.sectionSize << std::endl;
+                SectionHeader64 hdr = std::get<SectionHeader64>(section.header);
+                out.write(reinterpret_cast<const char*>(&hdr), sizeof(SectionHeader64));
             }
-            else if (std::holds_alternative<SectionHeader64>(section.header))
+            else
             {
-                const SectionHeader64& hdr64 = std::get<SectionHeader64>(section.header);
-                std::cout << "\tOffset in shstrtab: " << hdr64.offsetInSectionNameStringTable << std::endl;
-                std::cout << "\tSection size: " << hdr64.sectionSize << std::endl;
+                SectionHeader32 hdr = std::get<SectionHeader32>(section.header);
+                out.write(reinterpret_cast<const char*>(&hdr), sizeof(SectionHeader32));
             }
         }
-        if (data.header.Bitness == Bitness::Bits64)
-            std::cout << "Bitness: 64 bits" << std::endl;
-        else
-            std::cout << "Bitness: 32 bits" << std::endl;
-        if (data.header.Endianness == Endianness::LittleEndian)
-            std::cout << "Endianness: Little endian" << std::endl;
-        else
-            std::cout << "Endianness: Big endian" << std::endl;
-        std::cout << "HeaderVersion: " << (uint32_t)data.header.HeaderVersion << std::endl;
-        std::cout << "Type: " << (uint32_t)data.header.Type << std::endl;
-        std::cout << "InstructionSet: " << (uint32_t)data.header.InstructionSet << std::endl;
-        std::cout << "Version: " << (uint32_t)data.header.Version << std::endl;
-        if (data.header.Bitness == Bitness::Bits64)
-            std::cout << "SectionHeaderTablePos: " << data.header.bits64.SectionHeaderTablePosition << std::endl;
-        else
-            std::cout << "SectionHeaderTablePos: " << data.header.bits32.SectionHeaderTablePosition << std::endl;
-        std::cout << "SectionHeaderTableEntrySize: " << data.header.SectionHeaderTableEntrySize << std::endl;
-        std::cout << "SectionHeaderTableEntryCount: " << data.header.SectionHeaderTableEntryCount << std::endl;
 
-        return data;
+        out.seekp(0, std::ios::beg);
+        writeElfHeader(out, data.header);
     }
 };

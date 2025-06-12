@@ -167,4 +167,5 @@ namespace ELF {
     };
 
     Data createELF(BitMode bits, Architecture arch, Encoded encoded, Parsed parsed);
+    void writeElf(std::ofstream& out, Data& data);
 }

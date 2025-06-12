@@ -100,3 +100,41 @@ void printEncoded(const Encoded& encoded, int indent)
         }
     }
 }
+
+void printElf(const ELF::Data& data)
+{
+    for (const auto& section : data.sections)
+    {
+        std::cout << "Section: " << section.name << std::endl;
+        if (std::holds_alternative<ELF::SectionHeader32>(section.header))
+        {
+            const ELF::SectionHeader32& hdr32 = std::get<ELF::SectionHeader32>(section.header);
+            std::cout << "\tOffset in shstrtab: " << hdr32.offsetInSectionNameStringTable << std::endl;
+            std::cout << "\tSection size: " << hdr32.sectionSize << std::endl;
+        }
+        else if (std::holds_alternative<ELF::SectionHeader64>(section.header))
+        {
+            const ELF::SectionHeader64& hdr64 = std::get<ELF::SectionHeader64>(section.header);
+            std::cout << "\tOffset in shstrtab: " << hdr64.offsetInSectionNameStringTable << std::endl;
+            std::cout << "\tSection size: " << hdr64.sectionSize << std::endl;
+        }
+    }
+    if (data.header.Bitness == ELF::Bitness::Bits64)
+        std::cout << "Bitness: 64 bits" << std::endl;
+    else
+        std::cout << "Bitness: 32 bits" << std::endl;
+    if (data.header.Endianness == ELF::Endianness::LittleEndian)
+        std::cout << "Endianness: Little endian" << std::endl;
+    else
+        std::cout << "Endianness: Big endian" << std::endl;
+    std::cout << "HeaderVersion: " << (uint32_t)data.header.HeaderVersion << std::endl;
+    std::cout << "Type: " << (uint32_t)data.header.Type << std::endl;
+    std::cout << "InstructionSet: " << (uint32_t)data.header.InstructionSet << std::endl;
+    std::cout << "Version: " << (uint32_t)data.header.Version << std::endl;
+    if (data.header.Bitness == ELF::Bitness::Bits64)
+        std::cout << "SectionHeaderTablePos: " << data.header.bits64.SectionHeaderTablePosition << std::endl;
+    else
+        std::cout << "SectionHeaderTablePos: " << data.header.bits32.SectionHeaderTablePosition << std::endl;
+    std::cout << "SectionHeaderTableEntrySize: " << data.header.SectionHeaderTableEntrySize << std::endl;
+    std::cout << "SectionHeaderTableEntryCount: " << data.header.SectionHeaderTableEntryCount << std::endl;
+}

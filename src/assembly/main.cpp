@@ -20,7 +20,7 @@ int main(int argc, const char *argv[])
     }
     
     std::string input_path = "";
-    std::string output_path = "out.o";
+    std::string output_path = "";
 
     BitMode bitMode = BitMode::Bits64; // Default
     #ifdef __x86_64__
@@ -109,6 +109,11 @@ int main(int argc, const char *argv[])
         return 1;
     }
 
+    if (output_path.empty())
+    {
+        output_path = input_path + ".o";
+    }
+
     std::ifstream file(input_path);
     if (!file.is_open())
     {
@@ -122,8 +127,8 @@ int main(int argc, const char *argv[])
 
     resolveParsed(parsed);
 
-    std::ofstream out(output_path, std::ios::out | std::ios::trunc);
-    if (!out)
+    std::ofstream objectFile(output_path, std::ios::out | std::ios::trunc);
+    if (!objectFile)
     {
         std::cerr << "Couldn't open file " << output_path << std::endl;
         return 1;
@@ -133,7 +138,11 @@ int main(int argc, const char *argv[])
 
     ELF::Data elfData = ELF::createELF(bitMode, arch, encoded, parsed);
 
-    out.close();
+    printElf(elfData);
+
+    ELF::writeElf(objectFile, elfData);
+
+    objectFile.close();
 
     return 0;
 }
