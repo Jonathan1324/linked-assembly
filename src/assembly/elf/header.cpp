@@ -195,6 +195,11 @@ namespace ELF {
         strtab.name = ".strtab";
         strtab.buffer.push_back(0);
 
+        for (const auto& externSymbol : parsed.externs)
+        {
+
+        }
+
         for (const auto& [name, section] : encoded.sections) {
             ELFSection elfsection;
             elfsection.buffer = section.buffer;
@@ -403,6 +408,7 @@ namespace ELF {
         data.header.SectionHeaderTableEntryCount = data.sections.size();
 
 
+        //TODO: debug print
         for (const auto& section : data.sections)
         {
             std::cout << "Section: " << section.name << std::endl;

@@ -70,3 +70,33 @@ void printParsed(Parsed parsed)
         }
     }
 }
+
+void printEncoded(const Encoded& encoded, int indent = 0)
+{
+    std::string tab(indent, '\t');
+
+    for (const auto& [sectionName, section] : encoded.sections) {
+        std::cout << tab << "Section: " << sectionName << "\n";
+
+        std::cout << tab << "\tBuffer size: " << section.buffer.size() << " bytes\n";
+
+        if (!section.labels.empty()) {
+            std::cout << tab << "\tLabels:\n";
+            for (const auto& [labelName, label] : section.labels) {
+                std::cout << tab << "\t\tName: " << label.name
+                          << ", Offset: " << label.offset
+                          << ", Global: " << (label.isGlobal ? "yes" : "no") << "\n";
+
+                if (!label.localLabels.empty()) {
+                    std::cout << tab << "\t\tLocal Labels:\n";
+                    for (const auto& [localName, localLabel] : label.localLabels) {
+                        std::cout << tab << "\t\t\tName: " << localLabel.name
+                                  << ", Offset: " << localLabel.offset << "\n";
+                    }
+                }
+            }
+        } else {
+            std::cout << tab << "\t(No labels)\n";
+        }
+    }
+}

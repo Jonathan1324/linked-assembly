@@ -122,9 +122,6 @@ int main(int argc, const char *argv[])
 
     resolveParsed(parsed);
 
-    //TODO
-    printParsed(parsed);
-
     std::ofstream out(output_path, std::ios::out | std::ios::trunc);
     if (!out)
     {
