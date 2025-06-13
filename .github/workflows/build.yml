@@ -7,8 +7,17 @@ jobs:
   build:
     strategy:
       matrix:
-        os: [ubuntu-latest, windows-latest]
-        arch: [x86_64]
+        include:
+          - os: ubuntu-latest
+            arch: x86_64
+          - os: ubuntu-latest
+            arch: arm64
+          - os: windows-latest
+            arch: x86_64
+          - os: macos-latest
+            arch: x86_64
+          - os: macos-latest
+            arch: arm64
     
     runs-on: ${{ matrix.os }}
 
