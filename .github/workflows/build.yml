@@ -8,22 +8,22 @@ jobs:
     strategy:
       matrix:
         include:
-          - os: ubuntu-latest
+          - os: ubuntu-22.04
             arch: x86_64
             os_name: linux
-          - os: ubuntu-latest
+          - os: ubuntu-24.04-arm
             arch: arm64
             os_name: linux
-          - os: windows-latest
+          - os: windows-2025
             arch: x86_64
             os_name: windows
-          - os: windows-latest
+          - os: windows-11-arm
             arch: arm64
             os_name: windows
-          - os: macos-latest
+          - os: macos-13
             arch: x86_64
             os_name: macos
-          - os: macos-latest
+          - os: macos-15
             arch: arm64
             os_name: macos
     
