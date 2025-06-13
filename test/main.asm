@@ -2,5 +2,7 @@ section .text
     global _start
 
 _start:
-    nop
-    ret 0x1234
+    mov eax, 0x12345678
+    mov ebx, eax
+    mov ecx, eax
+    mov edx, eax

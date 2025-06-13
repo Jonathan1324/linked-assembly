@@ -37,13 +37,13 @@ Encoded encode(Parsed& parsed, Architecture arch)
                 switch (arch)
                 {
                     case Architecture::x86:
-                        currentOffset += x86::encodeInstruction(instruction, section);
+                        currentOffset += x86::encodeInstruction(instruction, section, parsed.constants);
                         break;
                     case Architecture::ARM:
-                        currentOffset += arm::encodeInstruction(instruction, section);
+                        currentOffset += ARM::encodeInstruction(instruction, section, parsed.constants);
                         break;
                     case Architecture::RISC_V:
-                        currentOffset += riscv::encodeInstruction(instruction, section);
+                        currentOffset += RISC_V::encodeInstruction(instruction, section, parsed.constants);
                         break;
                     default:
                         std::cerr << "Unknown architecture (encoder)" << std::endl;

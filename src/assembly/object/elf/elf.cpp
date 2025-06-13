@@ -5,6 +5,7 @@
 
 #include "../../util/buffer.hpp"
 #include "util.hpp"
+#include "flags.hpp"
 
 namespace ELF {
     Header createHeader(BitMode bits, Architecture arch)
@@ -35,21 +36,35 @@ namespace ELF {
         switch (arch)
         {
             case Architecture::x86:
+                header.Flags = 0;
+
                 if (bits == BitMode::Bits64)
+                {
                     header.InstructionSet = InstructionSet::x64;
+                }
                 else
+                {
                     header.InstructionSet = InstructionSet::x86;
+                }
                 break;
             case Architecture::ARM:
                 if (bits == BitMode::Bits64)
+                {
+                    header.Flags = 0;
                     header.InstructionSet = InstructionSet::Arm64;
+                }
                 else
+                {
+                    header.Flags = ARM::Flags32::newABI | ARM::Flags32::vfpFloat;
                     header.InstructionSet = InstructionSet::Arm;
+                }
                 break;
             case Architecture::RISC_V:
+                header.Flags = RISC_V::Flags::floatABI_double;
                 header.InstructionSet = InstructionSet::riscv;
                 break;
             default:
+                header.Flags = 0;
                 header.InstructionSet = InstructionSet::None;
                 break;
         }
@@ -61,7 +76,6 @@ namespace ELF {
 
         header.setSectionHeaderTablePosition(0);
 
-        header.Flags = 0;
         header.HeaderSize = sizeof(Header);
 
         header.ProgramHeaderTableEntrySize = 0;

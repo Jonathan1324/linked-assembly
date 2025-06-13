@@ -23,7 +23,8 @@ namespace ELF {
         constexpr uint8_t tls = 6;
     }
 
-    constexpr uint8_t makeSymbolInfo(uint8_t bind, uint8_t type) {
+    constexpr uint8_t makeSymbolInfo(uint8_t bind, uint8_t type)
+    {
         return (bind << 4) | (type & 0x0F);
     }
 

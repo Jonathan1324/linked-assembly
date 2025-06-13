@@ -5,7 +5,7 @@ size_t evaluate(std::__1::string value, EncodedSection& section, Encoded& encode
     (void)section;
     (void)encoded;
     //TODO
-    return std::stoul(value, nullptr, 0);
+    return std::stoull(value, nullptr, 0);
 }
 
 size_t encodeData(const DataDefinition& data, EncodedSection& section, Encoded& encoded)

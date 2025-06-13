@@ -46,17 +46,11 @@ struct Section {
     std::unordered_map<std::string, Label> labels;
 };
 
-struct ConstantDefinition {
-    std::string name;
-    std::string value;
-    int lineNumber;
-};
-
 struct Parsed {
     std::vector<Section> sections;
     std::vector<std::string> globals;
     std::vector<std::string> externs;
-    std::unordered_map<std::string, ConstantDefinition> constants;
+    std::unordered_map<std::string, std::string> constants;
 };
 
 Parsed parseAssembly(std::istream& input, BitMode bits);

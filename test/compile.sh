@@ -1,6 +1,16 @@
+#!/bin/sh
+
 mkdir -p build
-../build/assembly/assembly main.asm -o build/test.o \
+
+if [ "$1" = "-d" ]; then
+  ../build/assembly/assembly main.asm -o build/test.o \
     --arch x86 \
     -m32 \
     --format elf \
     --debug
+else
+  ../build/assembly/assembly main.asm -o build/test.o \
+    --arch x86 \
+    -m32 \
+    --format elf
+fi

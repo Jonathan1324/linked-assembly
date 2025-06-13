@@ -19,6 +19,7 @@ namespace ELF {
     };
 
     enum class Type : uint16_t {
+        None        = 0,
         Relocatable = 1,
         Executable  = 2,
         Shared      = 3,

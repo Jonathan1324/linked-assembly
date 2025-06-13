@@ -2,6 +2,6 @@
 
 #include "../encoder.hpp"
 
-namespace riscv {
-    size_t encodeInstruction(Instruction& instr, EncodedSection& section);
+namespace RISC_V {
+    size_t encodeInstruction(Instruction& instr, EncodedSection& section, std::unordered_map<std::string, std::string> constants);
 }
