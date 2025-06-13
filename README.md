@@ -15,6 +15,7 @@ Build the assembler using `make`:
 
 ```bash
 make
+```
 
 ## Usage
 
@@ -22,3 +23,4 @@ Build your assembly file into an object file with:
 
 ```bash
 build/assembly/assembly input.asm -o output.o
+```
