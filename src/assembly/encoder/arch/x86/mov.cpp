@@ -77,6 +77,7 @@ namespace x86 {
             else
             {
                 //TODO
+                std::cerr << "We don't support mov with memory yet: line " << instr.lineNumber << std::endl;
             }
 
             return offset;
