@@ -2,6 +2,9 @@
 
 #include <string>
 #include <iostream>
+#include <cinttypes>
+#include <cstring>
+#include <cstdint>
 
 namespace ELF {
     constexpr unsigned char Magic[] = {0x7F, 'E', 'L', 'F'};
