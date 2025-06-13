@@ -7,18 +7,18 @@
 #include "../../encoder/encoder.hpp"
 
 namespace ELF {
-    enum class Bitness : uint8_t {
+    enum class HBitness : uint8_t {
         None    = 0,
         Bits32  = 1,
         Bits64  = 2
     };
 
-    enum class Endianness : uint8_t {
+    enum class HEndianness : uint8_t {
         LittleEndian    = 1,
         BigEndian       = 2
     };
 
-    enum class Type : uint16_t {
+    enum class HType : uint16_t {
         None        = 0,
         Relocatable = 1,
         Executable  = 2,
@@ -26,7 +26,7 @@ namespace ELF {
         Core        = 4
     };
 
-    enum class InstructionSet : uint16_t {
+    enum class HInstructionSet : uint16_t {
         None    = 0,
         x86     = 3,
         x64     = 0x3E,
@@ -38,15 +38,15 @@ namespace ELF {
     struct Header {
         char Magic[4] = {0x7F, 'E', 'L', 'F'};
 
-        Bitness Bitness;
-        Endianness Endianness;
+        HBitness Bitness;
+        HEndianness Endianness;
         uint8_t HeaderVersion;
         uint8_t ABI;
         uint8_t ABIVersion;
         uint8_t _Padding[7]  = {};
 
-        Type Type;
-        InstructionSet InstructionSet;
+        HType Type;
+        HInstructionSet InstructionSet;
         uint32_t Version;
 
         union {
@@ -72,7 +72,7 @@ namespace ELF {
         uint16_t SectionNamesIndex;
 
         bool is64Bit() const {
-            return Bitness == Bitness::Bits64;
+            return Bitness == HBitness::Bits64;
         }
 
         uint64_t getProgramEntryPosition() const {

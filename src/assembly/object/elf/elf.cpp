@@ -16,22 +16,22 @@ namespace ELF {
         {
             case BitMode::Bits16:
             case BitMode::Bits32:
-                header.Bitness = Bitness::Bits32;
+                header.Bitness = HBitness::Bits32;
                 break;
             case BitMode::Bits64:
-                header.Bitness = Bitness::Bits64;
+                header.Bitness = HBitness::Bits64;
                 break;
             default:
-                header.Bitness = Bitness::None;
+                header.Bitness = HBitness::None;
                 break;
         }
 
-        header.Endianness = Endianness::LittleEndian;
+        header.Endianness = HEndianness::LittleEndian;
         header.HeaderVersion = 1;
         header.ABI = 0;
         header.ABIVersion = 0;
 
-        header.Type = Type::Relocatable;
+        header.Type = HType::Relocatable;
 
         switch (arch)
         {
@@ -40,32 +40,32 @@ namespace ELF {
 
                 if (bits == BitMode::Bits64)
                 {
-                    header.InstructionSet = InstructionSet::x64;
+                    header.InstructionSet = HInstructionSet::x64;
                 }
                 else
                 {
-                    header.InstructionSet = InstructionSet::x86;
+                    header.InstructionSet = HInstructionSet::x86;
                 }
                 break;
             case Architecture::ARM:
                 if (bits == BitMode::Bits64)
                 {
                     header.Flags = 0;
-                    header.InstructionSet = InstructionSet::Arm64;
+                    header.InstructionSet = HInstructionSet::Arm64;
                 }
                 else
                 {
                     header.Flags = ARM::Flags32::newABI | ARM::Flags32::vfpFloat;
-                    header.InstructionSet = InstructionSet::Arm;
+                    header.InstructionSet = HInstructionSet::Arm;
                 }
                 break;
             case Architecture::RISC_V:
                 header.Flags = RISC_V::Flags::floatABI_double;
-                header.InstructionSet = InstructionSet::riscv;
+                header.InstructionSet = HInstructionSet::riscv;
                 break;
             default:
                 header.Flags = 0;
-                header.InstructionSet = InstructionSet::None;
+                header.InstructionSet = HInstructionSet::None;
                 break;
         }
 
@@ -119,7 +119,7 @@ namespace ELF {
         nullSection.name = "";
         nullSection.buffer = {};
         
-        if(data.header.Bitness == Bitness::Bits64)
+        if(data.header.Bitness == HBitness::Bits64)
         {
             SectionHeader64 nullHeader{};
             nullHeader.Type = SectionType::Null;
@@ -147,7 +147,7 @@ namespace ELF {
         uint64_t localSymbolCount = 0;
         std::vector<unsigned char> globalSymtabBuffer;
         
-        if (data.header.Bitness == Bitness::Bits64)
+        if (data.header.Bitness == HBitness::Bits64)
         {
             SectionHeader64 header;
 
@@ -200,7 +200,7 @@ namespace ELF {
             strtab.buffer.insert(strtab.buffer.end(), externSymbol.begin(), externSymbol.end());
             strtab.buffer.push_back('\0');
 
-            if (data.header.Bitness == Bitness::Bits64)
+            if (data.header.Bitness == HBitness::Bits64)
             {
                 Sym64 sym;
                 sym.nameOffset = offsetInStrtab;
@@ -238,7 +238,7 @@ namespace ELF {
 
                 relocationSection.buffer = encodeRelocations(section.relocations, data.header.Bitness);
 
-                if (data.header.Bitness == Bitness::Bits64)
+                if (data.header.Bitness == HBitness::Bits64)
                 {
                     SectionHeader64 header;
 
@@ -276,7 +276,7 @@ namespace ELF {
                 data.sections.push_back(std::move(relocationSection));
             }
 
-            if (data.header.Bitness == Bitness::Bits64)
+            if (data.header.Bitness == HBitness::Bits64)
             {
                 SectionHeader64 header;
 
@@ -321,7 +321,7 @@ namespace ELF {
 
                     uint16_t sectionIndex = data.sections.size();
 
-                    if (data.header.Bitness == Bitness::Bits64)
+                    if (data.header.Bitness == HBitness::Bits64)
                     {
                         Sym64 sym;
                         sym.nameOffset = nameOffset;
@@ -365,7 +365,7 @@ namespace ELF {
                         strtab.buffer.insert(strtab.buffer.end(), localName.begin(), localName.end());
                         strtab.buffer.push_back('\0');
 
-                        if (data.header.Bitness == Bitness::Bits64) {
+                        if (data.header.Bitness == HBitness::Bits64) {
                             Sym64 sym;
                             sym.nameOffset = localNameOffset;
                             sym.info = makeSymbolInfo(SymbolBind::local, SymbolType::notype);
@@ -393,7 +393,7 @@ namespace ELF {
             data.sections.push_back(std::move(elfsection));
         }
 
-        if (data.header.Bitness == Bitness::Bits64)
+        if (data.header.Bitness == HBitness::Bits64)
         {
             SectionHeader64 header;
 
@@ -475,7 +475,7 @@ namespace ELF {
             }, section.header);
         }
 
-        if (data.header.Bitness == Bitness::Bits64)
+        if (data.header.Bitness == HBitness::Bits64)
         {
             SectionHeader64 header;
 
@@ -513,7 +513,7 @@ namespace ELF {
         data.header.SectionNamesIndex = data.sections.size();
         data.sections.push_back(std::move(shstrtab));
 
-        if (data.header.Bitness == Bitness::Bits64)
+        if (data.header.Bitness == HBitness::Bits64)
             data.header.SectionHeaderTableEntrySize = sizeof(SectionHeader64);
         else
             data.header.SectionHeaderTableEntrySize = sizeof(SectionHeader32);
@@ -529,7 +529,7 @@ namespace ELF {
         out.write(reinterpret_cast<const char*>(&header), 24);
         uint64_t offset = 24;
 
-        if (header.Bitness == Bitness::Bits64)
+        if (header.Bitness == HBitness::Bits64)
         {
             out.write(reinterpret_cast<const char*>(&header.bits64.ProgramEntryPosition), 8);
             out.write(reinterpret_cast<const char*>(&header.bits64.ProgramHeaderTablePosition), 8);

@@ -17,5 +17,5 @@ namespace ELF {
         int32_t  addend;   // Addend
     } __attribute__((packed));
 
-    sectionBuffer encodeRelocations(std::vector<Relocation> relocations, Bitness bits);
+    sectionBuffer encodeRelocations(std::vector<Relocation> relocations, HBitness bits);
 }
