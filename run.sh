@@ -1,20 +1,18 @@
 #!/bin/sh
 
 if [ "$1" = "-c" ]; then
-    make clean
+    chmod +x tests/clean.sh
 
-    chmod +x examples/tests/clean.sh
-
-    cd examples/tests
+    cd tests
     sh clean.sh $@
-    cd ../..
+    cd ..
 else
     make all
     chmod +x build/assembly/assembly
-    chmod +x examples/tests/test.sh
-    chmod +x examples/tests/debug.sh
+    chmod +x tests/test.sh
+    chmod +x tests/debug.sh
 
-    cd examples/tests
+    cd tests
     sh test.sh $@
-    cd ../..
+    cd ..
 fi
