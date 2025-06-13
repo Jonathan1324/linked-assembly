@@ -7,3 +7,8 @@ mkdir -p build
     -m32            \
     --format elf    \
     --debug
+
+../build/linker/linker build/$1_asm.o -o build/$1 \
+    --debug
+
+chmod +x build/$1

@@ -56,10 +56,20 @@ int main(int argc, const char *argv[])
 
     for (int i = 1; i < argc; ++i)
     {
-        if (std::string(argv[i]).compare("-o") == 0 && i + 1 < argc) {
-            output_path = argv[++i];
+        if (std::string(argv[i]).compare("-o") == 0 && i + 1 < argc)
+        {
+            if (i + 1 < argc)
+            {
+                output_path = argv[++i];
+            }
+            else
+            {
+                std::cerr << "Error: Missing output file after -o" << std::endl;
+                return 1;
+            }
         }
-        else if (std::string(argv[i]).compare("--arch") == 0 && i + 1 < argc) {
+        else if (std::string(argv[i]).compare("--arch") == 0 && i + 1 < argc)
+        {
             std::string archStr = toLower(argv[++i]);
             archStr = trim(archStr);
 
@@ -87,7 +97,8 @@ int main(int argc, const char *argv[])
                 return 1;
             }
         }
-        else if (std::string(argv[i]).compare("--format") == 0 && i + 1 < argc) {
+        else if (std::string(argv[i]).compare("--format") == 0 && i + 1 < argc)
+        {
             std::string formatStr = toLower(argv[++i]);
             formatStr = trim(formatStr);
 
@@ -129,11 +140,14 @@ int main(int argc, const char *argv[])
             debug = true;
         }
 
+        else if (!std::string(argv[i]).empty() && argv[i][0] == '-')
+        {
+            std::cerr << "Warning: Unknown option " << argv[i] << std::endl;
+        }
         else
         {
             input_path = argv[i];
         }
-        // TODO: weitere Optionen: --dump, --verbose, ...
     }
 
     if (input_path.empty())
