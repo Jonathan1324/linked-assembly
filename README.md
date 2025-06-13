@@ -44,3 +44,10 @@ See examples in the [examples/README.md](examples/README.md).
 ## License
 
 This project is licensed under the [BSD 3-Clause License](LICENSE).
+
+## Documentation
+
+- [Usage Guide](docs/usage.md)
+- [Architecture](docs/architecture.md)
+- [Tutorial](docs/tutorial.md)
+- [FAQ](docs/faq.md)
