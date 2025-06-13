@@ -1,43 +1,89 @@
 name: build
 
 on:
-    workflow_dispatch:  # TODO: currently only with UI
+  workflow_dispatch:  # TODO: currently only with UI
 
 jobs:
-    build:
-        runs-on: ubuntu-latest
+  build:
+    strategy:
+      matrix:
+        os: [ubuntu-latest]
+        arch: [x86_64]
+    
+    runs-on: ${{ matrix.os }}
 
-        steps:
-          - name: Checkout repository
-            uses: actions/checkout@v3
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v3
 
-          - name: Cache apt packages
-            uses: actions/cache@v4
-            with:
-                path: /var/cache/apt/archives
-                key: apt-cache-${{ runner.os }}-${{ hashFiles('**/apt-packages.txt') }}
-                restore-keys: |
-                    apt-cache-${{ runner.os }}-
+      - name: Install build tools (Linux)
+        if: runner.os == 'Linux'
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y build-essential nasm
 
-          - name: Install build tools
-            run: |
-                sudo apt-get update
-                sudo apt-get install -y build-essential
-                sudo apt-get install -y nasm
+      - name: Install build tools (Windows)
+        if: runner.os == 'Windows'
+        run: choco install make nasm
 
-          - name: Cache build directory
-            uses: actions/cache@v4
-            with:
-                path: build/
-                key: ${{ runner.os }}-build-${{ hashFiles('ci/build-version.txt') }}
-                restore-keys:
-                    ${{ runner.os }}-build-
+      - name: Install build tools (macOS)
+        if: runner.os == 'macOS'
+        run: brew install make nasm
 
-          - name: Build the project
-            run: make
+      - name: Build the project
+        run: make
+        shell: bash
 
-          - name: Upload build artifacts
-            uses: actions/upload-artifact@v4
-            with:
-                name: build-artifacts
-                path: build/
+      - name: Move binaries
+        run: |
+          mkdir -p binaries
+          EXT=""
+          if [[ "${{ runner.os }}" == "Windows" ]]; then
+            EXT=".exe"
+          fi
+          cp build/assembly/assembly$EXT binaries/assembly-${{ matrix.os }}-${{ matrix.arch }}$EXT
+          cp build/linker/linker$EXT binaries/linker-${{ matrix.os }}-${{ matrix.arch }}$EXT
+        shell: bash
+
+      - name: Upload binary artifacts
+        uses: actions/upload-artifact@v4
+        with:
+          name: binaries
+          path: binaries/
+
+#
+#jobs:
+#  build:
+#    runs-on: ubuntu-latest
+#
+#    steps:
+#      - name: Checkout repository
+#        uses: actions/checkout@v3
+#
+#      - name: Install build tools
+#        run: |
+#          sudo apt-get update
+#          sudo apt-get install -y build-essential nasm
+#
+#      - name: Cache build directory
+#        uses: actions/cache@v4
+#        with:
+#          path: build/
+#          key: ${{ runner.os }}-build-${{ hashFiles('ci/build-version.txt') }}
+#          restore-keys:
+#              ${{ runner.os }}-build-
+#
+#      - name: Build the project
+#        run: make
+#
+#      - name: Move binaries
+#        run: |
+#          mkdir -p binaries
+#          cp build/assembly/assembly binaries/assembly-linux-x86_64
+#          cp build/linker/linker binaries/linker-linux-x86_64
+#
+#      - name: Upload binary artifacts
+#        uses: actions/upload-artifact@v4
+#        with:
+#          name: binaries
+#          path: binaries/
