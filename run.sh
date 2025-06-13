@@ -1,14 +1,20 @@
 #!/bin/sh
 
-make all
-chmod +x build/assembly/assembly
-chmod +x test/compile.sh
+if [ "$1" = "-c" ]; then
+    make clean
 
-cd test
-sh compile.sh $@
-cd ..
+    chmod +x examples/tests/clean.sh
 
-if [ "$1" = "-d" ]; then
-  objdump --all-headers test/build/test.o
-  /opt/homebrew/opt/binutils/bin/readelf -a test/build/test.o
+    cd examples/tests
+    sh clean.sh $@
+    cd ../..
+else
+    make all
+    chmod +x build/assembly/assembly
+    chmod +x examples/tests/test.sh
+    chmod +x examples/tests/debug.sh
+
+    cd examples/tests
+    sh test.sh $@
+    cd ../..
 fi

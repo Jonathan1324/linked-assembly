@@ -31,9 +31,9 @@ Before you submit a pull request:
 ### 3. Suggested Areas to Help With
 
 - Implement new instructions for x86.
-- Add support for mach-o oder Coff
-- Add support for 64 or 16 bit x86
-- Add support for Arm or Risc-V
+- Add support for Mach-O oder Coff
+- Add support for 64 bit or 16 bit on x86
+- Add support for ARM or RISC-V
 
 ## Questions?
 

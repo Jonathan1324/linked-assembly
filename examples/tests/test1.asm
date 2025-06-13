@@ -4,5 +4,7 @@ section .text
 _start:
     mov eax, 0x12345678
     mov ebx, eax
-    mov ecx, eax
-    mov edx, eax
+    mov edx, ecx
+    mov ecx, edx
+    int3
+    mov eax, 0
