@@ -12,7 +12,7 @@ jobs:
             uses: actions/checkout@v3
 
           - name: Cache apt packages
-            uses: actions/cache@v3
+            uses: actions/cache@v4
             with:
                 path: /var/cache/apt/archives
                 key: apt-cache-${{ runner.os }}-${{ hashFiles('**/apt-packages.txt') }}
@@ -25,10 +25,16 @@ jobs:
                 sudo apt-get install -y build-essential
                 sudo apt-get install -y nasm
 
+          - name: Cache build directory
+            uses: actions/cache@v4
+            with:
+                path: build/
+                key: ${{ runner.os }}-build-${{ hashFiles('ci/build-version.txt') }}
+                restore-keys:
+                    ${{ runner.os }}-build-
+
           - name: Build the project
             run: make
-
-        #   TODO: cache build
 
           - name: Upload build artifacts
             uses: actions/upload-artifact@v4
