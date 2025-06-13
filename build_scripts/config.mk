@@ -14,6 +14,8 @@ ifeq ($(UNAME_S),Darwin)
 	CXXFLAGS += -arch $(ARCH)
 else
 	ASFLAGS += -f elf64
-	CFLAGS += -m64
-	CXXFLAGS += -m64
+	ifeq ($(ARCH),x86_64)
+		CFLAGS += -m64
+		CXXFLAGS += -m64
+	endif
 endif
