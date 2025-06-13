@@ -39,11 +39,8 @@ Check out [CONTRIBUTING.md](CONTRIBUTING.md) for how to get started.
 
 ## Examples
 
-See examples at [Examples](examples/README.md).
+See examples in the [examples/README.md](examples/README.md).
 
 ## License
 
 This project is licensed under the [BSD 3-Clause License](LICENSE).
-
----
-
