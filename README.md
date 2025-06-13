@@ -5,7 +5,7 @@ Currently only supports **x86**, **32-bit mode**, and **ELF `.o` object files**.
 
 ## Features
 
-- Supports a basic set of x86 instructions ([see full list](SUPPORTED_INSTRUCTIONS.md))
+- Supports a basic set of x86 instructions ([see full list](INSTRUCTIONS.md))
 - Generates valid 32-bit ELF object files.
 - Simple, readable assembly syntax
 - Command-line flags for extensibility:
