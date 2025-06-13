@@ -1,6 +1,6 @@
 # linked-assembly
 
-A modular assembler.  
+A modular assembler (and linker planned).  
 Currently only supports **x86**, **32-bit mode**, and **ELF `.o` object files**.
 
 ## Features

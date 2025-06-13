@@ -9,13 +9,13 @@ Frequently Asked Questions about the `linked-assembly` project.
 The project started with a narrow focus to ensure correctness and simplicity.  
 x86 32-bit is relatively well-documented, widely supported, and easier to implement than more complex 64-bit modes or newer ISAs like ARM and RISC-V.
 
-Support for other architectures and formats is planned. See [roadmap.md](./roadmap.md).
+Support for other architectures and formats is planned.
 
 ---
 
 ### ❓ Can I write real programs with this assembler?
 
-Yes — within limits. You can write minimal x86 assembly programs that don’t rely on complex features like labels, sections, or linking with external libraries.
+Yes — within limits. You can write minimal x86 assembly programs that don’t rely on complex features.
 
 Currently, you can:
 - Write short functions or snippets.
@@ -25,7 +25,7 @@ Currently, you can:
 
 ### ❓ How do I run the output?
 
-You assemble your `.asm` file into an `.o` file using `linked-assembly`, then link it with a linker like `gcc`:
+You assemble your `.asm` file into an `.o` file using `assembly`, then link it with a linker like `gcc`:
 
 ```bash
 build/assembly/assembly file.asm -o file.o --arch x86 --format elf -m32
@@ -55,10 +55,7 @@ More will be added as the encoding logic expands. You can help contribute! (See 
 It's planned, but it’s a bigger challenge due to:
 
 * Instruction encoding complexity
-* ELF64 format differences
-* Calling conventions and ABI
-
-See [roadmap.md](./roadmap.md) for priorities and progress.
+* Address complexity
 
 ---
 
@@ -77,7 +74,7 @@ See [CONTRIBUTING.md](../CONTRIBUTING.md) for details.
 ### ❓ Is there a test suite?
 
 Not yet — but it's planned. For now, you can test behavior manually by assembling and linking small test cases.
-Adding automated tests is high-priority in the roadmap.
+Adding automated tests is high-priority.
 
 ---
 
