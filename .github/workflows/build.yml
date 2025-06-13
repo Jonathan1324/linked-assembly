@@ -41,49 +41,12 @@ jobs:
           if [[ "${{ runner.os }}" == "Windows" ]]; then
             EXT=".exe"
           fi
-          cp build/assembly/assembly$EXT binaries/assembly-${{ matrix.os }}-${{ matrix.arch }}$EXT
-          cp build/linker/linker$EXT binaries/linker-${{ matrix.os }}-${{ matrix.arch }}$EXT
+          cp build/assembly/assembly$EXT binaries/assembly-${{ runner.os }}-${{ matrix.arch }}$EXT
+          cp build/linker/linker$EXT binaries/linker-${{ runner.os }}-${{ matrix.arch }}$EXT
         shell: bash
 
       - name: Upload binary artifacts
         uses: actions/upload-artifact@v4
         with:
-          name: binaries
+          name: binaries-${{ runner.os }}-${{ runner.arch }}
           path: binaries/
-
-#
-#jobs:
-#  build:
-#    runs-on: ubuntu-latest
-#
-#    steps:
-#      - name: Checkout repository
-#        uses: actions/checkout@v3
-#
-#      - name: Install build tools
-#        run: |
-#          sudo apt-get update
-#          sudo apt-get install -y build-essential nasm
-#
-#      - name: Cache build directory
-#        uses: actions/cache@v4
-#        with:
-#          path: build/
-#          key: ${{ runner.os }}-build-${{ hashFiles('ci/build-version.txt') }}
-#          restore-keys:
-#              ${{ runner.os }}-build-
-#
-#      - name: Build the project
-#        run: make
-#
-#      - name: Move binaries
-#        run: |
-#          mkdir -p binaries
-#          cp build/assembly/assembly binaries/assembly-linux-x86_64
-#          cp build/linker/linker binaries/linker-linux-x86_64
-#
-#      - name: Upload binary artifacts
-#        uses: actions/upload-artifact@v4
-#        with:
-#          name: binaries
-#          path: binaries/
