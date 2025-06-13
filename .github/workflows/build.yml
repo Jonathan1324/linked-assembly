@@ -7,7 +7,7 @@ jobs:
   build:
     strategy:
       matrix:
-        os: [ubuntu-latest]
+        os: [ubuntu-latest, windows-latest]
         arch: [x86_64]
     
     runs-on: ${{ matrix.os }}
@@ -48,5 +48,5 @@ jobs:
       - name: Upload binary artifacts
         uses: actions/upload-artifact@v4
         with:
-          name: binaries-${{ runner.os }}-${{ runner.arch }}
+          name: binaries-${{ runner.os }}-${{ matrix.arch }}
           path: binaries/
