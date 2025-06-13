@@ -10,7 +10,15 @@ jobs:
         steps:
           - name: Checkout repository
             uses: actions/checkout@v3
-        
+
+          - name: Cache apt packages
+            uses: actions/cache@v3
+            with:
+                path: /var/cache/apt/archives
+                key: apt-cache-${{ runner.os }}-${{ hashFiles('**/apt-packages.txt') }}
+                restore-keys: |
+                    apt-cache-${{ runner.os }}-
+
           - name: Install build tools
             run: |
                 sudo apt-get update
@@ -19,6 +27,8 @@ jobs:
 
           - name: Build the project
             run: make
+
+        #   TODO: cache build
 
           - name: Upload build artifacts
             uses: actions/upload-artifact@v4
