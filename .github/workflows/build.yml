@@ -10,14 +10,22 @@ jobs:
         include:
           - os: ubuntu-latest
             arch: x86_64
+            os_name: linux
           - os: ubuntu-latest
             arch: arm64
+            os_name: linux
           - os: windows-latest
             arch: x86_64
+            os_name: windows
+          - os: windows-latest
+            arch: arm64
+            os_name: windows
           - os: macos-latest
             arch: x86_64
+            os_name: macos
           - os: macos-latest
             arch: arm64
+            os_name: macos
     
     runs-on: ${{ matrix.os }}
 
@@ -26,17 +34,17 @@ jobs:
         uses: actions/checkout@v3
 
       - name: Install build tools (Linux)
-        if: runner.os == 'Linux'
+        if: matrix.os_name == 'linux'
         run: |
           sudo apt-get update
           sudo apt-get install -y build-essential nasm
 
       - name: Install build tools (Windows)
-        if: runner.os == 'Windows'
+        if: matrix.os_name == 'windows'
         run: choco install make nasm
 
       - name: Install build tools (macOS)
-        if: runner.os == 'macOS'
+        if: matrix.os_name == 'macos'
         run: brew install make nasm
 
       - name: Build the project
@@ -47,15 +55,15 @@ jobs:
         run: |
           mkdir -p binaries
           EXT=""
-          if [[ "${{ runner.os }}" == "Windows" ]]; then
+          if [[ "${{ matrix.os_name }}" == "windows" ]]; then
             EXT=".exe"
           fi
-          cp build/assembly/assembly$EXT binaries/assembly-${{ runner.os }}-${{ matrix.arch }}$EXT
-          cp build/linker/linker$EXT binaries/linker-${{ runner.os }}-${{ matrix.arch }}$EXT
+          cp build/assembly/assembly$EXT binaries/assembly$EXT
+          cp build/linker/linker$EXT binaries/linker$EXT
         shell: bash
 
       - name: Upload binary artifacts
         uses: actions/upload-artifact@v4
         with:
-          name: binaries-${{ runner.os }}-${{ matrix.arch }}
+          name: binaries-${{ matrix.os_name }}-${{ matrix.arch }}
           path: binaries/
