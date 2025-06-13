@@ -71,7 +71,7 @@ It should print:
 ## Step 5: Troubleshooting
 
 * Make sure you ran `make` and the `build/assembly/assembly` binary exists.
-* Ensure your assembly code only uses supported instructions (see [INSTRUCTIONS.md](../INSTRUCTIONS.md)).
+* Ensure your assembly code only uses supported instructions (see [instructions.md](instructions.md)).
 * If you get errors during linking, verify you’re producing valid ELF 32-bit `.o` files and using `-m32` if required.
 
 ---

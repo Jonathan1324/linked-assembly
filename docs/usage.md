@@ -58,7 +58,7 @@ build/assembly/assembly examples/example.asm -o examples/build/example.o --arch 
 ## Notes & Limitations
 
 * Currently, only the x86 architecture in 32-bit mode with ELF output is fully implemented.
-* The assembler supports a minimal subset of x86 instructions. See [INSTRUCTIONS.md](../INSTRUCTIONS.md) for the full list.
+* The assembler supports a minimal subset of x86 instructions. See [instructions.md](instructions.md) for the full list.
 * Error handling and diagnostics are basic and will be improved in future releases.
 
 ---
