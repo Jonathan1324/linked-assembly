@@ -8,6 +8,10 @@ _start:
     mov ecx, ebx
     int3
     mov eax, 0
+.next:
+    mov ebx, 0x20
+.done:
+    ret
 
 section .data
 

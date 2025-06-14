@@ -198,11 +198,11 @@ namespace ELF {
             localSymbolCount++;
             
             Endian::write(localSymtabBuffer, nullSym.nameOffset, endianness);
+            Endian::write(localSymtabBuffer, nullSym.value, endianness);
+            Endian::write(localSymtabBuffer, nullSym.size, endianness);
             Endian::write(localSymtabBuffer, nullSym.info, endianness);
             Endian::write(localSymtabBuffer, nullSym.other, endianness);
             Endian::write(localSymtabBuffer, nullSym.sectionIndex, endianness);
-            Endian::write(localSymtabBuffer, nullSym.value, endianness);
-            Endian::write(localSymtabBuffer, nullSym.size, endianness);
         }
 
         ELFSection strtab;
@@ -251,29 +251,155 @@ namespace ELF {
 
                 globalSymbolCount++;
                 Endian::write(globalSymtabBuffer, sym.nameOffset, endianness);
+                Endian::write(globalSymtabBuffer, sym.value, endianness);
+                Endian::write(globalSymtabBuffer, sym.size, endianness);
                 Endian::write(globalSymtabBuffer, sym.info, endianness);
                 Endian::write(globalSymtabBuffer, sym.other, endianness);
                 Endian::write(globalSymtabBuffer, sym.sectionIndex, endianness);
-                Endian::write(globalSymtabBuffer, sym.value, endianness);
-                Endian::write(globalSymtabBuffer, sym.size, endianness);
             }
         }
 
-        std::unordered_map<std::string, uint16_t> sectionIndexes;
+        std::unordered_map<std::string, size_t> sectionIndexes;
 
         for (const auto& [name, section] : encoded.sections)
         {
-            ELFSection elfSection;
+            ELFSection elfsection;
 
             if (!section.relocations.empty())
             {
                 ELFSection relocationSection;
-                sectionIndexes[".rela." + section.name] = data.sections.size();
+                sectionIndexes[".rela" + section.name] = data.sections.size();
                 data.sections.push_back(std::move(relocationSection));
             }
 
+            if (!section.labels.empty())
+            {
+                for (const auto& [name, label] : section.labels)
+                {
+                    uint32_t nameOffset = strtab.buffer.size();
+                    strtab.buffer.insert(strtab.buffer.end(), label.name.begin(), label.name.end());
+                    strtab.buffer.push_back('\0');
+
+                    uint16_t sectionIndex = data.sections.size();
+
+                    if (data.header.Bitness == HBitness::Bits64)
+                    {
+                        Sym64 sym;
+                        sym.nameOffset = nameOffset;
+                        sym.info = makeSymbolInfo(label.isGlobal ? SymbolBind::global : SymbolBind::local, SymbolType::notype);
+                        sym.other = 0;
+                        sym.sectionIndex = sectionIndex;
+                        sym.value = label.offset;
+                        sym.size = 0;
+
+                        if (label.isGlobal)
+                        {
+                            globalLabelIndexes[label.name] = globalSymbolCount;
+                            globalSymbolCount++;
+                            Endian::write(globalSymtabBuffer, sym.nameOffset, endianness);
+                            Endian::write(globalSymtabBuffer, sym.info, endianness);
+                            Endian::write(globalSymtabBuffer, sym.other, endianness);
+                            Endian::write(globalSymtabBuffer, sym.sectionIndex, endianness);
+                            Endian::write(globalSymtabBuffer, sym.value, endianness);
+                            Endian::write(globalSymtabBuffer, sym.size, endianness);
+                        }
+                        else
+                        {
+                            localLabelIndexes[label.name] = localSymbolCount;
+                            localSymbolCount++;
+                            Endian::write(localSymtabBuffer, sym.nameOffset, endianness);
+                            Endian::write(localSymtabBuffer, sym.info, endianness);
+                            Endian::write(localSymtabBuffer, sym.other, endianness);
+                            Endian::write(localSymtabBuffer, sym.sectionIndex, endianness);
+                            Endian::write(localSymtabBuffer, sym.value, endianness);
+                            Endian::write(localSymtabBuffer, sym.size, endianness);
+                        }
+                    }
+                    else
+                    {
+                        Sym32 sym;
+                        sym.nameOffset = nameOffset;
+                        sym.info = makeSymbolInfo(label.isGlobal ? SymbolBind::global : SymbolBind::local, SymbolType::notype);
+                        sym.other = 0;
+                        sym.sectionIndex = sectionIndex;
+                        sym.value = label.offset;
+                        sym.size = 0;
+
+                        if (label.isGlobal)
+                        {
+                            globalLabelIndexes[label.name] = globalSymbolCount;
+                            globalSymbolCount++;
+                            Endian::write(globalSymtabBuffer, sym.nameOffset, endianness);
+                            Endian::write(globalSymtabBuffer, sym.value, endianness);
+                            Endian::write(globalSymtabBuffer, sym.size, endianness);
+                            Endian::write(globalSymtabBuffer, sym.info, endianness);
+                            Endian::write(globalSymtabBuffer, sym.other, endianness);
+                            Endian::write(globalSymtabBuffer, sym.sectionIndex, endianness);
+                        }
+                        else
+                        {
+                            localLabelIndexes[label.name] = localSymbolCount;
+                            localSymbolCount++;
+                            Endian::write(localSymtabBuffer, sym.nameOffset, endianness);
+                            Endian::write(localSymtabBuffer, sym.value, endianness);
+                            Endian::write(localSymtabBuffer, sym.size, endianness);
+                            Endian::write(localSymtabBuffer, sym.info, endianness);
+                            Endian::write(localSymtabBuffer, sym.other, endianness);
+                            Endian::write(localSymtabBuffer, sym.sectionIndex, endianness);
+                        }
+                    }
+
+                    // local variables
+                    for (const auto& [lName, localLabel] : label.localLabels) {
+                        std::string localName = "@" + name + lName;
+                        uint32_t localNameOffset = strtab.buffer.size();
+                        strtab.buffer.insert(strtab.buffer.end(), localName.begin(), localName.end());
+                        strtab.buffer.push_back('\0');
+
+                        if (data.header.Bitness == HBitness::Bits64)
+                        {
+                            Sym64 sym;
+                            sym.nameOffset = localNameOffset;
+                            sym.info = makeSymbolInfo(SymbolBind::local, SymbolType::notype);
+                            sym.other = 0;
+                            sym.sectionIndex = sectionIndex;
+                            sym.value = localLabel.offset;
+                            sym.size = 0;
+
+                            localLabelIndexes[label.name] = localSymbolCount;
+                            localSymbolCount++;
+                            Endian::write(localSymtabBuffer, sym.nameOffset, endianness);
+                            Endian::write(localSymtabBuffer, sym.info, endianness);
+                            Endian::write(localSymtabBuffer, sym.other, endianness);
+                            Endian::write(localSymtabBuffer, sym.sectionIndex, endianness);
+                            Endian::write(localSymtabBuffer, sym.value, endianness);
+                            Endian::write(localSymtabBuffer, sym.size, endianness);
+                        }
+                        else
+                        {
+                            Sym32 sym;
+                            sym.nameOffset = localNameOffset;
+                            sym.info = makeSymbolInfo(SymbolBind::local, SymbolType::notype);
+                            sym.other = 0;
+                            sym.sectionIndex = sectionIndex;
+                            sym.value = localLabel.offset;
+                            sym.size = 0;
+
+                            localLabelIndexes[label.name] = localSymbolCount;
+                            localSymbolCount++;
+                            Endian::write(localSymtabBuffer, sym.nameOffset, endianness);
+                            Endian::write(localSymtabBuffer, sym.value, endianness);
+                            Endian::write(localSymtabBuffer, sym.size, endianness);
+                            Endian::write(localSymtabBuffer, sym.info, endianness);
+                            Endian::write(localSymtabBuffer, sym.other, endianness);
+                            Endian::write(localSymtabBuffer, sym.sectionIndex, endianness);
+                        }
+                    }
+                }
+            }
+
             sectionIndexes[section.name] = data.sections.size();
-            data.sections.push_back(std::move(elfSection));
+            data.sections.push_back(std::move(elfsection));
         }
 
         for (const auto& [name, labelIndex] : localLabelIndexes)
@@ -295,7 +421,7 @@ namespace ELF {
             if (!section.relocations.empty())
             {
                 ELFSection relocationSection;
-                relocationSection.name = ".rela." + section.name;
+                relocationSection.name = ".rela" + section.name;
 
                 relocationSection.buffer = encodeRelocations(section.relocations, data.header.Bitness, endianness, labelIndexes);
 
@@ -310,7 +436,7 @@ namespace ELF {
                     header.fileOffset = 0;
                     header.sectionSize = relocationSection.buffer.size();
                     header.linkIndex = symtabIndex;
-                    header.info = (uint64_t)data.sections.size() + 1;
+                    header.info = (uint64_t)sectionIndexes[elfsection.name];
                     header.addressAlignment = 8;
                     header.entrySize = sizeof(Rela64);
 
@@ -327,14 +453,14 @@ namespace ELF {
                     header.fileOffset = 0;
                     header.sectionSize = relocationSection.buffer.size();
                     header.linkIndex = symtabIndex;
-                    header.info = (uint32_t)data.sections.size() + 1;
+                    header.info = (uint32_t)sectionIndexes[elfsection.name];
                     header.addressAlignment = 4;
                     header.entrySize = sizeof(Rela32);
 
                     relocationSection.header = header;
                 }
 
-                data.sections.push_back(std::move(relocationSection));
+                data.sections[sectionIndexes[relocationSection.name]] = std::move(relocationSection);
             }
 
             if (data.header.Bitness == HBitness::Bits64)
@@ -372,86 +498,7 @@ namespace ELF {
                 elfsection.header = header;
             }
 
-            if (!section.labels.empty())
-            {
-                for (const auto& [name, label] : section.labels)
-                {
-                    uint32_t nameOffset = strtab.buffer.size();
-                    strtab.buffer.insert(strtab.buffer.end(), label.name.begin(), label.name.end());
-                    strtab.buffer.push_back('\0');
-
-                    uint16_t sectionIndex = data.sections.size();
-
-                    if (data.header.Bitness == HBitness::Bits64)
-                    {
-                        Sym64 sym;
-                        sym.nameOffset = nameOffset;
-                        sym.info = makeSymbolInfo(label.isGlobal ? SymbolBind::global : SymbolBind::local, SymbolType::notype);
-                        sym.other = 0;
-                        sym.sectionIndex = sectionIndex;
-                        sym.value = label.offset;
-                        sym.size = 0;
-
-                        if (label.isGlobal)
-                            writeToBuffer(globalSymtabBuffer, sym);
-                        else
-                        {
-                            localSymbolCount++;
-                            writeToBuffer(localSymtabBuffer, sym);
-                        }
-                    }
-                    else
-                    {
-                        Sym32 sym;
-                        sym.nameOffset = nameOffset;
-                        sym.info = makeSymbolInfo(label.isGlobal ? SymbolBind::global : SymbolBind::local, SymbolType::notype);
-                        sym.other = 0;
-                        sym.sectionIndex = sectionIndex;
-                        sym.value = label.offset;
-                        sym.size = 0;
-
-                        if (label.isGlobal)
-                            writeToBuffer(globalSymtabBuffer, sym);
-                        else
-                        {
-                            localSymbolCount++;
-                            writeToBuffer(localSymtabBuffer, sym);
-                        }
-                    }
-
-                    // local variables
-                    for (const auto& [lName, localLabel] : label.localLabels) {
-                        std::string localName = "@" + name + lName;
-                        uint32_t localNameOffset = strtab.buffer.size();
-                        strtab.buffer.insert(strtab.buffer.end(), localName.begin(), localName.end());
-                        strtab.buffer.push_back('\0');
-
-                        if (data.header.Bitness == HBitness::Bits64) {
-                            Sym64 sym;
-                            sym.nameOffset = localNameOffset;
-                            sym.info = makeSymbolInfo(SymbolBind::local, SymbolType::notype);
-                            sym.other = 0;
-                            sym.sectionIndex = sectionIndex;
-                            sym.value = localLabel.offset;
-                            sym.size = 0;
-                            localSymbolCount++;
-                            writeToBuffer(localSymtabBuffer, sym);
-                        } else {
-                            Sym32 sym;
-                            sym.nameOffset = localNameOffset;
-                            sym.info = makeSymbolInfo(SymbolBind::local, SymbolType::notype);
-                            sym.other = 0;
-                            sym.sectionIndex = sectionIndex;
-                            sym.value = localLabel.offset;
-                            sym.size = 0;
-                            localSymbolCount++;
-                            writeToBuffer(localSymtabBuffer, sym);
-                        }
-                    }
-                }
-            }
-
-            data.sections.push_back(std::move(elfsection));
+            data.sections[sectionIndexes[elfsection.name]] = std::move(elfsection);
         }
 
         if (data.header.Bitness == HBitness::Bits64)
