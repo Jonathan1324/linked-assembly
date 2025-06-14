@@ -21,17 +21,26 @@ struct EncodedLabel {
 };
 
 enum class Type {
+    None,
     Absolute,
     Relative,
     PCRelative,
     GOT,
     PLT,
+    Copy,
+    GlobDat,
+    JmpSlot,
+    GOTPC,
+    Size,
+
+    // Optional erweiterbar für weitere Fälle
 };
 
 struct Relocation {
     size_t offsetInSection;
     std::string labelName;
     Type type;
+    uint8_t size;
     int64_t addend = 0;
 };
 

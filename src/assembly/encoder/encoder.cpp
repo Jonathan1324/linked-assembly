@@ -13,6 +13,15 @@ Encoded encode(Parsed& parsed, Architecture arch, Endianness endianness)
     {
         EncodedSection& section = encoded.sections[s.name];
 
+        Relocation relocation;
+        relocation.labelName = "data2";
+        relocation.addend = 0x00;
+        relocation.offsetInSection = 0x12;
+        relocation.type = Type::Absolute;
+        relocation.size = 32;
+
+        section.relocations.push_back(relocation);
+
         section.name = s.name;
 
         std::vector<size_t> entryOffsets(s.entries.size());
