@@ -3,6 +3,7 @@
 #include <unordered_map>
 #include <vector>
 #include <string>
+#include <cstdint>
 #include "../parser.hpp"
 
 using sectionBuffer = std::vector<unsigned char>;

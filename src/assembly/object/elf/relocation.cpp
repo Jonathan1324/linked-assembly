@@ -2,7 +2,7 @@
 #include "../../util/buffer.hpp"
 
 namespace ELF {
-    sectionBuffer encodeRelocations(std::vector<Relocation> relocations, Bitness bits)
+    sectionBuffer encodeRelocations(std::vector<Relocation> relocations, HBitness bits)
     {
         sectionBuffer buffer;
         
@@ -11,7 +11,7 @@ namespace ELF {
             uint64_t symbolIndex = 0;   //TODO
             uint64_t symbolType = 0;    //TODO
 
-            if (bits == Bitness::Bits64)
+            if (bits == HBitness::Bits64)
             {
                 Rela64 rela;
                 rela.offset = relocation.offsetInSection;

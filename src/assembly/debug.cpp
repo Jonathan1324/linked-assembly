@@ -128,11 +128,11 @@ namespace ELF {
                 std::cout << "\tInfo: " << hdr64.info << std::endl;
             }
         }
-        if (data.header.Bitness == ELF::Bitness::Bits64)
+        if (data.header.Bitness == ELF::HBitness::Bits64)
             std::cout << "Bitness: 64 bits" << std::endl;
         else
             std::cout << "Bitness: 32 bits" << std::endl;
-        if (data.header.Endianness == ELF::Endianness::LittleEndian)
+        if (data.header.Endianness == ELF::HEndianness::LittleEndian)
             std::cout << "Endianness: Little endian" << std::endl;
         else
             std::cout << "Endianness: Big endian" << std::endl;
@@ -140,7 +140,7 @@ namespace ELF {
         std::cout << "Type: " << (uint32_t)data.header.Type << std::endl;
         std::cout << "InstructionSet: " << (uint32_t)data.header.InstructionSet << std::endl;
         std::cout << "Version: " << (uint32_t)data.header.Version << std::endl;
-        if (data.header.Bitness == ELF::Bitness::Bits64)
+        if (data.header.Bitness == ELF::HBitness::Bits64)
             std::cout << "SectionHeaderTablePos: " << data.header.bits64.SectionHeaderTablePosition << std::endl;
         else
             std::cout << "SectionHeaderTablePos: " << data.header.bits32.SectionHeaderTablePosition << std::endl;

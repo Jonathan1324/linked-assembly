@@ -1,6 +1,8 @@
 #include "data.hpp"
 
-size_t evaluate(std::__1::string value, EncodedSection& section, Encoded& encoded)
+#include <string>
+
+size_t evaluate(std::string value, EncodedSection& section, Encoded& encoded)
 {
     (void)section;
     (void)encoded;

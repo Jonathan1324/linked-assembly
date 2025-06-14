@@ -1,4 +1,5 @@
 include build_scripts/config.mk
+include build_scripts/os.mk
 
 SRC_DIR = src
 BUILD_DIR = build
@@ -16,7 +17,8 @@ assembly:
 		CC=$(CC) CFLAGS="$(CFLAGS)" 		\
 		CXX=$(CXX) CXXFLAGS="$(CXXFLAGS)"	\
 		SRC_DIR=$(SRC_DIR)/assembly 		\
-		BUILD_DIR=$(BUILD_DIR)/assembly
+		BUILD_DIR=$(BUILD_DIR)/assembly		\
+		EXE_EXT=$(EXE_EXT)
 
 linker:
 	@$(MAKE) -C $(SRC_DIR)/linker 			\
@@ -24,9 +26,16 @@ linker:
 		CC=$(CC) CFLAGS="$(CFLAGS)" 		\
 		CXX=$(CXX) CXXFLAGS="$(CXXFLAGS)"	\
 		SRC_DIR=$(SRC_DIR)/linker 			\
-		BUILD_DIR=$(BUILD_DIR)/linker
+		BUILD_DIR=$(BUILD_DIR)/linker		\
+		EXE_EXT=$(EXE_EXT)
 
 clean:
+	@$(MAKE) -C $(SRC_DIR)/assembly clean 	\
+		SRC_DIR=$(SRC_DIR)/assembly 		\
+		BUILD_DIR=$(BUILD_DIR)/assembly		\
+		EXE_EXT=$(EXE_EXT)
+	
 	@$(MAKE) -C $(SRC_DIR)/linker clean 	\
 		SRC_DIR=$(SRC_DIR)/linker 			\
-		BUILD_DIR=$(BUILD_DIR)/linker
+		BUILD_DIR=$(BUILD_DIR)/linker		\
+		EXE_EXT=$(EXE_EXT)

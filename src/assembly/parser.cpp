@@ -1,6 +1,8 @@
 #include "parser.hpp"
 #include "util/string.hpp"
 
+#include <algorithm>
+
 Parsed parseAssembly(std::istream& input, BitMode bits)
 {
     Parsed parsed;

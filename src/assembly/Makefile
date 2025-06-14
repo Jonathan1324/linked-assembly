@@ -15,7 +15,7 @@ ASM_OBJS = $(patsubst %.asm, $(BUILD_DIR)/%.asm.o, $(ASM_SRCS))
 
 DEPS := $(C_OBJS:.o=.d) $(CPP_OBJS:.o=.d) $(ASM_OBJS:.o=.d)
 
-TARGET = $(BUILD_DIR)/assembly
+TARGET = $(BUILD_DIR)/assembly$(EXE_EXT)
 
 .PHONY: all clean
 
