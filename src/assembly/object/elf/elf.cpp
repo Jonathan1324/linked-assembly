@@ -275,7 +275,7 @@ namespace ELF {
 
                     uint16_t sectionIndex = data.sections.size();
 
-                    std::cout << sectionIndex << std::endl;
+                    //TODO: not working - I don't know why
 
                     if (data.header.Bitness == HBitness::Bits64)
                     {
