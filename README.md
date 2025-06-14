@@ -19,9 +19,10 @@ Currently only supports **x86**, **32-bit mode**, and **ELF `.o` object files**.
 - Command-line flags for extensibility:
   - `--arch <arch>` — target architecture (`x86`, `arm`, `riscv`)
   - `--format <format>` — output file format (`elf`, `macho`, `coff`)
+  - `--endian <endianness>` — target endianness (`little`, `big`)
   - `-m64`, `-m32`, `-m16` — selects the bit mode
 
-**Note:** Currently, only `--arch x86`, `--format elf`, and `-m32` are fully supported.
+**Note:** Currently, only `--arch x86`, `--format elf`, `--endian little`, and `-m32` are fully supported.
 
 ## Building
 
@@ -37,7 +38,7 @@ This will produce the binary in `build/assembly/assembly`.
 Build your assembly file into an object file with:
 
 ```bash
-build/assembly/assembly input.asm -o output.o --arch x86 --format elf -m32
+build/assembly/assembly input.asm -o output.o --arch x86 --format elf --endian little -m32
 ```
 
 ## Contributing

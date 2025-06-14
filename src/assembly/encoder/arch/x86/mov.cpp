@@ -29,20 +29,27 @@ namespace x86 {
             return 2;
         }
 
-        size_t encodeMovRegImm(uint32_t imm, std::string dst, sectionBuffer& buffer)
+        size_t encodeMovRegImm(uint32_t imm, std::string dst, sectionBuffer& buffer, Endianness endianness)
         {
             uint8_t reg = registers[dst];
             uint8_t opcode = 0xB8 + reg;
             buffer.push_back(opcode);
 
-            for (int i = 0; i < 4; i++)
-                //little endian
-                buffer.push_back((imm >> (8 * i)) & 0xFF);
+            if (endianness == Endianness::Little)
+            {
+                for (int i = 0; i < 4; i++)
+                    buffer.push_back(static_cast<uint8_t>((imm >> (8 * i)) & 0xFF));
+            }
+            else
+            {
+                for (int i = 3; i >= 0; i--)
+                    buffer.push_back(static_cast<uint8_t>((imm >> (8 * i)) & 0xFF));
+            }
 
             return 5;
         }
 
-        size_t encodeMov(Instruction& instr, EncodedSection& section, std::unordered_map<std::string, std::string> constants)
+        size_t encodeMov(Instruction& instr, EncodedSection& section, std::unordered_map<std::string, std::string> constants, Endianness endianness)
         {
             size_t offset = 0;
 
@@ -71,7 +78,7 @@ namespace x86 {
                     }
                     uint32_t imm32 = static_cast<uint32_t>(val);
 
-                    offset = encodeMovRegImm(imm32, dst, section.buffer);
+                    offset = encodeMovRegImm(imm32, dst, section.buffer, endianness);
                 }
             }
             else

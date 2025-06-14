@@ -7,4 +7,4 @@
 
 void createFile(Format& format, std::ofstream& out, BitMode& bitMode,
                 Architecture& architecture, Encoded& encoded, Parsed& parsed,
-                bool debug = false);
+                Endianness endianness, bool debug = false);

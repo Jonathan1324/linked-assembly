@@ -8,7 +8,7 @@
 #include "flags.hpp"
 
 namespace ELF {
-    Header createHeader(BitMode bits, Architecture arch)
+    Header createHeader(BitMode bits, Architecture arch, Endianness endianness)
     {
         Header header;
 
@@ -26,7 +26,10 @@ namespace ELF {
                 break;
         }
 
-        header.Endianness = HEndianness::LittleEndian;
+        if (endianness == Endianness::Little)
+            header.Endianness = HEndianness::LittleEndian;
+        else
+            header.Endianness = HEndianness::BigEndian;
         header.HeaderVersion = 1;
         header.ABI = 0;
         header.ABIVersion = 0;
@@ -87,11 +90,10 @@ namespace ELF {
         return header;
     }
 
-    Data createELF(BitMode bits, Architecture arch, Encoded encoded, Parsed parsed)
+    Data create(BitMode bits, Architecture arch, Endianness endianness, Encoded encoded, Parsed parsed)
     {
-        //TODO: not really working
         Data data;
-        data.header = createHeader(bits, arch);
+        data.header = createHeader(bits, arch, endianness);
 
         SectionHeader64 dummyHeader64{};
         dummyHeader64.Type = SectionType::Null;  // Oder ein anderer Dummy-Typ, nur nicht symtab/strtab
@@ -166,7 +168,13 @@ namespace ELF {
 
             Sym64 nullSym = {0, 0, 0, 0, 0, 0};
             localSymbolCount++;
-            writeToBuffer(localSymtabBuffer, nullSym);
+
+            Endian::write(localSymtabBuffer, nullSym.nameOffset, endianness);
+            Endian::write(localSymtabBuffer, nullSym.info, endianness);
+            Endian::write(localSymtabBuffer, nullSym.other, endianness);
+            Endian::write(localSymtabBuffer, nullSym.sectionIndex, endianness);
+            Endian::write(localSymtabBuffer, nullSym.value, endianness);
+            Endian::write(localSymtabBuffer, nullSym.size, endianness);
         }
         else
         {
@@ -187,7 +195,13 @@ namespace ELF {
 
             Sym32 nullSym = {0, 0, 0, 0, 0, 0};
             localSymbolCount++;
-            writeToBuffer(localSymtabBuffer, nullSym);
+            
+            Endian::write(localSymtabBuffer, nullSym.nameOffset, endianness);
+            Endian::write(localSymtabBuffer, nullSym.info, endianness);
+            Endian::write(localSymtabBuffer, nullSym.other, endianness);
+            Endian::write(localSymtabBuffer, nullSym.sectionIndex, endianness);
+            Endian::write(localSymtabBuffer, nullSym.value, endianness);
+            Endian::write(localSymtabBuffer, nullSym.size, endianness);
         }
 
         ELFSection strtab;
@@ -210,7 +224,12 @@ namespace ELF {
                 sym.value = 0;
                 sym.size = 0;
 
-                writeToBuffer(globalSymtabBuffer, sym);
+                Endian::write(globalSymtabBuffer, sym.nameOffset, endianness);
+                Endian::write(globalSymtabBuffer, sym.info, endianness);
+                Endian::write(globalSymtabBuffer, sym.other, endianness);
+                Endian::write(globalSymtabBuffer, sym.sectionIndex, endianness);
+                Endian::write(globalSymtabBuffer, sym.value, endianness);
+                Endian::write(globalSymtabBuffer, sym.size, endianness);
             }
             else
             {
@@ -222,7 +241,12 @@ namespace ELF {
                 sym.value = 0;
                 sym.size = 0;
 
-                writeToBuffer(globalSymtabBuffer, sym);
+                Endian::write(globalSymtabBuffer, sym.nameOffset, endianness);
+                Endian::write(globalSymtabBuffer, sym.info, endianness);
+                Endian::write(globalSymtabBuffer, sym.other, endianness);
+                Endian::write(globalSymtabBuffer, sym.sectionIndex, endianness);
+                Endian::write(globalSymtabBuffer, sym.value, endianness);
+                Endian::write(globalSymtabBuffer, sym.size, endianness);
             }
         }
 
@@ -332,11 +356,23 @@ namespace ELF {
                         sym.size = 0;
 
                         if (label.isGlobal)
-                            writeToBuffer(globalSymtabBuffer, sym);
+                        {
+                            Endian::write(globalSymtabBuffer, sym.nameOffset, endianness);
+                            Endian::write(globalSymtabBuffer, sym.info, endianness);
+                            Endian::write(globalSymtabBuffer, sym.other, endianness);
+                            Endian::write(globalSymtabBuffer, sym.sectionIndex, endianness);
+                            Endian::write(globalSymtabBuffer, sym.value, endianness);
+                            Endian::write(globalSymtabBuffer, sym.size, endianness);
+                        }
                         else
                         {
                             localSymbolCount++;
-                            writeToBuffer(localSymtabBuffer, sym);
+                            Endian::write(localSymtabBuffer, sym.nameOffset, endianness);
+                            Endian::write(localSymtabBuffer, sym.info, endianness);
+                            Endian::write(localSymtabBuffer, sym.other, endianness);
+                            Endian::write(localSymtabBuffer, sym.sectionIndex, endianness);
+                            Endian::write(localSymtabBuffer, sym.value, endianness);
+                            Endian::write(localSymtabBuffer, sym.size, endianness);
                         }
                     }
                     else
@@ -350,11 +386,23 @@ namespace ELF {
                         sym.size = 0;
 
                         if (label.isGlobal)
-                            writeToBuffer(globalSymtabBuffer, sym);
+                        {
+                            Endian::write(globalSymtabBuffer, sym.nameOffset, endianness);
+                            Endian::write(globalSymtabBuffer, sym.info, endianness);
+                            Endian::write(globalSymtabBuffer, sym.other, endianness);
+                            Endian::write(globalSymtabBuffer, sym.sectionIndex, endianness);
+                            Endian::write(globalSymtabBuffer, sym.value, endianness);
+                            Endian::write(globalSymtabBuffer, sym.size, endianness);
+                        }
                         else
                         {
                             localSymbolCount++;
-                            writeToBuffer(localSymtabBuffer, sym);
+                            Endian::write(localSymtabBuffer, sym.nameOffset, endianness);
+                            Endian::write(localSymtabBuffer, sym.info, endianness);
+                            Endian::write(localSymtabBuffer, sym.other, endianness);
+                            Endian::write(localSymtabBuffer, sym.sectionIndex, endianness);
+                            Endian::write(localSymtabBuffer, sym.value, endianness);
+                            Endian::write(localSymtabBuffer, sym.size, endianness);
                         }
                     }
 
@@ -373,8 +421,14 @@ namespace ELF {
                             sym.sectionIndex = sectionIndex;
                             sym.value = localLabel.offset;
                             sym.size = 0;
+
                             localSymbolCount++;
-                            writeToBuffer(localSymtabBuffer, sym);
+                            Endian::write(localSymtabBuffer, sym.nameOffset, endianness);
+                            Endian::write(localSymtabBuffer, sym.info, endianness);
+                            Endian::write(localSymtabBuffer, sym.other, endianness);
+                            Endian::write(localSymtabBuffer, sym.sectionIndex, endianness);
+                            Endian::write(localSymtabBuffer, sym.value, endianness);
+                            Endian::write(localSymtabBuffer, sym.size, endianness);
                         } else {
                             Sym32 sym;
                             sym.nameOffset = localNameOffset;
@@ -383,8 +437,14 @@ namespace ELF {
                             sym.sectionIndex = sectionIndex;
                             sym.value = localLabel.offset;
                             sym.size = 0;
+
                             localSymbolCount++;
-                            writeToBuffer(localSymtabBuffer, sym);
+                            Endian::write(localSymtabBuffer, sym.nameOffset, endianness);
+                            Endian::write(localSymtabBuffer, sym.info, endianness);
+                            Endian::write(localSymtabBuffer, sym.other, endianness);
+                            Endian::write(localSymtabBuffer, sym.sectionIndex, endianness);
+                            Endian::write(localSymtabBuffer, sym.value, endianness);
+                            Endian::write(localSymtabBuffer, sym.size, endianness);
                         }
                     }
                 }
@@ -524,35 +584,66 @@ namespace ELF {
     }
 
 
-    uint64_t writeElfHeader(std::ofstream& out, const Header& header)
+    uint64_t writeHeader(std::ofstream& out, const Header& header, Endianness endianness)
     {
-        out.write(reinterpret_cast<const char*>(&header), 24);
-        uint64_t offset = 24;
+        uint64_t offset = 0;
 
-        if (header.Bitness == HBitness::Bits64)
+        Endian::write(out, header.Magic, 4, endianness);
+        offset += 4;
+
+        // Bitness, Endianness, HeaderVersion, ABI, ABIVersion, Padding[7]
+        Endian::write(out, static_cast<uint8_t>(header.Bitness), endianness);
+        Endian::write(out, static_cast<uint8_t>(header.Endianness), endianness);
+        Endian::write(out, header.HeaderVersion, endianness);
+        Endian::write(out, header.ABI, endianness);
+        Endian::write(out, header.ABIVersion, endianness);
+        Endian::write(out, header._Padding, 7, endianness);
+        offset += 1 + 1 + 1 + 1 + 1 + 7;
+
+        // Type, InstructionSet
+        Endian::write(out, static_cast<uint16_t>(header.Type), endianness);
+        Endian::write(out, static_cast<uint16_t>(header.InstructionSet), endianness);
+        offset += 2 + 2;
+
+        // Version (uint32_t)
+        Endian::write(out, header.Version, endianness);
+        offset += 4;
+
+        if (header.is64Bit())
         {
-            out.write(reinterpret_cast<const char*>(&header.bits64.ProgramEntryPosition), 8);
-            out.write(reinterpret_cast<const char*>(&header.bits64.ProgramHeaderTablePosition), 8);
-            out.write(reinterpret_cast<const char*>(&header.bits64.SectionHeaderTablePosition), 8);
-            offset += 8 * 3;
+            Endian::write(out, header.bits64.ProgramEntryPosition, endianness);
+            Endian::write(out, header.bits64.ProgramHeaderTablePosition, endianness);
+            Endian::write(out, header.bits64.SectionHeaderTablePosition, endianness);
+            offset += 8 + 8 + 8;
         }
         else
         {
-            out.write(reinterpret_cast<const char*>(&header.bits32.ProgramEntryPosition), 4);
-            out.write(reinterpret_cast<const char*>(&header.bits32.ProgramHeaderTablePosition), 4);
-            out.write(reinterpret_cast<const char*>(&header.bits32.SectionHeaderTablePosition), 4);
-            offset += 4 * 3;
+            Endian::write(out, header.bits32.ProgramEntryPosition, endianness);
+            Endian::write(out, header.bits32.ProgramHeaderTablePosition, endianness);
+            Endian::write(out, header.bits32.SectionHeaderTablePosition, endianness);
+            offset += 4 + 4 + 4;
         }
 
-        out.write(reinterpret_cast<const char*>(&header) + (sizeof(Header) - 16), 16);
-        offset += 16;
+        // Flags (uint32_t)
+        Endian::write(out, header.Flags, endianness);
+        offset += 4;
+
+        // HeaderSize, ProgramHeaderTableEntrySize, ProgramHeaderTableEntryCount,
+        // SectionHeaderTableEntrySize, SectionHeaderTableEntryCount, SectionNamesIndex (jeweils uint16_t)
+        Endian::write(out, header.HeaderSize, endianness);
+        Endian::write(out, header.ProgramHeaderTableEntrySize, endianness);
+        Endian::write(out, header.ProgramHeaderTableEntryCount, endianness);
+        Endian::write(out, header.SectionHeaderTableEntrySize, endianness);
+        Endian::write(out, header.SectionHeaderTableEntryCount, endianness);
+        Endian::write(out, header.SectionNamesIndex, endianness);
+        offset += 2 + 2 + 2 + 2 + 2 + 2;
 
         return offset;
     }
 
-    void writeElf(std::ofstream& out, Data& data)
+    void write(std::ofstream& out, Endianness endianness, Data& data)
     {
-        uint64_t offset = writeElfHeader(out, data.header);
+        uint64_t offset = writeHeader(out, data.header, endianness);
 
         std::unordered_map<std::string, uint64_t> offsets;
 
@@ -571,17 +662,37 @@ namespace ELF {
             {
                 SectionHeader64& hdr = std::get<SectionHeader64>(section.header);
                 hdr.fileOffset = offsets[section.name];
-                out.write(reinterpret_cast<const char*>(&hdr), sizeof(SectionHeader64));
+                
+                Endian::write(out, hdr.offsetInSectionNameStringTable, endianness);
+                Endian::write(out, static_cast<uint32_t>(hdr.Type), endianness);
+                Endian::write(out, hdr.Flags, endianness);
+                Endian::write(out, hdr.virtualAddress, endianness);
+                Endian::write(out, hdr.fileOffset, endianness);
+                Endian::write(out, hdr.sectionSize, endianness);
+                Endian::write(out, hdr.linkIndex, endianness);
+                Endian::write(out, hdr.info, endianness);
+                Endian::write(out, hdr.addressAlignment, endianness);
+                Endian::write(out, hdr.entrySize, endianness);
             }
             else
             {
                 SectionHeader32& hdr = std::get<SectionHeader32>(section.header);
                 hdr.fileOffset = offsets[section.name];
-                out.write(reinterpret_cast<const char*>(&hdr), sizeof(SectionHeader32));
+                
+                Endian::write(out, hdr.offsetInSectionNameStringTable, endianness);
+                Endian::write(out, static_cast<uint32_t>(hdr.Type), endianness);
+                Endian::write(out, hdr.Flags, endianness);
+                Endian::write(out, hdr.virtualAddress, endianness);
+                Endian::write(out, hdr.fileOffset, endianness);
+                Endian::write(out, hdr.sectionSize, endianness);
+                Endian::write(out, hdr.linkIndex, endianness);
+                Endian::write(out, hdr.info, endianness);
+                Endian::write(out, hdr.addressAlignment, endianness);
+                Endian::write(out, hdr.entrySize, endianness);
             }
         }
 
         out.seekp(0, std::ios::beg);
-        writeElfHeader(out, data.header);
+        writeHeader(out, data.header, endianness);
     }
 };

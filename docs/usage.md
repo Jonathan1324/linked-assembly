@@ -40,6 +40,12 @@ build/assembly/assembly input.asm -o output.o --arch x86 --format elf -m32
   * `macho` (planned)
   * `coff` (planned)
 
+* `--endian <endianness>`
+  Specify the target endianness. Supported values:
+
+  * `little` (currently fully supported)
+  * `big` (currently not fully supported)
+
 * `-m64`, `-m32`, `-m16`
   Select the bit mode (64-bit, 32-bit, or 16-bit). Currently only `-m32` is fully supported.
 

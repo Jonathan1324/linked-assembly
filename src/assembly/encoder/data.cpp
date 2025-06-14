@@ -10,7 +10,7 @@ size_t evaluate(std::string value, EncodedSection& section, Encoded& encoded)
     return std::stoull(value, nullptr, 0);
 }
 
-size_t encodeData(const DataDefinition& data, EncodedSection& section, Encoded& encoded)
+size_t encodeData(const DataDefinition& data, EncodedSection& section, Encoded& encoded, Endianness endianness)
 {
     sectionBuffer& buffer = section.buffer;
     size_t bytesWritten = 0;
@@ -49,9 +49,16 @@ size_t encodeData(const DataDefinition& data, EncodedSection& section, Encoded& 
             }
             else
             {
-                // little endian
-                for (size_t i = 0; i < typeSize; ++i)
-                    buffer.push_back(static_cast<unsigned char>((val >> (8 * i)) & 0xFF));
+                if (endianness == Endianness::Little)
+                {
+                    for (size_t i = 0; i < typeSize; ++i)
+                        buffer.push_back(static_cast<unsigned char>((val >> (8 * i)) & 0xFF));
+                }
+                else
+                {
+                    for (size_t i = 0; i < typeSize; ++i)
+                        buffer.push_back(static_cast<unsigned char>((val >> (8 * (typeSize - 1 - i))) & 0xFF));
+                }
                 bytesWritten += typeSize;
             }
         }

@@ -8,6 +8,6 @@
 
 namespace x86 {
     namespace bits32 {
-        size_t encodeDataTransfer(Instruction& instr, EncodedSection& section, std::unordered_map<std::string, std::string> constants);
+        size_t encodeDataTransfer(Instruction& instr, EncodedSection& section, std::unordered_map<std::string, std::string> constants, Endianness endianness);
     }
 }

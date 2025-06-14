@@ -1,11 +1,4 @@
-section .text
+section .data
     global test
 
-test:
-    nop
-.nextStep:
-    mov eax, 0
-.anotherStep:
-    mov ebx, 1
-.done:
-    ret
+test:   dd 0x12345678

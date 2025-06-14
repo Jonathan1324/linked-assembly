@@ -68,6 +68,8 @@ int main(int argc, const char *argv[])
         // ELF - format = Format::ELF;
     #endif
 
+    Endianness endianness = Endianness::Little;
+
 
     bool debug = false;
 
@@ -140,6 +142,30 @@ int main(int argc, const char *argv[])
                 return 1;
             }
         }
+        else if (std::string(argv[i]).compare("--endian") == 0 && i + 1 < argc)
+        {
+            std::string endianStr = toLower(argv[++i]);
+            endianStr = trim(endianStr);
+
+            if (endianStr.find("little") == 0
+             || endianStr.find("l") == 0
+             || endianStr.find("lil") == 0
+             || endianStr.find("le") == 0)
+            {
+                endianness = Endianness::Little;
+            }
+            else if (endianStr.find("big") == 0
+                  || endianStr.find("b") == 0
+                  || endianStr.find("be") == 0)
+            {
+                endianness = Endianness::Big;
+            }
+            else
+            {
+                std::cerr << "Unknown Endian: " << endianStr << std::endl;
+                return 1;
+            }
+        }
         else if (std::string(argv[i]).find("-m") == 0)
         {
             std::string modeStr = std::string(argv[i]).substr(2);
@@ -201,12 +227,12 @@ int main(int argc, const char *argv[])
         return 1;
     }
 
-    Encoded encoded = encode(parsed, arch);
+    Encoded encoded = encode(parsed, arch, endianness);
 
     if (debug)
         printEncoded(encoded);
 
-    createFile(format, objectFile, bitMode, arch, encoded, parsed, debug);
+    createFile(format, objectFile, bitMode, arch, encoded, parsed, endianness, debug);
 
     objectFile.close();
 

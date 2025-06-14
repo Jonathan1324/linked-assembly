@@ -5,7 +5,7 @@
 #include "arch/arm.hpp"
 #include "arch/riscv.hpp"
 
-Encoded encode(Parsed& parsed, Architecture arch)
+Encoded encode(Parsed& parsed, Architecture arch, Endianness endianness)
 {
     Encoded encoded;
 
@@ -37,13 +37,13 @@ Encoded encode(Parsed& parsed, Architecture arch)
                 switch (arch)
                 {
                     case Architecture::x86:
-                        currentOffset += x86::encodeInstruction(instruction, section, parsed.constants);
+                        currentOffset += x86::encodeInstruction(instruction, section, parsed.constants, endianness);
                         break;
                     case Architecture::ARM:
-                        currentOffset += ARM::encodeInstruction(instruction, section, parsed.constants);
+                        currentOffset += ARM::encodeInstruction(instruction, section, parsed.constants, endianness);
                         break;
                     case Architecture::RISC_V:
-                        currentOffset += RISC_V::encodeInstruction(instruction, section, parsed.constants);
+                        currentOffset += RISC_V::encodeInstruction(instruction, section, parsed.constants, endianness);
                         break;
                     default:
                         std::cerr << "Unknown architecture (encoder)" << std::endl;
@@ -62,7 +62,7 @@ Encoded encode(Parsed& parsed, Architecture arch)
                     currentOffset += padding;
                 }
 
-                currentOffset += encodeData(data, section, encoded);
+                currentOffset += encodeData(data, section, encoded, endianness);
             }
             else
             {

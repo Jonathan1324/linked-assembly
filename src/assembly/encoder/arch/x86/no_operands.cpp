@@ -4,7 +4,7 @@
 
 namespace x86 {
     namespace bits32 {
-        size_t encodeNoOperands(Instruction& instr, EncodedSection& section, std::unordered_map<std::string, std::string> constants)
+        size_t encodeNoOperands(Instruction& instr, EncodedSection& section, std::unordered_map<std::string, std::string> constants, Endianness endianness)
         {
             sectionBuffer& buffer = section.buffer;
             size_t offset = 0;
@@ -47,13 +47,17 @@ namespace x86 {
                         return -1;
                     }
 
-                    // low byte
-                    buffer.push_back(static_cast<uint8_t>(imm16 & 0xFF));
-                    offset++;
-
-                    // high byte
-                    buffer.push_back(static_cast<uint8_t>((imm16 >> 8) & 0xFF));
-                    offset++;
+                    if (endianness == Endianness::Little)
+                    {
+                        buffer.push_back(static_cast<uint8_t>(imm16 & 0xFF));       // low byte
+                        buffer.push_back(static_cast<uint8_t>((imm16 >> 8) & 0xFF)); // high byte
+                    }
+                    else
+                    {
+                        buffer.push_back(static_cast<uint8_t>((imm16 >> 8) & 0xFF)); // high byte
+                        buffer.push_back(static_cast<uint8_t>(imm16 & 0xFF));       // low byte
+                    }
+                    offset += 2;
                 }
             }
             else if (instr.mnemonic.compare("int3") == 0)

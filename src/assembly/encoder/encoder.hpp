@@ -46,4 +46,4 @@ struct Encoded {
     std::unordered_map<std::string, EncodedSection> sections;
 };
 
-Encoded encode(Parsed& parsed, Architecture arch);
+Encoded encode(Parsed& parsed, Architecture arch, Endianness endianness);

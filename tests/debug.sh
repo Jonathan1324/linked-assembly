@@ -5,7 +5,8 @@ mkdir -p build
 ../build/assembly/assembly $1 -o $1.o \
     --arch x86      \
     -m32            \
-    --format elf    \
+    --format macho  \
+    --endian little \
     --debug
 
 ../build/linker/linker build/$1_asm.o -o build/$1 \
