@@ -2,6 +2,10 @@
 
 #include "../evaluate.hpp"
 
+bool isMemoryOperand(const std::string& op) {
+    return !op.empty() && op.front() == '[' && op.back() == ']';
+}
+
 namespace x86 {
     namespace bits32 {
         std::unordered_map<std::string, uint32_t> registers = 
@@ -49,6 +53,21 @@ namespace x86 {
             return 5;
         }
 
+        size_t encodeMovRegMem(std::string src, std::string dst, sectionBuffer& buffer, std::vector<Relocation>& relocations, Endianness endianness)
+        {
+
+        }
+
+        size_t encodeMovMemReg(std::string src, std::string dst, sectionBuffer& buffer, std::vector<Relocation>& relocations, Endianness endianness)
+        {
+
+        }
+
+        size_t encodeMovMemImm(uint32_t imm, std::string dst, sectionBuffer& buffer, std::vector<Relocation>& relocations, Endianness endianness)
+        {
+
+        }
+
         size_t encodeMov(Instruction& instr, EncodedSection& section, std::unordered_map<std::string, std::string> constants, Endianness endianness)
         {
             size_t offset = 0;
@@ -56,6 +75,11 @@ namespace x86 {
             if (instr.operands.size() < 2)
             {
                 std::cerr << "Not enough operands for mov in line " << instr.lineNumber << std::endl;
+                return 0;
+            }
+            else if (instr.operands.size() > 2)
+            {
+                std::cerr << "Too many operands for mov in line " << instr.lineNumber << std::endl;
                 return 0;
             }
 
@@ -66,10 +90,17 @@ namespace x86 {
             {
                 if (registers.find(src) != registers.end())
                 {
+                    //src: reg, dst: reg
                     offset = encodeMovRegReg(src, dst, section.buffer);
+                }
+                else if (isMemoryOperand(src))
+                {
+                    //src: mem, dst: reg
+                    offset = encodeMovRegMem(src, dst, section.buffer, section.relocations, endianness);
                 }
                 else
                 {
+                    //src: imm, dst: reg
                     unsigned long long val = evaluate(src, constants, instr.lineNumber);
                     if (val > 0xFFFFFFFF)
                     {
@@ -81,10 +112,37 @@ namespace x86 {
                     offset = encodeMovRegImm(imm32, dst, section.buffer, endianness);
                 }
             }
+            else if (isMemoryOperand(dst))
+            {
+                if (registers.find(src) != registers.end())
+                {
+                    //src: reg, dst: mem
+                    offset = encodeMovMemReg(src, dst, section.buffer, section.relocations, endianness);
+                }
+                else if (isMemoryOperand(dst))
+                {
+                    //src: mem, dst: mem
+                    std::cerr << "mov mem, mem in line " << instr.lineNumber << std::endl;
+                    return 0;
+                }
+                else
+                {
+                    //src: imm, dst: mem
+                    unsigned long long val = evaluate(src, constants, instr.lineNumber);
+                    if (val > 0xFFFFFFFF)
+                    {
+                        std::cerr << src << " too big for " << dst << " in line " << instr.lineNumber << std::endl;
+                        return 0;
+                    }
+                    uint32_t imm32 = static_cast<uint32_t>(val);
+
+                    offset = encodeMovMemImm(imm32, dst, section.buffer, section.relocations, endianness);
+                }
+            }
             else
             {
-                //TODO
-                std::cerr << "We don't support mov with memory yet: line " << instr.lineNumber << std::endl;
+                std::cerr << "mov with imm as destination in line " << instr.lineNumber << std::endl;
+                return 0;
             }
 
             return offset;

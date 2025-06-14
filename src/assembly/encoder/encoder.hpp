@@ -32,8 +32,7 @@ enum class Type {
     JmpSlot,
     GOTPC,
     Size,
-
-    // Optional erweiterbar für weitere Fälle
+    //...
 };
 
 struct Relocation {
