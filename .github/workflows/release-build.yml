@@ -1,14 +1,15 @@
-name: build
+name: release-build
 
 on:
-  workflow_dispatch:  # TODO: currently only with UI
+  release:
+    types: [published]
 
 jobs:
   build:
     strategy:
       matrix:
         include:
-          - os: ubuntu-22.04
+          - os: ubuntu-24.04
             arch: x86_64
             os_name: linux
           - os: ubuntu-24.04-arm
@@ -62,8 +63,21 @@ jobs:
           cp build/linker/linker$EXT binaries/linker$EXT
         shell: bash
 
-      - name: Upload binary artifacts
-        uses: actions/upload-artifact@v4
+      - name: Archive binaries
+        run: |
+          cd binaries
+          if [[ "${{ matrix.os_name }}" == "windows" ]]; then
+            zip -r ../linked-assembly-${{ matrix.os_name }}-${{ matrix.arch }}.zip assembly.exe linker.exe
+          else
+            tar -czf ../linked-assembly-${{ matrix.os_name }}-${{ matrix.arch }}.tar.gz assembly linker
+          fi
+          cd ..
+        shell: bash
+
+      - name: Upload archive as release asset
+        uses: actions/upload-release-asset@v1.0.0
         with:
-          name: binaries-${{ matrix.os_name }}-${{ matrix.arch }}
-          path: binaries/
+          upload_url: ${{ github.event.release.upload_url }}
+          asset_path: ${{ matrix.os_name == 'windows' && format('linked-assembly-{0}-{1}.zip', matrix.os_name, matrix.arch) || format('linked-assembly-{0}-{1}.tar.gz', matrix.os_name, matrix.arch) }}
+          asset_name: ${{ matrix.os_name == 'windows' && format('linked-assembly-{0}-{1}.zip', matrix.os_name, matrix.arch) || format('linked-assembly-{0}-{1}.tar.gz', matrix.os_name, matrix.arch) }}
+          asset_content_type: application/octet-stream
