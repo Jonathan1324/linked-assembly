@@ -5,6 +5,8 @@
 
 #include "architecture/architecture.hpp"
 
+constexpr const char* version = "v0.1.0-alpha";
+
 int main(int argc, const char *argv[])
 {
     if (argc < 2)
