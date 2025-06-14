@@ -43,6 +43,12 @@ build/assembly/assembly input.asm -o output.o --arch x86 --format elf -m32
 * `-m64`, `-m32`, `-m16`
   Select the bit mode (64-bit, 32-bit, or 16-bit). Currently only `-m32` is fully supported.
 
+* `-v` / `--version`
+  Show version information.
+
+* `-h` / `--help`
+  Show help message.
+
 ---
 
 ## Example
