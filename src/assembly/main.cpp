@@ -15,7 +15,7 @@
 #include "cli/version.h"
 #include "cli/help.h"
 
-constexpr const char* version = "v0.1.0-alpha";
+#include "../version.h"
 
 int main(int argc, const char *argv[])
 {
@@ -27,7 +27,7 @@ int main(int argc, const char *argv[])
 
     if (strcmp(argv[1], "--version") == 0 || strcmp(argv[1], "-v") == 0)
     {
-        printVersion(version);
+        printVersion(VERSION);
         return 0;
     }
     else if (strcmp(argv[1], "--help") == 0 || strcmp(argv[1], "-h") == 0)
