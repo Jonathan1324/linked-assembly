@@ -259,8 +259,12 @@ namespace ELF {
             }
         }
 
+        std::unordered_map<std::string, size_t> sectionIndexes;
+
         for (const auto& [name, section] : encoded.sections)
         {
+            ELFSection elfsection;
+
             if (!section.labels.empty())
             {
                 for (const auto& [name, label] : section.labels)
@@ -269,7 +273,9 @@ namespace ELF {
                     strtab.buffer.insert(strtab.buffer.end(), label.name.begin(), label.name.end());
                     strtab.buffer.push_back('\0');
 
-                    uint16_t sectionIndex = 0x1;    //TODO
+                    uint16_t sectionIndex = data.sections.size();
+
+                    std::cout << sectionIndex << std::endl;
 
                     if (data.header.Bitness == HBitness::Bits64)
                     {
@@ -382,6 +388,16 @@ namespace ELF {
                     }
                 }
             }
+
+            if (!section.relocations.empty())
+            {
+                ELFSection relocationSection;
+                sectionIndexes[".rela" + section.name] = data.sections.size();
+                data.sections.push_back(std::move(relocationSection));
+            }
+
+            sectionIndexes[section.name] = data.sections.size();
+            data.sections.push_back(std::move(elfsection));
         }
 
         for (const auto& [name, labelIndex] : localLabelIndexes)
@@ -418,7 +434,7 @@ namespace ELF {
                     header.fileOffset = 0;
                     header.sectionSize = relocationSection.buffer.size();
                     header.linkIndex = symtabIndex;
-                    header.info = (uint64_t)data.sections.size() + 1;
+                    header.info = sectionIndexes[section.name];
                     header.addressAlignment = 8;
                     header.entrySize = sizeof(Rela64);
 
@@ -435,14 +451,14 @@ namespace ELF {
                     header.fileOffset = 0;
                     header.sectionSize = relocationSection.buffer.size();
                     header.linkIndex = symtabIndex;
-                    header.info = (uint32_t)data.sections.size() + 1;
+                    header.info = sectionIndexes[section.name];
                     header.addressAlignment = 4;
                     header.entrySize = sizeof(Rela32);
 
                     relocationSection.header = header;
                 }
 
-                data.sections.push_back(std::move(relocationSection));
+                data.sections[sectionIndexes[relocationSection.name]] = std::move(relocationSection);
             }
 
             if (data.header.Bitness == HBitness::Bits64)
@@ -480,7 +496,7 @@ namespace ELF {
                 elfsection.header = header;
             }
 
-            data.sections.push_back(std::move(elfsection));
+            data.sections[sectionIndexes[elfsection.name]] = std::move(elfsection);
         }
 
         if (data.header.Bitness == HBitness::Bits64)
@@ -611,12 +627,6 @@ namespace ELF {
             data.header.SectionHeaderTableEntrySize = sizeof(SectionHeader32);
         
         data.header.SectionHeaderTableEntryCount = data.sections.size();
-
-
-        for (const auto& [name, labelIndex] : labelIndexes)
-        {
-            std::cout << "Label: " << name << " at " << labelIndex << std::endl;
-        }
 
         return data;
     }
