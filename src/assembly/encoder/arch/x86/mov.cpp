@@ -55,17 +55,20 @@ namespace x86 {
 
         size_t encodeMovRegMem(std::string src, std::string dst, sectionBuffer& buffer, std::vector<Relocation>& relocations, Endianness endianness)
         {
-
+            std::cout << "Warning: mov reg, mem not implemented yet" << std::endl;
+            return 0;
         }
 
         size_t encodeMovMemReg(std::string src, std::string dst, sectionBuffer& buffer, std::vector<Relocation>& relocations, Endianness endianness)
         {
-
+            std::cout << "Warning: mov mem, reg not implemented yet" << std::endl;
+            return 0;
         }
 
         size_t encodeMovMemImm(uint32_t imm, std::string dst, sectionBuffer& buffer, std::vector<Relocation>& relocations, Endianness endianness)
         {
-
+            std::cout << "Warning: mov mem, imm not implemented yet" << std::endl;
+            return 0;
         }
 
         size_t encodeMov(Instruction& instr, EncodedSection& section, std::unordered_map<std::string, std::string> constants, Endianness endianness)
