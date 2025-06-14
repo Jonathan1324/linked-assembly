@@ -1,6 +1,7 @@
 #include "mach-o.hpp"
 
 #include "../../util/buffer.hpp"
+#include <cstring>
 
 namespace MACHO {
     Header createHeader(BitMode bits, Architecture arch, Endianness endianness)
