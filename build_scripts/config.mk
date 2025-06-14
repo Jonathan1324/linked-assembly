@@ -5,10 +5,30 @@ ARCH ?= $(UNAME_M)
 
 AS = nasm
 ASFLAGS = 
+
 CC = gcc
-CFLAGS = -Wall -Wextra -O2 -g
 CXX = g++
-CXXFLAGS = -std=c++17 -Wall -Wextra -O2 -g
+
+# Debug-Flag: 1 = Debug, 0 = Release
+DEBUG ?= 0
+
+# Basis-Flags
+COMMON_WARNINGS = -Wall -Wextra
+OPT_FLAGS = -O2
+DEBUG_FLAGS = -g
+RELEASE_FLAGS = -DNDEBUG -flto
+SECURITY_FLAGS = -fstack-protector-strong -D_FORTIFY_SOURCE=2 -fPIC
+
+CFLAGS = $(COMMON_WARNINGS)
+CXXFLAGS = -std=c++17 $(COMMON_WARNINGS)
+
+ifeq (${DEBUG},1)
+	CFLAGS += $(DEBUG_FLAGS)
+	CXXFLAGS += $(DEBUG_FLAGS)
+else
+	CFLAGS += $(OPT_FLAGS) $(RELEASE_FLAGS)
+	CXXFLAGS += $(OPT_FLAGS) $(RELEASE_FLAGS) $(SECURITY_FLAGS)
+endif
 
 ifeq ($(UNAME_S),Darwin)
 	CC = clang

@@ -7,7 +7,7 @@ if [ "$1" = "-c" ]; then
     sh clean.sh $@
     cd ..
 else
-    make all
+    make DEBUG=1
     chmod +x build/assembly/assembly
     chmod +x tests/test.sh
     chmod +x tests/debug.sh
