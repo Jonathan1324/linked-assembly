@@ -2,6 +2,7 @@
 #include <vector>
 #include <filesystem>
 #include <fstream>
+#include <cstring>
 
 #include "architecture/architecture.hpp"
 
