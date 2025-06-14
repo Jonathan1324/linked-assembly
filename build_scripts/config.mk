@@ -11,6 +11,9 @@ CXX = g++
 CXXFLAGS = -std=c++17 -Wall -Wextra -O2 -g
 
 ifeq ($(UNAME_S),Darwin)
+	CC = clang
+	CXX = clang++
+	
 	ASFLAGS += -f macho64
 	CFLAGS += -arch $(ARCH)
 	CXXFLAGS += -arch $(ARCH)
