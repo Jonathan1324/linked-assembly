@@ -259,9 +259,21 @@ namespace ELF {
             }
         }
 
+        std::unordered_map<std::string, uint16_t> sectionIndexes;
+
         for (const auto& [name, section] : encoded.sections)
         {
-            
+            ELFSection elfSection;
+
+            if (!section.relocations.empty())
+            {
+                ELFSection relocationSection;
+                sectionIndexes[".rela." + section.name] = data.sections.size();
+                data.sections.push_back(std::move(relocationSection));
+            }
+
+            sectionIndexes[section.name] = data.sections.size();
+            data.sections.push_back(std::move(elfSection));
         }
 
         for (const auto& [name, labelIndex] : localLabelIndexes)
