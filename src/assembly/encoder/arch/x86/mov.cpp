@@ -155,8 +155,16 @@ namespace x86 {
             }
             else if (modrm >> 6 == 0b10 || (modrm >> 6 == 0b00 && baseBits == 0b101)) // disp32
             {
-                for (int i = 0; i < 4; i++)
-                    buffer.push_back((mem.displacement >> (8 * i)) & 0xFF);
+                if (endianness == Endianness::Little)
+                {
+                    for (int i = 0; i < 4; i++)
+                        buffer.push_back(static_cast<uint8_t>((mem.displacement >> (8 * i)) & 0xFF));
+                }
+                else
+                {
+                    for (int i = 3; i >= 0; i--)
+                        buffer.push_back(static_cast<uint8_t>((mem.displacement >> (8 * i)) & 0xFF));
+                }
                 size += 4;
             }
 
