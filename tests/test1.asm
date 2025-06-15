@@ -3,6 +3,7 @@ section .text
 
 _start:
     mov eax, [data2]
+    ret
 
 section .data
 

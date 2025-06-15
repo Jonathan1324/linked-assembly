@@ -6,15 +6,16 @@
 
 namespace x86 {
     namespace bits32 {
-        std::unordered_map<std::string, uint8_t> reg_map = {
-            {"eax", 0},
-            {"ecx", 1},
-            {"edx", 2},
-            {"ebx", 3},
-            {"esp", 4},
-            {"ebp", 5},
-            {"esi", 6},
-            {"edi", 7}
+        const std::unordered_map<std::string, uint32_t> registers = 
+        {
+            {"eax", 0x0},
+            {"ecx", 0x1},
+            {"edx", 0x2},
+            {"ebx", 0x3},
+            {"esp", 0x4},
+            {"ebp", 0x5},
+            {"esi", 0x6},
+            {"edi", 0x7},
         };
     }
 }
