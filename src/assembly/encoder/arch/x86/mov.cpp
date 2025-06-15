@@ -7,12 +7,30 @@
 
 namespace x86 {
     namespace bits32 {
-        size_t encodeMovRegReg(std::string src, std::string dst, sectionBuffer& buffer)
+        size_t encodeMovRegReg8(std::string src, std::string dst, sectionBuffer& buffer)
+        {
+            // TODO
+            return 0;
+        }
+
+        size_t encodeMovRegMem8(std::string src, std::string dst, sectionBuffer& buffer, std::vector<Relocation>& relocations, Endianness endianness)
+        {
+            // TODO
+            return 0;
+        }
+
+        size_t encodeMovRegImm8(uint8_t imm, std::string dst, sectionBuffer& buffer, Endianness endianness)
+        {
+            // TODO
+            return 0;
+        }
+
+        size_t encodeMovRegReg32(std::string src, std::string dst, sectionBuffer& buffer)
         {
             uint8_t opcode = 0x89;
             uint8_t mod = 0b11 << 6;
-            uint8_t reg = registers.at(toLower(src)) << 3;
-            uint8_t rm = registers.at(toLower(dst));
+            uint8_t reg = bits32::registers.at(toLower(src)) << 3;
+            uint8_t rm = bits32::registers.at(toLower(dst));
 
             buffer.push_back(opcode);
             buffer.push_back(mod | reg | rm);
@@ -20,9 +38,14 @@ namespace x86 {
             return 2;
         }
 
-        size_t encodeMovRegImm(uint32_t imm, std::string dst, sectionBuffer& buffer, Endianness endianness)
+        size_t encodeMovRegReg16()
         {
-            uint8_t reg = registers.at(toLower(dst));
+
+        }
+
+        size_t encodeMovRegImm32(uint32_t imm, std::string dst, sectionBuffer& buffer, Endianness endianness)
+        {
+            uint8_t reg = bits32::registers.at(toLower(dst));
             uint8_t opcode = 0xB8 + reg;
             buffer.push_back(opcode);
 
@@ -40,7 +63,12 @@ namespace x86 {
             return 5;
         }
 
-        size_t encodeMovRegMem(std::string src, std::string dst, sectionBuffer& buffer, std::vector<Relocation>& relocations, Endianness endianness)
+        size_t encodeMovRegImm16()
+        {
+
+        }
+
+        size_t encodeMovReg32Mem(std::string src, std::string dst, sectionBuffer& buffer, std::vector<Relocation>& relocations, Endianness endianness)
         {
             MemoryOperand mem = parseMem(src);
             uint8_t opcode = 0x8B;
@@ -49,7 +77,7 @@ namespace x86 {
             bool hasSIB = false;
             size_t size = 1; //opcode
 
-            uint8_t reg = registers.at(toLower(dst));
+            uint8_t reg = bits32::registers.at(toLower(dst));
 
             // Defaults for SIB
             uint8_t scaleBits = 0;
@@ -64,12 +92,12 @@ namespace x86 {
             if (hasBase)
             {
                 std::string base = toLower(mem.base.value());
-                baseBits = registers.at(base);
+                baseBits = bits32::registers.at(base);
 
                 if (hasIndex)
                 {
                     std::string index = toLower(mem.index.value());
-                    indexBits = registers.at(index);
+                    indexBits = bits32::registers.at(index);
 
                     switch (mem.scale)
                     {
@@ -171,15 +199,44 @@ namespace x86 {
             return size;
         }
 
-        size_t encodeMovMemReg(std::string src, std::string dst, sectionBuffer& buffer, std::vector<Relocation>& relocations, Endianness endianness)
+        size_t encodeMovReg16Mem()
         {
-            std::cout << "Warning: mov mem, reg not implemented yet" << std::endl;
+
+        }
+
+        size_t encodeMovMemReg32(std::string src, std::string dst, sectionBuffer& buffer, std::vector<Relocation>& relocations, Endianness endianness)
+        {
+            std::cout << "Warning: mov mem, reg32 not implemented yet" << std::endl;
             return 0;
         }
 
-        size_t encodeMovMemImm(uint32_t imm, std::string dst, sectionBuffer& buffer, std::vector<Relocation>& relocations, Endianness endianness)
+        size_t encodeMovMemReg16(std::string src, std::string dst, sectionBuffer& buffer, std::vector<Relocation>& relocations, Endianness endianness)
         {
-            std::cout << "Warning: mov mem, imm not implemented yet" << std::endl;
+            std::cout << "Warning: mov mem, reg32 not implemented yet" << std::endl;
+            return 0;
+        }
+
+        size_t encodeMovMemReg8(std::string src, std::string dst, sectionBuffer& buffer, std::vector<Relocation>& relocations, Endianness endianness)
+        {
+            std::cout << "Warning: mov mem, reg8 not implemented yet" << std::endl;
+            return 0;
+        }
+
+        size_t encodeMovMemImm32(uint32_t imm, std::string dst, sectionBuffer& buffer, std::vector<Relocation>& relocations, Endianness endianness)
+        {
+            std::cout << "Warning: mov mem, imm32 not implemented yet" << std::endl;
+            return 0;
+        }
+
+        size_t encodeMovMemImm16(uint32_t imm, std::string dst, sectionBuffer& buffer, std::vector<Relocation>& relocations, Endianness endianness)
+        {
+            std::cout << "Warning: mov mem, imm16 not implemented yet" << std::endl;
+            return 0;
+        }
+
+        size_t encodeMovMemImm8(uint32_t imm, std::string dst, sectionBuffer& buffer, std::vector<Relocation>& relocations, Endianness endianness)
+        {
+            std::cout << "Warning: mov mem, imm8 not implemented yet" << std::endl;
             return 0;
         }
 
@@ -201,17 +258,51 @@ namespace x86 {
             std::string dst = instr.operands[0];
             std::string src = instr.operands[1];
 
-            if (registers.find(dst) != registers.end())
+            if (bits8::registers.find(dst) != bits8::registers.end())
             {
-                if (registers.find(src) != registers.end())
+                if (bits8::registers.find(src) != bits8::registers.end())
+                {
+                    offset = encodeMovRegReg8(src, dst, section.buffer);
+                }
+                else if (isMemoryOperand(src))
+                {
+                    offset = encodeMovRegMem8(src, dst, section.buffer, section.relocations, endianness);
+                }
+                else
+                {
+                    unsigned long long val = evaluate(src, constants, instr.lineNumber);
+                    if (val > 0xFF)
+                    {
+                        std::cerr << src << " too big for " << dst << " in line " << instr.lineNumber << std::endl;
+                        return 0;
+                    }
+                    uint8_t imm8 = static_cast<uint8_t>(val);
+
+                    offset = encodeMovRegImm8(imm8, dst, section.buffer, endianness);
+                }
+            }
+            else if (bits16::registers.find(dst) != bits16::registers.end())
+            {
+                //TODO
+                // 16-bit gpr dest
+            }
+            else if (bits16::segmentRegisters.find(dst) != bits16::segmentRegisters.end())
+            {
+                //TODO
+                // segment reg dest
+            }
+            else if (bits32::registers.find(dst) != bits32::registers.end())
+            {
+                // 32-bit GPR dest
+                if (bits32::registers.find(src) != bits32::registers.end())
                 {
                     //src: reg, dst: reg
-                    offset = encodeMovRegReg(src, dst, section.buffer);
+                    offset = encodeMovRegReg32(src, dst, section.buffer);
                 }
                 else if (isMemoryOperand(src))
                 {
                     //src: mem, dst: reg
-                    offset = encodeMovRegMem(src, dst, section.buffer, section.relocations, endianness);
+                    offset = encodeMovReg32Mem(src, dst, section.buffer, section.relocations, endianness);
                 }
                 else
                 {
@@ -224,15 +315,25 @@ namespace x86 {
                     }
                     uint32_t imm32 = static_cast<uint32_t>(val);
 
-                    offset = encodeMovRegImm(imm32, dst, section.buffer, endianness);
+                    offset = encodeMovRegImm32(imm32, dst, section.buffer, endianness);
                 }
+            }
+            else if (bits32::controlRegisters.find(dst) != bits32::controlRegisters.end())
+            {
+                //TODO
+                // control reg dest
+            }
+            else if (bits32::debugRegisters.find(dst) != bits32::debugRegisters.end())
+            {
+                //TODO
+                // control reg dest
             }
             else if (isMemoryOperand(dst))
             {
-                if (registers.find(src) != registers.end())
+                if (bits32::registers.find(src) != bits32::registers.end())
                 {
                     //src: reg, dst: mem
-                    offset = encodeMovMemReg(src, dst, section.buffer, section.relocations, endianness);
+                    offset = encodeMovMemReg32(src, dst, section.buffer, section.relocations, endianness);
                 }
                 else if (isMemoryOperand(dst))
                 {
@@ -251,8 +352,15 @@ namespace x86 {
                     }
                     uint32_t imm32 = static_cast<uint32_t>(val);
 
-                    offset = encodeMovMemImm(imm32, dst, section.buffer, section.relocations, endianness);
+                    offset = encodeMovMemImm32(imm32, dst, section.buffer, section.relocations, endianness);
                 }
+            }
+
+            // error
+            else if (bits16::flagsRegister.compare(dst) == 0 || bits32::flagsRegister.compare(dst) == 0)
+            {
+                std::cerr << "mov doesn't work with flags. Error in line " << instr.lineNumber << std::endl;
+                return 0;
             }
             else
             {

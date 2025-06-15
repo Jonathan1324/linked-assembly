@@ -11,20 +11,41 @@ unsigned long long evaluate(std::string str, std::unordered_map<std::string, std
     size_t pos = 0;
     try
     {
-        unsigned long long val = std::stoull(value, &pos, 0);
-
+        // Try signed first
+        long long sval = std::stoll(value, &pos, 0);
         if (pos != value.size()) {
             std::cout << value << " contains invalid characters (line " << lineNumber << ")" << std::endl;
             return 0;
         }
-
-        return val;
+        // Convert negative signed to unsigned two's complement equivalent
+        return static_cast<unsigned long long>(sval);
     }
-    catch (const std::invalid_argument& e)
+    catch (const std::invalid_argument&)
     {
-        std::cout << value << " not a number (line " << lineNumber << ")" << std::endl;
-    } catch (const std::out_of_range& e) {
+        // Failed signed parse, try unsigned
+        pos = 0;
+        try
+        {
+            unsigned long long uval = std::stoull(value, &pos, 0);
+            if (pos != value.size()) {
+                std::cout << value << " contains invalid characters (line " << lineNumber << ")" << std::endl;
+                return 0;
+            }
+            return uval;
+        }
+        catch (const std::invalid_argument&)
+        {
+            std::cout << value << " not a number (line " << lineNumber << ")" << std::endl;
+        }
+        catch (const std::out_of_range&)
+        {
+            std::cout << value << " number out of range (line " << lineNumber << ")" << std::endl;
+        }
+    }
+    catch (const std::out_of_range&)
+    {
         std::cout << value << " number out of range (line " << lineNumber << ")" << std::endl;
     }
+
     return 0;
 }
