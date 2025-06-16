@@ -16,6 +16,7 @@ namespace x86 {
 
         Memory isMemoryOperand(const std::string& op)
         {
+            // segments
             // Quick check if operand ends with ']'
             if (op.empty() || op.back() != ']')
                 return Memory::None;

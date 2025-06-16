@@ -2,8 +2,8 @@ section .text
     global _start
 
 _start:
-    mov [d], ss
+    mov eax, [buffer]
     ret
 
 section .bss
-d:              resd 1
+buffer:         resb 0x200
