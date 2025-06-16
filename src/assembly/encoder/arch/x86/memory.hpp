@@ -21,7 +21,23 @@ namespace x86 {
             int32_t displacement = 0;
         };
 
+        enum class Memory {
+            None,   // none
+            Byte,   // 8-bit
+            Word,   // 16-bit
+            Dword,  // 32-bit
+            Fword,  // 48-bit (far pointers)
+            Qword,  // 64-bit
+            MMword, // 64-bit (MMX registers)
+            Tbyte,  // 80-bit (x87 FPU)
+            Xword,  // 80-bit alias
+            Oword,  // 128-bit (SSE)
+            XMMword,// 128-bit (XMM registers)
+            Yword,  // 256-bit (AVX)
+            Zword   // 512-bit (AVX-512)
+        };
+
         MemoryOperand parseMem(const std::string& input);
-        bool isMemoryOperand(const std::string& op);
+        Memory isMemoryOperand(const std::string& op);
     }
 }

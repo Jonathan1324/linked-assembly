@@ -1,13 +1,38 @@
 #include "evaluate.hpp"
 
 #include <iostream>
+#include "../escapes.hpp"
 
-unsigned long long evaluate(std::string str, std::unordered_map<std::string, std::string> constants, int lineNumber)
+unsigned long long evaluate(std::string str, std::unordered_map<std::string, std::string> constants, int lineNumber, bool floatingPoint)
 {
     std::string value = str;
     if (constants.find(str) != constants.end())
         value = constants[str];
 
+    if (str.find('\'') == 0)
+    {
+        if (escapeSign.find(str[1]) != escapeSign.end())
+        {
+            unsigned char val = escapeSign.at(str[1]);
+            if (val == hex)
+            {
+                //TODO: hex number
+            }
+            else if (val == octal)
+            {
+                if (str[2] == '\'')
+                    return 0;
+                //TODO: octal number
+            }
+            return val;
+        }
+        else
+        {
+            std::cout << value << " invalid symbol after '\\' (line " << lineNumber << ")" << std::endl;
+            return 0;
+        }
+    }
+    
     size_t pos = 0;
     try
     {

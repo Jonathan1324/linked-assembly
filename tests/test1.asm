@@ -2,10 +2,8 @@ section .text
     global _start
 
 _start:
-    mov eax, [data2]
+    mov eax, eax
     ret
 
-section .data
-
-data1:          dq 0x0123456789abcdef
-data2:          dd 0x11111111
+section .bss
+d:              resd 1

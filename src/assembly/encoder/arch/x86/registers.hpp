@@ -7,7 +7,7 @@
 
 namespace x86 {
     namespace bits8 {
-        const std::unordered_map<std::string, uint32_t> registers = 
+        static const std::unordered_map<std::string, uint32_t> registers = 
         {
             // Lower byte registers
             {"al", 0x0},
@@ -22,7 +22,7 @@ namespace x86 {
             {"bh", 0x7},
         };
 
-        const std::unordered_map<std::string, uint32_t> registers64 = 
+        static const std::unordered_map<std::string, uint32_t> registers64 = 
         {
             // Extended low byte registers (r8b - r15b)
             {"r8b", 0x8},
@@ -37,7 +37,7 @@ namespace x86 {
     }
 
     namespace bits16 {
-        const std::unordered_map<std::string, uint32_t> registers = 
+        static const std::unordered_map<std::string, uint32_t> registers = 
         {
             {"ax", 0x0},
             {"cx", 0x1},
@@ -49,7 +49,7 @@ namespace x86 {
             {"di", 0x7},
         };
 
-        const std::unordered_map<std::string, uint32_t> segmentRegisters = 
+        static const std::unordered_map<std::string, uint32_t> segmentRegisters = 
         {
             {"es", 0x0},
             {"cs", 0x1},
@@ -62,7 +62,7 @@ namespace x86 {
         constexpr const std::string_view flagsRegister = "flags";
 
 
-        const std::unordered_map<std::string, uint32_t> registers64 = 
+        static const std::unordered_map<std::string, uint32_t> registers64 = 
         {
             // Extended registers 16-bit (r8w - r15w)
             {"r8w", 0x8},
@@ -77,7 +77,7 @@ namespace x86 {
     }
 
     namespace bits32 {
-        const std::unordered_map<std::string, uint32_t> registers = 
+        static const std::unordered_map<std::string, uint32_t> registers = 
         {
             {"eax", 0x0},
             {"ecx", 0x1},
@@ -89,7 +89,7 @@ namespace x86 {
             {"edi", 0x7},
         };
 
-        const std::unordered_map<std::string, uint32_t> controlRegisters = 
+        static const std::unordered_map<std::string, uint32_t> controlRegisters = 
         {
             {"cr0", 0x0},
             //cr1: reserved
@@ -98,7 +98,7 @@ namespace x86 {
             {"cr4", 0x4},
         };
 
-        const std::unordered_map<std::string, uint32_t> debugRegisters = 
+        static const std::unordered_map<std::string, uint32_t> debugRegisters = 
         {
             {"dr0", 0x0},
             {"dr1", 0x1},
@@ -110,8 +110,44 @@ namespace x86 {
 
         constexpr const std::string_view flagsRegister = "eflags";
 
+        static const std::unordered_map<std::string, uint32_t> mmxRegisters = 
+        {
+            {"mm0", 0x0},
+            {"mm1", 0x1},
+            {"mm2", 0x2},
+            {"mm3", 0x3},
+            {"mm4", 0x4},
+            {"mm5", 0x5},
+            {"mm6", 0x6},
+            {"mm7", 0x7},
+        };
 
-        const std::unordered_map<std::string, uint32_t> registers64 = 
+        static const std::unordered_map<std::string, uint32_t> xmmRegisters = 
+        {
+            {"xmm0", 0x0}, 
+            {"xmm1", 0x1}, 
+            {"xmm2", 0x2}, 
+            {"xmm3", 0x3},
+            {"xmm4", 0x4}, 
+            {"xmm5", 0x5}, 
+            {"xmm6", 0x6}, 
+            {"xmm7", 0x7},
+        };
+
+        static const std::unordered_map<std::string, uint32_t> fpuRegisters =
+        {
+            {"st0", 0x0},
+            {"st1", 0x1},
+            {"st2", 0x2},
+            {"st3", 0x3},
+            {"st4", 0x4},
+            {"st5", 0x5},
+            {"st6", 0x6},
+            {"st7", 0x7},
+        };
+
+
+        static const std::unordered_map<std::string, uint32_t> registers64 = 
         {
             // Extended registers 32-bit (r8d - r15d)
             {"r8d", 0x8},
@@ -126,7 +162,7 @@ namespace x86 {
     }
 
     namespace bits64 {
-        const std::unordered_map<std::string, uint32_t> registers = 
+        static const std::unordered_map<std::string, uint32_t> registers = 
         {
             {"rax", 0x0},
             {"rcx", 0x1},
@@ -148,7 +184,7 @@ namespace x86 {
             {"r15", 0xF},
         };
 
-        const std::unordered_map<std::string, uint32_t> controlRegisters = 
+        static const std::unordered_map<std::string, uint32_t> controlRegisters = 
         {
             {"cr0", 0x0},
             //cr1: reserved
@@ -158,7 +194,7 @@ namespace x86 {
             {"cr8", 0x8},  // Only valid in 64-bit mode
         };
 
-        const std::unordered_map<std::string, uint32_t> debugRegisters = 
+        static const std::unordered_map<std::string, uint32_t> debugRegisters = 
         {
             {"dr0", 0x0},
             {"dr1", 0x1},
@@ -168,7 +204,7 @@ namespace x86 {
             {"dr7", 0x7},
         };
 
-        const std::unordered_map<std::string, uint32_t> xmmRegisters =
+        static const std::unordered_map<std::string, uint32_t> xmmRegisters =
         {
             {"xmm0", 0x0},
             {"xmm1", 0x1},
