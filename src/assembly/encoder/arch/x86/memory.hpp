@@ -23,6 +23,8 @@ namespace x86 {
 
         enum class Memory {
             None,   // none
+            Default,// default
+
             Byte,   // 8-bit
             Word,   // 16-bit
             Dword,  // 32-bit

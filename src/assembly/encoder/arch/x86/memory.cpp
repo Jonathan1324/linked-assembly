@@ -1,5 +1,7 @@
 #include "memory.hpp"
 
+#include <iostream>
+
 namespace x86 {
     namespace bits32 {
         MemoryOperand parseMem(const std::string& input)
@@ -35,18 +37,18 @@ namespace x86 {
             if (prefix == "byte ptr")    return Memory::Byte;
             if (prefix == "word ptr")    return Memory::Word;
             if (prefix == "dword ptr")   return Memory::Dword;
+            if (prefix == "fword ptr")   return Memory::Fword;
             if (prefix == "qword ptr")   return Memory::Qword;
             if (prefix == "mmword ptr")  return Memory::MMword;
             if (prefix == "tbyte ptr")   return Memory::Tbyte;
             if (prefix == "xword ptr")   return Memory::Xword;
             if (prefix == "oword ptr")   return Memory::Oword;
             if (prefix == "xmmword ptr") return Memory::XMMword;
-            if (prefix == "fword ptr")   return Memory::Fword;
             if (prefix == "yword ptr")   return Memory::Yword;
             if (prefix == "zword ptr")   return Memory::Zword;
 
             // No prefix but is memory operand
-            return Memory::Dword;
+            return Memory::Default;
         }
     }
 }

@@ -2,7 +2,7 @@ section .text
     global _start
 
 _start:
-    mov eax, eax
+    mov [d], ss
     ret
 
 section .bss

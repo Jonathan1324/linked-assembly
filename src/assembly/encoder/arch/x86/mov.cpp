@@ -70,8 +70,6 @@ namespace x86 {
             return 2;
         }
 
-        //TODO: encodeMovMemSegReg16
-
         size_t encodeMovRegMem16(std::string src, std::string dst, sectionBuffer& buffer, std::vector<Relocation>& relocations, Endianness endianness)
         {
             // TODO
@@ -116,8 +114,12 @@ namespace x86 {
 
             return 2;
         }
-        
-        //TODO: encodeMovSegRegMem16
+
+        size_t encodeMovSegRegMem16(std::string src, std::string dst, sectionBuffer& buffer, std::vector<Relocation>& relocations, Endianness endianness)
+        {
+            // TODO
+            return 0;
+        }
 
         size_t encodeMovRegReg32(std::string src, std::string dst, sectionBuffer& buffer)
         {
@@ -320,6 +322,12 @@ namespace x86 {
             return 0;
         }
 
+        size_t encodeMovMemSegReg16(std::string src, std::string dst, sectionBuffer& buffer, std::vector<Relocation>& relocations, Endianness endianness)
+        {
+            // TODO
+            return 0;
+        }
+
         size_t encodeMovMemReg32(std::string src, std::string dst, sectionBuffer& buffer, std::vector<Relocation>& relocations, Endianness endianness)
         {
             // TODO
@@ -370,8 +378,16 @@ namespace x86 {
                 }
                 else if (isMemoryOperand(src) != Memory::None)
                 {
-                    //TODO
-                    offset = encodeMovRegMem8(src, dst, section.buffer, section.relocations, endianness);
+                    Memory type = isMemoryOperand(src);
+                    if (type == Memory::Default || type == Memory::Byte)
+                        // default or specific 8-bit
+                        offset = encodeMovRegMem8(src, dst, section.buffer, section.relocations, endianness);
+                    else
+                    {
+                        //wrong type
+                        std::cerr << "Memory size and register mismatch in line " << instr.lineNumber << std::endl;
+                        return 0;
+                    }
                 }
                 else
                 {
@@ -398,8 +414,16 @@ namespace x86 {
                 }
                 else if (isMemoryOperand(src) != Memory::None)
                 {
-                    //TODO
-                    offset = encodeMovRegMem16(src, dst, section.buffer, section.relocations, endianness);
+                    Memory type = isMemoryOperand(src);
+                    if (type == Memory::Default || type == Memory::Word)
+                        // default or specific 16-bit
+                        offset = encodeMovRegMem16(src, dst, section.buffer, section.relocations, endianness);
+                    else
+                    {
+                        //wrong type
+                        std::cerr << "Memory size and register mismatch in line " << instr.lineNumber << std::endl;
+                        return 0;
+                    }
                 }
                 else
                 {
@@ -420,6 +444,19 @@ namespace x86 {
                 {
                     offset = encodeMovSegRegReg16(src, dst, section.buffer);
                 }
+                else if (isMemoryOperand(src) != Memory::None)
+                {
+                    Memory type = isMemoryOperand(src);
+                    if (type == Memory::Default || type == Memory::Word)
+                        // default or specific 16-bit
+                        encodeMovSegRegMem16(src, dst, section.buffer, section.relocations, endianness);
+                    else
+                    {
+                        //wrong type
+                        std::cerr << "Memory size and register mismatch in line " << instr.lineNumber << std::endl;
+                        return 0;
+                    }
+                }
             }
             else if (bits32::registers.find(dst) != bits32::registers.end())
             {
@@ -437,12 +474,19 @@ namespace x86 {
                 }
                 else if (isMemoryOperand(src) != Memory::None)
                 {
-                    //TODO
-                    offset = encodeMovReg32Mem(src, dst, section.buffer, section.relocations, endianness);
+                    Memory type = isMemoryOperand(src);
+                    if (type == Memory::Default || type == Memory::Dword)
+                        // default or specific 32-bit
+                        offset = encodeMovReg32Mem(src, dst, section.buffer, section.relocations, endianness);
+                    else
+                    {
+                        //wrong type
+                        std::cerr << "Memory size and register mismatch in line " << instr.lineNumber << std::endl;
+                        return 0;
+                    }
                 }
                 else
                 {
-                    //src: imm, dst: reg
                     unsigned long long val = evaluate(src, constants, instr.lineNumber);
                     if (val > 0xFFFFFFFF)
                     {
@@ -468,42 +512,95 @@ namespace x86 {
                     offset = encodeMovDrRegReg32(src, dst, section.buffer);
                 }
             }
-            else if (isMemoryOperand(src) != Memory::None)
+            else if (isMemoryOperand(dst) != Memory::None)
             {
-                //TODO
                 if (bits8::registers.find(src) != bits8::registers.end())
                 {
+                    Memory type = isMemoryOperand(dst);
+                    if (type != Memory::Default && type != Memory::Byte)
+                    {
+                        //wrong type
+                        std::cerr << "Memory size and register mismatch in line " << instr.lineNumber << std::endl;
+                        return 0;
+                    }
                     offset = encodeMovMemReg8(src, dst, section.buffer, section.relocations, endianness);
                 }
                 else if (bits16::registers.find(src) != bits16::registers.end())
                 {
+                    Memory type = isMemoryOperand(dst);
+                    if (type != Memory::Default && type != Memory::Word)
+                    {
+                        //wrong type
+                        std::cerr << "Memory size and register mismatch in line " << instr.lineNumber << std::endl;
+                        return 0;
+                    }
                     offset = encodeMovMemReg16(src, dst, section.buffer, section.relocations, endianness);
+                }
+                else if (bits16::segmentRegisters.find(src) != bits16::segmentRegisters.end())
+                {
+                    Memory type = isMemoryOperand(dst);
+                    if (type != Memory::Default && type != Memory::Word)
+                    {
+                        //wrong type
+                        std::cerr << "Memory size and register mismatch in line " << instr.lineNumber << std::endl;
+                        return 0;
+                    }
+                    offset = encodeMovMemSegReg16(src, dst, section.buffer, section.relocations, endianness);
                 }
                 else if (bits32::registers.find(src) != bits32::registers.end())
                 {
+                    Memory type = isMemoryOperand(dst);
+                    if (type != Memory::Default && type != Memory::Dword)
+                    {
+                        //wrong type
+                        std::cerr << "Memory size and register mismatch in line " << instr.lineNumber << std::endl;
+                        return 0;
+                    }
                     offset = encodeMovMemReg32(src, dst, section.buffer, section.relocations, endianness);
                 }
                 else
                 {
+                    Memory type = isMemoryOperand(dst);
                     unsigned long long val = evaluate(src, constants, instr.lineNumber);
-                    if (val < 0x100)
+
+                    uint8_t imm8;
+                    uint16_t imm16;
+                    uint32_t imm32;
+                    switch (type)
                     {
-                        uint8_t imm8 = static_cast<uint8_t>(val);
+                    case Memory::Byte:
+                        if (val > 0xFF)
+                        {
+                            std::cerr << src << " too big for a byte in line " << instr.lineNumber << std::endl;
+                            return 0;
+                        }
+                        imm8 = static_cast<uint8_t>(val);
                         offset = encodeMovMemImm8(imm8, dst, section.buffer, section.relocations, endianness);
-                    }
-                    else if (val < 0x10000)
-                    {
-                        uint16_t imm16 = static_cast<uint16_t>(val);
+                        break;
+                    
+                    case Memory::Word:
+                        if (val > 0xFFFF)
+                        {
+                            std::cerr << src << " too big for a word in line " << instr.lineNumber << std::endl;
+                            return 0;
+                        }
+                        imm16 = static_cast<uint16_t>(val);
                         offset = encodeMovMemImm16(imm16, dst, section.buffer, section.relocations, endianness);
-                    }
-                    else if (val < 0x100000000)
-                    {
-                        uint32_t imm32 = static_cast<uint32_t>(val);
+                        break;
+                    
+                    case Memory::Dword:
+                    case Memory::Default:
+                        if (val > 0xFFFFFFFF)
+                        {
+                            std::cerr << src << " too big for a dword in line " << instr.lineNumber << std::endl;
+                            return 0;
+                        }
+                        imm32 = static_cast<uint32_t>(val);
                         offset = encodeMovMemImm32(imm32, dst, section.buffer, section.relocations, endianness);
-                    }
-                    else
-                    {
-                        std::cerr << src << " too big for " << dst << " in line " << instr.lineNumber << std::endl;
+                        break;
+                    
+                    default:
+                        std::cerr << dst << " not supported with mov. Error in line " << instr.lineNumber << std::endl;
                         return 0;
                     }
                 }
