@@ -1,8 +1,13 @@
 # Supported Instructions
 
-This is the current set of supported x86 instructions in 32-bit mode:
+## x86
 
-### Control Flow & CPU
+### 16-bit
+> Not supported yet. *(planned)*
+
+### 32-bit
+
+#### Control Flow & CPU
 - `nop`
 - `ret`
 - `ret imm16`
@@ -12,15 +17,24 @@ This is the current set of supported x86 instructions in 32-bit mode:
 - `pause`
 - `wait` / `fwait`
 
-### Flags & Interrupts
+#### Flags & Interrupts
 - `cli` / `sti`
 - `clc` / `stc` / `cmc`
 - `std`
 
-### CPU Info
+#### CPU Info
 - `cpuid`
 - `rdtsc`
 
-### MOV
+#### MOV
 - `mov reg, imm32`
 - `mov reg, reg`
+
+### 64-bit
+> Not supported yet. *(planned)*
+
+## ARM
+> Not supported yet.
+
+## RISC-V
+> Not supported yet.
