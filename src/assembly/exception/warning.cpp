@@ -20,7 +20,7 @@ void Warning::print(std::ostream& os) const
 {
     std::string type = typeToString();
     if (!type.empty())
-        os << "[" << type << "] ";
+        os << "(" << type << ") ";
     if (line_ >= 0)
         os << "Line " << line_ << ": ";
     os << message_ << std::endl;
