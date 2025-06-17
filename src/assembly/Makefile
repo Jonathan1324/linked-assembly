@@ -17,6 +17,11 @@ DEPS := $(C_OBJS:.o=.d) $(CPP_OBJS:.o=.d) $(ASM_OBJS:.o=.d)
 
 TARGET = $(BUILD_DIR)/assembly$(EXE_EXT)
 
+
+CFLAGS	 += -I$(SRC_DIR)
+CXXFLAGS += -I$(SRC_DIR)
+
+
 .PHONY: all clean
 
 all: $(TARGET)
