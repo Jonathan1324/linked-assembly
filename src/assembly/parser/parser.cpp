@@ -1,9 +1,10 @@
 #include "parser.hpp"
-#include "util/string.hpp"
+#include "../util/string.hpp"
 
 #include <algorithm>
+#include "../Exception.hpp"
 
-Parsed parseAssembly(std::istream& input, BitMode bits)
+Parsed parseAssembly(std::istream& input, BitMode bits, Context& context)
 {
     Parsed parsed;
 
@@ -58,9 +59,7 @@ Parsed parseAssembly(std::istream& input, BitMode bits)
             else if (bits.compare(0, 2, "64") == 0)
                 currentBitMode = BitMode::Bits64;
             else
-            {
-                //TODO: error
-            }
+                throw Exception::SyntaxError("Undefined bits mode", lineNumber);
 
             trimmed = trim(trimmed.substr(5 + bits.size()));
 
@@ -71,7 +70,7 @@ Parsed parseAssembly(std::istream& input, BitMode bits)
             size_t bitPos = toLower(trimmed).find("bits ");
             if (bitPos == std::string::npos)
             {
-                // TODO: error
+                throw Exception::SyntaxError("Didn't find 'bits' after '['", lineNumber);
             }
             else
             {
@@ -84,15 +83,14 @@ Parsed parseAssembly(std::istream& input, BitMode bits)
                     currentBitMode = BitMode::Bits64;
                 else
                 {
-                    //TODO: error
+                    throw Exception::SyntaxError("Undefined bits mode", lineNumber);
                 }
             }
 
             size_t closed = trimmed.find("]");
             if (closed == std::string::npos)
             {
-                //TODO: error
-                continue;
+                throw Exception::SyntaxError("Didn't find ']' after '['", lineNumber);
             }
             else
             {
@@ -112,7 +110,7 @@ Parsed parseAssembly(std::istream& input, BitMode bits)
                 [&](const Section& s) { return s.name == sectionName; });
 
             if (it == parsed.sections.end()) {
-                // Neue Section anlegen und Pointer setzen
+                // Create new section
                 parsed.sections.push_back(Section{sectionName, {}, {}});
                 currentSection = &parsed.sections.back();
             } else {
@@ -140,36 +138,32 @@ Parsed parseAssembly(std::istream& input, BitMode bits)
                 {
                     if (currentLabel.empty())
                     {
-                        std::cerr << "Local label " << labelName << " doesn't have any global labe" << std::endl;
-                        //TODO: error
+                        throw Exception::SemanticError("Local label '" + labelName + "' doesn't have any parent label", lineNumber);
                     }
                     else
                     {
                         LocalLabel label{labelName, currentSection->entries.size()};
                         
                         auto it = currentSection->labels.find(currentLabel);
-                        if (it != currentSection->labels.end()) {
+                        if (it != currentSection->labels.end())
                             it->second.localLabels.push_back(label);
-                        } else {
-                            //error: label doesn't exist
-                        }
+                        else
+                            throw Exception::SemanticError("Local label '" + labelName + "' doesn't have any parent label", lineNumber);
                     }
                 }
                 else
                 {
                     auto result = currentSection->labels.emplace(labelName, Label{labelName, currentSection->entries.size(), {}});
-                    if (result.second) {
+                    if (result.second)
                         currentLabel = labelName;
-                    } else {
-                        // TODO: error - label already exists
-                    }
+                    else
+                        throw Exception::SemanticError("Label '" + labelName + "' already exists", lineNumber);
                 }
             
-                trimmed = trim(trimmed.substr(colonPos + 1)); // Rest nach dem Label
+                trimmed = trim(trimmed.substr(colonPos + 1));
             }
         
-            if (trimmed.empty()) continue; // Nur Label auf der Zeile
-            // Ansonsten ist nach dem Label noch eine Instruktion => weiter unten behandeln
+            if (trimmed.empty()) continue;
         }
         else
         {
@@ -180,7 +174,6 @@ Parsed parseAssembly(std::istream& input, BitMode bits)
             for (const std::string& directive : dataDirectives) {
                 size_t dirPos = trimmed.find(" " + directive + " ");
                 if (dirPos != std::string::npos && dirPos > 0) {
-                    // Prüfe, ob das davor ein potenzieller Label-Name ist
                     std::string before = trim(trimmed.substr(0, dirPos));
                     if (!before.empty()) {
                         std::string labelName = before;
@@ -188,8 +181,7 @@ Parsed parseAssembly(std::istream& input, BitMode bits)
                         {
                             if (currentLabel.empty())
                             {
-                                std::cerr << "Local label " << labelName << " doesn't have any global labe" << std::endl;
-                                //TODO: error
+                                throw Exception::SemanticError("Local label '" + labelName + "' doesn't have any parent label", lineNumber);
                             }
                             else
                             {
@@ -199,7 +191,7 @@ Parsed parseAssembly(std::istream& input, BitMode bits)
                                 if (it != currentSection->labels.end()) {
                                     it->second.localLabels.push_back(label);
                                 } else {
-                                    //error: label doesn't exist
+                                    throw Exception::SemanticError("Local label '" + labelName + "' doesn't have any parent label", lineNumber);
                                 }
                             }
                         }
@@ -209,11 +201,11 @@ Parsed parseAssembly(std::istream& input, BitMode bits)
                             if (result.second) {
                                 currentLabel = labelName;
                             } else {
-                                // TODO: error - label already exists
+                                throw Exception::SemanticError("Label '" + labelName + "' already exists", lineNumber);
                             }
                         }
             
-                        trimmed = trim(trimmed.substr(dirPos)); // Entferne das Label vom Anfang
+                        trimmed = trim(trimmed.substr(dirPos));
                     }
                     break;
                 }
@@ -258,7 +250,7 @@ Parsed parseAssembly(std::istream& input, BitMode bits)
                 start = commaPos + 1;
             }
 
-            std::string labelName = ""; // TODO: falls vorher Label gesetzt wurde, übergib hier
+            std::string labelName = ""; // TODO: if label was defined before, set it here
 
             bool isReserved = type.rfind("res", 0) == 0;
 

@@ -4,7 +4,7 @@
 
 namespace x86 {
     namespace bits32 {
-        size_t encodeNoOperands(Instruction& instr, EncodedSection& section, std::unordered_map<std::string, std::string> constants, Endianness endianness)
+        size_t encodeNoOperands(Instruction& instr, EncodedSection& section, std::unordered_map<std::string, std::string> constants, Endianness endianness, Context& context)
         {
             sectionBuffer& buffer = section.buffer;
             size_t offset = 0;
@@ -29,22 +29,23 @@ namespace x86 {
                     std::string operand = instr.operands[0];
 
                     uint16_t imm16 = 0;
-                    try {
+                    try
+                    {
                         unsigned long long val = evaluate(operand, constants, instr.lineNumber);
 
-                        if (val > 0xFFFF) {
-                            std::cout << operand << " too big for 16 bit (line " << instr.lineNumber << ")" << std::endl;
-                            return -1;
-                        }
+                        if (val > 0xFFFF)
+                            throw Exception::OverflowError(operand + " too large for 16 bit", instr.lineNumber);
 
                         imm16 = static_cast<uint16_t>(val);
 
-                    } catch (const std::invalid_argument& e) {
-                        std::cout << operand << " not a number (line " << instr.lineNumber << ")" << std::endl;
-                        return -1;
-                    } catch (const std::out_of_range& e) {
-                        std::cout << operand << " number out of range (line " << instr.lineNumber << ")" << std::endl;
-                        return -1;
+                    }
+                    catch (const std::invalid_argument& e)
+                    {
+                        throw Exception::SyntaxError(operand + " not a number", instr.lineNumber);
+                    }
+                    catch (const std::out_of_range& e)
+                    {
+                        throw Exception::OverflowError(operand + " too large", instr.lineNumber);
                     }
 
                     if (endianness == Endianness::Little)

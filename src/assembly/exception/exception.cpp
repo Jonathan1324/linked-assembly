@@ -30,8 +30,14 @@ std::string Exception::typeToString() const
 {
     switch (type_)
     {
-        case Type::ArgumentError:  return "ArgumentError";
-        case Type::IOError:        return "IOError";
+        case Type::ArgumentError:       return "ArgumentError";
+        case Type::IOError:             return "IOError";
+        case Type::ParseError:          return "ParseError";
+        case Type::SyntaxError:         return "SyntaxError";
+        case Type::SemanticError:       return "SemanticError";
+        case Type::UndefinedSymbol:     return "UndefinedSymbol";
+        case Type::OverflowError:       return "OverflowError";
+        case Type::InternalError:       return "InternalError";
 
         default:                        return "";
     }
@@ -45,4 +51,34 @@ Exception Exception::ArgumentError(const std::string& message)
 Exception Exception::IOError(const std::string& message)
 {
     return Exception(Type::IOError, message, -1);
+}
+
+Exception Exception::ParseError(const std::string& message, int line)
+{
+    return Exception(Type::ParseError, message, line);
+}
+
+Exception Exception::SyntaxError(const std::string& message, int line)
+{
+    return Exception(Type::ParseError, message, line);
+}
+
+Exception Exception::SemanticError(const std::string& message, int line)
+{
+    return Exception(Type::SemanticError, message, line);
+}
+
+Exception Exception::UndefinedSymbol(const std::string& message)
+{
+    return Exception(Type::UndefinedSymbol, message, -1);
+}
+
+Exception Exception::OverflowError(const std::string& message, int line)
+{
+    return Exception(Type::OverflowError, message, line);
+}
+
+Exception Exception::InternalError(const std::string& message)
+{
+    return Exception(Type::InternalError, message, -1);
 }

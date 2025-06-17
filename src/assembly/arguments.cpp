@@ -2,7 +2,7 @@
 
 #include "Exception.hpp"
 
-#include "../../version.h"
+#include "../version.h"
 #include "util/string.hpp"
 
 #include "cli/version.h"
@@ -11,7 +11,8 @@
 void parseArguments(int argc, const char *argv[],
                     std::string& input, std::string& output,
                     BitMode& bits, Architecture& arch, Format& format,
-                    Endianness& endianness, bool& debug)
+                    Endianness& endianness, bool& debug,
+                    Context& context)
 {
     bits = BitMode::Bits64;
     #ifdef __x86_64__
@@ -46,7 +47,7 @@ void parseArguments(int argc, const char *argv[],
 
     if (argc < 2)
     {
-        throw Exception::ArgumentError("No input file specified. Usage: assembly <input.asm> [arguments/flags]");
+        throw Exception::ArgumentError("No input file specified");
     }
 
     if (strcmp(argv[1], "--version") == 0 || strcmp(argv[1], "-v") == 0)
@@ -167,11 +168,21 @@ void parseArguments(int argc, const char *argv[],
 
         else if (!std::string(argv[i]).empty() && argv[i][0] == '-')
         {
-            std::cerr << "Warning: Unknown option " << argv[i] << std::endl;
+            context.warningManager->add(Warning::ArgumentWarning("Unknown option: " + std::string(argv[i])));
         }
         else
         {
             input = argv[i];
         }
+    }
+
+    if (input.empty())
+    {
+        throw Exception::ArgumentError("No input file entered");
+    }
+
+    if (output.empty())
+    {
+        output = input + ".o";
     }
 }

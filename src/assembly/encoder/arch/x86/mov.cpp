@@ -185,8 +185,7 @@ namespace x86 {
                         case 4: scaleBits = 0b10; break;
                         case 8: scaleBits = 0b11; break;
                         default:
-                            std::cerr << "Invalid scale in memory operand: " << (int)mem.scale << std::endl;
-                            return 0;
+                            throw Exception::InternalError("Invalid scale in memory operand: " + (uint8_t)mem.scale);
                     }
 
                     hasSIB = true;
@@ -221,8 +220,7 @@ namespace x86 {
             }
             else
             {
-                std::cerr << "Invalid memory operand: " << src << std::endl;
-                return 0;
+                throw Exception::SyntaxError("Invalid memory operand: " + src, -1);
             }
 
             // Emit opcode
@@ -352,20 +350,14 @@ namespace x86 {
             return 0;
         }
 
-        size_t encodeMov(Instruction& instr, EncodedSection& section, std::unordered_map<std::string, std::string> constants, Endianness endianness)
+        size_t encodeMov(Instruction& instr, EncodedSection& section, std::unordered_map<std::string, std::string> constants, Endianness endianness, Context& context)
         {
             size_t offset = 0;
 
             if (instr.operands.size() < 2)
-            {
-                std::cerr << "Not enough operands for mov in line " << instr.lineNumber << std::endl;
-                return 0;
-            }
+                throw Exception::SyntaxError("Not enough operands for mov", instr.lineNumber);
             else if (instr.operands.size() > 2)
-            {
-                std::cerr << "Too many operands for mov in line " << instr.lineNumber << std::endl;
-                return 0;
-            }
+                throw Exception::SyntaxError("Too many operands for mov", instr.lineNumber);
 
             std::string dst = instr.operands[0];
             std::string src = instr.operands[1];
@@ -385,8 +377,7 @@ namespace x86 {
                     else
                     {
                         //wrong type
-                        std::cerr << "Memory size and register mismatch in line " << instr.lineNumber << std::endl;
-                        return 0;
+                        throw Exception::SemanticError("Memory size and register mismatch", instr.lineNumber);
                     }
                 }
                 else
@@ -394,7 +385,7 @@ namespace x86 {
                     unsigned long long val = evaluate(src, constants, instr.lineNumber);
                     if (val > 0xFF)
                     {
-                        std::cerr << src << " too big for " << dst << " in line " << instr.lineNumber << std::endl;
+                        throw Exception::OverflowError(src + " too large for " + dst, instr.lineNumber);
                         return 0;
                     }
                     uint8_t imm8 = static_cast<uint8_t>(val);
@@ -421,8 +412,7 @@ namespace x86 {
                     else
                     {
                         //wrong type
-                        std::cerr << "Memory size and register mismatch in line " << instr.lineNumber << std::endl;
-                        return 0;
+                        throw Exception::SemanticError("Memory size and register mismatch", instr.lineNumber);
                     }
                 }
                 else
@@ -430,7 +420,7 @@ namespace x86 {
                     unsigned long long val = evaluate(src, constants, instr.lineNumber);
                     if (val > 0xFFFF)
                     {
-                        std::cerr << src << " too big for " << dst << " in line " << instr.lineNumber << std::endl;
+                        throw Exception::OverflowError(src + " too large for " + dst, instr.lineNumber);
                         return 0;
                     }
                     uint16_t imm16 = static_cast<uint16_t>(val);
@@ -453,8 +443,7 @@ namespace x86 {
                     else
                     {
                         //wrong type
-                        std::cerr << "Memory size and register mismatch in line " << instr.lineNumber << std::endl;
-                        return 0;
+                        throw Exception::SemanticError("Memory size and register mismatch", instr.lineNumber);
                     }
                 }
             }
@@ -481,8 +470,7 @@ namespace x86 {
                     else
                     {
                         //wrong type
-                        std::cerr << "Memory size and register mismatch in line " << instr.lineNumber << std::endl;
-                        return 0;
+                        throw Exception::SemanticError("Memory size and register mismatch", instr.lineNumber);
                     }
                 }
                 else
@@ -490,8 +478,7 @@ namespace x86 {
                     unsigned long long val = evaluate(src, constants, instr.lineNumber);
                     if (val > 0xFFFFFFFF)
                     {
-                        std::cerr << src << " too big for " << dst << " in line " << instr.lineNumber << std::endl;
-                        return 0;
+                        throw Exception::OverflowError(src + " too big for " + dst, instr.lineNumber);
                     }
                     uint32_t imm32 = static_cast<uint32_t>(val);
 
@@ -520,8 +507,7 @@ namespace x86 {
                     if (type != Memory::Default && type != Memory::Byte)
                     {
                         //wrong type
-                        std::cerr << "Memory size and register mismatch in line " << instr.lineNumber << std::endl;
-                        return 0;
+                        throw Exception::SemanticError("Memory size and register mismatch", instr.lineNumber);
                     }
                     offset = encodeMovMemReg8(src, dst, section.buffer, section.relocations, endianness);
                 }
@@ -531,8 +517,7 @@ namespace x86 {
                     if (type != Memory::Default && type != Memory::Word)
                     {
                         //wrong type
-                        std::cerr << "Memory size and register mismatch in line " << instr.lineNumber << std::endl;
-                        return 0;
+                        throw Exception::SemanticError("Memory size and register mismatch", instr.lineNumber);
                     }
                     offset = encodeMovMemReg16(src, dst, section.buffer, section.relocations, endianness);
                 }
@@ -542,8 +527,7 @@ namespace x86 {
                     if (type != Memory::Default && type != Memory::Word)
                     {
                         //wrong type
-                        std::cerr << "Memory size and register mismatch in line " << instr.lineNumber << std::endl;
-                        return 0;
+                        throw Exception::SemanticError("Memory size and register mismatch", instr.lineNumber);
                     }
                     offset = encodeMovMemSegReg16(src, dst, section.buffer, section.relocations, endianness);
                 }
@@ -553,8 +537,7 @@ namespace x86 {
                     if (type != Memory::Default && type != Memory::Dword)
                     {
                         //wrong type
-                        std::cerr << "Memory size and register mismatch in line " << instr.lineNumber << std::endl;
-                        return 0;
+                        throw Exception::SemanticError("Memory size and register mismatch", instr.lineNumber);
                     }
                     offset = encodeMovMemReg32(src, dst, section.buffer, section.relocations, endianness);
                 }
@@ -570,20 +553,14 @@ namespace x86 {
                     {
                     case Memory::Byte:
                         if (val > 0xFF)
-                        {
-                            std::cerr << src << " too big for a byte in line " << instr.lineNumber << std::endl;
-                            return 0;
-                        }
+                            throw Exception::OverflowError(src + " too big for a byte", instr.lineNumber);
                         imm8 = static_cast<uint8_t>(val);
                         offset = encodeMovMemImm8(imm8, dst, section.buffer, section.relocations, endianness);
                         break;
                     
                     case Memory::Word:
                         if (val > 0xFFFF)
-                        {
-                            std::cerr << src << " too big for a word in line " << instr.lineNumber << std::endl;
-                            return 0;
-                        }
+                            throw Exception::OverflowError(src + " too big for a word", instr.lineNumber);
                         imm16 = static_cast<uint16_t>(val);
                         offset = encodeMovMemImm16(imm16, dst, section.buffer, section.relocations, endianness);
                         break;
@@ -591,32 +568,22 @@ namespace x86 {
                     case Memory::Dword:
                     case Memory::Default:
                         if (val > 0xFFFFFFFF)
-                        {
-                            std::cerr << src << " too big for a dword in line " << instr.lineNumber << std::endl;
-                            return 0;
-                        }
+                            throw Exception::OverflowError(src + " too big for a dword", instr.lineNumber);
                         imm32 = static_cast<uint32_t>(val);
                         offset = encodeMovMemImm32(imm32, dst, section.buffer, section.relocations, endianness);
                         break;
                     
                     default:
-                        std::cerr << dst << " not supported with mov. Error in line " << instr.lineNumber << std::endl;
-                        return 0;
+                        throw Exception::SyntaxError(dst + " not supported using mov", instr.lineNumber);
                     }
                 }
             }
 
             // error
             else if (bits16::flagsRegister.compare(dst) == 0 || bits32::flagsRegister.compare(dst) == 0)
-            {
-                std::cerr << "mov doesn't work with flags. Error in line " << instr.lineNumber << std::endl;
-                return 0;
-            }
+                throw Exception::SyntaxError("mov used eflags", instr.lineNumber);
             else
-            {
-                std::cerr << "mov with imm as destination in line " << instr.lineNumber << std::endl;
-                return 0;
-            }
+                throw Exception::SyntaxError("mov used imm as destination", instr.lineNumber);
 
             return offset;
         }

@@ -1,6 +1,6 @@
 #pragma once
 
-#include "parser.hpp"
+#include "parser/parser.hpp"
 #include "encoder/encoder.hpp"
 #include "object/elf/elf.hpp"
 #include "object/mach-o/mach-o.hpp"

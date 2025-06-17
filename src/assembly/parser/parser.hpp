@@ -5,7 +5,8 @@
 #include <unordered_map>
 #include <fstream>
 #include <variant>
-#include "architecture/architecture.hpp"
+#include "../architecture/architecture.hpp"
+#include "../Context.hpp"
 
 struct Instruction {
     std::string mnemonic;
@@ -53,4 +54,4 @@ struct Parsed {
     std::unordered_map<std::string, std::string> constants;
 };
 
-Parsed parseAssembly(std::istream& input, BitMode bits);
+Parsed parseAssembly(std::istream& input, BitMode bits, Context& context);

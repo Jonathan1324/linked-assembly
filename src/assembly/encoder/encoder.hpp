@@ -4,7 +4,8 @@
 #include <vector>
 #include <string>
 #include <cstdint>
-#include "../parser.hpp"
+#include "../parser/parser.hpp"
+#include "../Context.hpp"
 
 using sectionBuffer = std::vector<unsigned char>;
 
@@ -54,4 +55,4 @@ struct Encoded {
     std::unordered_map<std::string, EncodedSection> sections;
 };
 
-Encoded encode(Parsed& parsed, Architecture arch, Endianness endianness);
+Encoded encode(Parsed& parsed, Architecture arch, Endianness endianness, Context& context);

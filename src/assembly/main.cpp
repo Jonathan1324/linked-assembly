@@ -1,8 +1,8 @@
 #include <iostream>
 #include <fstream>
 
-#include "parser.hpp"
-#include "symbol.hpp"
+#include "parser/parser.hpp"
+#include "parser/symbol.hpp"
 #include "encoder/encoder.hpp"
 #include "Architecture.hpp"
 #include "object/object.hpp"
@@ -15,10 +15,23 @@
 #include "cli/version.h"
 #include "cli/help.h"
 
+#include "arguments.hpp"
+#include "io/file.hpp"
+
 #include "Exception.hpp"
+#include "Context.hpp"
+
+int handleError(const std::exception& e) {
+    std::cerr << e.what() << std::endl;
+    return 1;
+}
 
 int main(int argc, const char *argv[])
 {
+    WarningManager warningManager;
+    Context context;
+    context.warningManager = &warningManager;
+
     std::string input_path;
     std::string output_path;
     BitMode bitMode;
@@ -27,48 +40,81 @@ int main(int argc, const char *argv[])
     Endianness endianness;
     bool debug;
 
-    if (input_path.empty())
+    // Parse arguments
+    try
     {
-        std::cerr << "Enter input file" << std::endl;
+        parseArguments(argc, argv, input_path, output_path, bitMode, arch, format, endianness, debug, context);
+        if (warningManager.hasWarnings())
+        {
+            warningManager.printAll(std::cerr);
+            warningManager.clear();
+        }
+    }
+    catch(const Exception& e)
+    {
+        e.print(std::cerr);
         return 1;
     }
-
-    if (output_path.empty())
+    catch(const std::exception& e) { handleError(e); }
+    
+    // create file handles
+    std::ifstream file;
+    std::ofstream objectFile;
+    try
     {
-        output_path = input_path + ".o";
+        file = openIfstream(input_path);
+        objectFile = openOfstream(output_path, std::ios::out | std::ios::trunc);
     }
-
-    std::ifstream file(input_path);
-    if (!file.is_open())
+    catch(const Exception& e)
     {
-        std::cerr << "Couldn't open file " << input_path << std::endl;
+        e.print(std::cerr);
         return 1;
     }
+    catch(const std::exception& e) { handleError(e); }
 
-    Parsed parsed = parseAssembly(file, bitMode);
-
-    file.close();
-
-    resolveParsed(parsed);
-
-    if (debug)
-        printParsed(parsed);
-
-    std::ofstream objectFile(output_path, std::ios::out | std::ios::trunc);
-    if (!objectFile)
+    // Parse
+    Parsed parsed;
+    try
     {
-        std::cerr << "Couldn't open file " << output_path << std::endl;
+        parsed = parseAssembly(file, bitMode, context);
+        resolveParsed(parsed, context);
+        if (debug)
+            printParsed(parsed);
+    }
+    catch(const Exception& e)
+    {
+        e.print(std::cerr);
         return 1;
     }
+    catch(const std::exception& e) { handleError(e); }
 
-    Encoded encoded = encode(parsed, arch, endianness);
+    // Encode
+    Encoded encoded;
+    try
+    {
+        encoded = encode(parsed, arch, endianness, context);
 
-    if (debug)
-        printEncoded(encoded);
+        if (debug)
+            printEncoded(encoded);
+    }
+    catch(const Exception& e)
+    {
+        e.print(std::cerr);
+        return 1;
+    }
+    catch(const std::exception& e) { handleError(e); }
 
-    createFile(format, objectFile, bitMode, arch, encoded, parsed, endianness, debug);
-
-    objectFile.close();
+    // Create .o file
+    try
+    {
+        createFile(format, objectFile, bitMode, arch, encoded, parsed, endianness, debug);
+    }
+    catch(const Exception& e)
+    {
+        e.print(std::cerr);
+        return 1;
+    }
+    catch(const std::exception& e) { handleError(e); } 
 
     return 0;
 }

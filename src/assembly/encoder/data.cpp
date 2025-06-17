@@ -1,6 +1,7 @@
 #include "data.hpp"
 
 #include <string>
+#include "../Exception.hpp"
 
 size_t evaluate(std::string value, EncodedSection& section, Encoded& encoded)
 {
@@ -10,7 +11,7 @@ size_t evaluate(std::string value, EncodedSection& section, Encoded& encoded)
     return std::stoull(value, nullptr, 0);
 }
 
-size_t encodeData(const DataDefinition& data, EncodedSection& section, Encoded& encoded, Endianness endianness)
+size_t encodeData(const DataDefinition& data, EncodedSection& section, Encoded& encoded, Endianness endianness, Context& context)
 {
     sectionBuffer& buffer = section.buffer;
     size_t bytesWritten = 0;
@@ -22,9 +23,7 @@ size_t encodeData(const DataDefinition& data, EncodedSection& section, Encoded& 
     else if (data.type == "dq" || data.type == "resq") typeSize = 8;
     else if (data.type == "dt" || data.type == "rest") typeSize = 10;
     else
-    {
-        std::cerr << "Unsupported data type (line " << data.lineNumber << "): " << data.type << std::endl;
-    }
+        throw Exception::SyntaxError("Unsoppurted data type: " + data.type, data.lineNumber);
 
     if (data.reserved)
     {
@@ -42,7 +41,7 @@ size_t encodeData(const DataDefinition& data, EncodedSection& section, Encoded& 
             if (typeSize == 10)
             {
                 // TODO: fix
-                std::cerr << "dt doesn't work yet." << std::endl;
+                context.warningManager->add(Warning::GeneralWarning("s"));
                 for (size_t i = 0; i < 10; ++i)
                     buffer.push_back(0x00);
                 bytesWritten += 10;

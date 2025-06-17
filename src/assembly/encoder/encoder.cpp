@@ -5,7 +5,9 @@
 #include "arch/arm.hpp"
 #include "arch/riscv.hpp"
 
-Encoded encode(Parsed& parsed, Architecture arch, Endianness endianness)
+#include "../Exception.hpp"
+
+Encoded encode(Parsed& parsed, Architecture arch, Endianness endianness, Context& context)
 {
     Encoded encoded;
 
@@ -37,16 +39,16 @@ Encoded encode(Parsed& parsed, Architecture arch, Endianness endianness)
                 switch (arch)
                 {
                     case Architecture::x86:
-                        currentOffset += x86::encodeInstruction(instruction, section, parsed.constants, endianness);
+                        currentOffset += x86::encodeInstruction(instruction, section, parsed.constants, endianness, context);
                         break;
                     case Architecture::ARM:
-                        currentOffset += ARM::encodeInstruction(instruction, section, parsed.constants, endianness);
+                        currentOffset += ARM::encodeInstruction(instruction, section, parsed.constants, endianness, context);
                         break;
                     case Architecture::RISC_V:
-                        currentOffset += RISC_V::encodeInstruction(instruction, section, parsed.constants, endianness);
+                        currentOffset += RISC_V::encodeInstruction(instruction, section, parsed.constants, endianness, context);
                         break;
                     default:
-                        std::cerr << "Unknown architecture (encoder)" << std::endl;
+                        throw Exception::InternalError("Unknown architecture");
                         break;
                 }
             }
@@ -62,11 +64,11 @@ Encoded encode(Parsed& parsed, Architecture arch, Endianness endianness)
                     currentOffset += padding;
                 }
 
-                currentOffset += encodeData(data, section, encoded, endianness);
+                currentOffset += encodeData(data, section, encoded, endianness, context);
             }
             else
             {
-                //TODO: error - unknown type
+                throw Exception::InternalError("Unknown type");
             }
         }
 

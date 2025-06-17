@@ -12,6 +12,15 @@ public:
     {
         ArgumentError,
         IOError,
+        ParseError,
+        SyntaxError,
+        UndefinedSymbol,
+        RedefinitionError,
+        TypeError,
+        OverflowError,
+        SemanticError,
+
+        InternalError
     };
 
     Exception(Type type, const std::string& message, int line);
@@ -24,6 +33,12 @@ public:
 
     static Exception ArgumentError(const std::string& message);
     static Exception IOError(const std::string& message);
+    static Exception ParseError(const std::string& message, int line);
+    static Exception SyntaxError(const std::string& message, int line);
+    static Exception SemanticError(const std::string& message, int line);
+    static Exception UndefinedSymbol(const std::string& message);
+    static Exception OverflowError(const std::string& message, int line);
+    static Exception InternalError(const std::string& message);
 
 private:
     Type type_;
