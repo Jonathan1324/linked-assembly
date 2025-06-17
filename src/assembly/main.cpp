@@ -1,23 +1,17 @@
 #include <iostream>
 #include <fstream>
+#include <string>
 
+#include "debug.hpp"
+#include "arguments.hpp"
 #include "parser/parser.hpp"
 #include "parser/symbol.hpp"
 #include "encoder/encoder.hpp"
-#include "Architecture.hpp"
 #include "object/object.hpp"
-
-#include "util/string.hpp"
-#include <cstring>
-
-#include "debug.hpp"
-
+#include "io/file.hpp"
 #include "cli/version.h"
 #include "cli/help.h"
-
-#include "arguments.hpp"
-#include "io/file.hpp"
-
+#include "Architecture.hpp"
 #include "Exception.hpp"
 #include "Context.hpp"
 
