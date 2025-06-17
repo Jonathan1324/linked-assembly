@@ -2,7 +2,7 @@
 
 #include "Exception.hpp"
 
-#include "../version.h"
+#include <version.h>
 #include "util/string.hpp"
 
 #include "cli/version.h"

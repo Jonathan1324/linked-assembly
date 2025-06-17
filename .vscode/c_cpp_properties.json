@@ -3,15 +3,14 @@
         {
             "name": "Mac",
             "includePath": [
-                "${workspaceFolder}/src/assembly",
+                "${workspaceFolder}/src/lib",
                 "${workspaceFolder}/**"
             ],
             "defines": [],
             "compilerPath": "/usr/bin/clang",
             "cStandard": "c17",
             "cppStandard": "c++17",
-            "intelliSenseMode": "macos-clang-arm64",
-            "configurationProvider": "ms-vscode.makefile-tools"
+            "intelliSenseMode": "macos-clang-arm64"
         }
     ],
     "version": 4

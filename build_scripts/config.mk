@@ -8,19 +8,24 @@ ASFLAGS =
 
 CC = gcc
 CXX = g++
+AR = ar
+RANLIB = ranlib
+
+ARFLAGS = r
 
 # Debug-Flag: 1 = Debug, 0 = Release
 DEBUG ?= 0
 
 # Basis-Flags
+INCLUDE_FLAGS = -I$(abspath src/lib/)
 COMMON_WARNINGS = -Wall -Wextra
 OPT_FLAGS = -O2
 DEBUG_FLAGS = -g
 RELEASE_FLAGS = -DNDEBUG -flto
 SECURITY_FLAGS = -fstack-protector-strong -D_FORTIFY_SOURCE=2 -fPIC
 
-CFLAGS = $(COMMON_WARNINGS)
-CXXFLAGS = -std=c++17 $(COMMON_WARNINGS)
+CFLAGS = $(INCLUDE_FLAGS) $(COMMON_WARNINGS)
+CXXFLAGS = $(INCLUDE_FLAGS) -std=c++17 $(COMMON_WARNINGS)
 
 ifeq (${DEBUG},1)
 	CFLAGS += $(DEBUG_FLAGS)

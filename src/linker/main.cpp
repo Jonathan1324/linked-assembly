@@ -9,7 +9,7 @@
 #include "cli/version.h"
 #include "cli/help.h"
 
-#include "../version.h"
+#include <version.h>
 
 int main(int argc, const char *argv[])
 {

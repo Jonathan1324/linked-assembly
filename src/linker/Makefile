@@ -20,6 +20,7 @@ TARGET = $(BUILD_DIR)/linker$(EXE_EXT)
 
 CFLAGS	 += -I$(SRC_DIR)
 CXXFLAGS += -I$(SRC_DIR)
+LDFLAGS  += -L$(LIB_DIR) -l$(LIB)
 
 
 .PHONY: all clean
@@ -45,7 +46,7 @@ $(BUILD_DIR)/%.asm.o: $(SRC_DIR)/%.asm
 	@$(AS) $(ASFLAGS) -MD -MF $(@:.o=.d) -o $@ $<
 
 # link files
-$(TARGET): $(C_OBJS) $(CPP_OBJS) $(ASM_OBJS)
+$(TARGET): $(C_OBJS) $(CPP_OBJS) $(ASM_OBJS) $(LIB_DIR)/lib$(LIB).a
 	@echo "Linking " $@
 	@$(CXX) $(CXXFLAGS) $(LDFLAGS) -o $@ $^
 

@@ -15,12 +15,12 @@ ASM_OBJS = $(patsubst %.asm, $(BUILD_DIR)/%.asm.o, $(ASM_SRCS))
 
 DEPS := $(C_OBJS:.o=.d) $(CPP_OBJS:.o=.d) $(ASM_OBJS:.o=.d)
 
-TARGET = $(BUILD_DIR)/assembly$(EXE_EXT)
+TARGET = $(BUILD_DIR)/lib$(LIB).a
 
 
 CFLAGS	 += -I$(SRC_DIR)
 CXXFLAGS += -I$(SRC_DIR)
-LDFLAGS  += -L$(LIB_DIR) -l$(LIB)
+
 
 .PHONY: all clean
 
@@ -44,10 +44,11 @@ $(BUILD_DIR)/%.asm.o: $(SRC_DIR)/%.asm
 	@mkdir -p $(dir $@)
 	@$(AS) $(ASFLAGS) -MD -MF $(@:.o=.d) -o $@ $<
 
-# link files
-$(TARGET): $(C_OBJS) $(CPP_OBJS) $(ASM_OBJS) $(LIB_DIR)/lib$(LIB).a
-	@echo "Linking " $@
-	@$(CXX) $(CXXFLAGS) $(LDFLAGS) -o $@ $^
+# Create static library
+$(TARGET): $(C_OBJS) $(CPP_OBJS) $(ASM_OBJS)
+	@echo "Creating static library " $@
+	@$(AR) $(ARFLAGS) $@ $^
+	@$(RANLIB) $@
 
 -include $(DEPS)
 
