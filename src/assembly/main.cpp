@@ -43,7 +43,9 @@ int main(int argc, const char *argv[])
     // Parse arguments
     try
     {
-        parseArguments(argc, argv, input_path, output_path, bitMode, arch, format, endianness, debug, context);
+        bool stop = parseArguments(argc, argv, input_path, output_path, bitMode, arch, format, endianness, debug, context);
+        if (stop)
+            return 0;
         if (warningManager.hasWarnings())
         {
             warningManager.printAll(std::cerr);

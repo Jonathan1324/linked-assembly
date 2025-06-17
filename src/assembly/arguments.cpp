@@ -8,7 +8,7 @@
 #include "cli/version.h"
 #include "cli/help.h"
 
-void parseArguments(int argc, const char *argv[],
+bool parseArguments(int argc, const char *argv[],
                     std::string& input, std::string& output,
                     BitMode& bits, Architecture& arch, Format& format,
                     Endianness& endianness, bool& debug,
@@ -53,12 +53,12 @@ void parseArguments(int argc, const char *argv[],
     if (strcmp(argv[1], "--version") == 0 || strcmp(argv[1], "-v") == 0)
     {
         printVersion(VERSION);
-        return;
+        return true;
     }
     else if (strcmp(argv[1], "--help") == 0 || strcmp(argv[1], "-h") == 0)
     {
         printHelp();
-        return;
+        return true;
     }
     
     debug = false;
@@ -185,4 +185,6 @@ void parseArguments(int argc, const char *argv[],
     {
         output = input + ".o";
     }
+
+    return false;
 }
