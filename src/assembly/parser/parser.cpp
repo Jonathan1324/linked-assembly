@@ -6,6 +6,9 @@
 
 Parsed parseAssembly(std::istream& input, BitMode bits, Context& context)
 {
+    //TODO
+    (void)context;
+    
     Parsed parsed;
 
     parsed.sections.push_back(Section{".text", {}, {}});

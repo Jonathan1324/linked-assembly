@@ -4,6 +4,8 @@
 
 void resolveParsed(Parsed& parsed, Context& context)
 {
+    //TODO
+    (void)context;
     for (const auto& sym : parsed.globals) {
         bool found = false;
         for (auto& section : parsed.sections)

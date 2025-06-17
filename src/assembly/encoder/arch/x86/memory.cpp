@@ -8,6 +8,7 @@ namespace x86 {
         {
             MemoryOperand memOp;
 
+            (void)input;
             //TODO
             memOp.label = "data2";
 

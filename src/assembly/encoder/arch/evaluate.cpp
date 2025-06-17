@@ -32,6 +32,9 @@ unsigned long long evaluate(std::string str, std::unordered_map<std::string, std
             return 0;
         }
     }
+
+    //TODO: floating point
+    (void)floatingPoint;
     
     size_t pos = 0;
     try

@@ -26,10 +26,10 @@ namespace ELF {
                 break;
         }
 
-        if (endianness == Endianness::Little)
-            header.Endianness = HEndianness::LittleEndian;
-        else
+        if (endianness == Endianness::Big)
             header.Endianness = HEndianness::BigEndian;
+        else
+            header.Endianness = HEndianness::LittleEndian;
         header.HeaderVersion = 1;
         header.ABI = 0;
         header.ABIVersion = 0;
@@ -90,8 +90,11 @@ namespace ELF {
         return header;
     }
 
-    Data create(BitMode bits, Architecture arch, Endianness endianness, Encoded encoded, Parsed parsed)
+    Data create(BitMode bits, Architecture arch, Endianness endianness, Encoded encoded, Parsed parsed, Context& context)
     {
+        //TODO
+        (void)context;
+
         Data data;
         data.header = createHeader(bits, arch, endianness);
 
@@ -634,8 +637,10 @@ namespace ELF {
     }
 
 
-    uint64_t writeHeader(std::ofstream& out, const Header& header, Endianness endianness)
+    uint64_t writeHeader(std::ofstream& out, const Header& header, Endianness endianness, Context& context)
     {
+        //TODO
+        (void)context;
         uint64_t offset = 0;
 
         Endian::write(out, header.Magic, 4, endianness);
@@ -691,9 +696,9 @@ namespace ELF {
         return offset;
     }
 
-    void write(std::ofstream& out, Endianness endianness, Data& data)
+    void write(std::ofstream& out, Endianness endianness, Data& data, Context& context)
     {
-        uint64_t offset = writeHeader(out, data.header, endianness);
+        uint64_t offset = writeHeader(out, data.header, endianness, context);
 
         std::unordered_map<std::string, uint64_t> offsets;
 
@@ -743,6 +748,6 @@ namespace ELF {
         }
 
         out.seekp(0, std::ios::beg);
-        writeHeader(out, data.header, endianness);
+        writeHeader(out, data.header, endianness, context);
     }
 };

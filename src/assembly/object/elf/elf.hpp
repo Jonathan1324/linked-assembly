@@ -167,6 +167,6 @@ namespace ELF {
         std::vector<ELFSection> sections;
     };
 
-    Data create(BitMode bits, Architecture arch, Endianness endianness, Encoded encoded, Parsed parsed);
-    void write(std::ofstream& out, Endianness endianness, Data& data);
+    Data create(BitMode bits, Architecture arch, Endianness endianness, Encoded encoded, Parsed parsed, Context& context);
+    void write(std::ofstream& out, Endianness endianness, Data& data, Context& context);
 }

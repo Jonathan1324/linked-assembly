@@ -153,6 +153,7 @@ namespace ELF {
 namespace MACHO {
     void print(const Data& data)
     {
+        (void)data;
         //TODO
     }
 }
@@ -160,6 +161,7 @@ namespace MACHO {
 namespace COFF {
     void print(const Data& data)
     {
+        (void)data;
         //TODO
     }
 }

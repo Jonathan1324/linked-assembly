@@ -107,7 +107,7 @@ int main(int argc, const char *argv[])
     // Create .o file
     try
     {
-        createFile(format, objectFile, bitMode, arch, encoded, parsed, endianness, debug);
+        createFile(format, objectFile, bitMode, arch, encoded, parsed, endianness, context, debug);
     }
     catch(const Exception& e)
     {

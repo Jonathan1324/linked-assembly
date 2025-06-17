@@ -68,7 +68,7 @@ namespace x86 {
 
         if (offset <= 0)
         {
-            throw Exception::InternalError("Error on line " + instr.lineNumber);
+            throw Exception::InternalError("Error on line " + std::to_string(instr.lineNumber));
             return 0;
         }
 

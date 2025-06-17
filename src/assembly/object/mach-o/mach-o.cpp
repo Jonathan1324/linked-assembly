@@ -24,12 +24,7 @@ namespace MACHO {
                     std::memcpy(header.magic, Magic::Magic64, 4);
                 break;
             default:
-                //TODO
-                if (endianness == Endianness::Little)
-                    std::memcpy(header.magic, Magic::Cigam64, 4);
-                else
-                    std::memcpy(header.magic, Magic::Magic64, 4);
-                break;
+                throw Exception::InternalError("Unknown bits");
         }
 
         switch (arch)
@@ -64,19 +59,25 @@ namespace MACHO {
         return header;
     }
 
-    Data create(BitMode bits, Architecture arch, Endianness endianness, Encoded encoded, Parsed parsed)
+    Data create(BitMode bits, Architecture arch, Endianness endianness, Encoded encoded, Parsed parsed, Context& context)
     {
         Data data;
         data.header = createHeader(bits, arch, endianness);
-        
-        data.header.commandCount;   //TODO
-        data.header.commandSize;    //TODO
+
+        (void)encoded;
+        (void)parsed;
+        (void)context;
+        (void)data.header.commandCount;   //TODO
+        (void)data.header.commandSize;    //TODO
 
         return data;
     }
 
-    uint64_t writeHeader(std::ofstream& out, Endianness endianness, const Header& header)
+    uint64_t writeHeader(std::ofstream& out, Endianness endianness, const Header& header, Context& context)
     {
+        //TODO
+        (void)context;
+
         Endian::write(out, header.magic, 4, endianness);
         
         Endian::write(out, static_cast<uint32_t>(header.cpuType), endianness);
@@ -98,8 +99,10 @@ namespace MACHO {
             return sizeof(Header) - 4;
     }
 
-    void write(std::ofstream& out, Endianness endianness, Data& data)
+    void write(std::ofstream& out, Endianness endianness, Data& data, Context& context)
     {
-        uint64_t offset = writeHeader(out, endianness, data.header);
+        uint64_t offset = writeHeader(out, endianness, data.header, context);
+
+        (void)offset;
     }
 }
