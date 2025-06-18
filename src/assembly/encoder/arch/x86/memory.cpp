@@ -11,7 +11,7 @@ namespace x86 {
 
             (void)input;
             //TODO
-            memOp.label = "data2";
+            memOp.label = "label2";
 
             return memOp;
         }
