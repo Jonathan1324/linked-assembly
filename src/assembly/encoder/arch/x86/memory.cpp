@@ -24,8 +24,7 @@ namespace x86 {
                 return Memory::None;
 
             // Lowercase copy of op to do case-insensitive prefix matching
-            std::string lowerOp = op;
-            std::transform(lowerOp.begin(), lowerOp.end(), lowerOp.begin(), [](unsigned char c){ return std::tolower(c); });
+            std::string lowerOp = toLower(op);
 
             // Look for size prefixes before the first '['
             size_t bracketPos = lowerOp.find('[');

@@ -1,7 +1,7 @@
 #include "arguments.hpp"
 
+#include <cstring>
 #include <Exception.hpp>
-
 #include <version.h>
 #include <util/string.hpp>
 
