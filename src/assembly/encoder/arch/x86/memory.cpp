@@ -1,6 +1,7 @@
 #include "memory.hpp"
 
 #include <iostream>
+#include <util/string.hpp>
 
 namespace x86 {
     namespace bits32 {

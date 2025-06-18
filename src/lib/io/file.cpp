@@ -1,6 +1,6 @@
 #include "file.hpp"
 
-#include "../Exception.hpp"
+#include <Exception.hpp>
 #include <cstdio>
 
 std::ifstream openIfstream(const std::string& path)

@@ -1,4 +1,4 @@
-name: build-test
+name: build-test-ubuntu
 
 on:
   workflow_dispatch:

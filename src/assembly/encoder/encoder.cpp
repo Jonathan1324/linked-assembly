@@ -5,7 +5,7 @@
 #include "arch/arm.hpp"
 #include "arch/riscv.hpp"
 
-#include "../Exception.hpp"
+#include <Exception.hpp>
 
 Encoded encode(Parsed& parsed, Architecture arch, Endianness endianness, Context& context)
 {

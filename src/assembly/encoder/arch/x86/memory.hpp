@@ -4,7 +4,6 @@
 #include <string>
 #include <cstdbool>
 #include <cstdint>
-#include "../../../util/string.hpp"
 
 namespace x86 {
     namespace bits32 {

@@ -1,7 +1,7 @@
 #include "mov.hpp"
 
 #include "../evaluate.hpp"
-#include "../../../util/string.hpp"
+#include <util/string.hpp>
 #include "registers.hpp"
 #include "memory.hpp"
 

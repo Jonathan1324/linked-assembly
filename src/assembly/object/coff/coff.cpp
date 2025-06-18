@@ -1,6 +1,6 @@
 #include "coff.hpp"
 
-#include "../../util/buffer.hpp"
+#include <util/string.hpp>
 
 namespace COFF {
     Data create(BitMode bits, Architecture arch, Endianness endianness, Encoded encoded, Parsed parsed, Context& context)
