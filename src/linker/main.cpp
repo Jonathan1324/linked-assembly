@@ -111,5 +111,7 @@ int main(int argc, const char *argv[])
 
     outputFile.close();
 
+    std::cout << "Linker not implemented yet. ):" << std::endl;
+
     return 0;
 }
