@@ -1,8 +1,8 @@
 #include "parser.hpp"
-#include "../util/string.hpp"
+#include <util/string.hpp>
 
 #include <algorithm>
-#include "../Exception.hpp"
+#include <Exception.hpp>
 
 Parsed parseAssembly(std::istream& input, BitMode bits, Context& context)
 {

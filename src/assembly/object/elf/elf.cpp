@@ -3,7 +3,7 @@
 #include "relocation.hpp"
 #include "symbols.hpp"
 
-#include "../../util/buffer.hpp"
+#include <util/string.hpp>
 #include "util.hpp"
 #include "flags.hpp"
 

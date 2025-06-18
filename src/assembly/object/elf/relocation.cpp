@@ -1,5 +1,5 @@
 #include "relocation.hpp"
-#include "../../util/buffer.hpp"
+#include <util/string.hpp>
 
 namespace ELF {
     sectionBuffer encodeRelocations(std::vector<Relocation> relocations, HBitness bits, Endianness endianness, std::unordered_map<std::string, size_t> labelIndexes)

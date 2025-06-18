@@ -1,7 +1,7 @@
 #include "data.hpp"
 
 #include <string>
-#include "../Exception.hpp"
+#include <Exception.hpp>
 
 size_t evaluate(std::string value, EncodedSection& section, Encoded& encoded)
 {

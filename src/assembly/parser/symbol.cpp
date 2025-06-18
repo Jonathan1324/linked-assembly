@@ -1,6 +1,6 @@
 #include "symbol.hpp"
 
-#include "../Exception.hpp"
+#include <Exception.hpp>
 
 void resolveParsed(Parsed& parsed, Context& context)
 {

@@ -18,7 +18,7 @@ jobs:
           sudo apt-get install -y build-essential nasm
 
       - name: Build the project
-        run: make
+        run: make DEBUG=1
         shell: bash
 
       - name: Upload build artifact

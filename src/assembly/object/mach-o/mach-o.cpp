@@ -1,6 +1,6 @@
 #include "mach-o.hpp"
 
-#include "../../util/buffer.hpp"
+#include <util/string.hpp>
 #include <cstring>
 
 namespace MACHO {

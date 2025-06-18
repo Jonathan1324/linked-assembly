@@ -1,9 +1,9 @@
 #include "arguments.hpp"
 
-#include "Exception.hpp"
-
-#include "../version.h"
-#include "util/string.hpp"
+#include <cstring>
+#include <Exception.hpp>
+#include <version.h>
+#include <util/string.hpp>
 
 #include "cli/version.h"
 #include "cli/help.h"

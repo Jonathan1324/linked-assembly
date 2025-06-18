@@ -7,6 +7,7 @@
 #include "../debug.hpp"
 
 #include <variant>
+#include <Exception.hpp>
 
 void createFile(Format& format, std::ofstream& out, BitMode& bitMode,
                 Architecture& architecture, Encoded& encoded, Parsed& parsed,
@@ -34,7 +35,7 @@ void createFile(Format& format, std::ofstream& out, BitMode& bitMode,
                 COFF::print(std::get<COFF::Data>(data));
             break;
         default:
-            std::cerr << "Unknown format" << std::endl;
+            throw Exception::InternalError("Unknown format");
             break;
     }
 }
