@@ -31,15 +31,15 @@ Provide a minimal example or commands to reproduce the issue:
 
 ```
 
-1. Write this assembly code:
-
-   ```
-   mov eax, 1
-   int 0x80
-   ```
-2. Assemble: `asm -o out.o test.asm`
-3. Link: `linker out.o -o test`
-4. Observe the error
+    1. Write this assembly code:
+    
+        ```
+        mov eax, 1
+        int 0x80
+        ```
+    2. Assemble: `asm -o out.o test.asm`
+    3. Link: `linker out.o -o test`
+    4. Computer starts burning
 
 ```
 
