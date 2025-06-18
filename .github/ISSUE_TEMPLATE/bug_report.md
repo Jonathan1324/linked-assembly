@@ -1,5 +1,5 @@
 ---
-name: 🐛 Bug Report
+name: Bug Report
 about: Report a reproducible bug in the assembler/linker
 title: "[Bug]: "
 labels: bug
