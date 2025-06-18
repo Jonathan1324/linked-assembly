@@ -1,0 +1,124 @@
+name: Bug Report
+description: Report a reproducible bug or unexpected behavior
+title: "[Bug]: "
+labels: [bug]
+assignees: []
+
+body:
+  - type: markdown
+    attributes:
+      value: |
+        Thank you for taking the time to report a bug!  
+        Please fill out the following information as clearly and completely as possible to help us resolve the issue faster.
+
+  - type: input
+    id: environment
+    attributes:
+      label: Host Environment
+      description: Describe the system where the assembler/linker was run.
+      placeholder: e.g. Ubuntu 24.04, macOS 14, Windows 11, WSL2
+    validations:
+      required: true
+
+  - type: input
+    id: version
+    attributes:
+      label: Version
+      description: Version or commit hash of the assembler/linker.
+      placeholder: e.g. v1.4.2 or commit hash (abc1234)
+    validations:
+      required: true
+
+  - type: textarea
+    id: target_arch
+    attributes:
+      label: Target Architecture & Format
+      description: Specify the architecture and output format used.
+      placeholder: e.g. x86_64 ELF, ARM64 Mach-O, RISC-V flat binary
+    validations:
+      required: true
+
+  - type: textarea
+    id: description
+    attributes:
+      label: Bug Description
+      description: A clear and concise description of what the bug is.
+      placeholder: What were you trying to do, and what went wrong?
+    validations:
+      required: true
+
+  - type: textarea
+    id: reproduction
+    attributes:
+      label: Steps to Reproduce
+      description: Provide a minimal example (code or command) that triggers the bug.
+      placeholder: |
+        1. Write this assembly:
+           ```
+           mov eax, 1
+           int 0x80
+           ```
+        2. Run: `assembly -o out.o test.asm`
+        3. Link: `linker out.o -o test`
+        4. Computer starts burning
+    validations:
+      required: true
+
+  - type: textarea
+    id: expected
+    attributes:
+      label: Expected Behavior
+      description: What should have happened instead?
+      placeholder: The file should link successfully and produce a valid ELF executable.
+
+  - type: textarea
+    id: actual
+    attributes:
+      label: Actual Behavior / Error Message
+      description: Describe the observed result. Include full error messages.
+      placeholder: e.g. "Error: unresolved symbol '_start' in test.asm line 1"
+
+  - type: textarea
+    id: files
+    attributes:
+      label: Source Files (if applicable)
+      description: Paste short example code inline, or upload test cases as attachments.
+      placeholder: Use fenced code blocks or attach `.asm`, `.o`, etc.
+
+  - type: textarea
+    id: logs
+    attributes:
+      label: Command Output / Logs
+      description: Output from your terminal or build system.
+      placeholder: |
+        ```
+        $ asm -o test.o test.asm
+        Assembling...
+        Error: invalid opcode on line 2
+        ```
+
+  - type: checkboxes
+    id: regression
+    attributes:
+      label: Is this a regression?
+      description: Did the bug appear after a recent change?
+      options:
+        - label: Yes, it worked in a previous version
+        - label: No, this never worked
+        - label: Not sure
+
+  - type: input
+    id: related_issues
+    attributes:
+      label: Related Issues or PRs
+      description: List related reports or relevant commits/PRs
+      placeholder: e.g. #42, #105, commit abc1234
+
+  - type: checkboxes
+    id: final_checks
+    attributes:
+      label: Final Checks
+      options:
+        - label: I verified this is not a duplicate
+        - label: I provided enough information to reproduce the issue
+        - label: I included code snippets or input files if relevant
