@@ -1,11 +1,11 @@
 #pragma once
 
-#ifdef __cplusplus
-extern "C" {
-#endif
+#include "cpp/cpp.h"
+
+HCB
 
 #define VERSION "v0.1.0-alpha"
 
-#ifdef __cplusplus
-}
-#endif
+void printVersion(const char* version);
+
+HCE

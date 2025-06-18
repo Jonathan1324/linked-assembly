@@ -5,7 +5,6 @@
 #include <version.h>
 #include <util/string.hpp>
 
-#include "cli/version.h"
 #include "cli/help.h"
 
 bool parseArguments(int argc, const char *argv[],

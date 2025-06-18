@@ -6,7 +6,6 @@
 
 #include "architecture/architecture.hpp"
 
-#include "cli/version.h"
 #include "cli/help.h"
 
 #include <version.h>
