@@ -1,4 +1,4 @@
-name: build-test-windows
+name: build-test-macos
 
 on:
   workflow_dispatch:
