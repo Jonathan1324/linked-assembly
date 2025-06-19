@@ -3,6 +3,19 @@
 section .text
 global _start
 _start:
-    mov eax, ebx
-    mov edx, ebx
-    mov ecx, esp
+    push 0x1234
+    push eax
+    push ax
+    push es
+    push cs
+    push ss
+    push ds
+    push fs
+    push gs
+    pop ebx
+    pop bx
+    pop es
+    pop ss
+    pop ds
+    pop fs
+    pop gs

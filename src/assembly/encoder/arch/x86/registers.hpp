@@ -77,6 +77,8 @@ namespace x86 {
     }
 
     namespace bits32 {
+        constexpr const uint8_t prefix16 = 0x66;
+        
         static const std::unordered_map<std::string, uint32_t> registers = 
         {
             {"eax", 0x0},
