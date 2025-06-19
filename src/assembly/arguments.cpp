@@ -187,7 +187,10 @@ bool parseArguments(int argc, const char *argv[],
 
     if (output.empty())
     {
-        output = input + ".o";
+        if (format == Format::Binary)
+            output = input + ".bin";
+        else
+            output = input + ".o";
     }
 
     return false;

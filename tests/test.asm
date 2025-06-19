@@ -20,3 +20,12 @@ _start:
     mov bp, 1000
     mov si, 9999
     mov di, 5
+
+    mov ah, 0x01
+    mov al, 0x23
+    mov bh, 0x45
+    mov bl, 0x67
+    mov ch, 0x89
+    mov cl, 0xab
+    mov dh, 0xcd
+    mov dl, 0xef
