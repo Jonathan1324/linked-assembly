@@ -79,7 +79,10 @@ namespace ELF {
 
         header.setSectionHeaderTablePosition(0);
 
-        header.HeaderSize = sizeof(Header);
+        if (bits == BitMode::Bits64)
+            header.HeaderSize = 0x40;
+        else
+            header.HeaderSize = 0x34;
 
         header.ProgramHeaderTableEntrySize = 0;
         header.ProgramHeaderTableEntryCount = 0;
@@ -120,6 +123,11 @@ namespace ELF {
         dummy2.buffer = {};
         dummy2.header = dummyHeader64;
 
+        ELFSection dummy3;
+        dummy2.name = "dummy3";
+        dummy2.buffer = {};
+        dummy2.header = dummyHeader64;
+
         ELFSection nullSection;
         nullSection.name = "";
         nullSection.buffer = {};
@@ -138,12 +146,6 @@ namespace ELF {
         }
 
         data.sections.push_back(std::move(nullSection));  // Index 0
-        data.sections.push_back(std::move(dummy1));       // Index 1
-        data.sections.push_back(std::move(dummy2));       // Index 2
-
-
-        uint32_t symtabIndex = 1;
-        uint32_t strtabIndex = 2;
 
         ELFSection symtab;
         symtab.name = ".symtab";
@@ -155,21 +157,6 @@ namespace ELF {
         
         if (data.header.Bitness == HBitness::Bits64)
         {
-            SectionHeader64 header;
-
-            header.offsetInSectionNameStringTable = 0;
-            header.Type = SectionType::SymTab;
-            header.Flags = 0;
-            header.virtualAddress = 0;
-            header.fileOffset = 0;
-            header.sectionSize = 0;
-            header.linkIndex = strtabIndex;
-            header.info = 0;
-            header.addressAlignment = 8;
-            header.entrySize = sizeof(Sym64);
-
-            symtab.header = header;
-
             Sym64 nullSym = {0, 0, 0, 0, 0, 0};
             localSymbolCount++;
 
@@ -182,21 +169,6 @@ namespace ELF {
         }
         else
         {
-            SectionHeader32 header;
-
-            header.offsetInSectionNameStringTable = 0;
-            header.Type = SectionType::SymTab;
-            header.Flags = 0;
-            header.virtualAddress = 0;
-            header.fileOffset = 0;
-            header.sectionSize = 0;
-            header.linkIndex = strtabIndex;
-            header.info = 0;
-            header.addressAlignment = 4;
-            header.entrySize = sizeof(Sym32);
-
-            symtab.header = header;
-
             Sym32 nullSym = {0, 0, 0, 0, 0, 0};
             localSymbolCount++;
             
@@ -216,54 +188,116 @@ namespace ELF {
         std::unordered_map<std::string, size_t> localLabelIndexes;
         std::unordered_map<std::string, size_t> globalLabelIndexes;
 
-        for (const auto& externSymbol : parsed.externs)
+        std::unordered_map<std::string, size_t> sectionIndexes;
+
+        uint32_t nameOffset = strtab.buffer.size();
+        strtab.buffer.insert(strtab.buffer.end(), context.filename.begin(), context.filename.end());
+        strtab.buffer.push_back('\0');
+
+        // Write filename to symtab
+        if (data.header.Bitness == HBitness::Bits64)
         {
-            uint32_t offsetInStrtab = strtab.buffer.size();
-            strtab.buffer.insert(strtab.buffer.end(), externSymbol.begin(), externSymbol.end());
+            Sym64 sym;
+            sym.nameOffset = nameOffset;
+            sym.info = makeSymbolInfo(SymbolBind::local, SymbolType::file);
+            sym.other = 0;
+            sym.sectionIndex = (uint16_t)SectionIndex::ABSOLUTE;
+            sym.value = 0;
+            sym.size = 0;
+
+            localLabelIndexes[context.filename] = localSymbolCount;
+            localSymbolCount++;
+            Endian::write(localSymtabBuffer, sym.nameOffset, endianness);
+            Endian::write(localSymtabBuffer, sym.info, endianness);
+            Endian::write(localSymtabBuffer, sym.other, endianness);
+            Endian::write(localSymtabBuffer, sym.sectionIndex, endianness);
+            Endian::write(localSymtabBuffer, sym.value, endianness);
+            Endian::write(localSymtabBuffer, sym.size, endianness);
+        }
+        else
+        {
+            Sym32 sym;
+            sym.nameOffset = nameOffset;
+            sym.info = makeSymbolInfo(SymbolBind::local, SymbolType::file);
+            sym.other = 0;
+            sym.sectionIndex = (uint16_t)SectionIndex::ABSOLUTE;
+            sym.value = 0;
+            sym.size = 0;
+
+            localLabelIndexes[context.filename] = localSymbolCount;
+            localSymbolCount++;
+            Endian::write(localSymtabBuffer, sym.nameOffset, endianness);
+            Endian::write(localSymtabBuffer, sym.value, endianness);
+            Endian::write(localSymtabBuffer, sym.size, endianness);
+            Endian::write(localSymtabBuffer, sym.info, endianness);
+            Endian::write(localSymtabBuffer, sym.other, endianness);
+            Endian::write(localSymtabBuffer, sym.sectionIndex, endianness);
+        }
+
+        // Get sections
+        for (const auto& [name, section] : encoded.sections)
+        {
+            ELFSection elfsection;
+
+            uint32_t nameOffset = strtab.buffer.size();
+            strtab.buffer.insert(strtab.buffer.end(), section.name.begin(), section.name.end());
             strtab.buffer.push_back('\0');
 
-            globalLabelIndexes[externSymbol] = globalSymbolCount;
+            uint16_t sectionIndex = data.sections.size();
 
             if (data.header.Bitness == HBitness::Bits64)
             {
                 Sym64 sym;
-                sym.nameOffset = offsetInStrtab;
-                sym.info = makeSymbolInfo(SymbolBind::global, SymbolType::notype);
+                sym.nameOffset = nameOffset;
+                sym.info = makeSymbolInfo(SymbolBind::local, SymbolType::section);
                 sym.other = 0;
-                sym.sectionIndex = (uint16_t)SectionIndex::UNDEFINED;
+                sym.sectionIndex = sectionIndex;
                 sym.value = 0;
                 sym.size = 0;
 
-                globalSymbolCount++;
-                Endian::write(globalSymtabBuffer, sym.nameOffset, endianness);
-                Endian::write(globalSymtabBuffer, sym.info, endianness);
-                Endian::write(globalSymtabBuffer, sym.other, endianness);
-                Endian::write(globalSymtabBuffer, sym.sectionIndex, endianness);
-                Endian::write(globalSymtabBuffer, sym.value, endianness);
-                Endian::write(globalSymtabBuffer, sym.size, endianness);
+                localLabelIndexes[section.name] = localSymbolCount;
+                localSymbolCount++;
+                Endian::write(localSymtabBuffer, sym.nameOffset, endianness);
+                Endian::write(localSymtabBuffer, sym.info, endianness);
+                Endian::write(localSymtabBuffer, sym.other, endianness);
+                Endian::write(localSymtabBuffer, sym.sectionIndex, endianness);
+                Endian::write(localSymtabBuffer, sym.value, endianness);
+                Endian::write(localSymtabBuffer, sym.size, endianness);
             }
             else
             {
                 Sym32 sym;
-                sym.nameOffset = offsetInStrtab;
-                sym.info = makeSymbolInfo(SymbolBind::global, SymbolType::notype);;
+                sym.nameOffset = nameOffset;
+                sym.info = makeSymbolInfo(SymbolBind::local, SymbolType::section);
                 sym.other = 0;
-                sym.sectionIndex = (uint16_t)SectionIndex::UNDEFINED;
+                sym.sectionIndex = sectionIndex;
                 sym.value = 0;
                 sym.size = 0;
 
-                globalSymbolCount++;
-                Endian::write(globalSymtabBuffer, sym.nameOffset, endianness);
-                Endian::write(globalSymtabBuffer, sym.value, endianness);
-                Endian::write(globalSymtabBuffer, sym.size, endianness);
-                Endian::write(globalSymtabBuffer, sym.info, endianness);
-                Endian::write(globalSymtabBuffer, sym.other, endianness);
-                Endian::write(globalSymtabBuffer, sym.sectionIndex, endianness);
+                localLabelIndexes[section.name] = localSymbolCount;
+                localSymbolCount++;
+                Endian::write(localSymtabBuffer, sym.nameOffset, endianness);
+                Endian::write(localSymtabBuffer, sym.value, endianness);
+                Endian::write(localSymtabBuffer, sym.size, endianness);
+                Endian::write(localSymtabBuffer, sym.info, endianness);
+                Endian::write(localSymtabBuffer, sym.other, endianness);
+                Endian::write(localSymtabBuffer, sym.sectionIndex, endianness);
             }
+
+            sectionIndexes[section.name] = data.sections.size();
+            data.sections.push_back(std::move(elfsection));
         }
 
-        std::unordered_map<std::string, size_t> sectionIndexes;
+        uint32_t shstrtabIndex = data.sections.size();
+        data.sections.push_back(dummy1);
 
+        uint32_t symtabIndex = data.sections.size();
+        data.sections.push_back(dummy2);
+
+        uint32_t strtabIndex = data.sections.size();
+        data.sections.push_back(dummy3);
+
+        // Get labels
         for (const auto& [name, section] : encoded.sections)
         {
             ELFSection elfsection;
@@ -283,7 +317,7 @@ namespace ELF {
                     strtab.buffer.insert(strtab.buffer.end(), label.name.begin(), label.name.end());
                     strtab.buffer.push_back('\0');
 
-                    uint16_t sectionIndex = data.sections.size();
+                    uint16_t sectionIndex = sectionIndexes[section.name];
 
                     if (data.header.Bitness == HBitness::Bits64)
                     {
@@ -400,9 +434,53 @@ namespace ELF {
                     }
                 }
             }
+        }
 
-            sectionIndexes[section.name] = data.sections.size();
-            data.sections.push_back(std::move(elfsection));
+        // Get extern symbols
+        for (const auto& externSymbol : parsed.externs)
+        {
+            uint32_t offsetInStrtab = strtab.buffer.size();
+            strtab.buffer.insert(strtab.buffer.end(), externSymbol.begin(), externSymbol.end());
+            strtab.buffer.push_back('\0');
+
+            globalLabelIndexes[externSymbol] = globalSymbolCount;
+
+            if (data.header.Bitness == HBitness::Bits64)
+            {
+                Sym64 sym;
+                sym.nameOffset = offsetInStrtab;
+                sym.info = makeSymbolInfo(SymbolBind::global, SymbolType::notype);
+                sym.other = 0;
+                sym.sectionIndex = (uint16_t)SectionIndex::UNDEFINED;
+                sym.value = 0;
+                sym.size = 0;
+
+                globalSymbolCount++;
+                Endian::write(globalSymtabBuffer, sym.nameOffset, endianness);
+                Endian::write(globalSymtabBuffer, sym.info, endianness);
+                Endian::write(globalSymtabBuffer, sym.other, endianness);
+                Endian::write(globalSymtabBuffer, sym.sectionIndex, endianness);
+                Endian::write(globalSymtabBuffer, sym.value, endianness);
+                Endian::write(globalSymtabBuffer, sym.size, endianness);
+            }
+            else
+            {
+                Sym32 sym;
+                sym.nameOffset = offsetInStrtab;
+                sym.info = makeSymbolInfo(SymbolBind::global, SymbolType::notype);;
+                sym.other = 0;
+                sym.sectionIndex = (uint16_t)SectionIndex::UNDEFINED;
+                sym.value = 0;
+                sym.size = 0;
+
+                globalSymbolCount++;
+                Endian::write(globalSymtabBuffer, sym.nameOffset, endianness);
+                Endian::write(globalSymtabBuffer, sym.value, endianness);
+                Endian::write(globalSymtabBuffer, sym.size, endianness);
+                Endian::write(globalSymtabBuffer, sym.info, endianness);
+                Endian::write(globalSymtabBuffer, sym.other, endianness);
+                Endian::write(globalSymtabBuffer, sym.sectionIndex, endianness);
+            }
         }
 
         for (const auto& [name, labelIndex] : localLabelIndexes)
@@ -415,6 +493,7 @@ namespace ELF {
             labelIndexes[name] = labelIndex + localSymbolCount;
         }
 
+        // Set values
         for (const auto& [name, section] : encoded.sections)
         {
             ELFSection elfsection;
@@ -434,13 +513,13 @@ namespace ELF {
 
                     header.offsetInSectionNameStringTable = 0;
                     header.Type = SectionType::Rela;
-                    header.Flags = 0;
+                    header.Flags = getFlags64(relocationSection.name);
                     header.virtualAddress = 0;
                     header.fileOffset = 0;
                     header.sectionSize = relocationSection.buffer.size();
                     header.linkIndex = symtabIndex;
                     header.info = (uint64_t)sectionIndexes[elfsection.name];
-                    header.addressAlignment = 8;
+                    header.addressAlignment = getAlignment64(relocationSection.name);
                     header.entrySize = sizeof(Rela64);
 
                     relocationSection.header = header;
@@ -451,13 +530,13 @@ namespace ELF {
 
                     header.offsetInSectionNameStringTable = 0;
                     header.Type = SectionType::Rela;
-                    header.Flags = 0;
+                    header.Flags = getFlags32(relocationSection.name);
                     header.virtualAddress = 0;
                     header.fileOffset = 0;
                     header.sectionSize = relocationSection.buffer.size();
                     header.linkIndex = symtabIndex;
                     header.info = (uint32_t)sectionIndexes[elfsection.name];
-                    header.addressAlignment = 4;
+                    header.addressAlignment = getAlignment32(relocationSection.name);
                     header.entrySize = sizeof(Rela32);
 
                     relocationSection.header = header;
@@ -510,13 +589,13 @@ namespace ELF {
 
             header.offsetInSectionNameStringTable = 0;
             header.Type = SectionType::StrTab;
-            header.Flags = 0;
+            header.Flags = getFlags64(strtab.name);
             header.virtualAddress = 0;
             header.fileOffset = 0;
             header.sectionSize = strtab.buffer.size();
             header.linkIndex = 0;
             header.info = 0;
-            header.addressAlignment = 1;
+            header.addressAlignment = getAlignment64(strtab.name);
             header.entrySize = 0;
 
             strtab.header = header;
@@ -527,13 +606,13 @@ namespace ELF {
 
             header.offsetInSectionNameStringTable = 0;
             header.Type = SectionType::StrTab;
-            header.Flags = 0;
+            header.Flags = getFlags32(strtab.name);
             header.virtualAddress = 0;
             header.fileOffset = 0;
             header.sectionSize = strtab.buffer.size();
             header.linkIndex = 0;
             header.info = 0;
-            header.addressAlignment = 1;
+            header.addressAlignment = getAlignment32(strtab.name);
             header.entrySize = 0;
 
             strtab.header = header;
@@ -541,6 +620,41 @@ namespace ELF {
 
         symtab.buffer = localSymtabBuffer;
         symtab.buffer.insert(symtab.buffer.end(), globalSymtabBuffer.begin(), globalSymtabBuffer.end());
+
+        if (data.header.Bitness == HBitness::Bits64)
+        {
+            SectionHeader64 header;
+
+            header.offsetInSectionNameStringTable = 0;
+            header.Type = SectionType::SymTab;
+            header.Flags = getFlags64(symtab.name);;
+            header.virtualAddress = 0;
+            header.fileOffset = 0;
+            header.sectionSize = 0;
+            header.linkIndex = strtabIndex;
+            header.info = 0;
+            header.addressAlignment = getAlignment64(symtab.name);
+            header.entrySize = sizeof(Sym64);
+
+            symtab.header = header;
+        }
+        else
+        {
+            SectionHeader32 header;
+
+            header.offsetInSectionNameStringTable = 0;
+            header.Type = SectionType::SymTab;
+            header.Flags = getFlags32(symtab.name);;
+            header.virtualAddress = 0;
+            header.fileOffset = 0;
+            header.sectionSize = 0;
+            header.linkIndex = strtabIndex;
+            header.info = 0;
+            header.addressAlignment = getAlignment32(symtab.name);
+            header.entrySize = sizeof(Sym32);
+
+            symtab.header = header;
+        }
 
         if (std::holds_alternative<SectionHeader64>(symtab.header))
         {
@@ -566,18 +680,24 @@ namespace ELF {
 
         std::unordered_map<std::string, uint32_t> nameOffsets;
 
-        // Für alle Sections (inkl. symtab, strtab, relocations...), Namen hinzufügen
-        for (const auto& section : data.sections)
+        // add names to section
+        for (size_t i = 0; i < data.sections.size(); i++)
         {
-            nameOffsets[section.name] = shstrtab.buffer.size();
-            // Namen als null-terminierte Strings anfügen
-            shstrtab.buffer.insert(shstrtab.buffer.end(), section.name.begin(), section.name.end());
-            shstrtab.buffer.push_back('\0');
+            ELFSection section = data.sections[i];
+            if (i == shstrtabIndex)
+            {
+                nameOffsets[section.name] = shstrtab.buffer.size();
+                nameOffsets[shstrtab.name] = shstrtab.buffer.size();
+                shstrtab.buffer.insert(shstrtab.buffer.end(), shstrtab.name.begin(), shstrtab.name.end());
+                shstrtab.buffer.push_back('\0');
+            }
+            else
+            {
+                nameOffsets[section.name] = shstrtab.buffer.size();
+                shstrtab.buffer.insert(shstrtab.buffer.end(), section.name.begin(), section.name.end());
+                shstrtab.buffer.push_back('\0');
+            }
         }
-
-        nameOffsets[shstrtab.name] = shstrtab.buffer.size();
-        shstrtab.buffer.insert(shstrtab.buffer.end(), shstrtab.name.begin(), shstrtab.name.end());
-        shstrtab.buffer.push_back('\0');
 
         // Jetzt setze in jedem SectionHeader das offsetInSectionNameStringTable auf den ermittelten Wert:
         for (auto& section : data.sections)
@@ -594,13 +714,13 @@ namespace ELF {
 
             header.offsetInSectionNameStringTable = nameOffsets[shstrtab.name];
             header.Type = SectionType::StrTab;
-            header.Flags = 0;
+            header.Flags = getFlags64(shstrtab.name);;
             header.virtualAddress = 0;
             header.fileOffset = 0;
             header.sectionSize = shstrtab.buffer.size();
             header.linkIndex = 0;
             header.info = 0;
-            header.addressAlignment = 1;
+            header.addressAlignment = getAlignment64(shstrtab.name);
             header.entrySize = 0;
 
             shstrtab.header = header;
@@ -611,20 +731,20 @@ namespace ELF {
 
             header.offsetInSectionNameStringTable = nameOffsets[shstrtab.name];
             header.Type = SectionType::StrTab;
-            header.Flags = 0;
+            header.Flags = getFlags32(shstrtab.name);;
             header.virtualAddress = 0;
             header.fileOffset = 0;
             header.sectionSize = shstrtab.buffer.size();
             header.linkIndex = 0;
             header.info = 0;
-            header.addressAlignment = 1;
+            header.addressAlignment = getAlignment32(shstrtab.name);
             header.entrySize = 0;
 
             shstrtab.header = header;
         }
 
-        data.header.SectionNamesIndex = data.sections.size();
-        data.sections.push_back(std::move(shstrtab));
+        data.header.SectionNamesIndex = shstrtabIndex;
+        data.sections[shstrtabIndex] = std::move(shstrtab);
 
         if (data.header.Bitness == HBitness::Bits64)
             data.header.SectionHeaderTableEntrySize = sizeof(SectionHeader64);

@@ -1,6 +1,7 @@
 #include <iostream>
 #include <fstream>
 #include <string>
+#include <filesystem>
 
 #include "debug.hpp"
 #include "arguments.hpp"
@@ -50,6 +51,8 @@ int main(int argc, const char *argv[])
         return 1;
     }
     catch(const std::exception& e) { handleError(e); }
+
+    context.filename = std::filesystem::path(input_path).filename().string();
     
     // create file handles
     std::ifstream file;

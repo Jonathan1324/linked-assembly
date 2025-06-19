@@ -1,10 +1,15 @@
 #pragma once
 
 #include <cinttypes>
+#include "../../encoder/encoder.hpp"
 
 namespace ELF {
     enum class SectionIndex : uint16_t {
-        UNDEFINED       = 0
+        UNDEFINED       = 0x0000,
+        ABSOLUTE        = 0xFFF1,
+        COMMON          = 0xFFF2,
+        LORESERVE       = 0xFF00,
+        XINDEX          = 0xFFFF
     };
 
     namespace SymbolBind {
@@ -46,4 +51,7 @@ namespace ELF {
         uint64_t value;             // Adresse oder Wert
         uint64_t size;              // Größe des Symbols
     } __attribute__((packed));
+
+    void writeSymbol(sectionBuffer buffer, Sym32 sym, Endianness endianness);
+    void writeSymbol(sectionBuffer buffer, Sym64 sym, Endianness endianness);
 }
