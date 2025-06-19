@@ -35,6 +35,17 @@ Before you submit a pull request:
 - Add support for 64 bit or 16 bit on x86
 - Add support for ARM or RISC-V
 
+## Contributor License Agreement (CLA)
+
+Before submitting a pull request, you must agree to our Contributor License Agreement (CLA).
+You will be automatically prompted to sign the CLA by our CLA Assistant when you open a PR.
+
+Please read the full CLA here: [Contributor-License-Agreement.md](https://gist.github.com/Jonathan1324/4d65f3cead742c9e4141c7961962b08e)  
+
+Please make sure to read and accept the CLA so your contribution can be reviewed and merged.
+
+*Note: Pull requests will not be merged unless the CLA has been signed.*
+
 ## Questions?
 
 If you're unsure where to start or have any questions, feel free to open an issue or discussion thread.
