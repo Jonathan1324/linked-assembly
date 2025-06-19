@@ -10,7 +10,7 @@ make
 
 This will compile the source code and produce the binary at:
 
-```
+```bash
 build/assembly/assembly
 ```
 

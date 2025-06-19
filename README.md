@@ -31,6 +31,7 @@ Build the assembler using `make`:
 ```bash
 make
 ```
+
 This will produce the binary in `build/assembly/assembly`.
 
 ## Usage

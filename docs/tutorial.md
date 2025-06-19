@@ -29,7 +29,7 @@ make
 
 This will generate the assembler binary at:
 
-```
+```bash
 build/assembly/assembly
 ```
 
@@ -62,7 +62,7 @@ echo $?
 
 It should print:
 
-```
+```bash
 42
 ```
 
