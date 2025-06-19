@@ -12,8 +12,8 @@ namespace x86 {
             uint8_t opcode = 0x8A;
             uint8_t mod = 0b11 << 6;
 
-            uint8_t reg = bits32::registers.at(toLower(dst)) << 3;
-            uint8_t rm = bits32::registers.at(toLower(src));
+            uint8_t reg = bits8::registers.at(toLower(dst)) << 3;
+            uint8_t rm = bits8::registers.at(toLower(src));
 
             buffer.push_back(opcode);
             buffer.push_back(mod | reg | rm);
@@ -45,8 +45,8 @@ namespace x86 {
             uint8_t opcode = 0x8B;
             uint8_t mod = 0b11 << 6;
             
-            uint8_t reg = bits32::registers.at(toLower(dst)) << 3;
-            uint8_t rm = bits32::registers.at(toLower(src));
+            uint8_t reg = bits16::registers.at(toLower(dst)) << 3;
+            uint8_t rm = bits16::registers.at(toLower(src));
 
             buffer.push_back(prefix);
             buffer.push_back(opcode);
@@ -80,7 +80,7 @@ namespace x86 {
         {
             uint8_t prefix = 0x66;
 
-            uint8_t reg = bits32::registers.at(toLower(dst));
+            uint8_t reg = bits16::registers.at(toLower(dst));
             uint8_t opcode = 0xB8 + reg;
 
             buffer.push_back(prefix);
