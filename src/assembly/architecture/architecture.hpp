@@ -23,6 +23,7 @@ enum class Endianness {
 };
 
 enum class Format {
+    Binary,
     ELF,
     COFF,
     MACHO,

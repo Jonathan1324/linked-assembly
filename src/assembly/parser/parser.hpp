@@ -52,6 +52,7 @@ struct Parsed {
     std::vector<std::string> globals;
     std::vector<std::string> externs;
     std::unordered_map<std::string, std::string> constants;
+    uint64_t org = 0;
 };
 
 Parsed parseAssembly(std::istream& input, BitMode bits, Context& context);

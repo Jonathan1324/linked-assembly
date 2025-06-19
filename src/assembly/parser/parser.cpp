@@ -102,6 +102,16 @@ Parsed parseAssembly(std::istream& input, BitMode bits, Context& context)
             }
         }
 
+        if (toLower(trimmed).find("org ") == 0)
+        {
+            try
+            {
+                parsed.org = std::stoull(trimmed.substr(4), nullptr, 0);
+            }
+            catch(const Exception& e) { throw e; }
+            catch(const std::exception& e) { throw e; }
+        }
+
         // Directives
         if (toLower(trimmed).find("section ") == 0)
         {

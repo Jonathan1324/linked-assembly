@@ -101,6 +101,13 @@ void printEncoded(const Encoded& encoded, int indent)
     }
 }
 
+namespace Binary {
+    void print(const Data& data)
+    {
+        std::cout << "Buffer size: " << data.buffer.size() << std::endl;
+    }
+}
+
 namespace ELF {
     void print(const Data& data)
     {

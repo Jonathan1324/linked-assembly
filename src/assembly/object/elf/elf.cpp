@@ -824,6 +824,12 @@ namespace ELF {
 
         for (const auto& section : data.sections)
         {
+            if (section.name == ".bss")
+            {
+                offsets[section.name] = 0;
+                continue;
+            }
+
             out.write(reinterpret_cast<const char*>(section.buffer.data()), section.buffer.size());
             offsets[section.name] = offset;
             offset += section.buffer.size();

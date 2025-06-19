@@ -60,7 +60,7 @@ int main(int argc, const char *argv[])
     try
     {
         file = openIfstream(input_path);
-        objectFile = openOfstream(output_path, std::ios::out | std::ios::trunc);
+        objectFile = openOfstream(output_path, std::ios::out | std::ios::trunc | std::ios::binary);
     }
     catch(const Exception& e)
     {

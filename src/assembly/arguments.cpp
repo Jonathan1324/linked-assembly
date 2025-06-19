@@ -108,7 +108,12 @@ bool parseArguments(int argc, const char *argv[],
             std::string formatStr = toLower(argv[++i]);
             formatStr = trim(formatStr);
 
-            if (formatStr.find("elf") == 0)
+            if (formatStr.find("bin") == 0
+             || formatStr.find("raw") == 0)
+            {
+                format = Format::Binary;
+            }
+            else if (formatStr.find("elf") == 0)
             {
                 format = Format::ELF;
             }

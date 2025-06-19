@@ -1,12 +1,10 @@
-section .text
-    global _start
+[BITS 32]
 
+section .text
+global _start
 _start:
-    mov eax, 4
+    mov eax, [data1]
 
 section .data
-
-extern labelExtern1
-
-label1:         dd 0x12345678
-label2:         dd 0x87654321
+data1:          dd 0x01234567
+data2:          dd 0x89abcdef

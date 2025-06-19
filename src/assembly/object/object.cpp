@@ -1,5 +1,6 @@
 #include "object.hpp"
 
+#include "binary/binary.hpp"
 #include "elf/elf.hpp"
 #include "mach-o/mach-o.hpp"
 #include "coff/coff.hpp"
@@ -13,9 +14,15 @@ void createFile(Format& format, std::ofstream& out, BitMode& bitMode,
                 Architecture& architecture, Encoded& encoded, Parsed& parsed,
                 Endianness endianness, Context& context, bool debug)
 {
-    std::variant<ELF::Data, MACHO::Data, COFF::Data> data;
+    std::variant<Binary::Data, ELF::Data, MACHO::Data, COFF::Data> data;
     switch (format)
     {
+        case Format::Binary:
+            data = Binary::create(bitMode, architecture, endianness, encoded, parsed, context);
+            Binary::write(out, endianness, std::get<Binary::Data>(data), context);
+            if (debug)
+                Binary::print(std::get<Binary::Data>(data));
+            break;
         case Format::ELF:
             data = ELF::create(bitMode, architecture, endianness, encoded, parsed, context);
             ELF::write(out, endianness, std::get<ELF::Data>(data), context);
