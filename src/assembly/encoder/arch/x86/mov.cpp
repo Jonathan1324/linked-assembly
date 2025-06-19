@@ -7,16 +7,18 @@
 
 namespace x86 {
     namespace bits32 {
+        constexpr const uint8_t prefix16 = 0x66;
+
         size_t encodeMovRegReg8(std::string src, std::string dst, sectionBuffer& buffer)
         {
-            uint8_t opcode = 0x8A;
-            uint8_t mod = 0b11 << 6;
-
-            uint8_t reg = bits8::registers.at(toLower(dst)) << 3;
-            uint8_t rm = bits8::registers.at(toLower(src));
+            uint8_t opcode = 0x88;
+            uint8_t mod = 11;   // reg to reg
+            uint8_t reg = bits8::registers.at(src);
+            uint8_t rm = bits8::registers.at(dst);
+            uint8_t modrm = (mod << 6) | (reg << 3) | rm;
 
             buffer.push_back(opcode);
-            buffer.push_back(mod | reg | rm);
+            buffer.push_back(modrm);
 
             return 2;
         }
@@ -40,34 +42,23 @@ namespace x86 {
 
         size_t encodeMovRegReg16(std::string src, std::string dst, sectionBuffer& buffer)
         {
-            uint8_t prefix = 0x66;
+            uint8_t opcode = 0x89;
+            uint8_t mod = 11;   // reg to reg
+            uint8_t reg = bits16::registers.at(src);
+            uint8_t rm = bits16::registers.at(dst);
+            uint8_t modrm = (mod << 6) | (reg << 3) | rm;
 
-            uint8_t opcode = 0x8B;
-            uint8_t mod = 0b11 << 6;
-            
-            uint8_t reg = bits16::registers.at(toLower(dst)) << 3;
-            uint8_t rm = bits16::registers.at(toLower(src));
-
-            buffer.push_back(prefix);
+            buffer.push_back(prefix16);
             buffer.push_back(opcode);
-            buffer.push_back(mod | reg | rm);
+            buffer.push_back(modrm);
 
             return 3;
         }
 
         size_t encodeMovRegSegReg16(std::string src, std::string dst, sectionBuffer& buffer)
         {
-            uint8_t sreg = bits16::segmentRegisters.at(toLower(src));
-            uint8_t reg = bits16::registers.at(toLower(dst));
-
-            uint8_t opcode = 0x8C;  // MOV r16, Sreg opcode
-            uint8_t mod = 0b11 << 6;  // Register to register
-            uint8_t modrm = mod | (sreg << 3) | reg;
-
-            buffer.push_back(opcode);
-            buffer.push_back(modrm);
-
-            return 2;
+            // TODO
+            return 0;
         }
 
         size_t encodeMovRegMem16(std::string src, std::string dst, sectionBuffer& buffer, std::vector<Relocation>& relocations, Endianness endianness)
@@ -102,17 +93,8 @@ namespace x86 {
 
         size_t encodeMovSegRegReg16(std::string src, std::string dst, sectionBuffer& buffer)
         {
-            uint8_t reg = bits16::registers.at(toLower(src));
-            uint8_t sreg  = bits16::segmentRegisters.at(toLower(dst));
-
-            uint8_t opcode = 0x8E;
-            uint8_t mod    = 0b11 << 6;
-            uint8_t modrm  = mod | (sreg << 3) | reg;
-
-            buffer.push_back(opcode);
-            buffer.push_back(modrm);
-
-            return 2;
+            // TODO
+            return 0;
         }
 
         size_t encodeMovSegRegMem16(std::string src, std::string dst, sectionBuffer& buffer, std::vector<Relocation>& relocations, Endianness endianness)
@@ -123,14 +105,14 @@ namespace x86 {
 
         size_t encodeMovRegReg32(std::string src, std::string dst, sectionBuffer& buffer)
         {
-            uint8_t opcode = 0x8B;
-            uint8_t mod = 0b11 << 6;
-
-            uint8_t reg = bits32::registers.at(toLower(dst)) << 3;
-            uint8_t rm = bits32::registers.at(toLower(src));
+            uint8_t opcode = 0x89;
+            uint8_t mod = 11;   // reg to reg
+            uint8_t reg = bits32::registers.at(src);
+            uint8_t rm = bits32::registers.at(dst);
+            uint8_t modrm = (mod << 6) | (reg << 3) | rm;
 
             buffer.push_back(opcode);
-            buffer.push_back(mod | reg | rm);
+            buffer.push_back(modrm);
 
             return 2;
         }
@@ -149,131 +131,8 @@ namespace x86 {
 
         size_t encodeMovReg32Mem(std::string src, std::string dst, sectionBuffer& buffer, std::vector<Relocation>& relocations, Endianness endianness)
         {
-            MemoryOperand mem = parseMem(src);
-            uint8_t opcode = 0x8B;
-            uint8_t modrm = 0;
-            uint8_t sib = 0;
-            bool hasSIB = false;
-            size_t size = 1; //opcode
-
-            uint8_t reg = bits32::registers.at(toLower(dst));
-
-            // Defaults for SIB
-            uint8_t scaleBits = 0;
-            uint8_t indexBits = 0xb100; // default: no index
-            uint8_t baseBits = 0xb101;  // default: no base (disp32)
-
-            // Determine addressing mode
-            bool hasBase = mem.base.has_value();
-            bool hasIndex = mem.index.has_value();
-
-            // Starts with ModRM
-            if (hasBase)
-            {
-                std::string base = toLower(mem.base.value());
-                baseBits = bits32::registers.at(base);
-
-                if (hasIndex)
-                {
-                    std::string index = toLower(mem.index.value());
-                    indexBits = bits32::registers.at(index);
-
-                    switch (mem.scale)
-                    {
-                        case 1: scaleBits = 0b00; break;
-                        case 2: scaleBits = 0b01; break;
-                        case 4: scaleBits = 0b10; break;
-                        case 8: scaleBits = 0b11; break;
-                        default:
-                            throw Exception::InternalError("Invalid scale in memory operand: " + (uint8_t)mem.scale);
-                    }
-
-                    hasSIB = true;
-                }
-                else if (baseBits == 0b100)
-                {
-                    // ESP as base needs SIB even if no index
-                    hasSIB = true;
-                    indexBits = 0b100; // no index
-                    scaleBits = 0b00;
-                }
-
-                // Determine Mod field
-                if (mem.displacement == 0 && baseBits != 0b101)
-                {
-                    modrm = (0b00 << 6) | (reg << 3) | 0b100; // Use SIB
-                    if (!hasSIB) modrm = (0b00 << 6) | (reg << 3) | baseBits;
-                }
-                else if (mem.displacement >= -128 && mem.displacement <= 127)
-                {
-                    modrm = (0b01 << 6) | (reg << 3) | (hasSIB ? 0b100 : baseBits);
-                }
-                else
-                {
-                    modrm = (0b10 << 6) | (reg << 3) | (hasSIB ? 0b100 : baseBits);
-                }
-            }
-            else if (mem.label.has_value())
-            {
-                // [label] — no base or index
-                modrm = (0b00 << 6) | (reg << 3) | 0b101; // disp32
-            }
-            else
-            {
-                throw Exception::SyntaxError("Invalid memory operand: " + src, -1);
-            }
-
-            // Emit opcode
-            buffer.push_back(opcode);
-            buffer.push_back(modrm);
-            size += 2;
-
-            // Emit SIB if required
-            if (hasSIB)
-            {
-                sib = (scaleBits << 6) | (indexBits << 3) | baseBits;
-                buffer.push_back(sib);
-                size += 1;
-            }
-
-            // Emit displacement if needed
-            if (mem.label.has_value())
-            {
-                Relocation rel;
-                rel.offsetInSection = buffer.size();
-                rel.labelName = mem.label.value();
-                rel.type = Type::Absolute; // TODO: Could change based on context
-                rel.size = 4;
-                rel.addend = mem.displacement; // Add any constant offset
-
-                relocations.push_back(rel);
-
-                // Reserve 4 bytes in buffer for the address (to be relocated later)
-                for (int i = 0; i < 4; i++)
-                    buffer.push_back(0);
-                size += 4;
-            }
-            else if (modrm >> 6 == 0b01) // disp8
-            {
-                buffer.push_back(static_cast<uint8_t>(mem.displacement & 0xFF));
-                size += 1;
-            }
-            else if (modrm >> 6 == 0b10 || (modrm >> 6 == 0b00 && baseBits == 0b101)) // disp32
-            {
-                if (endianness == Endianness::Little)
-                {
-                    for (int i = 0; i < 4; i++)
-                        buffer.push_back(static_cast<uint8_t>((mem.displacement >> (8 * i)) & 0xFF));
-                }
-                else
-                {
-                    for (int i = 3; i >= 0; i--)
-                        buffer.push_back(static_cast<uint8_t>((mem.displacement >> (8 * i)) & 0xFF));
-                }
-                size += 4;
-            }
-
-            return size;
+            // TODO
+            return 0;
         }
 
         size_t encodeMovRegImm32(uint32_t imm, std::string dst, sectionBuffer& buffer, Endianness endianness)
