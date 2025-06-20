@@ -301,8 +301,8 @@ namespace x86 {
             else if (instr.operands.size() > 2)
                 throw Exception::SyntaxError("Too many operands for mov", instr.lineNumber);
 
-            std::string dst = instr.operands[0];
-            std::string src = instr.operands[1];
+            std::string dst = toLower(instr.operands[0]);
+            std::string src = toLower(instr.operands[1]);
 
             if (bits8::registers.find(dst) != bits8::registers.end())
             {

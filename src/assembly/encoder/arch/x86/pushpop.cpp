@@ -66,6 +66,16 @@ namespace x86 {
             return 1;
         }
 
+        size_t encodePushImm8(uint8_t imm, Endianness endianness, sectionBuffer& buffer)
+        {
+            uint8_t opcode = 0x6A;
+            buffer.push_back(opcode);
+
+            buffer.push_back(imm);
+
+            return 2;
+        }
+
         size_t encodePushImm32(uint32_t imm, Endianness endianness, sectionBuffer& buffer)
         {
             uint8_t opcode = 0x68;
@@ -115,14 +125,22 @@ namespace x86 {
             else
             {
                 unsigned long long val = evaluate(src, constants, instr.lineNumber);
-                if (val > 0xFFFFFFFF)
+                if (val <= 0xFF)
+                {
+                    uint8_t imm8 = static_cast<uint8_t>(val);
+
+                    offset = encodePushImm8(imm8, endianness, section.buffer);
+                }
+                else if (val <= 0xFFFFFFFF)
+                {
+                    uint32_t imm32 = static_cast<uint32_t>(val);
+
+                    offset = encodePushImm32(imm32, endianness, section.buffer);
+                }
+                else
                 {
                     throw Exception::OverflowError(src + " too big for push", instr.lineNumber);
                 }
-                uint32_t imm32 = static_cast<uint32_t>(val);
-
-                //TODO
-                offset = encodePushImm32(imm32, endianness, section.buffer);
             }
 
             return offset;
@@ -196,7 +214,7 @@ namespace x86 {
             else if (instr.operands.size() > 1)
                 throw Exception::SyntaxError("Too many operands for push", instr.lineNumber);
 
-            std::string src = instr.operands[0];
+            std::string src = toLower(instr.operands[0]);
 
             if (bits16::registers.find(src) != bits16::registers.end())
             {
