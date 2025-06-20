@@ -15,8 +15,11 @@ The assembler consists of several key components:
 - **Instruction Encoder:**  
   Translates parsed instructions into their corresponding machine code bytes according to the x86 32-bit instruction set.
 
+- **Binary File Writer:**  
+  Packages the generated machine code into a valid binary file (`.bin`).
+
 - **Object File Writer:**  
-  Packages the generated machine code into a valid ELF object file format (`.o`), suitable for linking.
+  Packages the generated machine code into a valid object file format (`.o`), suitable for linking.
 
 ## Supported Architectures and Formats
 

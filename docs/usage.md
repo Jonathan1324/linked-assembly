@@ -6,7 +6,7 @@ To build the assembler binary, simply run:
 
 ```bash
 make
-````
+```
 
 This will compile the source code and produce the binary at:
 
@@ -47,7 +47,7 @@ build/assembly/assembly input.asm -o output.o --arch x86 --format elf -m32
   * `big` (currently not fully supported)
 
 * `-m64`, `-m32`, `-m16`
-  Select the bit mode (64-bit, 32-bit, or 16-bit). Currently only `-m32` is fully supported.
+  Select the bit mode (64-bit, 32-bit, or 16-bit). Currently only `-m32` is supported.
 
 * `-v` / `--version`
   Show version information.
@@ -69,7 +69,7 @@ build/assembly/assembly examples/example.asm -o examples/build/example.o --arch 
 
 ## Notes & Limitations
 
-* Currently, only the x86 architecture in 32-bit mode with ELF output is fully implemented.
+* Currently, only the x86 architecture in 32-bit mode with ELF or binary output is implemented.
 * The assembler supports a minimal subset of x86 instructions. See [instructions.md](instructions.md) for the full list.
 * Error handling and diagnostics are basic and will be improved in future releases.
 

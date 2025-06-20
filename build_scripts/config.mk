@@ -74,6 +74,6 @@ else
 
 #	Unknown
 	else
-		$(warning Not known architecture: $(ARCH))
+		$(warning Unknown architecture: $(ARCH))
 	endif
 endif
