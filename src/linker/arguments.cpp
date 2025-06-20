@@ -1,5 +1,6 @@
 #include "arguments.hpp"
 
+#include <vector>
 #include <cstring>
 #include <Exception.hpp>
 #include <version.h>
@@ -8,7 +9,7 @@
 #include "cli/help.h"
 
 bool parseArguments(int argc, const char *argv[],
-                    std::string& input, std::string& output,
+                    std::vector<std::string>& inputs, std::string& output,
                     BitMode& bits, Architecture& arch, Format& format,
                     Endianness& endianness, bool& debug,
                     Context& context)
@@ -49,7 +50,7 @@ bool parseArguments(int argc, const char *argv[],
 
     if (argc < 2)
     {
-        throw Exception::ArgumentError("No input file specified");
+        throw Exception::ArgumentError("No input files specified");
     }
 
     if (strcmp(argv[1], "--version") == 0 || strcmp(argv[1], "-v") == 0)
@@ -179,21 +180,26 @@ bool parseArguments(int argc, const char *argv[],
         }
         else
         {
-            input = argv[i];
+            inputs.push_back(argv[i]);
         }
     }
 
-    if (input.empty())
+    if (inputs.empty())
     {
         throw Exception::ArgumentError("No input file entered");
     }
 
     if (output.empty())
     {
-        if (format == Format::Binary)
-            output = input + ".bin";
-        else
-            output = input + ".o";
+        std::filesystem::path inputPath(inputs[0]);
+        
+#ifdef _WIN32
+        // Windows
+        output = inputPath.stem().string() + ".exe";
+#else
+        // Anything else
+        output = inputPath.stem().string();
+#endif
     }
 
     return false;
