@@ -16,6 +16,8 @@ ARFLAGS = r
 # Debug-Flag: 1 = Debug, 0 = Release
 DEBUG ?= 0
 
+VERSION ?= commit
+
 # Basis-Flags
 INCLUDE_FLAGS = -I$(abspath src/lib/)
 COMMON_WARNINGS = -Wall -Wextra
@@ -26,6 +28,11 @@ SECURITY_FLAGS = -fstack-protector-strong -D_FORTIFY_SOURCE=2 -fPIC
 
 CFLAGS = $(INCLUDE_FLAGS) $(COMMON_WARNINGS)
 CXXFLAGS = $(INCLUDE_FLAGS) -std=c++17 $(COMMON_WARNINGS)
+
+ifeq ($(DEBUG),0)
+#	TODO: CFLAGS += -DVERSION="$(VERSION)"
+#	TODO: CXXFLAGS += -DVERSION="$(VERSION)"
+endif
 
 ifeq (${DEBUG},1)
 	CFLAGS += $(DEBUG_FLAGS)

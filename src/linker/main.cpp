@@ -10,7 +10,6 @@
 #include "arguments.hpp"
 #include "Context.hpp"
 
-#include <version.h>
 #include <Exception.hpp>
 #include <io/file.hpp>
 
