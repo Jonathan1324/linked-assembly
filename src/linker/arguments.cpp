@@ -5,6 +5,7 @@
 #include <Exception.hpp>
 #include <version.h>
 #include <util/string.hpp>
+#include <filesystem>
 
 #include "cli/help.h"
 
