@@ -5,7 +5,7 @@
 #include <unordered_map>
 #include <fstream>
 #include <variant>
-#include "../architecture/architecture.hpp"
+#include <Architecture.hpp>
 #include "../Context.hpp"
 
 struct Instruction {

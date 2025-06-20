@@ -1,6 +1,6 @@
 #pragma once
 
-#include "../architecture/architecture.hpp"
+#include <Architecture.hpp>
 #include "../encoder/encoder.hpp"
 #include "../parser/parser.hpp"
 #include <fstream>

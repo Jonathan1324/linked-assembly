@@ -57,5 +57,5 @@ Format getFormat(const char buffer[])
             return Format::COFF;
     }
 
-    return Format::UNKNOWN;
+    return Format::Unknown;
 }

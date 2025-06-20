@@ -1,6 +1,6 @@
 #include "symbols.hpp"
 
-#include "../../Architecture.hpp"
+#include <Architecture.hpp>
 
 namespace ELF {
     void writeSymbol(sectionBuffer buffer, Sym32 sym, Endianness endianness)

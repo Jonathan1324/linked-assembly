@@ -3,7 +3,7 @@
 #include <cinttypes>
 #include <string>
 
-#include "../../Architecture.hpp"
+#include <Architecture.hpp>
 #include "../../encoder/encoder.hpp"
 
 namespace Binary {

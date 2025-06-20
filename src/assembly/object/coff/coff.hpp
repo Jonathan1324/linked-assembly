@@ -3,7 +3,7 @@
 #include <cinttypes>
 #include <string>
 
-#include "../../architecture/architecture.hpp"
+#include <Architecture.hpp>
 #include "../../encoder/encoder.hpp"
 
 namespace COFF {

@@ -1,10 +1,5 @@
 #pragma once
 
-enum class Format {
-    UNKNOWN,
-    ELF,
-    COFF,
-    MACHO,
-};
+#include <Architecture.hpp>
 
 Format getFormat(const char buffer[]);

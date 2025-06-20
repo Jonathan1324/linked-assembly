@@ -10,7 +10,7 @@
 #include "encoder/encoder.hpp"
 #include "object/object.hpp"
 #include <io/file.hpp>
-#include "Architecture.hpp"
+#include <Architecture.hpp>
 #include <Exception.hpp>
 #include "Context.hpp"
 
