@@ -6,7 +6,7 @@ _start:
     mov eax, 1
     ret
 
-section .data
+section .bss
 bss1:          reso 1
 bss2:          resy 1
 bss3:          resz 1
