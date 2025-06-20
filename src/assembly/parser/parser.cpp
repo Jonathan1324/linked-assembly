@@ -181,7 +181,7 @@ Parsed parseAssembly(std::istream& input, BitMode bits, Context& context)
         else
         {
             static const std::vector<std::string> dataDirectives = {
-                "db", "dw", "dd", "dq", "dt", "resb", "resw", "resd", "resq", "rest"
+                "db", "dw", "dd", "dq", "dt", "do", "dy", "dz", "resb", "resw", "resd", "resq", "rest", "reso", "resy", "resz"
             };
 
             for (const std::string& directive : dataDirectives) {
@@ -238,10 +238,12 @@ Parsed parseAssembly(std::istream& input, BitMode bits, Context& context)
         // Data
         if (toLower(trimmed).find("db ") == 0 || toLower(trimmed).find("dw ") == 0
          || toLower(trimmed).find("dd ") == 0 || toLower(trimmed).find("dq ") == 0
-         || toLower(trimmed).find("dt ") == 0
+         || toLower(trimmed).find("dt ") == 0 || toLower(trimmed).find("do ") == 0
+         || toLower(trimmed).find("dy ") == 0 || toLower(trimmed).find("dz ") == 0
          || toLower(trimmed).find("resb ") == 0 || toLower(trimmed).find("resw ") == 0
          || toLower(trimmed).find("resd ") == 0 || toLower(trimmed).find("resq ") == 0
-         || toLower(trimmed).find("rest ") == 0)
+         || toLower(trimmed).find("rest ") == 0 || toLower(trimmed).find("reso ") == 0
+         || toLower(trimmed).find("resy ") == 0 || toLower(trimmed).find("resz ") == 0)
         {
             // get type (db, dw, dd)
             size_t spacePos = trimmed.find(' ');

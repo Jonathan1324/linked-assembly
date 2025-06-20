@@ -22,6 +22,9 @@ size_t encodeData(const DataDefinition& data, EncodedSection& section, Encoded& 
     else if (data.type == "dd" || data.type == "resd") typeSize = 4;
     else if (data.type == "dq" || data.type == "resq") typeSize = 8;
     else if (data.type == "dt" || data.type == "rest") typeSize = 10;
+    else if (data.type == "do" || data.type == "reso") typeSize = 16;
+    else if (data.type == "dy" || data.type == "resy") typeSize = 32;
+    else if (data.type == "dz" || data.type == "resz") typeSize = 64;
     else
         throw Exception::SyntaxError("Unsoppurted data type: " + data.type, data.lineNumber);
 
@@ -38,13 +41,13 @@ size_t encodeData(const DataDefinition& data, EncodedSection& section, Encoded& 
         {
             unsigned long val = evaluate(valStr, section, encoded);
 
-            if (typeSize == 10)
+            if (typeSize > 8)
             {
                 // TODO: fix
-                context.warningManager->add(Warning::GeneralWarning("s"));
-                for (size_t i = 0; i < 10; ++i)
+                context.warningManager->add(Warning::GeneralWarning("Type size to big for data"));
+                for (size_t i = 0; i < typeSize; ++i)
                     buffer.push_back(0x00);
-                bytesWritten += 10;
+                bytesWritten += typeSize;
             }
             else
             {

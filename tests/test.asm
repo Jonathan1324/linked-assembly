@@ -3,16 +3,10 @@
 section .text
 global _start
 _start:
-    ; setup data segments
-    mov ax, 0           ; can't set ds/es directly
-    mov ds, ax
-    mov es, ax
-    
-    ; setup stack
-    mov ss, ax
-    mov sp, 0x7C00              ; stack grows downwards from where we are loaded in memory
+    mov eax, 1
+    ret
 
-    ; some BIOSes might start us at 07C0:0000 instead of 0000:7C00, make sure we are in the
-    ; expected location
-    push es
-    
+section .data
+bss1:          reso 1
+bss2:          resy 1
+bss3:          resz 1
