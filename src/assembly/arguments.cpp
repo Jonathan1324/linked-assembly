@@ -54,7 +54,7 @@ bool parseArguments(int argc, const char *argv[],
 
     if (strcmp(argv[1], "--version") == 0 || strcmp(argv[1], "-v") == 0)
     {
-        printVersion(VERSION);
+        printVersion(VERSION_STR);
         return true;
     }
     else if (strcmp(argv[1], "--help") == 0 || strcmp(argv[1], "-h") == 0)
