@@ -32,8 +32,16 @@
 
 #### MOV
 
-- `mov reg, imm32`
+- `mov reg, imm`
 - `mov reg, reg`
+
+#### Stack
+
+- `push reg`
+- `push imm`
+- `pop reg`
+- `pusha`/`popa`
+- `pushf`/`popf`
 
 ### 64-bit
 
