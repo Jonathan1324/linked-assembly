@@ -7,90 +7,66 @@
 #include "architecture/architecture.hpp"
 
 #include "cli/help.h"
+#include "arguments.hpp"
+#include "Context.hpp"
 
 #include <version.h>
+#include <Exception.hpp>
+#include <io/file.hpp>
+
+int handleError(const std::exception& e) {
+    std::cerr << e.what() << std::endl;
+    return 1;
+}
 
 int main(int argc, const char *argv[])
 {
-    if (argc < 2)
-    {
-        std::cerr << "Usage: linker <input files> [-o output file]" << std::endl;
-        return 1;
-    }
-
-    if (strcmp(argv[1], "--version") == 0 || strcmp(argv[1], "-v") == 0)
-    {
-        printVersion(VERSION);
-        return 0;
-    }
-    else if (strcmp(argv[1], "--help") == 0 || strcmp(argv[1], "-h") == 0)
-    {
-        printHelp();
-        return 0;
-    }
+    WarningManager warningManager;
+    Context context;
+    context.warningManager = &warningManager;
 
     std::vector<std::string> inputFiles;
-    std::string outputPath;
+    std::string output;
+    BitMode bitMode;
+    Architecture arch;
+    Format format;
+    Endianness endianness;
+    bool debug;
 
-    bool debug = false;
-
-    for (int i = 1; i < argc; ++i)
+    // Parse arguments
+    try
     {
-        if (std::string(argv[i]).compare("-o") == 0 && i + 1 < argc)
+        bool stop = parseArguments(argc, argv, inputFiles, output, bitMode, arch, format, endianness, debug, context);
+        if (stop)
+            return 0;
+        if (warningManager.hasWarnings())
         {
-            if (i + 1 < argc)
-            {
-                outputPath = argv[++i];
-            }
-            else
-            {
-                std::cerr << "Error: Missing output file after -o" << std::endl;
-                return 1;
-            }
-        }
-
-        else if (std::string(argv[i]).find("--debug") == 0)
-        {
-            debug = true;
-        }
-
-        else if (!std::string(argv[i]).empty() && argv[i][0] == '-')
-        {
-            std::cerr << "Warning: Unknown option " << argv[i] << std::endl;
-        }
-        else
-        {
-            inputFiles.push_back(argv[i]);
+            warningManager.printAll(std::cerr);
+            warningManager.clear();
         }
     }
-
-    if (inputFiles.empty())
+    catch(const Exception& e)
     {
-        std::cerr << "Enter input file" << std::endl;
+        e.print(std::cerr);
         return 1;
     }
-
-    if (outputPath.empty())
-    {
-        std::filesystem::path inputPath(inputFiles[0]);
-        
-#ifdef _WIN32
-        // Windows
-        outputPath = inputPath.stem().string() + ".exe";
-#else
-        // Anything else
-        outputPath = inputPath.stem().string();
-#endif
-    }
+    catch(const std::exception& e) { handleError(e); }
 
     for (const auto& inputFile : inputFiles)
     {
-        std::ifstream file(inputFile, std::ios::binary);
-        if (!file)
+        context.filename = std::filesystem::path(inputFile).filename().string();
+
+        std::ifstream file;
+        try
         {
-            std::cerr << "Error opening file: " << inputFile << std::endl;
+            file = openIfstream(inputFile);
+        }
+        catch(const Exception& e)
+        {
+            e.print(std::cerr);
             return 1;
         }
+        catch(const std::exception& e) { handleError(e); }
 
         char buffer[4];
 
@@ -101,14 +77,17 @@ int main(int argc, const char *argv[])
         file.close();
     }
 
-    std::ofstream outputFile(outputPath, std::ios::out | std::ios::trunc);
-    if (!outputFile)
+    std::ofstream objectFile;
+    try
     {
-        std::cerr << "Couldn't open file " << outputPath << std::endl;
+        objectFile = openOfstream(output, std::ios::out | std::ios::trunc | std::ios::binary);
+    }
+    catch(const Exception& e)
+    {
+        e.print(std::cerr);
         return 1;
     }
-
-    outputFile.close();
+    catch(const std::exception& e) { handleError(e); }
 
     std::cout << "Linker not implemented yet. ):" << std::endl;
 
