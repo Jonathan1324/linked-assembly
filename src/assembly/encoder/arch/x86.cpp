@@ -2,6 +2,7 @@
 #include "x86/registers.hpp"
 #include "x86/no_operands.hpp"
 #include "x86/datatransfer.hpp"
+#include "x86/controltransfer.hpp"
 #include "x86/stack.hpp"
 
 namespace x86 {
@@ -35,6 +36,10 @@ namespace x86 {
                 return offset;
 
             offset = encodeStack(instr, section, constants, endianness, context);
+            if (offset > 0)
+                return offset;
+
+            offset = encodeControlTransfer(instr, section, constants, endianness, context);
             if (offset > 0)
                 return offset;
 

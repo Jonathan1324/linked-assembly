@@ -18,6 +18,7 @@
 - `hlt`
 - `pause`
 - `wait` / `fwait`
+- `int imm8`
 
 #### Flags & Interrupts
 
