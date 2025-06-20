@@ -37,26 +37,26 @@ unsigned long long evaluate(std::string str, std::unordered_map<std::string, std
     (void)floatingPoint;
 
     int base = 0;
-    if (value.find('h') != std::string::npos
-     || value.find('x') != std::string::npos)
+    if (value.find('h') == value.size() - 1
+     || value.find('x') == value.size() - 1)
     {
         value = value.substr(0, value.size() - 1);
         base = 16;
     }
-    else if (value.find('o') != std::string::npos
-          || value.find('q') != std::string::npos)
+    else if (value.find('o') == value.size() - 1
+          || value.find('q') == value.size() - 1)
     {
         value = value.substr(0, value.size() - 1);
         base = 8;
     }
-    else if (value.find('b') != std::string::npos
-          || value.find('y') != std::string::npos)
+    else if (value.find('b') == value.size() - 1
+          || value.find('y') == value.size() - 1)
     {
         value = value.substr(0, value.size() - 1);
         base = 2;
     }
-    else if (value.find('d') != std::string::npos
-          || value.find('t') != std::string::npos)
+    else if (value.find('d') == value.size() - 1
+          || value.find('t') == value.size() - 1)
     {
         value = value.substr(0, value.size() - 1);
         base = 10;
