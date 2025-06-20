@@ -81,3 +81,5 @@ jobs:
           asset_path: ${{ matrix.os_name == 'windows' && format('linked-assembly-{0}-{1}.zip', matrix.os_name, matrix.arch) || format('linked-assembly-{0}-{1}.tar.gz', matrix.os_name, matrix.arch) }}
           asset_name: ${{ matrix.os_name == 'windows' && format('linked-assembly-{0}-{1}.zip', matrix.os_name, matrix.arch) || format('linked-assembly-{0}-{1}.tar.gz', matrix.os_name, matrix.arch) }}
           asset_content_type: application/octet-stream
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
