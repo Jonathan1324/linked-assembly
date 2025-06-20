@@ -3,10 +3,12 @@
 section .text
 global _start
 _start:
-    mov eax, 1
-    ret
-
-section .bss
-bss1:          reso 1
-bss2:          resy 1
-bss3:          resz 1
+    int 0b1010
+    int 0d10
+    int 0h10
+    int 0o10
+    int 0q10
+    int 0t10
+    int 0x10
+    int 0y10
+    int 10
