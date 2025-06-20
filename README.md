@@ -1,7 +1,7 @@
 # linked-assembly
 
 A modular assembler (and linker planned).  
-Currently only supports **x86**, **32-bit mode**, and **ELF `.o` object files**.
+Currently only supports **x86**, **32-bit mode**, and **ELF `.o` object files**/**Binary `.bin` files**.
 
 ## Documentation
 
@@ -14,15 +14,15 @@ Currently only supports **x86**, **32-bit mode**, and **ELF `.o` object files**.
 ## Features
 
 - Supports a basic set of x86 instructions ([see full list](docs/instructions.md))
-- Generates valid ELF object files.
+- Generates valid object files.
 - Simple, readable assembly syntax
 - Command-line flags for extensibility:
   - `--arch <arch>` — target architecture (`x86`, `arm`, `riscv`)
-  - `--format <format>` — output file format (`elf`, `macho`, `coff`)
+  - `--format <format>` — output file format (`bin`, `elf`, `macho`, `coff`)
   - `--endian <endianness>` — target endianness (`little`, `big`)
   - `-m64`, `-m32`, `-m16` — selects the bit mode
 
-**Note:** Currently, only `--arch x86`, `--format elf`, `--endian little`, and `-m32` are fully supported.
+**Note:** Currently, only `--arch x86`, `--format elf`/`--format bin`, `--endian little`, and `-m32` are fully supported.
 
 ## Building
 
@@ -41,6 +41,8 @@ Build your assembly file into an object file with:
 ```bash
 build/assembly/assembly input.asm -o output.o --arch x86 --format elf --endian little -m32
 ```
+
+([see full guide](docs/usage.md))
 
 ## Contributing
 
