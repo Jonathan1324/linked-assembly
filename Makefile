@@ -17,6 +17,7 @@ library:
 		CC=$(CC) CFLAGS="$(CFLAGS)" 		\
 		CXX=$(CXX) CXXFLAGS="$(CXXFLAGS)"	\
 		AR=$(AR) ARFLAGS=$(ARFLAGS)			\
+		LDFLAGS=$(LDFLAGS)					\
 		RANLIB=$(RANLIB)					\
 		SRC_DIR=$(SRC_DIR)/lib 				\
 		LIB=core							\
@@ -27,6 +28,7 @@ assembly: library
 		AS=$(AS) ASFLAGS="$(ASFLAGS)"		\
 		CC=$(CC) CFLAGS="$(CFLAGS)" 		\
 		CXX=$(CXX) CXXFLAGS="$(CXXFLAGS)"	\
+		LDFLAGS=$(LDFLAGS)					\
 		SRC_DIR=$(SRC_DIR)/assembly 		\
 		BUILD_DIR=$(BUILD_DIR)/assembly		\
 		LIB_DIR=$(BUILD_DIR)/lib			\
@@ -38,6 +40,7 @@ linker: library
 		AS=$(AS) ASFLAGS="$(ASFLAGS)"		\
 		CC=$(CC) CFLAGS="$(CFLAGS)" 		\
 		CXX=$(CXX) CXXFLAGS="$(CXXFLAGS)"	\
+		LDFLAGS=$(LDFLAGS)					\
 		SRC_DIR=$(SRC_DIR)/linker 			\
 		BUILD_DIR=$(BUILD_DIR)/linker		\
 		LIB_DIR=$(BUILD_DIR)/lib			\
