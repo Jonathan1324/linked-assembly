@@ -47,7 +47,7 @@ jobs:
 
       - name: Install build tools (Windows)
         if: matrix.os_name == 'windows'
-        run: choco install make nasm zip -y
+        run: choco install make nasm 7zip -y
 
       - name: Install build tools (macOS)
         if: matrix.os_name == 'macos'
@@ -72,7 +72,7 @@ jobs:
         run: |
           cd binaries
           if [[ "${{ matrix.os_name }}" == "windows" ]]; then
-            zip -r ../linked-assembly-${{ matrix.os_name }}-${{ matrix.arch }}.zip assembly.exe linker.exe
+            7z a ../linked-assembly-${{ matrix.os_name }}-${{ matrix.arch }}.7z assembly.exe linker.exe
           else
             tar -czf ../linked-assembly-${{ matrix.os_name }}-${{ matrix.arch }}.tar.gz assembly linker
           fi
