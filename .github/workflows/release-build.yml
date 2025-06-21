@@ -72,7 +72,7 @@ jobs:
         run: |
           cd binaries
           if [[ "${{ matrix.os_name }}" == "windows" ]]; then
-            7z a ../linked-assembly-${{ matrix.os_name }}-${{ matrix.arch }}.7z assembly.exe linker.exe
+            7z a -tzip ../linked-assembly-${{ matrix.os_name }}-${{ matrix.arch }}.zip assembly.exe linker.exe
           else
             tar -czf ../linked-assembly-${{ matrix.os_name }}-${{ matrix.arch }}.tar.gz assembly linker
           fi
