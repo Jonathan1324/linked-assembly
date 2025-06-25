@@ -1,6 +1,7 @@
 #include "datatransfer.hpp"
 
 #include "../evaluate.hpp"
+#include "jump.hpp"
 
 namespace x86 {
     namespace bits32 {
@@ -13,7 +14,7 @@ namespace x86 {
 
             std::string num = instr.operands[0];
 
-            unsigned long long val = evaluate(num, constants, instr.lineNumber);
+            unsigned long long val = evaluate(num, constants, instr.lineNumber, false);
             if (val > 0xFF)
                 throw Exception::OverflowError(num + " too large for an interrupt", instr.lineNumber);
             uint8_t interrupt = static_cast<uint8_t>(val);
@@ -32,6 +33,8 @@ namespace x86 {
 
             if (instr.mnemonic.compare("int") == 0)
                 offset = encodeInterrupt(instr, section, constants, endianness, context);
+            else if (instr.mnemonic.compare("jmp") == 0)
+                offset = encodeJump(instr, section, constants, endianness, context);
 
             return offset;
         }
