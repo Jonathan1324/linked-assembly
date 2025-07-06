@@ -7,9 +7,9 @@ BUILD_DIR = build
 SRC_DIR := $(shell pwd)/$(SRC_DIR)
 BUILD_DIR := $(shell pwd)/$(BUILD_DIR)
 
-.PHONY: all clean library assembly linker
+.PHONY: all clean library assembler linker
 
-all: library assembly linker
+all: library assembler linker
 
 library:
 	@$(MAKE) -C $(SRC_DIR)/lib 				\
@@ -23,14 +23,14 @@ library:
 		LIB=core							\
 		BUILD_DIR=$(BUILD_DIR)/lib
 
-assembly: library
-	@$(MAKE) -C $(SRC_DIR)/assembly 		\
+assembler: library
+	@$(MAKE) -C $(SRC_DIR)/assembler 		\
 		AS=$(AS) ASFLAGS="$(ASFLAGS)"		\
 		CC=$(CC) CFLAGS="$(CFLAGS)" 		\
 		CXX=$(CXX) CXXFLAGS="$(CXXFLAGS)"	\
 		LDFLAGS=$(LDFLAGS)					\
-		SRC_DIR=$(SRC_DIR)/assembly 		\
-		BUILD_DIR=$(BUILD_DIR)/assembly		\
+		SRC_DIR=$(SRC_DIR)/assembler 		\
+		BUILD_DIR=$(BUILD_DIR)/assembler		\
 		LIB_DIR=$(BUILD_DIR)/lib			\
 		LIB=core							\
 		EXE_EXT=$(EXE_EXT)
@@ -48,9 +48,9 @@ linker: library
 		EXE_EXT=$(EXE_EXT)
 
 clean:
-	@$(MAKE) -C $(SRC_DIR)/assembly clean 	\
-		SRC_DIR=$(SRC_DIR)/assembly 		\
-		BUILD_DIR=$(BUILD_DIR)/assembly		\
+	@$(MAKE) -C $(SRC_DIR)/assembler clean 	\
+		SRC_DIR=$(SRC_DIR)/assembler 		\
+		BUILD_DIR=$(BUILD_DIR)/assembler		\
 		EXE_EXT=$(EXE_EXT)
 	
 	@$(MAKE) -C $(SRC_DIR)/linker clean 	\

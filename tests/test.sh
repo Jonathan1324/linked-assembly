@@ -2,7 +2,7 @@
 
 mkdir -p build
 
-../build/assembly/assembly $1.asm -o build/$1_asm.o \
+../build/assembler/assembler $1.asm -o build/$1_asm.o \
     --arch x86      \
     -m32            \
     --endian little \
