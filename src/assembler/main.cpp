@@ -10,6 +10,8 @@
 #include "Context.hpp"
 
 #include "Parser/Parser.hpp"
+#include "Encoder/Encoder.hpp"
+#include "ObjectWriter/ObjectWriter.hpp"
 
 int handleError(const std::exception& e)
 {
@@ -69,6 +71,19 @@ int main(int argc, const char *argv[])
 
     // Parse
     Parser parser(file, context, arch, bitMode, endianness);
+    try
+    {
+        parser.Parse();
+
+        if (debug)
+            parser.Print();
+    }
+    catch(const Exception& e)
+    {
+        e.print(std::cerr);
+        return 1;
+    }
+    catch(const std::exception& e) { return handleError(e); }
 
     // Encode
 

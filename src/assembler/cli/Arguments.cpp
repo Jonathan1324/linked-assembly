@@ -172,7 +172,7 @@ bool parseArguments(int argc, const char *argv[],
                 throw Exception::ArgumentError("Unknown bit mode: " + modeStr);
         }
 
-        else if (std::string(argv[i]).find("--debug") == 0)
+        else if (std::string(argv[i]).compare("--debug") == 0 || std::string(argv[i]).compare("-d") == 0)
         {
             debug = true;
         }

@@ -8,7 +8,7 @@ cd tests
 
 mkdir -p build
 ../build/assembler/assembler test.asm -o build/test.bin \
-    --arch x86 --format raw -m32
+    --arch x86 --format raw -m32 -d
 
 ../build/assembler/assembler test.asm -o build/test.o \
     --arch x86 --format elf -m32
