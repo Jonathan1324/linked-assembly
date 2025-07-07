@@ -1,11 +1,15 @@
-#include "arguments.hpp"
+#include "Arguments.hpp"
 
 #include <cstring>
 #include <Exception.hpp>
 #include <version.h>
 #include <util/string.hpp>
 
-#include "cli/help.h"
+void printHelp()
+{
+    //TODO
+    fflush(stdout);
+}
 
 bool parseArguments(int argc, const char *argv[],
                     std::string& input, std::string& output,

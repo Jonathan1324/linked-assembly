@@ -6,8 +6,10 @@
 #include <io/file.hpp>
 #include <Architecture.hpp>
 #include <Exception.hpp>
-#include "arguments.hpp"
+#include "cli/Arguments.hpp"
 #include "Context.hpp"
+
+#include "Parser/Parser.hpp"
 
 int handleError(const std::exception& e)
 {
@@ -66,6 +68,7 @@ int main(int argc, const char *argv[])
     catch(const std::exception& e) { return handleError(e); }
 
     // Parse
+    Parser parser(file, context, arch, bitMode, endianness);
 
     // Encode
 
