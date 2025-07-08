@@ -16,9 +16,9 @@ namespace Token
 
     inline const char* to_string(Type type) {
             switch (type) {
-                case Type::Token: return "Token";
-                case Type::Comma: return "Comma";
-                case Type::EOL:   return "EOL";
+                case Type::Token: return "_Token";
+                case Type::Comma: return "_Comma";
+                case Type::EOL:   return "___EOL";
                 default:          return "Unknown";
             }
         }
@@ -36,8 +36,7 @@ namespace Token
         void print() const
         {
             std::cout << "Token (Type=" << to_string(type) << ") '" << value
-                << "' in line " << line
-                << " at column " << column;
+                << "' in line " << line << " at column " << column;
         }
     };
 

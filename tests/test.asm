@@ -10,5 +10,4 @@ section .data
 data1:
     db 0
 
-data2:
-    dw 2
+data2: dw 2
