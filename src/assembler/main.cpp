@@ -70,10 +70,10 @@ int main(int argc, const char *argv[])
     catch(const std::exception& e) { return handleError(e); }
 
     // Parse
-    Parser parser(file, context, arch, bitMode, endianness);
+    Parser parser(context, arch, bitMode, endianness);
     try
     {
-        parser.Parse();
+        parser.Parse(file);
 
         if (debug)
             parser.Print();
