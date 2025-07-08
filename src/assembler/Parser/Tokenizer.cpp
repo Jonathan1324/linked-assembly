@@ -6,9 +6,10 @@ Tokenizer::Tokenizer() {
 	
 }
 
-std::vector<Token::Token> Tokenizer::tokenize(std::istream& input)
+void Tokenizer::tokenize(std::istream& input, bool clear)
 {
-    std::vector<Token> tokens;
+    if (clear)
+        tokens.clear();
     std::string line;
     size_t lineNumber = 0;
 
@@ -86,17 +87,21 @@ std::vector<Token::Token> Tokenizer::tokenize(std::istream& input)
             length + 1
         );
     }
+}
 
+std::vector<Token::Token> Tokenizer::getTokens()
+{
     return tokens;
 }
 
-void Tokenizer::print(std::vector<Token> tokens, const char* indent)
+void Tokenizer::print()
 {
+    std::cout << "Tokens: " << std::endl;
     for (size_t i = 0; i < tokens.size(); i++)
     {
         const Token& token = tokens[i];
-        std::cout << indent;
+        std::cout << "  ";
         token.print();
-        std::cout << '\n';
+        std::cout << std::endl;
     }
 }

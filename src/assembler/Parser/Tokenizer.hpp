@@ -47,7 +47,10 @@ namespace Token
     public:
         Tokenizer();
 
-        std::vector<Token> tokenize(std::istream& input);
-        void print(std::vector<Token> tokens, const char* indent);
+        void tokenize(std::istream& input, bool clear = false);
+        std::vector<Token> getTokens();
+        void print();
+    private:
+        std::vector<Token> tokens;
     };
 }

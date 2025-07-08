@@ -9,13 +9,12 @@ Parser::Parser(Context _context, Architecture _arch, BitMode _bits, Endianness _
 
 }
 
-void Parser::Parse(std::istream& input)
+void Parser::Parse(std::vector<Token::Token> tokens)
 {
-    tokens = tokenizer.tokenize(input);
+    // TODO
 }
 
 void Parser::Print()
 {
-    std::cout << "Tokens: " << std::endl;
-    tokenizer.print(tokens, "\t");
+    // TODO
 }

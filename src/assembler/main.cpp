@@ -9,6 +9,7 @@
 #include "cli/Arguments.hpp"
 #include "Context.hpp"
 
+#include "Parser/Tokenizer.hpp"
 #include "Parser/Parser.hpp"
 #include "Encoder/Encoder.hpp"
 #include "ObjectWriter/ObjectWriter.hpp"
@@ -73,8 +74,12 @@ int main(int argc, const char *argv[])
     Parser parser(context, arch, bitMode, endianness);
     try
     {
-        parser.Parse(file);
-
+        Token::Tokenizer tokenizer;
+        tokenizer.tokenize(file);
+        if (debug)
+            tokenizer.print();
+        
+        parser.Parse(tokenizer.getTokens());
         if (debug)
             parser.Print();
     }

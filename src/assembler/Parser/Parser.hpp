@@ -12,8 +12,9 @@ class Parser
 {
 public:
     Parser(Context _context, Architecture _arch, BitMode _bits, Endianness _endianness);
+    virtual ~Parser() = 0;
 
-    void Parse(std::istream& input);
+    void Parse(std::vector<Token::Token> tokens);
 
     void Print();
 
@@ -22,7 +23,4 @@ private:
     Architecture arch;
     BitMode bits;
     Endianness endianness;
-
-    Token::Tokenizer tokenizer;
-    std::vector<Token::Token> tokens;
 };
