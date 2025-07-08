@@ -71,7 +71,6 @@ int main(int argc, const char *argv[])
     catch(const std::exception& e) { return handleError(e); }
 
     // Parse
-    Parser parser(context, arch, bitMode, endianness);
     try
     {
         Token::Tokenizer tokenizer;
@@ -79,9 +78,7 @@ int main(int argc, const char *argv[])
         if (debug)
             tokenizer.print();
         
-        parser.Parse(tokenizer.getTokens());
-        if (debug)
-            parser.Print();
+        
     }
     catch(const Exception& e)
     {

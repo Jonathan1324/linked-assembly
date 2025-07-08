@@ -9,11 +9,6 @@ Parser::Parser(Context _context, Architecture _arch, BitMode _bits, Endianness _
 
 }
 
-void Parser::Parse(std::vector<Token::Token> tokens)
-{
-    // TODO
-}
-
 void Parser::Print()
 {
     // TODO
