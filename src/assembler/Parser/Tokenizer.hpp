@@ -11,15 +11,17 @@ namespace Token
     {
         Token,
         Comma,
+        Bracket,
         EOL
     };
 
     inline const char* to_string(Type type) {
             switch (type) {
-                case Type::Token: return "_Token";
-                case Type::Comma: return "_Comma";
-                case Type::EOL:   return "___EOL";
-                default:          return "Unknown";
+                case Type::Token:   return "__Token__";
+                case Type::Comma:   return "__Comma__";
+                case Type::Bracket: return "_Bracket_";
+                case Type::EOL:     return "___EOL___";
+                default:            return "__Unknown";
             }
         }
 

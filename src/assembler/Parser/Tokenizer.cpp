@@ -20,10 +20,9 @@ std::vector<Token::Token> Tokenizer::tokenize(std::istream& input)
 
         while (pos < length)
         {
+            // Skip whitespace
             while (pos < length && std::isspace(static_cast<unsigned char>(line[pos])))
-            {
                 ++pos;
-            }
             if (pos >= length) break;
 
             size_t startPos = pos;
@@ -38,14 +37,39 @@ std::vector<Token::Token> Tokenizer::tokenize(std::istream& input)
                 );
                 ++pos;
             }
+            else if (line[pos] == '(' || line[pos] == ')' ||
+                     line[pos] == '[' || line[pos] == ']' ||
+                     line[pos] == '{' || line[pos] == '}')
+            {
+                tokens.emplace_back(
+                    Type::Bracket,
+                    std::string(1, line[pos]),
+                    lineNumber,
+                    pos + 1
+                );
+                ++pos;
+            }
+            else if (line[pos] == '"')
+            {
+                // String literal
+                ++pos; // skip opening "
+                startPos = pos;
+                while (pos < length && line[pos] != '"')
+                    ++pos;
+
+                std::string value = line.substr(startPos, pos - startPos);
+                tokens.emplace_back(Type::Token, value, lineNumber, startPos);
+
+                if (pos < length && line[pos] == '"')
+                    ++pos; // skip closing "
+            }
             else
             {
                 while (pos < length &&
-                    !std::isspace(static_cast<unsigned char>(line[pos])) &&
-                    line[pos] != ',')
-                {
+                       !std::isspace(static_cast<unsigned char>(line[pos])) &&
+                       line[pos] != ',')
                     ++pos;
-                }
+                
                 tokens.emplace_back(
                     Type::Token,
                     line.substr(startPos, pos - startPos),
