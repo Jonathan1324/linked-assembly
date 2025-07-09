@@ -12,7 +12,7 @@ class Parser
 {
 public:
     Parser(Context _context, Architecture _arch, BitMode _bits, Endianness _endianness);
-    virtual ~Parser() = 0;
+    virtual ~Parser() = default;
 
     virtual void Parse(std::vector<Token::Token> tokens) = 0;
     void Print();

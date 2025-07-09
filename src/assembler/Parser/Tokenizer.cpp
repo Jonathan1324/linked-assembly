@@ -6,10 +6,12 @@ Tokenizer::Tokenizer() {
 	
 }
 
-void Tokenizer::tokenize(std::istream& input, bool clear)
+void Tokenizer::clear() {
+    tokens.clear();
+}
+
+void Tokenizer::tokenize(std::istream& input)
 {
-    if (clear)
-        tokens.clear();
     std::string line;
     size_t lineNumber = 0;
 
@@ -87,6 +89,12 @@ void Tokenizer::tokenize(std::istream& input, bool clear)
             length + 1
         );
     }
+    tokens.emplace_back(
+        Type::_EOF,
+        "",
+        lineNumber + 1,
+        0
+    );
 }
 
 std::vector<Token::Token> Tokenizer::getTokens()

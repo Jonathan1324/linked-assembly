@@ -12,7 +12,7 @@ void printHelp()
 }
 
 bool parseArguments(int argc, const char *argv[],
-                    std::string& input, std::string& output,
+                    std::vector<std::string>& inputs, std::string& output,
                     BitMode& bits, Architecture& arch, Format& format,
                     Endianness& endianness, bool& debug,
                     Context& context)
@@ -183,11 +183,11 @@ bool parseArguments(int argc, const char *argv[],
         }
         else
         {
-            input = argv[i];
+            inputs.push_back(argv[i]);
         }
     }
 
-    if (input.empty())
+    if (inputs.empty())
     {
         throw Exception::ArgumentError("No input file entered");
     }
@@ -195,9 +195,9 @@ bool parseArguments(int argc, const char *argv[],
     if (output.empty())
     {
         if (format == Format::Binary)
-            output = input + ".bin";
+            output = inputs.at(0) + ".bin";
         else
-            output = input + ".o";
+            output = inputs.at(0) + ".o";
     }
 
     return false;

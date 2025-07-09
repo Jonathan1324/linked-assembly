@@ -12,7 +12,8 @@ namespace Token
         Token,
         Comma,
         Bracket,
-        EOL
+        EOL,
+        _EOF
     };
 
     inline const char* to_string(Type type) {
@@ -21,6 +22,7 @@ namespace Token
                 case Type::Comma:   return "__Comma__";
                 case Type::Bracket: return "_Bracket_";
                 case Type::EOL:     return "___EOL___";
+                case Type::_EOF:    return "___EOF___";
                 default:            return "__Unknown";
             }
         }
@@ -37,8 +39,21 @@ namespace Token
             
         void print() const
         {
-            std::cout << "Token (Type=" << to_string(type) << ") '" << value
-                << "' in line " << line << " at column " << column;
+            std::cout << "Token (Type=" << to_string(type) << ")";
+            switch (type)
+            {
+                case Type::Token:
+                case Type::Bracket:
+                    std::cout << " '" << value << "' in line " << line << " at column " << column;
+                    break;
+                case Type::Comma:
+                case Type::EOL:
+                    std::cout << " in line " << line << " at column " << column;
+                    break;
+                case Type::_EOF:
+                    std::cout << " at line " << line << std::endl;
+                    break;
+            }
         }
     };
 
@@ -47,7 +62,8 @@ namespace Token
     public:
         Tokenizer();
 
-        void tokenize(std::istream& input, bool clear = false);
+        void clear();
+        void tokenize(std::istream& input);
         std::vector<Token> getTokens();
         void print();
     private:

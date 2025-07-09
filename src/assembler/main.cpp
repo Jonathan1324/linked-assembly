@@ -26,8 +26,8 @@ int main(int argc, const char *argv[])
     Context context;
     context.warningManager = &warningManager;
 
-    std::string input_path;
-    std::string output_path;
+    std::vector<std::string> inputFiles;
+    std::string outputFile;
     BitMode bitMode;
     Architecture arch;
     Format format;
@@ -37,7 +37,7 @@ int main(int argc, const char *argv[])
     // Parse arguments
     try
     {
-        bool stop = parseArguments(argc, argv, input_path, output_path, bitMode, arch, format, endianness, debug, context);
+        bool stop = parseArguments(argc, argv, inputFiles, outputFile, bitMode, arch, format, endianness, debug, context);
         if (stop)
             return 0;
         if (warningManager.hasWarnings())
@@ -53,15 +53,24 @@ int main(int argc, const char *argv[])
     }
     catch(const std::exception& e) { return handleError(e); }
 
-    context.filename = std::filesystem::path(input_path).filename().string();
-    
-    // create file handles
-    std::ifstream file;
+    context.filename = std::filesystem::path(inputFiles.at(0)).filename().string();
+
+    // Create file handles and tokenize
     std::ofstream objectFile;
+    Token::Tokenizer tokenizer;
     try
     {
-        file = openIfstream(input_path);
-        objectFile = openOfstream(output_path, std::ios::out | std::ios::trunc | std::ios::binary);
+        objectFile = openOfstream(outputFile, std::ios::out | std::ios::trunc | std::ios::binary);
+
+        tokenizer.clear();
+        for (size_t i = 0; i < inputFiles.size(); i++)
+        {
+            std::ifstream file = openIfstream(inputFiles.at(i));
+            tokenizer.tokenize(file);
+            file.close();
+        }
+        if (debug)
+            tokenizer.print();
     }
     catch(const Exception& e)
     {
@@ -71,21 +80,6 @@ int main(int argc, const char *argv[])
     catch(const std::exception& e) { return handleError(e); }
 
     // Parse
-    try
-    {
-        Token::Tokenizer tokenizer;
-        tokenizer.tokenize(file);
-        if (debug)
-            tokenizer.print();
-        
-        
-    }
-    catch(const Exception& e)
-    {
-        e.print(std::cerr);
-        return 1;
-    }
-    catch(const std::exception& e) { return handleError(e); }
 
     // Encode
 
