@@ -58,14 +58,15 @@ void Tokenizer::tokenize(std::istream& input)
                 ++pos; // skip opening "
                 startPos = pos;
                 while (pos < length && line[pos] != '"')
-                    ++pos;
+                    ++pos;  // TODO: \""
 
                 std::string value = line.substr(startPos, pos - startPos);
-                tokens.emplace_back(Type::Token, value, lineNumber, startPos);
+                tokens.emplace_back(Type::String, value, lineNumber, startPos);
 
                 if (pos < length && line[pos] == '"')
                     ++pos; // skip closing "
             }
+            // comments ';' or '#'
             else
             {
                 while (pos < length &&

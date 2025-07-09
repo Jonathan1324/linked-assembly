@@ -10,6 +10,7 @@ namespace Token
     enum class Type
     {
         Token,
+        String,
         Comma,
         Bracket,
         EOL,
@@ -19,6 +20,7 @@ namespace Token
     inline const char* to_string(Type type) {
             switch (type) {
                 case Type::Token:   return "__Token__";
+                case Type::String:  return "__String_";
                 case Type::Comma:   return "__Comma__";
                 case Type::Bracket: return "_Bracket_";
                 case Type::EOL:     return "___EOL___";
