@@ -44,16 +44,18 @@ namespace Token
             std::cout << "Token (Type=" << to_string(type) << ")";
             switch (type)
             {
-                case Type::Token:
-                case Type::Bracket:
-                    std::cout << " '" << value << "' in line " << line << " at column " << column;
-                    break;
                 case Type::Comma:
                 case Type::EOL:
                     std::cout << " in line " << line << " at column " << column;
                     break;
                 case Type::_EOF:
                     std::cout << " at line " << line << std::endl;
+                    break;
+                
+                case Type::Token:
+                case Type::Bracket:
+                default:
+                    std::cout << " '" << value << "' in line " << line << " at column " << column;
                     break;
             }
         }

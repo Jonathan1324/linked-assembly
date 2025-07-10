@@ -25,7 +25,7 @@ void Tokenizer::tokenize(std::istream& input)
         {
             // Skip whitespace
             while (pos < length && std::isspace(static_cast<unsigned char>(line[pos])))
-                ++pos;
+                pos++;
             if (pos >= length) break;
 
             size_t startPos = pos;
@@ -38,7 +38,7 @@ void Tokenizer::tokenize(std::istream& input)
                     lineNumber,
                     pos + 1
                 );
-                ++pos;
+                pos++;
             }
             else if (line[pos] == '(' || line[pos] == ')' ||
                      line[pos] == '[' || line[pos] == ']' ||
@@ -50,29 +50,50 @@ void Tokenizer::tokenize(std::istream& input)
                     lineNumber,
                     pos + 1
                 );
-                ++pos;
+                pos++;
             }
             else if (line[pos] == '"')
             {
                 // String literal
-                ++pos; // skip opening "
+                pos++; // skip opening "
                 startPos = pos;
-                while (pos < length && line[pos] != '"')
-                    ++pos;  // TODO: \""
+                std::string value;
+                while (pos < length)
+                {
+                    if (line[pos] == '\\')
+                    {
+                        pos++;
+                        switch(line[pos])
+                        {
+                            case '\\': value.push_back('\\'); pos++; break;
+                            case '"': value.push_back('"'); pos++; break;
 
-                std::string value = line.substr(startPos, pos - startPos);
+                            default: pos++;
+                        }
+                    }
+                    else if (line[pos] == '"')
+                    {
+                        break;
+                    }
+                    else
+                    {
+                        value.push_back(line[pos]);
+                        pos++;
+                    }
+                }
+
                 tokens.emplace_back(Type::String, value, lineNumber, startPos);
 
                 if (pos < length && line[pos] == '"')
-                    ++pos; // skip closing "
+                    pos++; // skip closing "
             }
-            // comments ';' or '#'
+            // TODO: comments ';' or '#'
             else
             {
                 while (pos < length &&
                        !std::isspace(static_cast<unsigned char>(line[pos])) &&
                        line[pos] != ',')
-                    ++pos;
+                    pos++;
                 
                 tokens.emplace_back(
                     Type::Token,

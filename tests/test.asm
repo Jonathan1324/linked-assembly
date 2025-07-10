@@ -1,16 +1,12 @@
 section .text
-global _start
+    global _start
 
 _start:
-    mov eax, 1       ; syscall number (sys_exit)
-    mov ebx, 0       ; exit code 0
-    int 0x80         ; interrupt to invoke syscall
+    mov eax, 0
+test:
+    jmp test2
+test3:
+    mov ecx, eax
 
-section .data
-data1:
-    db 0
 
-data2: dw 2
-
-msg db "Hello, World!"
-testChar:   db 'a'
+msg db "Hi \" Hi2"
