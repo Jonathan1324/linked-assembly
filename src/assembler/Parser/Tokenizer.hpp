@@ -11,6 +11,7 @@ namespace Token
     {
         Token,
         String,
+        Character,
         Comma,
         Bracket,
         EOL,
@@ -50,6 +51,10 @@ namespace Token
                     break;
                 case Type::_EOF:
                     std::cout << " at line " << line << std::endl;
+                    break;
+
+                case Type::Character:
+                    std::cout << " 0x" << std::hex << static_cast<int>(static_cast<unsigned char>(value[0])) << std::dec << " ('" << value[0] << "') in line " << line << " at column " << column;
                     break;
                 
                 case Type::Token:

@@ -1,5 +1,7 @@
 #include "Tokenizer.hpp"
 
+#include <Exception.hpp>
+
 using namespace Token;
 
 Tokenizer::Tokenizer() {
@@ -55,7 +57,7 @@ void Tokenizer::tokenize(std::istream& input)
             else if (line[pos] == '"')
             {
                 // String literal
-                pos++; // skip opening "
+                pos++;  // skip opening "
                 startPos = pos;
                 std::string value;
                 while (pos < length)
@@ -67,6 +69,9 @@ void Tokenizer::tokenize(std::istream& input)
                         {
                             case '\\': value.push_back('\\'); pos++; break;
                             case '"': value.push_back('"'); pos++; break;
+                            case '\'': value = '\''; pos++; break;
+                            case 'n': value = '\n'; pos++; break;
+                            // TODO: add more
 
                             default: pos++;
                         }
@@ -86,6 +91,43 @@ void Tokenizer::tokenize(std::istream& input)
 
                 if (pos < length && line[pos] == '"')
                     pos++; // skip closing "
+            }
+            else if (line[pos] == '\'')
+            {
+                pos++;  // skip opening '
+                startPos = pos;
+                char value;
+                if (line[pos] == '\\')
+                {
+                    pos++;
+                    if (pos >= line.length())
+                        throw Exception::SyntaxError("Unexpected end of line after escape character", lineNumber);
+
+                    // TODO: one function only
+                    switch(line[pos])
+                    {
+                        case '\\': value = '\\'; break;
+                        case '"': value = '"'; break;
+                        case '\'': value = '\''; break;
+                        case 'n': value = '\n';break;
+                        // TODO: add more
+                    }
+                }
+                else
+                {
+                    value = line[pos];
+                }
+
+                pos++;
+
+                if (pos >= line.length() || line[pos] != '\'')
+                {
+                    throw Exception::SyntaxError("Expected closing '", lineNumber);
+                }
+
+                tokens.emplace_back(Type::Character, std::string() + value, lineNumber, startPos);
+
+                pos++; // skip closing '
             }
             // TODO: comments ';' or '#'
             else

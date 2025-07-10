@@ -10,3 +10,5 @@ test3:
 
 
 msg db "Hi \" Hi2"
+c   db 'a'
+c2  db '\n'
