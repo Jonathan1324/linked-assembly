@@ -49,6 +49,12 @@ void Tokenizer::tokenize(std::istream& input)
                 tokens.emplace_back(Type::Punctuation, std::string() + line[pos], lineNumber, pos);
                 pos++;
             }
+            // %
+            else if (line[pos] == '%')
+            {
+                tokens.emplace_back(Type::Macro, "", lineNumber, pos);
+                pos++;
+            }
 
             // Bracket
             else if (line[pos] == '(' || line[pos] == ')' ||

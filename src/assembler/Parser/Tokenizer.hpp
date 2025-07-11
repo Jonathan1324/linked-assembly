@@ -14,24 +14,28 @@ namespace Token
         Character,
         Comma,
         Punctuation,
+        Macro,
         Bracket,
         EOL,
         _EOF
     };
 
-    inline const char* to_string(Type type) {
-            switch (type) {
-                case Type::Token:       return "__Token_______";
-                case Type::String:      return "__String______";
-                case Type::Character:   return "__Character___";
-                case Type::Comma:       return "__Comma_______";
-                case Type::Punctuation: return "__Punctuation_";
-                case Type::Bracket:     return "__Bracket_____";
-                case Type::EOL:         return "_EOL__________";
-                case Type::_EOF:        return "EOF___________";
-                default:                return "_______Unknown";
-            }
+    inline const char* to_string(Type type)
+    {
+        switch (type)
+        {
+            case Type::Token:       return "__Token_______";
+            case Type::String:      return "__String______";
+            case Type::Character:   return "__Character___";
+            case Type::Comma:       return "__Comma_______";
+            case Type::Macro:       return "__Macro_______";
+            case Type::Punctuation: return "__Punctuation_";
+            case Type::Bracket:     return "__Bracket_____";
+            case Type::EOL:         return "_EOL__________";
+            case Type::_EOF:        return "EOF___________";
+            default:                return "_______Unknown";
         }
+    }
 
     struct Token
     {
@@ -49,6 +53,7 @@ namespace Token
             switch (type)
             {
                 case Type::Comma:
+                case Type::Macro:
                 case Type::EOL:
                     std::cout << " in line " << line << " at column " << column;
                     break;
