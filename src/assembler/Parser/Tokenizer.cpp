@@ -32,6 +32,7 @@ void Tokenizer::tokenize(std::istream& input)
 
             size_t startPos = pos;
 
+            // ,
             if (line[pos] == ',')
             {
                 tokens.emplace_back(
@@ -42,6 +43,14 @@ void Tokenizer::tokenize(std::istream& input)
                 );
                 pos++;
             }
+            // ;
+            else if (line[pos] == ';')
+            {
+                tokens.emplace_back(Type::Punctuation, std::string() + line[pos], lineNumber, pos);
+                pos++;
+            }
+
+            // Bracket
             else if (line[pos] == '(' || line[pos] == ')' ||
                      line[pos] == '[' || line[pos] == ']' ||
                      line[pos] == '{' || line[pos] == '}')
@@ -54,9 +63,10 @@ void Tokenizer::tokenize(std::istream& input)
                 );
                 pos++;
             }
+
+            // Strings
             else if (line[pos] == '"')
             {
-                // String literal
                 pos++;  // skip opening "
                 startPos = pos;
                 std::string value;
@@ -92,6 +102,7 @@ void Tokenizer::tokenize(std::istream& input)
                 if (pos < length && line[pos] == '"')
                     pos++; // skip closing "
             }
+            // Characters
             else if (line[pos] == '\'')
             {
                 pos++;  // skip opening '
@@ -129,12 +140,13 @@ void Tokenizer::tokenize(std::istream& input)
 
                 pos++; // skip closing '
             }
-            // TODO: comments ';' or '#'
+
+            // Everything else
             else
             {
                 while (pos < length &&
                        !std::isspace(static_cast<unsigned char>(line[pos])) &&
-                       line[pos] != ',')
+                       line[pos] != ',' && line[pos] != ';')
                     pos++;
                 
                 tokens.emplace_back(

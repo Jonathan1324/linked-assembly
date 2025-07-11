@@ -14,7 +14,7 @@ public:
     Parser(Context _context, Architecture _arch, BitMode _bits, Endianness _endianness);
     virtual ~Parser() = default;
 
-    virtual void Parse(std::vector<Token::Token> tokens) = 0;
+    virtual void Parse(const std::vector<Token::Token>& tokens) = 0;
     void Print();
 
 protected:
@@ -23,3 +23,6 @@ protected:
     BitMode bits;
     Endianness endianness;
 };
+
+// FIXME: only temporary solution
+Parser* getParser(Context _context, Architecture _arch, BitMode _bits, Endianness _endianness);

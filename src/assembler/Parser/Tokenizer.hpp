@@ -13,6 +13,7 @@ namespace Token
         String,
         Character,
         Comma,
+        Punctuation,
         Bracket,
         EOL,
         _EOF
@@ -20,13 +21,15 @@ namespace Token
 
     inline const char* to_string(Type type) {
             switch (type) {
-                case Type::Token:   return "__Token__";
-                case Type::String:  return "__String_";
-                case Type::Comma:   return "__Comma__";
-                case Type::Bracket: return "_Bracket_";
-                case Type::EOL:     return "___EOL___";
-                case Type::_EOF:    return "___EOF___";
-                default:            return "__Unknown";
+                case Type::Token:       return "__Token_______";
+                case Type::String:      return "__String______";
+                case Type::Character:   return "__Character___";
+                case Type::Comma:       return "__Comma_______";
+                case Type::Punctuation: return "__Punctuation_";
+                case Type::Bracket:     return "__Bracket_____";
+                case Type::EOL:         return "_EOL__________";
+                case Type::_EOF:        return "EOF___________";
+                default:                return "_______Unknown";
             }
         }
 
@@ -58,7 +61,9 @@ namespace Token
                     break;
                 
                 case Type::Token:
+                case Type::String:
                 case Type::Bracket:
+                case Type::Punctuation:
                 default:
                     std::cout << " '" << value << "' in line " << line << " at column " << column;
                     break;

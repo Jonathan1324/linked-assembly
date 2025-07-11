@@ -2,7 +2,7 @@ section .text
     global _start
 
 _start:
-    mov eax, 0
+    mov eax, 0;         Hi, Test comment
 test:
     jmp test2
 test3:

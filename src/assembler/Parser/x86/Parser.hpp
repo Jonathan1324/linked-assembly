@@ -7,6 +7,8 @@ namespace x86
     class Parser : public ::Parser
     {
     public:
-        void Parse(std::vector<Token::Token> tokens) override;
+        Parser(Context _context, Architecture _arch, BitMode _bits, Endianness _endianness);
+        
+        void Parse(const std::vector<Token::Token>& tokens) override;
     };
 }

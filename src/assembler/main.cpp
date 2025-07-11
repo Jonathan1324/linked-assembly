@@ -80,6 +80,18 @@ int main(int argc, const char *argv[])
     catch(const std::exception& e) { return handleError(e); }
 
     // Parse
+    Parser* parser = getParser(context, arch, bitMode, endianness);
+    try
+    {
+        parser->Parse(tokenizer.getTokens());
+    }
+    catch(const Exception& e)
+    {
+        e.print(std::cerr);
+        return 1;
+    }
+    catch(const std::exception& e) { return handleError(e); }
+    
 
     // Encode
 
