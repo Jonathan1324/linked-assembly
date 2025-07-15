@@ -43,8 +43,8 @@ void Tokenizer::tokenize(std::istream& input)
                 );
                 pos++;
             }
-            // ;
-            else if (line[pos] == ';')
+            // ; or :
+            else if (line[pos] == ';' || line[pos] == ':')
             {
                 tokens.emplace_back(Type::Punctuation, std::string() + line[pos], lineNumber, pos);
                 pos++;
@@ -152,7 +152,7 @@ void Tokenizer::tokenize(std::istream& input)
             {
                 while (pos < length &&
                        !std::isspace(static_cast<unsigned char>(line[pos])) &&
-                       line[pos] != ',' && line[pos] != ';')
+                       line[pos] != ',' && line[pos] != ';' && line[pos] != ':')
                     pos++;
                 
                 tokens.emplace_back(
@@ -190,8 +190,43 @@ void Tokenizer::print()
     for (size_t i = 0; i < tokens.size(); i++)
     {
         const Token& token = tokens[i];
-        std::cout << "  ";
-        token.print();
-        std::cout << std::endl;
+        std::cout << "  " << token.what() << std::endl;
     }
+}
+
+std::string Token::Token::what() const
+{
+    std::string result = std::string("Token (Type=") + to_string(type) + ")";
+
+    switch (type)
+    {
+        case Type::Comma:
+        case Type::Macro:
+        case Type::EOL:
+            result += " in line " + std::to_string(line) + " at column " + std::to_string(column);
+            break;
+
+        case Type::_EOF:
+            result += " at line " + std::to_string(line);
+            break;
+
+        case Type::Character:
+        {
+            char buf[80];
+            unsigned char c = static_cast<unsigned char>(value[0]);
+            snprintf(buf, sizeof(buf), " 0x%02x ('%c') in line %zu at column %zu", c, value[0], line, column);
+            result += buf;
+            break;
+        }
+
+        case Type::Token:
+        case Type::String:
+        case Type::Bracket:
+        case Type::Punctuation:
+        default:
+            result += " '" + value + "' in line " + std::to_string(line) + " at column " + std::to_string(column);
+            break;
+    }
+
+    return result;
 }

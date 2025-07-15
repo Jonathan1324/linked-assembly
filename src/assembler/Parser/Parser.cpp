@@ -11,7 +11,44 @@ Parser::Parser(Context _context, Architecture _arch, BitMode _bits, Endianness _
 
 void Parser::Print()
 {
-    // TODO
+    for (const auto& section : sections)
+    {
+        std::cout << section.name << ": " << std::endl;
+        for (const auto& entry : section.entries)
+        {
+            if (std::holds_alternative<Instruction>(entry))
+            {
+                const Instruction& instruction = std::get<Instruction>(entry);
+                // TODO
+            }
+            else if (std::holds_alternative<DataDefinition>(entry))
+            {
+                const DataDefinition& dataDefinition = std::get<DataDefinition>(entry);
+                std::cout << "\t";
+                if (dataDefinition.reserved)
+                    std::cout << "Reserved";
+                else
+                    std::cout << "Data";
+
+                std::cout << " of size " << dataDefinition.size;
+                
+                if (dataDefinition.alignment != 0)
+                    std::cout << " aligned to " << dataDefinition.alignment;
+
+                std::cout << " in line " << dataDefinition.lineNumber << " at column " << dataDefinition.column << std::endl;
+
+                for (const auto& value : dataDefinition.values)
+                {
+                    std::cout << "\t\t0x" << std::hex << value << std::dec << std::endl;
+                }
+            }
+            else if (std::holds_alternative<Label>(entry))
+            {
+                const Label& label = std::get<Label>(entry);
+                // TODO
+            }
+        }
+    }
 }
 
 #include "x86/Parser.hpp"

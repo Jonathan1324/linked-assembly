@@ -40,6 +40,7 @@ int main(int argc, const char *argv[])
         bool stop = parseArguments(argc, argv, inputFiles, outputFile, bitMode, arch, format, endianness, debug, context);
         if (stop)
             return 0;
+        
         if (warningManager.hasWarnings())
         {
             warningManager.printAll(std::cerr);
@@ -71,6 +72,12 @@ int main(int argc, const char *argv[])
         }
         if (debug)
             tokenizer.print();
+        
+        if (warningManager.hasWarnings())
+        {
+            warningManager.printAll(std::cerr);
+            warningManager.clear();
+        }
     }
     catch(const Exception& e)
     {
@@ -84,6 +91,14 @@ int main(int argc, const char *argv[])
     try
     {
         parser->Parse(tokenizer.getTokens());
+        if (debug)
+            parser->Print();
+
+        if (warningManager.hasWarnings())
+        {
+            warningManager.printAll(std::cerr);
+            warningManager.clear();
+        }
     }
     catch(const Exception& e)
     {

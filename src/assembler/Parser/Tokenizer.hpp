@@ -46,34 +46,8 @@ namespace Token
 
         Token(Type t, std::string v, size_t l, size_t c)
             : type(t), value(std::move(v)), line(l), column(c) {}
-            
-        void print() const
-        {
-            std::cout << "Token (Type=" << to_string(type) << ")";
-            switch (type)
-            {
-                case Type::Comma:
-                case Type::Macro:
-                case Type::EOL:
-                    std::cout << " in line " << line << " at column " << column;
-                    break;
-                case Type::_EOF:
-                    std::cout << " at line " << line << std::endl;
-                    break;
 
-                case Type::Character:
-                    std::cout << " 0x" << std::hex << static_cast<int>(static_cast<unsigned char>(value[0])) << std::dec << " ('" << value[0] << "') in line " << line << " at column " << column;
-                    break;
-                
-                case Type::Token:
-                case Type::String:
-                case Type::Bracket:
-                case Type::Punctuation:
-                default:
-                    std::cout << " '" << value << "' in line " << line << " at column " << column;
-                    break;
-            }
-        }
+        std::string what() const;
     };
 
     class Tokenizer
