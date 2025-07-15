@@ -8,10 +8,50 @@
 #include "../Context.hpp"
 #include "Tokenizer.hpp"
 
-struct Instruction
+namespace Instruction
 {
+    struct Register
+    {
+        // TODO
+    };
 
-};
+    enum class ImmediateType
+    {
+        Unsigned,
+        Signed,
+        Floating
+    };
+
+    struct Immediate
+    {
+        uint64_t value;
+        ImmediateType type;
+        uint16_t size;
+    };
+
+    struct Memory
+    {
+        // TODO
+    };
+
+    struct Label
+    {
+        std::string label;
+    };
+
+    using Operand = std::variant<Register, Immediate, Memory, Label>;
+
+    struct Instruction
+    {
+        uint64_t mnemonic;
+        std::vector<Operand> operands;
+        BitMode bits;
+        int alignment;
+
+        size_t lineNumber;
+        size_t column;
+    };
+}
 
 struct DataDefinition
 {
@@ -33,7 +73,7 @@ struct Label
     size_t column;
 };
 
-using SectionEntry = std::variant<Instruction, DataDefinition, Label>;
+using SectionEntry = std::variant<Instruction::Instruction, DataDefinition, Label>;
 
 struct Section
 {

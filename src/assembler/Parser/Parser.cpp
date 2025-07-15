@@ -16,9 +16,9 @@ void Parser::Print()
         std::cout << section.name << ": " << std::endl;
         for (const auto& entry : section.entries)
         {
-            if (std::holds_alternative<Instruction>(entry))
+            if (std::holds_alternative<Instruction::Instruction>(entry))
             {
-                const Instruction& instruction = std::get<Instruction>(entry);
+                const Instruction::Instruction& instruction = std::get<Instruction::Instruction>(entry);
                 // TODO
             }
             else if (std::holds_alternative<DataDefinition>(entry))
