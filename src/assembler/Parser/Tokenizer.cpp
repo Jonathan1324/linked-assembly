@@ -207,7 +207,7 @@ std::string Token::Token::what() const
             break;
 
         case Type::_EOF:
-            result += " at line " + std::to_string(line);
+            result += " in line " + std::to_string(line);
             break;
 
         case Type::Character:

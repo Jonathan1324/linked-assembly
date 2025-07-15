@@ -83,6 +83,9 @@ void x86::Parser::Parse(const std::vector<Token::Token>& tokens)
     for (size_t i = 0; i < filteredTokens.size(); i++)
     {
         const Token::Token& token = filteredTokens[i];
+        if (token.type == Token::Type::EOL || token.type == Token::Type::_EOF)
+            continue;
+        
         const std::string lowerVal = toLower(token.value);
 
         // Macros and constants
@@ -121,7 +124,26 @@ void x86::Parser::Parse(const std::vector<Token::Token>& tokens)
         }
 
         // Labels
-        // TODO
+        if (token.type == Token::Type::Token &&
+           (filteredTokens[i + 1].type == Token::Type::Punctuation && filteredTokens[i + 1].value == ":"
+         || filteredTokens[i + 1].type == Token::Type::Token && std::find(dataDefinitions.begin(), dataDefinitions.end(), toLower(filteredTokens[i + 1].value)) != dataDefinitions.end()))
+        {
+            Label label;
+            label.name = token.value;
+            label.lineNumber = token.line;
+            label.column = token.column;
+
+            if (std::find(globals.begin(), globals.end(), token.value) != globals.end())
+                label.isGlobal = true;
+            else
+                label.isGlobal = false;
+
+            currentSection->entries.push_back(label);
+
+            if (filteredTokens[i + 1].type == Token::Type::Punctuation && filteredTokens[i + 1].value == ":")
+                i++;
+            continue;
+        }
 
         // Data
         if (token.type == Token::Type::Token && std::find(dataDefinitions.begin(), dataDefinitions.end(), lowerVal) != dataDefinitions.end())

@@ -28,6 +28,9 @@ struct Label
 {
     std::string name;
     bool isGlobal;
+
+    size_t lineNumber;
+    size_t column;
 };
 
 using SectionEntry = std::variant<Instruction, DataDefinition, Label>;

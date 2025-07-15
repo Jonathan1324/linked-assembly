@@ -24,7 +24,7 @@ void Parser::Print()
             else if (std::holds_alternative<DataDefinition>(entry))
             {
                 const DataDefinition& dataDefinition = std::get<DataDefinition>(entry);
-                std::cout << "\t";
+                std::cout << "  ";  // '  '
                 if (dataDefinition.reserved)
                     std::cout << "Reserved";
                 else
@@ -39,13 +39,19 @@ void Parser::Print()
 
                 for (const auto& value : dataDefinition.values)
                 {
-                    std::cout << "\t\t0x" << std::hex << value << std::dec << std::endl;
+                    std::cout << "    ";    // 2x '  '
+                    std::cout << "0x" << std::hex << value << std::dec << std::endl;
                 }
             }
             else if (std::holds_alternative<Label>(entry))
             {
                 const Label& label = std::get<Label>(entry);
-                // TODO
+                std::cout << "  ";  // '  '
+                if (label.isGlobal)
+                    std::cout << "Global label '";
+                else
+                    std::cout << "Label '";
+                std::cout << label.name << "' in line " << label.lineNumber << " at column " << label.column << std::endl;
             }
         }
     }
