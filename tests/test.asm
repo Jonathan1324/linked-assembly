@@ -5,7 +5,6 @@ section .text
 
 _start:
     mov eax, ebx
-    push cons
 
 section .data
 
@@ -13,5 +12,3 @@ section .data
 ;msg2    dw "Hello, world!"
 ;msg3    dd "Hello, world!"
 ;msg4    dq "Hello, world!"
-
-cons    equ $
