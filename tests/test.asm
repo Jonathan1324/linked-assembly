@@ -5,10 +5,14 @@ section .text
 
 _start:
     mov eax, ebx
+    mov ebx, $
 
 section .data
 
-;msg1    db "Hello, world!"
-;msg2    dw "Hello, world!"
-;msg3    dd "Hello, world!"
-;msg4    dq "Hello, world!"
+msg1    db "Hello, world!"
+msg2    dw "Hello, world!"
+msg3    dd "Hello, world!"
+msg4    dq "Hello, world!"
+
+msg5 db 3
+

@@ -3,7 +3,7 @@
 #include <util/string.hpp>
 #include <algorithm>
 
-Parser::Parser(Context _context, Architecture _arch, BitMode _bits)
+Parser::Parser(const Context& _context, Architecture _arch, BitMode _bits)
     : context(_context), arch(_arch), bits(_bits)
 {
 
@@ -50,6 +50,12 @@ void Parser::Print()
                         std::cout << "    "; // 2x '  '
                         std::cout << "Register '" << reg.reg << "'" << std::endl;
                     }
+                    else if (std::holds_alternative<Instruction::Immediate>(operand))
+                    {
+                        const Instruction::Immediate& imm = std::get<Instruction::Immediate>(operand);
+                        std::cout << "    "; // 2x '  '
+                        std::cout << "'" << imm.value << "'" << std::endl;
+                    }
                 }
             }
             else if (std::holds_alternative<DataDefinition>(entry))
@@ -71,7 +77,10 @@ void Parser::Print()
                 for (const auto& value : dataDefinition.values)
                 {
                     std::cout << "    ";    // 2x '  '
-                    std::cout << "0x" << std::hex << value << std::dec << std::endl;
+                    if (value.isString)
+                        std::cout << "'" << value.str << "'" << std::endl;
+                    else
+                        std::cout << "0x" << std::hex << value.val << std::dec << std::endl;
                 }
             }
             else if (std::holds_alternative<Label>(entry))
@@ -91,7 +100,7 @@ void Parser::Print()
 #include "x86/Parser.hpp"
 
 // FIXME: only temporary solution
-Parser* getParser(Context _context, Architecture _arch, BitMode _bits)
+Parser* getParser(const Context& _context, Architecture _arch, BitMode _bits)
 {
     return new x86::Parser(_context, _arch, _bits);
 }

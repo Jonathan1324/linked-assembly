@@ -51,7 +51,10 @@ int main(int argc, const char *argv[])
         e.print(std::cerr);
         return 1;
     }
-    catch(const std::exception& e) { return handleError(e); }
+    catch(const std::exception& e)
+    {
+        return handleError(e);
+    }
 
     context.filename = std::filesystem::path(inputFiles.at(0)).filename().string();
 
@@ -81,9 +84,21 @@ int main(int argc, const char *argv[])
     catch(const Exception& e)
     {
         e.print(std::cerr);
+
+        // delete outputFile
+        objectFile.close();
+        std::remove(outputFile.c_str());
+
         return 1;
     }
-    catch(const std::exception& e) { return handleError(e); }
+    catch(const std::exception& e)
+    {
+        // delete outputFile
+        objectFile.close();
+        std::remove(outputFile.c_str());
+
+        return handleError(e);
+    }
 
     // Parse
     Parser* parser = getParser(context, arch, bitMode);
@@ -102,16 +117,29 @@ int main(int argc, const char *argv[])
     catch(const Exception& e)
     {
         e.print(std::cerr);
+        
+        // delete outputFile
+        objectFile.close();
+        std::remove(outputFile.c_str());
+
         return 1;
     }
-    catch(const std::exception& e) { return handleError(e); }
+    catch(const std::exception& e)
+    {
+        // delete outputFile
+        objectFile.close();
+        std::remove(outputFile.c_str());
+        
+        return handleError(e);
+    }
     
 
     // Encode
 
     // Create .o/.bin file
 
-    delete parser;
+    if (parser)
+        delete parser;
 
     return 0;
 }

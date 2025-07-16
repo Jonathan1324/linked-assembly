@@ -25,9 +25,7 @@ namespace Instruction
 
     struct Immediate
     {
-        uint64_t value;
-        ImmediateType type;
-        uint16_t size;
+        std::string value;
     };
 
     struct Memory
@@ -35,12 +33,7 @@ namespace Instruction
         // TODO
     };
 
-    struct Label
-    {
-        std::string label;
-    };
-
-    using Operand = std::variant<Register, Immediate, Memory, Label>;
+    using Operand = std::variant<Register, Immediate, Memory>;
 
     struct Instruction
     {
@@ -54,11 +47,19 @@ namespace Instruction
     };
 }
 
+struct DataValue
+{
+    std::string str;
+    uint64_t val;
+
+    bool isString;
+};
+
 struct DataDefinition
 {
     size_t size;
     bool reserved;
-    std::vector<uint64_t> values;
+    std::vector<DataValue> values;
     int alignment;
 
     size_t lineNumber;
@@ -85,7 +86,7 @@ struct Section
 class Parser
 {
 public:
-    Parser(Context _context, Architecture _arch, BitMode _bits);
+    Parser(const Context& _context, Architecture _arch, BitMode _bits);
     virtual ~Parser() = default;
 
     virtual void Parse(const std::vector<Token::Token>& tokens) = 0;
@@ -96,10 +97,10 @@ protected:
     Architecture arch;
     BitMode bits;
 
-    uint64_t org = 0;
+    std::string org = 0;
     std::vector<Section> sections;
     std::vector<std::string> externs;
     std::unordered_map<std::string, std::string> constants;
 };
 
-Parser* getParser(Context _context, Architecture _arch, BitMode _bits);
+Parser* getParser(const Context& _context, Architecture _arch, BitMode _bits);

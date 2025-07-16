@@ -96,7 +96,7 @@ void Tokenizer::tokenize(std::istream& input)
                             case 'n': value = '\n'; pos++; break;
                             // TODO: add more
 
-                            default: pos++;
+                            default: throw Exception::SyntaxError("Unknown escape character", lineNumber, pos);
                         }
                     }
                     else if (line[pos] == '"')
@@ -125,7 +125,7 @@ void Tokenizer::tokenize(std::istream& input)
                 {
                     pos++;
                     if (pos >= line.length())
-                        throw Exception::SyntaxError("Unexpected end of line after escape character", lineNumber);
+                        throw Exception::SyntaxError("Unexpected end of line after escape character", lineNumber, pos);
 
                     // TODO: one function only
                     switch(line[pos])
@@ -135,6 +135,8 @@ void Tokenizer::tokenize(std::istream& input)
                         case '\'': value = '\''; break;
                         case 'n': value = '\n';break;
                         // TODO: add more
+
+                        default: throw Exception::SyntaxError("Unknown escape character", lineNumber, pos);
                     }
                 }
                 else
@@ -146,7 +148,7 @@ void Tokenizer::tokenize(std::istream& input)
 
                 if (pos >= line.length() || line[pos] != '\'')
                 {
-                    throw Exception::SyntaxError("Expected closing '", lineNumber);
+                    throw Exception::SyntaxError("Expected closing '", lineNumber, pos);
                 }
 
                 tokens.emplace_back(Type::Character, std::string() + value, lineNumber, startPos);

@@ -24,6 +24,7 @@ public:
     };
 
     Exception(Type _type, const std::string& _message, int _line, int _column);
+    ~Exception() = default;
 
     const char* what() const noexcept override;
     Type getType() const noexcept;

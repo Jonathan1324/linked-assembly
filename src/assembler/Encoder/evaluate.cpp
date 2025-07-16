@@ -17,7 +17,7 @@ static int64_t sign_extend(uint64_t val, size_t size_bytes)
     }
 }
 
-uint64_t evalInteger(std::string str, size_t size, std::unordered_map<std::string, std::string> constants, int lineNumber)
+uint64_t evalInteger(std::string str, size_t size, std::unordered_map<std::string, std::string> constants, int lineNumber, int column)
 {
     // TODO: operations
     std::string value = str;
@@ -82,7 +82,7 @@ uint64_t evalInteger(std::string str, size_t size, std::unordered_map<std::strin
         // Try signed first
         long long sval = std::stoll(value, &pos, base);
         if (pos != value.size())
-            throw Exception::SemanticError(value + " contains invalid characters", lineNumber);
+            throw Exception::SemanticError(value + " contains invalid characters", lineNumber, column);
         
         // Convert negative signed to unsigned two's complement equivalent
         rawValue = static_cast<uint64_t>(sval);
@@ -95,21 +95,21 @@ uint64_t evalInteger(std::string str, size_t size, std::unordered_map<std::strin
         {
             uint64_t uval = std::stoull(value, &pos, base);
             if (pos != value.size())
-                throw Exception::SemanticError(value + " contains invalid characters", lineNumber);
+                throw Exception::SemanticError(value + " contains invalid characters", lineNumber, column);
             rawValue = uval;
         }
         catch (const std::invalid_argument&)
         {
-            throw Exception::SemanticError(value + " not a number", lineNumber);
+            throw Exception::SemanticError(value + " not a number", lineNumber, column);
         }
         catch (const std::out_of_range&)
         {
-            throw Exception::OverflowError(value + " number out of range", lineNumber);
+            throw Exception::OverflowError(value + " number out of range", lineNumber, column);
         }
     }
     catch (const std::out_of_range&)
     {
-        throw Exception::OverflowError(value + " number out of range", lineNumber);
+        throw Exception::OverflowError(value + " number out of range", lineNumber, column);
     }
 
     if (size >= 8)

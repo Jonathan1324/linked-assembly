@@ -1,7 +1,7 @@
 #include "exception.hpp"
 
 Exception::Exception(Type _type, const std::string& _message, int _line, int _column)
-    : std::runtime_error(message), type(_type), message(_message), line(_line), column(_column)
+    : std::runtime_error(_message), type(_type), message(_message), line(_line), column(_column)
 {
 
 }
@@ -62,7 +62,7 @@ Exception Exception::ParseError(const std::string& message, int line, int column
 
 Exception Exception::SyntaxError(const std::string& message, int line, int column)
 {
-    return Exception(Type::ParseError, message, line, column);
+    return Exception(Type::SyntaxError, message, line, column);
 }
 
 Exception Exception::SemanticError(const std::string& message, int line, int column)

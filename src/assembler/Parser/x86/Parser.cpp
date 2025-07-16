@@ -4,11 +4,10 @@
 #include <unordered_set>
 #include <array>
 #include <algorithm>
-#include "../evaluate.hpp"
 #include "registers.hpp"
 #include "Instructions.hpp"
 
-x86::Parser::Parser(Context _context, Architecture _arch, BitMode _bits)
+x86::Parser::Parser(const Context& _context, Architecture _arch, BitMode _bits)
     : ::Parser(_context, _arch, _bits)
 {
 
@@ -42,6 +41,23 @@ void x86::Parser::Parse(const std::vector<Token::Token>& tokens)
 
     for (auto it = filteredTokens.begin(); it != filteredTokens.end(); /* manual increment */)
     {
+        bool hasOpeningBracket = false;
+        bool hasClosingBracket = false;
+
+        if (it->type == Token::Type::Bracket && it->value == "[")
+        {
+            auto next = std::next(it);
+            if (next != filteredTokens.end())
+            {
+                const std::string val = toLower(next->value);
+                if (val == "global" || val == "extern")
+                {
+                    hasOpeningBracket = true;
+                    it = filteredTokens.erase(it);
+                }
+            }
+        }
+
         const std::string lowerVal = toLower(it->value);
 
         if (lowerVal == "global" || lowerVal == "extern")
@@ -54,6 +70,28 @@ void x86::Parser::Parse(const std::vector<Token::Token>& tokens)
                     globals.push_back(next->value);
                 else
                     externs.push_back(next->value);
+            }
+
+            // remove "global"/"extern"
+            it = filteredTokens.erase(it);
+
+            // remove symbol
+            if (it != filteredTokens.end())
+                it = filteredTokens.erase(it);
+
+            // remove ']' if it started with '['
+            if (hasOpeningBracket)
+            {
+                if (it == filteredTokens.end() || it->type != Token::Type::Bracket || it->value != "]")
+                    throw Exception::SyntaxError("Missing closing ']' after '[global ...' or '[extern ...'", it->line, it->column);
+                it = filteredTokens.erase(it);
+            }
+            else
+            {
+                /* TODO: think about it
+                if (it != filteredTokens.end() && it->type == Token::Type::Bracket && it->value == "]")
+                    throw Exception::SyntaxError("Unexpected closing ']' after directive", it->line, it->column);
+                */
             }
 
             // Erase tokens until end-of-line
@@ -146,14 +184,11 @@ void x86::Parser::Parse(const std::vector<Token::Token>& tokens)
                 else if (bits.compare(0, 2, "64") == 0)
                     currentBitMode = BitMode::Bits64;
                 else
-                    throw Exception::SyntaxError("Undefined bits", token.line);
+                    throw Exception::SyntaxError("Undefined bits", token.line, token.column);
             }
             else if (lowerDir.compare("org") == 0)
             {
-                // TODO: constants
-                // TODO: not just integers
-                uint64_t addr = evalInteger(filteredTokens[i + 1].value, 8, constants, filteredTokens[i + 1].line);
-                org = addr;
+                org = filteredTokens[i + 1].value;
             }
 
             while (i < filteredTokens.size() && filteredTokens[i].type != Token::Type::EOL)
@@ -212,7 +247,7 @@ void x86::Parser::Parse(const std::vector<Token::Token>& tokens)
                 case 'o': data.size = 16; break;
                 case 'y': data.size = 32; break;
                 case 'z': data.size = 64; break;
-                default: throw Exception::InternalError("Unknown size suffix");
+                default: throw Exception::InternalError("Unknown size suffix", token.line, token.column);
             }
 
             i++;
@@ -234,12 +269,17 @@ void x86::Parser::Parse(const std::vector<Token::Token>& tokens)
 
                     i--;
 
-                    uint64_t val = evalInteger(value, data.size, constants, filteredTokens[i].line);
+                    DataValue val;
+                    val.str = value;
+                    val.isString = true;
+
                     data.values.push_back(val);
                 }
                 else if (filteredTokens[i].type == Token::Type::Character)
                 {
-                    uint64_t val = filteredTokens[i].value[0];
+                    DataValue val;
+                    val.val = filteredTokens[i].value[0];
+                    val.isString = false;
                     data.values.push_back(val);
                 }
                 else if (filteredTokens[i].type == Token::Type::String)
@@ -264,11 +304,15 @@ void x86::Parser::Parse(const std::vector<Token::Token>& tokens)
                             }
                         }
 
-                        data.values.push_back(combined);
+                        DataValue value;
+                        value.val = combined;
+                        value.isString = false;
+
+                        data.values.push_back(value);
                     }
                 }
                 else
-                    throw Exception::SyntaxError("Expected definition after data definition", filteredTokens[i].line);
+                    throw Exception::SyntaxError("Expected definition after data definition", filteredTokens[i].line, filteredTokens[i].column);
 
                 i++;
                 if (i >= filteredTokens.size()) break;
@@ -277,11 +321,11 @@ void x86::Parser::Parse(const std::vector<Token::Token>& tokens)
                 {
                     i++;
                     if (i >= filteredTokens.size())
-                        throw Exception::SyntaxError("Unexpected end after comma", filteredTokens.back().line);
+                        throw Exception::InternalError("Unexpected end after comma", filteredTokens.back().line, filteredTokens.back().column);
                 }
                 else if (filteredTokens[i].type != Token::Type::EOL)
                 {
-                    throw Exception::SyntaxError("Expected comma or end of line after data definition", filteredTokens[i].line);
+                    throw Exception::SyntaxError("Expected comma or end of line after data definition", filteredTokens[i].line, filteredTokens[i].column);
                 }
             }
 
@@ -346,6 +390,15 @@ void x86::Parser::Parse(const std::vector<Token::Token>& tokens)
             else
             {
                 // TODO: immediate?
+                std::string val;
+                while (i < filteredTokens.size() && filteredTokens[i].type != Token::Type::EOL)
+                {
+                    val += filteredTokens[i].value;
+                    i++;
+                }
+                Instruction::Immediate imm;
+                imm.value = val;
+                instruction.operands.push_back(imm);
             }
 
             if (filteredTokens[i].type != Token::Type::EOL)
