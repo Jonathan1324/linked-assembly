@@ -5,9 +5,11 @@
 #include <array>
 #include <algorithm>
 #include "../evaluate.hpp"
+#include "registers.hpp"
+#include "Instructions.hpp"
 
-x86::Parser::Parser(Context _context, Architecture _arch, BitMode _bits, Endianness _endianness)
-    : ::Parser(_context, _arch, _bits, _endianness)
+x86::Parser::Parser(Context _context, Architecture _arch, BitMode _bits)
+    : ::Parser(_context, _arch, _bits)
 {
 
 }
@@ -75,10 +77,16 @@ void x86::Parser::Parse(const std::vector<Token::Token>& tokens)
         "resb", "resw", "resd", "resq", "rest", "reso", "resy", "resz"
     };
 
+    static constexpr std::array<std::string_view, 3> directives = {
+        "section", "bits", "org"
+    };
+
     Section text;
     text.name = ".text";
     sections.push_back(text);
+
     Section* currentSection = &sections.at(0);
+    BitMode currentBitMode = bits;
 
     for (size_t i = 0; i < filteredTokens.size(); i++)
     {
@@ -99,25 +107,55 @@ void x86::Parser::Parse(const std::vector<Token::Token>& tokens)
         }
 
         // Directives
-        if (lowerVal.compare("section") == 0)
+        if ((token.type == Token::Type::Bracket && token.value == "[" && std::find(directives.begin(), directives.end(), toLower(filteredTokens[i + 1].value)) != directives.end())
+         || std::find(directives.begin(), directives.end(), lowerVal) != directives.end())
         {
-            // TODO: currently case insensitive
-            std::string name = toLower(filteredTokens[++i].value);
-
-            auto it = std::find_if(sections.begin(), sections.end(), [&](const Section& s) {return s.name == name; });
-
-            if (it == sections.end())
+            if (token.type == Token::Type::Bracket)
+                i++;
+            const Token::Token& directive = filteredTokens[i];
+            const std::string& lowerDir = toLower(directive.value);
+            
+            if (lowerDir.compare("section") == 0)
             {
-                // Create new section
-                Section section;
-                section.name = name;
-                sections.emplace_back(section);
-                currentSection = &sections.back();
+                // TODO: currently case insensitive
+                std::string name = toLower(filteredTokens[++i].value);
+
+                auto it = std::find_if(sections.begin(), sections.end(), [&](const Section& s) {return s.name == name; });
+
+                if (it == sections.end())
+                {
+                    // Create new section
+                    Section section;
+                    section.name = name;
+                    sections.emplace_back(section);
+                    currentSection = &sections.back();
+                }
+                else
+                {
+                    currentSection = &(*it);
+                }
             }
-            else
+            else if (lowerDir.compare("bits") == 0)
             {
-                currentSection = &(*it);
+                std::string bits = filteredTokens[i + 1].value;
+
+                if (bits.compare(0, 2, "16") == 0)
+                    currentBitMode = BitMode::Bits16;
+                else if (bits.compare(0, 2, "32") == 0)
+                    currentBitMode = BitMode::Bits32;
+                else if (bits.compare(0, 2, "64") == 0)
+                    currentBitMode = BitMode::Bits64;
+                else
+                    throw Exception::SyntaxError("Undefined bits", token.line);
             }
+            else if (lowerDir.compare("org") == 0)
+            {
+                // TODO: constants
+                // TODO: not just integers
+                uint64_t addr = evalInteger(filteredTokens[i + 1].value, 8, constants, filteredTokens[i + 1].line);
+                org = addr;
+            }
+
             while (i < filteredTokens.size() && filteredTokens[i].type != Token::Type::EOL)
                 i++;
             continue;
@@ -125,8 +163,8 @@ void x86::Parser::Parse(const std::vector<Token::Token>& tokens)
 
         // Labels
         if (token.type == Token::Type::Token &&
-           (filteredTokens[i + 1].type == Token::Type::Punctuation && filteredTokens[i + 1].value == ":"
-         || filteredTokens[i + 1].type == Token::Type::Token && std::find(dataDefinitions.begin(), dataDefinitions.end(), toLower(filteredTokens[i + 1].value)) != dataDefinitions.end()))
+           ((filteredTokens[i + 1].type == Token::Type::Punctuation && filteredTokens[i + 1].value == ":" && /*TODO: not segment:offset*/ std::find(registers.begin(), registers.end(), token.value) == registers.end())
+         || (filteredTokens[i + 1].type == Token::Type::Token && std::find(dataDefinitions.begin(), dataDefinitions.end(), toLower(filteredTokens[i + 1].value)) != dataDefinitions.end())))
         {
             Label label;
             label.name = token.value;
@@ -181,17 +219,53 @@ void x86::Parser::Parse(const std::vector<Token::Token>& tokens)
             while (i < filteredTokens.size() && filteredTokens[i].type != Token::Type::EOL)
             {
                 // TODO: strings
-                if (filteredTokens[i].type == Token::Type::Token)
+                if (filteredTokens[i].type == Token::Type::Token || filteredTokens[i].type == Token::Type::Operator)
                 {
                     // TODO: constants
                     // TODO: not just integers
-                    uint64_t val = evalInteger(filteredTokens[i].value, std::unordered_map<std::string, std::string>{}, filteredTokens[i].line);
+                    std::string value;
+                    
+                    while (i < filteredTokens.size() &&
+                           !(filteredTokens[i].type == Token::Type::Comma || filteredTokens[i].type == Token::Type::EOL))
+                    {
+                        value += filteredTokens[i].value;
+                        i++;
+                    }
+
+                    i--;
+
+                    uint64_t val = evalInteger(value, data.size, constants, filteredTokens[i].line);
                     data.values.push_back(val);
                 }
                 else if (filteredTokens[i].type == Token::Type::Character)
                 {
                     uint64_t val = filteredTokens[i].value[0];
                     data.values.push_back(val);
+                }
+                else if (filteredTokens[i].type == Token::Type::String)
+                {
+                    const std::string& val = filteredTokens[i].value;
+                    size_t len = val.size();
+
+                    for (size_t pos = 0; pos < len; pos += data.size)
+                    {
+                        uint64_t combined = 0;
+
+                        for (size_t offset = 0; offset < data.size; ++offset)
+                        {
+                            if (pos + offset < len)
+                            {
+                                combined |= static_cast<uint64_t>(static_cast<unsigned char>(val[pos + offset])) << (8 * offset);
+                            }
+                            else
+                            {
+                                //add padding 0s
+                                combined |= 0ULL << (8 * offset);
+                            }
+                        }
+
+                        data.values.push_back(combined);
+                    }
                 }
                 else
                     throw Exception::SyntaxError("Expected definition after data definition", filteredTokens[i].line);
@@ -215,6 +289,72 @@ void x86::Parser::Parse(const std::vector<Token::Token>& tokens)
             data.alignment = 0;
 
             currentSection->entries.push_back(data);
+
+            continue;
+        }
+
+        // Instructions
+        if (lowerVal.compare("mov") == 0)
+        {
+            Instruction::Instruction instruction;
+            instruction.bits = currentBitMode;
+            instruction.lineNumber = token.line;
+            instruction.column = token.column;
+            instruction.mnemonic = Instructions::MOV;
+
+            const Token::Token& operand1 = filteredTokens[++i];
+            if (registers.find(toLower(operand1.value)) != registers.end()
+             && filteredTokens[i + 1].type != Token::Type::Punctuation)
+            {
+                // reg
+                Instruction::Register reg;
+                reg.reg = operand1.value;
+                instruction.operands.push_back(reg);
+                i++;
+            }
+            else if ((operand1.type == Token::Type::Bracket && operand1.value == "[")
+                  || (registers.find(toLower(operand1.value)) != registers.end()
+                   && filteredTokens[i + 1].type != Token::Type::Punctuation))
+            {
+                // TODO: memory
+            }
+            else
+            {
+                // TODO: Error
+            }
+
+            if (filteredTokens[i].type != Token::Type::Comma)
+                throw Exception::SyntaxError("Expected ',' after first argument for 'mov'", operand1.line, operand1.column);
+            i++;
+
+            const Token::Token& operand2 = filteredTokens[i];
+            if (registers.find(toLower(operand2.value)) != registers.end()
+             && filteredTokens[i + 1].type != Token::Type::Punctuation)
+            {
+                // reg
+                Instruction::Register reg;
+                reg.reg = operand2.value;
+                instruction.operands.push_back(reg);
+                i++;
+            }
+            else if ((operand1.type == Token::Type::Bracket && operand1.value == "[")
+                  || (registers.find(toLower(operand1.value)) != registers.end()
+                   && filteredTokens[i + 1].type != Token::Type::Punctuation))
+            {
+                // TODO: memory
+            }
+            else
+            {
+                // TODO: immediate?
+            }
+
+            if (filteredTokens[i].type != Token::Type::EOL)
+                throw Exception::SyntaxError("Expected end of line after second argument for 'mov'", operand1.line, operand1.column);
+
+            // TODO
+            instruction.alignment = 0;
+
+            currentSection->entries.push_back(instruction);
 
             continue;
         }

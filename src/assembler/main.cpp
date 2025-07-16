@@ -31,13 +31,12 @@ int main(int argc, const char *argv[])
     BitMode bitMode;
     Architecture arch;
     Format format;
-    Endianness endianness;
     bool debug;
 
     // Parse arguments
     try
     {
-        bool stop = parseArguments(argc, argv, inputFiles, outputFile, bitMode, arch, format, endianness, debug, context);
+        bool stop = parseArguments(argc, argv, inputFiles, outputFile, bitMode, arch, format, debug, context);
         if (stop)
             return 0;
         
@@ -87,7 +86,7 @@ int main(int argc, const char *argv[])
     catch(const std::exception& e) { return handleError(e); }
 
     // Parse
-    Parser* parser = getParser(context, arch, bitMode, endianness);
+    Parser* parser = getParser(context, arch, bitMode);
     try
     {
         parser->Parse(tokenizer.getTokens());
@@ -111,6 +110,8 @@ int main(int argc, const char *argv[])
     // Encode
 
     // Create .o/.bin file
+
+    delete parser;
 
     return 0;
 }

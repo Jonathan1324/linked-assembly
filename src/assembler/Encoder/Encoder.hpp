@@ -8,12 +8,13 @@
 class Encoder
 {
 public:
-    Encoder(Context _context, Architecture _arch, BitMode _bits, Endianness _endianness);
+    Encoder(Context _context, Architecture _arch, BitMode _bits);
     virtual ~Encoder() = default;
 
 protected:
     Context context;
     Architecture arch;
     BitMode bits;
-    Endianness endianness;
 };
+
+Encoder* getEncoder(Context _context, Architecture _arch, BitMode _bits);

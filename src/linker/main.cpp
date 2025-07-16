@@ -29,13 +29,12 @@ int main(int argc, const char *argv[])
     BitMode bitMode;
     Architecture arch;
     Format format;
-    Endianness endianness;
     bool debug;
 
     // Parse arguments
     try
     {
-        bool stop = parseArguments(argc, argv, inputFiles, output, bitMode, arch, format, endianness, debug, context);
+        bool stop = parseArguments(argc, argv, inputFiles, output, bitMode, arch, format, debug, context);
         if (stop)
             return 0;
         if (warningManager.hasWarnings())

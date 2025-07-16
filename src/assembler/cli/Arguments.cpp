@@ -14,8 +14,7 @@ void printHelp()
 bool parseArguments(int argc, const char *argv[],
                     std::vector<std::string>& inputs, std::string& output,
                     BitMode& bits, Architecture& arch, Format& format,
-                    Endianness& endianness, bool& debug,
-                    Context& context)
+                    bool& debug, Context& context)
 {
 #ifdef __x86_64__
     bits = BitMode::Bits64;
@@ -48,8 +47,6 @@ bool parseArguments(int argc, const char *argv[],
 #else
     format = Format::ELF;
 #endif
-
-    endianness = Endianness::Little;
 
     if (argc < 2)
     {
@@ -137,30 +134,6 @@ bool parseArguments(int argc, const char *argv[],
             }
             else
                 throw Exception::ArgumentError("Unknown format: " + formatStr);
-        }
-        else if (std::string(argv[i]).compare("--endian") == 0)
-        {
-            if (i + 1 >= argc)
-                throw Exception::ArgumentError("Missing arg after '--endian'");
-            
-            std::string endianStr = toLower(argv[++i]);
-            endianStr = trim(endianStr);
-
-            if (endianStr.find("little") == 0
-             || endianStr.find("l") == 0
-             || endianStr.find("lil") == 0
-             || endianStr.find("le") == 0)
-            {
-                endianness = Endianness::Little;
-            }
-            else if (endianStr.find("big") == 0
-                  || endianStr.find("b") == 0
-                  || endianStr.find("be") == 0)
-            {
-                endianness = Endianness::Big;
-            }
-            else
-                throw Exception::ArgumentError("Unknown Endianness: " + endianStr);
         }
         else if (std::string(argv[i]).find("-m") == 0)
         {

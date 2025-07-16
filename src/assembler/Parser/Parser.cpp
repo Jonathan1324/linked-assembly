@@ -3,14 +3,26 @@
 #include <util/string.hpp>
 #include <algorithm>
 
-Parser::Parser(Context _context, Architecture _arch, BitMode _bits, Endianness _endianness)
-    : context(_context), arch(_arch), bits(_bits), endianness(_endianness)
+Parser::Parser(Context _context, Architecture _arch, BitMode _bits)
+    : context(_context), arch(_arch), bits(_bits)
 {
 
 }
 
 void Parser::Print()
 {
+    std::cout << "org: " << org << std::endl;
+
+    if (!externs.empty())
+    {
+        std::cout << "externs: " << std::endl;
+        for (const auto& label : externs)
+        {
+            // '  '
+            std::cout << "  " << label << std::endl;
+        }
+    }
+
     for (const auto& section : sections)
     {
         std::cout << section.name << ": " << std::endl;
@@ -19,7 +31,26 @@ void Parser::Print()
             if (std::holds_alternative<Instruction::Instruction>(entry))
             {
                 const Instruction::Instruction& instruction = std::get<Instruction::Instruction>(entry);
-                // TODO
+                std::cout << "  "; // '  '
+                switch (instruction.bits)
+                {
+                    case BitMode::Bits16: std::cout << "16-bit "; break;
+                    case BitMode::Bits32: std::cout << "32-bit "; break;
+                    case BitMode::Bits64: std::cout << "64-bit "; break;
+                    default: std::cout << "Unknown bits "; break;
+                }
+                std::cout << "instruction 0x" << std::hex << instruction.mnemonic << std::dec;
+                std::cout << " aligned to " << instruction.alignment << " on line " << instruction.lineNumber << " in column " << instruction.column;
+                std::cout << ": " << std::endl;
+                for (const auto& operand : instruction.operands)
+                {
+                    if (std::holds_alternative<Instruction::Register>(operand))
+                    {
+                        const Instruction::Register& reg = std::get<Instruction::Register>(operand);
+                        std::cout << "    "; // 2x '  '
+                        std::cout << "Register '" << reg.reg << "'" << std::endl;
+                    }
+                }
             }
             else if (std::holds_alternative<DataDefinition>(entry))
             {
@@ -59,7 +90,8 @@ void Parser::Print()
 
 #include "x86/Parser.hpp"
 
-Parser* getParser(Context _context, Architecture _arch, BitMode _bits, Endianness _endianness)
+// FIXME: only temporary solution
+Parser* getParser(Context _context, Architecture _arch, BitMode _bits)
 {
-    return new x86::Parser(_context, _arch, _bits, _endianness);
+    return new x86::Parser(_context, _arch, _bits);
 }

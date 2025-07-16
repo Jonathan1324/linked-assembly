@@ -12,6 +12,7 @@ namespace Token
         Token,
         String,
         Character,
+        Operator,
         Comma,
         Punctuation,
         Macro,
@@ -27,6 +28,7 @@ namespace Token
             case Type::Token:       return "__Token_______";
             case Type::String:      return "__String______";
             case Type::Character:   return "__Character___";
+            case Type::Operator:    return "__Operator____";
             case Type::Comma:       return "__Comma_______";
             case Type::Macro:       return "__Macro_______";
             case Type::Punctuation: return "__Punctuation_";

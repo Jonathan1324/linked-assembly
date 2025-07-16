@@ -1,19 +1,19 @@
 #include "exception.hpp"
 
-Exception::Exception(Type type, const std::string& message, int line)
-    : std::runtime_error(message), type_(type), message_(message), line_(line)
+Exception::Exception(Type _type, const std::string& _message, int _line, int _column)
+    : std::runtime_error(message), type(_type), message(_message), line(_line), column(_column)
 {
 
 }
 
 const char* Exception::what() const noexcept
 {
-    return message_.c_str();
+    return message.c_str();
 }
 
-Exception::Type Exception::type() const noexcept
+Exception::Type Exception::getType() const noexcept
 {
-    return type_;
+    return type;
 }
 
 void Exception::print(std::ostream& os) const
@@ -21,14 +21,16 @@ void Exception::print(std::ostream& os) const
     std::string type = typeToString();
     if (!type.empty())
         os << "[" << type << "] ";
-    if (line_ >= 0)
-        os << "Line " << line_ << ": ";
-    os << message_ << std::endl;
+    if (line >= 0)
+        os << "On line " << line;
+    if (column >= 0)
+        os << " in column " << column;
+    os << ": " << message << std::endl;
 }
 
 std::string Exception::typeToString() const
 {
-    switch (type_)
+    switch (type)
     {
         case Type::ArgumentError:       return "ArgumentError";
         case Type::IOError:             return "IOError";
@@ -43,42 +45,42 @@ std::string Exception::typeToString() const
     }
 }
 
-Exception Exception::ArgumentError(const std::string& message)
+Exception Exception::ArgumentError(const std::string& message, int line, int column)
 {
-    return Exception(Type::ArgumentError, message, -1);
+    return Exception(Type::ArgumentError, message, line, column);
 }
 
-Exception Exception::IOError(const std::string& message)
+Exception Exception::IOError(const std::string& message, int line, int column)
 {
-    return Exception(Type::IOError, message, -1);
+    return Exception(Type::IOError, message, line, column);
 }
 
-Exception Exception::ParseError(const std::string& message, int line)
+Exception Exception::ParseError(const std::string& message, int line, int column)
 {
-    return Exception(Type::ParseError, message, line);
+    return Exception(Type::ParseError, message, line, column);
 }
 
-Exception Exception::SyntaxError(const std::string& message, int line)
+Exception Exception::SyntaxError(const std::string& message, int line, int column)
 {
-    return Exception(Type::ParseError, message, line);
+    return Exception(Type::ParseError, message, line, column);
 }
 
-Exception Exception::SemanticError(const std::string& message, int line)
+Exception Exception::SemanticError(const std::string& message, int line, int column)
 {
-    return Exception(Type::SemanticError, message, line);
+    return Exception(Type::SemanticError, message, line, column);
 }
 
-Exception Exception::UndefinedSymbol(const std::string& message)
+Exception Exception::UndefinedSymbol(const std::string& message, int line, int column)
 {
-    return Exception(Type::UndefinedSymbol, message, -1);
+    return Exception(Type::UndefinedSymbol, message, line, column);
 }
 
-Exception Exception::OverflowError(const std::string& message, int line)
+Exception Exception::OverflowError(const std::string& message, int line, int column)
 {
-    return Exception(Type::OverflowError, message, line);
+    return Exception(Type::OverflowError, message, line, column);
 }
 
-Exception Exception::InternalError(const std::string& message)
+Exception Exception::InternalError(const std::string& message, int line, int column)
 {
-    return Exception(Type::InternalError, message, -1);
+    return Exception(Type::InternalError, message, line, column);
 }

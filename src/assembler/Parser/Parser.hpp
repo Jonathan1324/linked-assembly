@@ -4,6 +4,7 @@
 #include <string>
 #include <vector>
 #include <variant>
+#include <unordered_map>
 #include <Architecture.hpp>
 #include "../Context.hpp"
 #include "Tokenizer.hpp"
@@ -12,7 +13,7 @@ namespace Instruction
 {
     struct Register
     {
-        // TODO
+        std::string reg;
     };
 
     enum class ImmediateType
@@ -84,7 +85,7 @@ struct Section
 class Parser
 {
 public:
-    Parser(Context _context, Architecture _arch, BitMode _bits, Endianness _endianness);
+    Parser(Context _context, Architecture _arch, BitMode _bits);
     virtual ~Parser() = default;
 
     virtual void Parse(const std::vector<Token::Token>& tokens) = 0;
@@ -94,12 +95,11 @@ protected:
     Context context;
     Architecture arch;
     BitMode bits;
-    Endianness endianness;
 
     uint64_t org = 0;
     std::vector<Section> sections;
     std::vector<std::string> externs;
+    std::unordered_map<std::string, std::string> constants;
 };
 
-// FIXME: only temporary solution
-Parser* getParser(Context _context, Architecture _arch, BitMode _bits, Endianness _endianness);
+Parser* getParser(Context _context, Architecture _arch, BitMode _bits);

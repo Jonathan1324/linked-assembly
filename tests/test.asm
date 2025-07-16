@@ -1,13 +1,14 @@
+bits 32
+
 section .text
     global _start
 
 _start:
-    db 0, 1
-    dw 2, 3
-    dd 4, 5
-    dq 6, 7
+    mov eax, ebx
 
 section .data
 
-msg     db 'h', 'e', 'l', 'l', 'o', '!', 0
-msg2:   db 't', 'e', 's', 't', 0
+;msg1    db "Hello, world!"
+;msg2    dw "Hello, world!"
+;msg3    dd "Hello, world!"
+;msg4    dq "Hello, world!"

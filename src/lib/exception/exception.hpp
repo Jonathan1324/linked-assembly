@@ -23,27 +23,28 @@ public:
         InternalError
     };
 
-    Exception(Type type, const std::string& message, int line);
+    Exception(Type _type, const std::string& _message, int _line, int _column);
 
     const char* what() const noexcept override;
-    Type type() const noexcept;
+    Type getType() const noexcept;
 
     void print(std::ostream& os = std::cerr) const;
 
 
-    static Exception ArgumentError(const std::string& message);
-    static Exception IOError(const std::string& message);
-    static Exception ParseError(const std::string& message, int line);
-    static Exception SyntaxError(const std::string& message, int line);
-    static Exception SemanticError(const std::string& message, int line);
-    static Exception UndefinedSymbol(const std::string& message);
-    static Exception OverflowError(const std::string& message, int line);
-    static Exception InternalError(const std::string& message);
+    static Exception ArgumentError(const std::string& message, int line = -1, int column = -1);
+    static Exception IOError(const std::string& message, int line = -1, int column = -1);
+    static Exception ParseError(const std::string& message, int line = -1, int column = -1);
+    static Exception SyntaxError(const std::string& message, int line = -1, int column = -1);
+    static Exception SemanticError(const std::string& message, int line = -1, int column = -1);
+    static Exception UndefinedSymbol(const std::string& message, int line = -1, int column = -1);
+    static Exception OverflowError(const std::string& message, int line = -1, int column = -1);
+    static Exception InternalError(const std::string& message, int line = -1, int column = -1);
 
 private:
-    Type type_;
-    std::string message_;
-    int line_;
+    Type type;
+    std::string message;
+    int line;
+    int column;
 
     std::string typeToString() const;
 };

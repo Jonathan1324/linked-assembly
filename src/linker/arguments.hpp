@@ -6,6 +6,5 @@
 
 bool parseArguments(int argc, const char *argv[],
                     std::vector<std::string>& inputs, std::string& output,
-                    BitMode& bits, Architecture& arch, Format& format,
-                    Endianness& endianness, bool& debug,
+                    BitMode& bits, Architecture& arch, Format& format, bool& debug,
                     Context& context);

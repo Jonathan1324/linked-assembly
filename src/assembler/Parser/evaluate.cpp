@@ -2,7 +2,22 @@
 
 #include <Exception.hpp>
 
-uint64_t evalInteger(std::string str, std::unordered_map<std::string, std::string> constants, int lineNumber)
+static int64_t sign_extend(uint64_t val, size_t size_bytes)
+{
+    size_t bits = size_bytes * 8;
+    uint64_t mask = 1ULL << (bits - 1);
+    if (val & mask)
+    {
+        uint64_t extend_mask = ~((1ULL << bits) - 1);
+        return static_cast<int64_t>(val | extend_mask);
+    }
+    else
+    {
+        return static_cast<int64_t>(val & ((1ULL << bits) - 1));
+    }
+}
+
+uint64_t evalInteger(std::string str, size_t size, std::unordered_map<std::string, std::string> constants, int lineNumber)
 {
     // TODO: operations
     std::string value = str;
@@ -61,6 +76,7 @@ uint64_t evalInteger(std::string str, std::unordered_map<std::string, std::strin
     }
 
     size_t pos = 0;
+    uint64_t rawValue = 0;
     try
     {
         // Try signed first
@@ -69,7 +85,7 @@ uint64_t evalInteger(std::string str, std::unordered_map<std::string, std::strin
             throw Exception::SemanticError(value + " contains invalid characters", lineNumber);
         
         // Convert negative signed to unsigned two's complement equivalent
-        return static_cast<uint64_t>(sval);
+        rawValue = static_cast<uint64_t>(sval);
     }
     catch (const std::invalid_argument&)
     {
@@ -80,8 +96,7 @@ uint64_t evalInteger(std::string str, std::unordered_map<std::string, std::strin
             uint64_t uval = std::stoull(value, &pos, base);
             if (pos != value.size())
                 throw Exception::SemanticError(value + " contains invalid characters", lineNumber);
-        
-            return uval;
+            rawValue = uval;
         }
         catch (const std::invalid_argument&)
         {
@@ -95,6 +110,14 @@ uint64_t evalInteger(std::string str, std::unordered_map<std::string, std::strin
     catch (const std::out_of_range&)
     {
         throw Exception::OverflowError(value + " number out of range", lineNumber);
+    }
+
+    if (size >= 8)
+        return rawValue;
+    else
+    {
+        uint64_t mask = (1ULL << (size * 8)) - 1;
+        return rawValue & mask;
     }
 
     return 0;

@@ -56,6 +56,13 @@ void Tokenizer::tokenize(std::istream& input)
                 pos++;
             }
 
+            // +,-,*,/
+            else if (line[pos] == '+' || line[pos] == '-' || line[pos] == '*' || line[pos] == '/')
+            {
+                tokens.emplace_back(Type::Operator, std::string() + line[pos], lineNumber, pos);
+                pos++;
+            }
+
             // Bracket
             else if (line[pos] == '(' || line[pos] == ')' ||
                      line[pos] == '[' || line[pos] == ']' ||
@@ -152,7 +159,11 @@ void Tokenizer::tokenize(std::istream& input)
             {
                 while (pos < length &&
                        !std::isspace(static_cast<unsigned char>(line[pos])) &&
-                       line[pos] != ',' && line[pos] != ';' && line[pos] != ':')
+                       line[pos] != ',' && line[pos] != ';' && line[pos] != ':' &&
+                       line[pos] != '(' && line[pos] != ')' && line[pos] != '[' &&
+                       line[pos] != ']' && line[pos] != '{' && line[pos] != '}' &&
+                       line[pos] != '"' && line[pos] != '\'' &&
+                       line[pos] != '+' && line[pos] != '-' && line[pos] != '*' && line[pos] != '/')
                     pos++;
                 
                 tokens.emplace_back(
