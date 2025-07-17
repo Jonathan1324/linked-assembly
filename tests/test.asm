@@ -14,4 +14,4 @@ msg2    dw "Hello, world!"
 msg3    dd "Hello, world!"
 msg4    dq "Hello, world!"
 
-msg5 db 3 + 2
+msg5 db 3 + $
