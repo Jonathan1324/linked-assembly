@@ -54,7 +54,30 @@ void Parser::Print()
                     {
                         const Instruction::Immediate& imm = std::get<Instruction::Immediate>(operand);
                         std::cout << "    "; // 2x '  '
-                        std::cout << "'" << imm.value << "'" << std::endl;
+                        std::cout << "Immediate: " << std::endl;
+                        
+                        for (const auto& op : imm.operands)
+                        {
+                            std::cout << "      "; // 3x '  '
+                            if (std::holds_alternative<Instruction::Integer>(op))
+                            {
+                                const Instruction::Integer& integer = std::get<Instruction::Integer>(op);
+                                if (integer.isString)
+                                    std::cout << "'" << integer.value << "'" << std::endl;
+                                else
+                                    std::cout << "0x" << std::hex << integer.val << std::dec << std::endl;
+                            }
+                            else if (std::holds_alternative<Instruction::Operator>(op))
+                            {
+                                const Instruction::Operator& Op = std::get<Instruction::Operator>(op);
+                                std::cout << "'" << Op.op << "'" << std::endl;;
+                            }
+                            else if (std::holds_alternative<Instruction::String>(op))
+                            {
+                                const Instruction::String& str = std::get<Instruction::String>(op);
+                                std::cout << "'" << str.value << "'" << std::endl;;
+                            }
+                        }
                     }
                 }
             }
@@ -77,10 +100,30 @@ void Parser::Print()
                 for (const auto& value : dataDefinition.values)
                 {
                     std::cout << "    ";    // 2x '  '
-                    if (value.isString)
-                        std::cout << "'" << value.str << "'" << std::endl;
-                    else
-                        std::cout << "0x" << std::hex << value.val << std::dec << std::endl;
+                    std::cout << "Immediate: " << std::endl;
+                        
+                    for (const auto& op : value.operands)
+                    {
+                        std::cout << "      ";  // 3x '  '
+                        if (std::holds_alternative<Instruction::Integer>(op))
+                        {
+                            const Instruction::Integer& integer = std::get<Instruction::Integer>(op);
+                            if (integer.isString)
+                                std::cout << "'" << integer.value << "'" << std::endl;
+                            else
+                                std::cout << "0x" << std::hex << integer.val << std::dec << std::endl;
+                        }
+                        else if (std::holds_alternative<Instruction::Operator>(op))
+                        {
+                            const Instruction::Operator& Op = std::get<Instruction::Operator>(op);
+                            std::cout << "'" << Op.op << "'" << std::endl;;
+                        }
+                        else if (std::holds_alternative<Instruction::String>(op))
+                        {
+                            const Instruction::String& str = std::get<Instruction::String>(op);
+                            std::cout << "'" << str.value << "'" << std::endl;;
+                        }
+                    }
                 }
             }
             else if (std::holds_alternative<Label>(entry))

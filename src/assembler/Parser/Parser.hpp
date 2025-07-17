@@ -16,16 +16,29 @@ namespace Instruction
         std::string reg;
     };
 
-    enum class ImmediateType
+    struct Integer
     {
-        Unsigned,
-        Signed,
-        Floating
+        std::string value;
+        uint64_t val;
+
+        bool isString;
     };
+
+    struct Operator
+    {
+        std::string op;
+    };
+
+    struct String
+    {
+        std::string value;
+    };
+
+    using ImmediateOperand = std::variant<Integer, Operator, String>;
 
     struct Immediate
     {
-        std::string value;
+        std::vector<ImmediateOperand> operands;
     };
 
     struct Memory
@@ -49,10 +62,7 @@ namespace Instruction
 
 struct DataValue
 {
-    std::string str;
-    uint64_t val;
-
-    bool isString;
+    std::vector<Instruction::ImmediateOperand> operands;
 };
 
 struct DataDefinition
@@ -97,7 +107,7 @@ protected:
     Architecture arch;
     BitMode bits;
 
-    std::string org = 0;
+    std::string org;
     std::vector<Section> sections;
     std::vector<std::string> externs;
     std::unordered_map<std::string, std::string> constants;

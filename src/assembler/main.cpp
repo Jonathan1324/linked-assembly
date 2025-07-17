@@ -101,9 +101,13 @@ int main(int argc, const char *argv[])
     }
 
     // Parse
-    Parser* parser = getParser(context, arch, bitMode);
+    Parser* parser = nullptr;
     try
     {
+        parser = getParser(context, arch, bitMode);
+        if (!parser)
+            throw Exception::InternalError("Couldn't get parser");
+        
         parser->Parse(tokenizer.getTokens());
         if (debug)
             parser->Print();
@@ -132,7 +136,6 @@ int main(int argc, const char *argv[])
         
         return handleError(e);
     }
-    
 
     // Encode
 
