@@ -14,4 +14,6 @@ msg2    dw "Hello, world!"
 msg3    dd "Hello, world!"
 msg4    dq "Hello, world!"
 
-msg5 db 3 + $
+msg5 db $
+
+times 512 - ($ - $$) db 0
