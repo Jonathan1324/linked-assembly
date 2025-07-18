@@ -26,10 +26,10 @@ Currently, you can:
 
 ## ❓ How do I run the output?
 
-You assemble your `.asm` file into an `.o` file using `assembly`, then link it with a linker like `gcc`:
+You assemble your `.asm` file into an `.o` file using `assembler`, then link it with a linker like `gcc`:
 
 ```bash
-build/assembly/assembly file.asm -o file.o --arch x86 --format elf -m32
+build/assembler/assembler file.asm -o file.o --arch x86 --format elf -m32
 gcc file.o -o file
 ./file
 ```

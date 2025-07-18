@@ -30,7 +30,7 @@ make
 This will generate the assembler binary at:
 
 ```bash
-build/assembly/assembly
+build/assembler/assembler
 ```
 
 ---
@@ -40,7 +40,7 @@ build/assembly/assembly
 Use the assembler to compile your `.asm` file into an object file:
 
 ```bash
-build/assembly/assembly ret42.asm -o ret42.o --arch x86 --format elf --endian little -m32
+build/assembler/assembler ret42.asm -o ret42.o --arch x86 --format elf --endian little -m32
 ```
 
 ---
@@ -70,7 +70,7 @@ It should print:
 
 ## Step 5: Troubleshooting
 
-* Make sure you ran `make` and the `build/assembly/assembly` binary exists.
+* Make sure you ran `make` and the `build/assembler/assembler` binary exists.
 * Ensure your assembly code only uses supported instructions (see [instructions.md](instructions.md)).
 * If you get errors during linking, verify you’re producing valid ELF 32-bit `.o` files and using `-m32` if required.
 
