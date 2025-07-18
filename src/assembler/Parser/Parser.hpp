@@ -89,7 +89,15 @@ struct Constant
     size_t column;
 };
 
-using SectionEntry = std::variant<Instruction::Instruction, DataDefinition, Label, Constant>;
+struct Repetition
+{
+    Immediate count;
+
+    size_t lineNumber;
+    size_t column;
+};
+
+using SectionEntry = std::variant<Instruction::Instruction, DataDefinition, Label, Constant, Repetition>;
 
 struct Section
 {

@@ -166,6 +166,35 @@ void Parser::Print()
                     }
                 }
             }
+            else if (std::holds_alternative<Repetition>(entry))
+            {
+                const Repetition& repeat = std::get<Repetition>(entry);
+                std::cout << "  ";  // '  '
+                std::cout << "Repetition on line " << repeat.lineNumber << " in column " << repeat.column << std::endl;
+
+                for (const auto& op : repeat.count.operands)
+                {
+                    std::cout << "      ";  // 3x '  '
+                    if (std::holds_alternative<Integer>(op))
+                    {
+                        const Integer& integer = std::get<Integer>(op);
+                        if (integer.isString)
+                            std::cout << "'" << integer.value << "'" << std::endl;
+                        else
+                            std::cout << "0x" << std::hex << integer.val << std::dec << std::endl;
+                    }
+                    else if (std::holds_alternative<Operator>(op))
+                    {
+                        const Operator& Op = std::get<Operator>(op);
+                        std::cout << "'" << Op.op << "'" << std::endl;;
+                    }
+                    else if (std::holds_alternative<String>(op))
+                    {
+                        const String& str = std::get<String>(op);
+                        std::cout << "'" << str.value << "'" << std::endl;;
+                    }
+                }
+            }
         }
     }
 }

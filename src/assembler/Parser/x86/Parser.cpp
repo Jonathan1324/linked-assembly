@@ -177,7 +177,7 @@ void x86::Parser::Parse(const std::vector<Token::Token>& tokens)
         }
 
         // Constants
-        if (filteredTokens[i + 1].type == Token::Type::Token && filteredTokens[i + 1].value == "equ")
+        if (filteredTokens[i + 1].type == Token::Type::Token && filteredTokens[i + 1].value.compare("equ") == 0)
         {
             Constant constant;
             constant.lineNumber = token.line;
@@ -190,7 +190,8 @@ void x86::Parser::Parse(const std::vector<Token::Token>& tokens)
             {
                 if (filteredTokens[i].type == Token::Type::Token
                  || filteredTokens[i].type == Token::Type::Operator
-                 || filteredTokens[i].type == Token::Type::Character)
+                 || filteredTokens[i].type == Token::Type::Character
+                 || filteredTokens[i].type == Token::Type::Bracket)
                 {
                     while (i < filteredTokens.size() &&
                            !(filteredTokens[i].type == Token::Type::Comma || filteredTokens[i].type == Token::Type::EOL))
@@ -213,6 +214,42 @@ void x86::Parser::Parse(const std::vector<Token::Token>& tokens)
 
             currentSection->entries.push_back(constant);
 
+            continue;
+        }
+
+        // times
+        if (token.type == Token::Type::Token && lowerVal.compare("times") == 0)
+        {
+            Repetition repetition;
+            repetition.lineNumber = token.line;
+            repetition.column = token.column;
+
+            i++;
+            
+            // TODO: strange way
+            while (i < filteredTokens.size())
+            {
+                if (filteredTokens[i].type == Token::Type::Token
+                 || filteredTokens[i].type == Token::Type::Operator
+                 || filteredTokens[i].type == Token::Type::Character
+                 || filteredTokens[i].type == Token::Type::Bracket)
+                {
+                    ImmediateOperand op = getOperand(filteredTokens[i]);
+                    repetition.count.operands.push_back(op);
+                }
+                else
+                    throw Exception::SyntaxError("Unknown value type after 'times'", filteredTokens[i].line, filteredTokens[i].column);
+                
+                i++;
+                if (filteredTokens[i].type == Token::Type::Token && (
+                    filteredTokens[i - 1].type == Token::Type::Token ||
+                    filteredTokens[i - 1].type == Token::Type::Bracket && filteredTokens[i - 1].value == ")"
+                ))
+                    break;
+            }
+            i--;
+
+            currentSection->entries.push_back(repetition);
             continue;
         }
 
@@ -334,7 +371,8 @@ void x86::Parser::Parse(const std::vector<Token::Token>& tokens)
             {
                 if (filteredTokens[i].type == Token::Type::Token
                  || filteredTokens[i].type == Token::Type::Operator
-                 || filteredTokens[i].type == Token::Type::Character)
+                 || filteredTokens[i].type == Token::Type::Character
+                 || filteredTokens[i].type == Token::Type::Bracket)
                 {
                     Immediate val;
                     
