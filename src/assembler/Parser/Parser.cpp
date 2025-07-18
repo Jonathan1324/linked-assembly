@@ -141,7 +141,7 @@ void Parser::Print()
             {
                 const Constant& constant = std::get<Constant>(entry);
                 std::cout << "  ";  // '  '
-                std::cout << "Constant '" << constant.name << "' on line" << constant.lineNumber << " in column " << constant.column << std::endl;
+                std::cout << "Constant '" << constant.name << "' on line " << constant.lineNumber << " in column " << constant.column << std::endl;
 
                 for (const auto& op : constant.value.operands)
                 {

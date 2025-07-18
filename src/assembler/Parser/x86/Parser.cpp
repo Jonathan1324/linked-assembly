@@ -28,6 +28,13 @@ ImmediateOperand getOperand(const Token::Token& token)
         integer.isString = true;
         return integer;
     }
+    else if (token.type == Token::Type::Character)
+    {
+        Integer integer;
+        integer.val = static_cast<uint64_t>(static_cast<unsigned char>(token.value[0]));
+        integer.isString = false;
+        return integer;
+    }
     else
     {
         String str;
@@ -179,10 +186,32 @@ void x86::Parser::Parse(const std::vector<Token::Token>& tokens)
 
             while (i < filteredTokens.size() && filteredTokens[i].type != Token::Type::EOL)
             {
-                Immediate val;
+                if (filteredTokens[i].type == Token::Type::Token
+                 || filteredTokens[i].type == Token::Type::Operator
+                 || filteredTokens[i].type == Token::Type::Character)
+                {
+                    while (i < filteredTokens.size() &&
+                           !(filteredTokens[i].type == Token::Type::Comma || filteredTokens[i].type == Token::Type::EOL))
+                    {
+                        ImmediateOperand op = getOperand(filteredTokens[i]);
+                        constant.value.operands.push_back(op);
+                        i++;
+                    }
+                    i--;
+                }
+                else if (filteredTokens[i].type == Token::Type::String)
+                {
+                    // TODO
+                }
+                else
+                    throw Exception::SyntaxError("Expected definition after 'equ'", filteredTokens[i].line, filteredTokens[i].column);
 
-                // TODO
+                i++;
             }
+
+            currentSection->entries.push_back(constant);
+
+            continue;
         }
 
         // Directives
@@ -294,7 +323,9 @@ void x86::Parser::Parse(const std::vector<Token::Token>& tokens)
             i++;
             while (i < filteredTokens.size() && filteredTokens[i].type != Token::Type::EOL)
             {
-                if (filteredTokens[i].type == Token::Type::Token || filteredTokens[i].type == Token::Type::Operator)
+                if (filteredTokens[i].type == Token::Type::Token
+                 || filteredTokens[i].type == Token::Type::Operator
+                 || filteredTokens[i].type == Token::Type::Character)
                 {
                     Immediate val;
                     
@@ -306,17 +337,6 @@ void x86::Parser::Parse(const std::vector<Token::Token>& tokens)
                         i++;
                     }
                     i--;
-
-                    data.values.push_back(val);
-                }
-                else if (filteredTokens[i].type == Token::Type::Character)
-                {
-                    Immediate val;
-                    
-                    Integer integer;
-                    integer.val = static_cast<uint64_t>(static_cast<unsigned char>(filteredTokens[i].value[0]));
-                    integer.isString = false;
-                    val.operands.push_back(integer);
 
                     data.values.push_back(val);
                 }
