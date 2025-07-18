@@ -13,6 +13,29 @@ x86::Parser::Parser(const Context& _context, Architecture _arch, BitMode _bits)
 
 }
 
+ImmediateOperand getOperand(const Token::Token& token)
+{
+    if (token.type == Token::Type::Operator || token.type == Token::Type::Bracket)
+    {
+        Operator op;
+        op.op = token.value;
+        return op;
+    }
+    else if (std::isdigit(static_cast<unsigned char>(token.value[0])) != 0)
+    {
+        Integer integer;
+        integer.value = token.value;
+        integer.isString = true;
+        return integer;
+    }
+    else
+    {
+        String str;
+        str.value = token.value;
+        return str;
+    }
+}
+
 void x86::Parser::Parse(const std::vector<Token::Token>& tokens)
 {
     std::vector<Token::Token> filteredTokens;
@@ -134,7 +157,7 @@ void x86::Parser::Parse(const std::vector<Token::Token>& tokens)
         
         const std::string lowerVal = toLower(token.value);
 
-        // Macros and constants
+        // Macros
         // ('%')
         if (token.type == Token::Type::Macro)
         {
@@ -142,6 +165,24 @@ void x86::Parser::Parse(const std::vector<Token::Token>& tokens)
             while (i < filteredTokens.size() && filteredTokens[i].type != Token::Type::EOL && filteredTokens[i].type != Token::Type::_EOF)
                 i++;
             continue;
+        }
+
+        // Constants
+        if (filteredTokens[i + 1].type == Token::Type::Token && filteredTokens[i + 1].value == "equ")
+        {
+            Constant constant;
+            constant.lineNumber = token.line;
+            constant.column = token.column;
+            // TODO: case sensitive
+            constant.name = token.value;
+            i += 2;
+
+            while (i < filteredTokens.size() && filteredTokens[i].type != Token::Type::EOL)
+            {
+                Immediate val;
+
+                // TODO
+            }
         }
 
         // Directives
@@ -255,30 +296,13 @@ void x86::Parser::Parse(const std::vector<Token::Token>& tokens)
             {
                 if (filteredTokens[i].type == Token::Type::Token || filteredTokens[i].type == Token::Type::Operator)
                 {
-                    DataValue val;
+                    Immediate val;
                     
                     while (i < filteredTokens.size() &&
                            !(filteredTokens[i].type == Token::Type::Comma || filteredTokens[i].type == Token::Type::EOL))
                     {
-                        if (filteredTokens[i].type == Token::Type::Operator || filteredTokens[i].type == Token::Type::Bracket)
-                        {
-                            Instruction::Operator op;
-                            op.op = filteredTokens[i].value;
-                            val.operands.push_back(op);
-                        }
-                        else if (std::isdigit(static_cast<unsigned char>(filteredTokens[i].value[0])) != 0)
-                        {
-                            Instruction::Integer integer;
-                            integer.value = filteredTokens[i].value;
-                            integer.isString = true;
-                            val.operands.push_back(integer);
-                        }
-                        else
-                        {
-                            Instruction::String str;
-                            str.value = filteredTokens[i].value;
-                            val.operands.push_back(str);
-                        }
+                        ImmediateOperand op = getOperand(filteredTokens[i]);
+                        val.operands.push_back(op);
                         i++;
                     }
                     i--;
@@ -287,10 +311,10 @@ void x86::Parser::Parse(const std::vector<Token::Token>& tokens)
                 }
                 else if (filteredTokens[i].type == Token::Type::Character)
                 {
-                    DataValue val;
+                    Immediate val;
                     
-                    Instruction::Integer integer;
-                    integer.val = filteredTokens[i].value[0];
+                    Integer integer;
+                    integer.val = static_cast<uint64_t>(static_cast<unsigned char>(filteredTokens[i].value[0]));
                     integer.isString = false;
                     val.operands.push_back(integer);
 
@@ -318,9 +342,9 @@ void x86::Parser::Parse(const std::vector<Token::Token>& tokens)
                             }
                         }
 
-                        DataValue value;
+                        Immediate value;
 
-                        Instruction::Integer integer;
+                        Integer integer;
                         integer.val = combined;
                         integer.isString = false;
                         value.operands.push_back(integer);
@@ -407,28 +431,12 @@ void x86::Parser::Parse(const std::vector<Token::Token>& tokens)
             else
             {
                 // TODO: immediate?
-                Instruction::Immediate imm;
+                Immediate imm;
 
                 while (i < filteredTokens.size() && filteredTokens[i].type != Token::Type::EOL)
                 {
-                    if (filteredTokens[i].type == Token::Type::Operator || filteredTokens[i].type == Token::Type::Bracket)
-                    {
-                        Instruction::Operator op;
-                        op.op = filteredTokens[i].value;
-                        imm.operands.push_back(op);
-                    }
-                    else if (std::isdigit(static_cast<unsigned char>(filteredTokens[i].value[0])) != 0)
-                    {
-                        Instruction::Integer integer;
-                        integer.value = filteredTokens[i].value;
-                        imm.operands.push_back(integer);
-                    }
-                    else
-                    {
-                        Instruction::String str;
-                        str.value = filteredTokens[i].value;
-                        imm.operands.push_back(str);
-                    }
+                    ImmediateOperand op = getOperand(filteredTokens[i]);
+                    imm.operands.push_back(op);
                     i++;
                 }
                 instruction.operands.push_back(imm);

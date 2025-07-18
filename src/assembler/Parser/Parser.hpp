@@ -9,36 +9,36 @@
 #include "../Context.hpp"
 #include "Tokenizer.hpp"
 
+struct Integer
+{
+    std::string value;
+    uint64_t val;
+
+    bool isString;
+};
+
+struct Operator
+{
+    std::string op;
+};
+
+struct String
+{
+    std::string value;
+};
+
+using ImmediateOperand = std::variant<Integer, Operator, String>;
+
+struct Immediate
+{
+    std::vector<ImmediateOperand> operands;
+};
+
 namespace Instruction
 {
     struct Register
     {
         std::string reg;
-    };
-
-    struct Integer
-    {
-        std::string value;
-        uint64_t val;
-
-        bool isString;
-    };
-
-    struct Operator
-    {
-        std::string op;
-    };
-
-    struct String
-    {
-        std::string value;
-    };
-
-    using ImmediateOperand = std::variant<Integer, Operator, String>;
-
-    struct Immediate
-    {
-        std::vector<ImmediateOperand> operands;
     };
 
     struct Memory
@@ -60,16 +60,11 @@ namespace Instruction
     };
 }
 
-struct DataValue
-{
-    std::vector<Instruction::ImmediateOperand> operands;
-};
-
 struct DataDefinition
 {
     size_t size;
     bool reserved;
-    std::vector<DataValue> values;
+    std::vector<Immediate> values;
     int alignment;
 
     size_t lineNumber;
@@ -85,7 +80,16 @@ struct Label
     size_t column;
 };
 
-using SectionEntry = std::variant<Instruction::Instruction, DataDefinition, Label>;
+struct Constant
+{
+    std::string name;
+    Immediate value;
+
+    size_t lineNumber;
+    size_t column;
+};
+
+using SectionEntry = std::variant<Instruction::Instruction, DataDefinition, Label, Constant>;
 
 struct Section
 {
@@ -110,7 +114,6 @@ protected:
     std::string org;
     std::vector<Section> sections;
     std::vector<std::string> externs;
-    std::unordered_map<std::string, std::string> constants;
 };
 
 Parser* getParser(const Context& _context, Architecture _arch, BitMode _bits);

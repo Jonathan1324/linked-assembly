@@ -11,7 +11,8 @@ Parser::Parser(const Context& _context, Architecture _arch, BitMode _bits)
 
 void Parser::Print()
 {
-    std::cout << "org: " << org << std::endl;
+    if (!org.empty())
+        std::cout << "org: " << org << std::endl;
 
     if (!externs.empty())
     {
@@ -50,31 +51,31 @@ void Parser::Print()
                         std::cout << "    "; // 2x '  '
                         std::cout << "Register '" << reg.reg << "'" << std::endl;
                     }
-                    else if (std::holds_alternative<Instruction::Immediate>(operand))
+                    else if (std::holds_alternative<Immediate>(operand))
                     {
-                        const Instruction::Immediate& imm = std::get<Instruction::Immediate>(operand);
+                        const Immediate& imm = std::get<Immediate>(operand);
                         std::cout << "    "; // 2x '  '
                         std::cout << "Immediate: " << std::endl;
                         
                         for (const auto& op : imm.operands)
                         {
                             std::cout << "      "; // 3x '  '
-                            if (std::holds_alternative<Instruction::Integer>(op))
+                            if (std::holds_alternative<Integer>(op))
                             {
-                                const Instruction::Integer& integer = std::get<Instruction::Integer>(op);
+                                const Integer& integer = std::get<Integer>(op);
                                 if (integer.isString)
                                     std::cout << "'" << integer.value << "'" << std::endl;
                                 else
                                     std::cout << "0x" << std::hex << integer.val << std::dec << std::endl;
                             }
-                            else if (std::holds_alternative<Instruction::Operator>(op))
+                            else if (std::holds_alternative<Operator>(op))
                             {
-                                const Instruction::Operator& Op = std::get<Instruction::Operator>(op);
+                                const Operator& Op = std::get<Operator>(op);
                                 std::cout << "'" << Op.op << "'" << std::endl;;
                             }
-                            else if (std::holds_alternative<Instruction::String>(op))
+                            else if (std::holds_alternative<String>(op))
                             {
-                                const Instruction::String& str = std::get<Instruction::String>(op);
+                                const String& str = std::get<String>(op);
                                 std::cout << "'" << str.value << "'" << std::endl;;
                             }
                         }
@@ -105,22 +106,22 @@ void Parser::Print()
                     for (const auto& op : value.operands)
                     {
                         std::cout << "      ";  // 3x '  '
-                        if (std::holds_alternative<Instruction::Integer>(op))
+                        if (std::holds_alternative<Integer>(op))
                         {
-                            const Instruction::Integer& integer = std::get<Instruction::Integer>(op);
+                            const Integer& integer = std::get<Integer>(op);
                             if (integer.isString)
                                 std::cout << "'" << integer.value << "'" << std::endl;
                             else
                                 std::cout << "0x" << std::hex << integer.val << std::dec << std::endl;
                         }
-                        else if (std::holds_alternative<Instruction::Operator>(op))
+                        else if (std::holds_alternative<Operator>(op))
                         {
-                            const Instruction::Operator& Op = std::get<Instruction::Operator>(op);
+                            const Operator& Op = std::get<Operator>(op);
                             std::cout << "'" << Op.op << "'" << std::endl;;
                         }
-                        else if (std::holds_alternative<Instruction::String>(op))
+                        else if (std::holds_alternative<String>(op))
                         {
-                            const Instruction::String& str = std::get<Instruction::String>(op);
+                            const String& str = std::get<String>(op);
                             std::cout << "'" << str.value << "'" << std::endl;;
                         }
                     }
@@ -134,7 +135,36 @@ void Parser::Print()
                     std::cout << "Global label '";
                 else
                     std::cout << "Label '";
-                std::cout << label.name << "' in line " << label.lineNumber << " at column " << label.column << std::endl;
+                std::cout << label.name << "' on line " << label.lineNumber << " in column " << label.column << std::endl;
+            }
+            else if (std::holds_alternative<Constant>(entry))
+            {
+                const Constant& constant = std::get<Constant>(entry);
+                std::cout << "  ";  // '  '
+                std::cout << "Constant '" << constant.name << "' on line" << constant.lineNumber << " in column " << constant.column << std::endl;
+
+                for (const auto& op : constant.value.operands)
+                {
+                    std::cout << "      ";  // 3x '  '
+                    if (std::holds_alternative<Integer>(op))
+                    {
+                        const Integer& integer = std::get<Integer>(op);
+                        if (integer.isString)
+                            std::cout << "'" << integer.value << "'" << std::endl;
+                        else
+                            std::cout << "0x" << std::hex << integer.val << std::dec << std::endl;
+                    }
+                    else if (std::holds_alternative<Operator>(op))
+                    {
+                        const Operator& Op = std::get<Operator>(op);
+                        std::cout << "'" << Op.op << "'" << std::endl;;
+                    }
+                    else if (std::holds_alternative<String>(op))
+                    {
+                        const String& str = std::get<String>(op);
+                        std::cout << "'" << str.value << "'" << std::endl;;
+                    }
+                }
             }
         }
     }

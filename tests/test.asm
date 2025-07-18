@@ -16,4 +16,6 @@ msg4    dq "Hello, world!"
 
 msg5 db $
 
-times 512 - ($ - $$) db 0
+con equ 1
+
+;times 512 - ($ - $$) db 0
