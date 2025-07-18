@@ -116,4 +116,4 @@ protected:
     std::vector<std::string> externs;
 };
 
-Parser* getParser(const Context& _context, Architecture _arch, BitMode _bits);
+Parser* getParser(const Context& context, Architecture arch, BitMode bits);

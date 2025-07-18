@@ -7,7 +7,7 @@ namespace x86
     class Encoder : public ::Encoder
     {
     public:
-        Encoder(const Context& _context, Architecture _arch, BitMode _bits);
+        Encoder(const Context& _context, Architecture _arch, BitMode _bits, const Parser* _parser);
         ~Encoder() = default;
     };
 }

@@ -173,7 +173,7 @@ void Parser::Print()
 #include "x86/Parser.hpp"
 
 // FIXME: only temporary solution
-Parser* getParser(const Context& _context, Architecture _arch, BitMode _bits)
+Parser* getParser(const Context& context, Architecture arch, BitMode bits)
 {
-    return new x86::Parser(_context, _arch, _bits);
+    return new x86::Parser(context, arch, bits);
 }

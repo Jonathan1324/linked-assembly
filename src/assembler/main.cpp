@@ -138,11 +138,49 @@ int main(int argc, const char *argv[])
     }
 
     // Encode
+    Encoder* encoder = nullptr;
+    try
+    {
+        encoder = getEncoder(context, arch, bitMode, parser);
+        if (!parser)
+            throw Exception::InternalError("Couldn't get encoder");
+
+        if (debug)
+            encoder->Print();
+
+        if (warningManager.hasWarnings())
+        {
+            warningManager.printAll(std::cerr);
+            warningManager.clear();
+        }
+    }
+    catch(const Exception& e)
+    {
+        e.print(std::cerr);
+        
+        // delete outputFile
+        objectFile.close();
+        std::remove(outputFile.c_str());
+
+        return 1;
+    }
+    catch(const std::exception& e)
+    {
+        // delete outputFile
+        objectFile.close();
+        std::remove(outputFile.c_str());
+        
+        return handleError(e);
+    }
+    
 
     // Create .o/.bin file
 
+    // Clean up
     if (parser)
         delete parser;
+    if (encoder)
+        delete encoder;
 
     return 0;
 }
