@@ -1,19 +1,19 @@
 #include "warning.hpp"
 
-Warning::Warning(Type type, const std::string& message, int line)
-    : type_(type), message_(message), line_(line)
+Warning::Warning(Type _type, const std::string& _message, int _line, int _column)
+    : type(_type), message(_message), line(_line), column(_column)
 {
 
 }
 
 const char* Warning::what() const noexcept
 {
-    return message_.c_str();
+    return message.c_str();
 }
 
-Warning::Type Warning::type() const noexcept
+Warning::Type Warning::getType() const noexcept
 {
-    return type_;
+    return type;
 }
 
 void Warning::print(std::ostream& os) const
@@ -21,14 +21,16 @@ void Warning::print(std::ostream& os) const
     std::string type = typeToString();
     if (!type.empty())
         os << "(" << type << ") ";
-    if (line_ >= 0)
-        os << "Line " << line_ << ": ";
-    os << message_ << std::endl;
+    if (line >= 0)
+        os << "On line " << line;
+    if (line >= 0)
+        os << " in column" << column;
+    os << ": " << message << std::endl;
 }
 
 std::string Warning::typeToString() const
 {
-    switch (type_)
+    switch (type)
     {
         case Type::Argument:        return "Argument";
 
@@ -36,14 +38,14 @@ std::string Warning::typeToString() const
     }
 }
 
-Warning Warning::GeneralWarning(const std::string& message)
+Warning Warning::GeneralWarning(const std::string& message, int line, int column)
 {
-    return Warning(Type::None, message, -1);
+    return Warning(Type::None, message, line, column);
 }
 
-Warning Warning::ArgumentWarning(const std::string& message)
+Warning Warning::ArgumentWarning(const std::string& message, int line, int column)
 {
-    return Warning(Type::Argument, message, -1);
+    return Warning(Type::Argument, message, line, column);
 }
 
 

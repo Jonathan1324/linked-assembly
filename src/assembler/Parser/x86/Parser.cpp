@@ -145,8 +145,8 @@ void x86::Parser::Parse(const std::vector<Token::Token>& tokens)
         "resb", "resw", "resd", "resq", "rest", "reso", "resy", "resz"
     };
 
-    static constexpr std::array<std::string_view, 3> directives = {
-        "section", "bits", "org"
+    static constexpr std::array<std::string_view, 5> directives = {
+        "section", "segment", "bits", "org", "align"
     };
 
     Section text;
@@ -155,6 +155,8 @@ void x86::Parser::Parse(const std::vector<Token::Token>& tokens)
 
     Section* currentSection = &sections.at(0);
     BitMode currentBitMode = bits;
+
+    size_t align = 0;
 
     for (size_t i = 0; i < filteredTokens.size(); i++)
     {
@@ -223,7 +225,7 @@ void x86::Parser::Parse(const std::vector<Token::Token>& tokens)
             const Token::Token& directive = filteredTokens[i];
             const std::string& lowerDir = toLower(directive.value);
             
-            if (lowerDir.compare("section") == 0)
+            if (lowerDir.compare("section") == 0 || lowerDir.compare("segment") == 0)
             {
                 // TODO: currently case insensitive
                 std::string name = toLower(filteredTokens[++i].value);
@@ -259,6 +261,13 @@ void x86::Parser::Parse(const std::vector<Token::Token>& tokens)
             else if (lowerDir.compare("org") == 0)
             {
                 org = filteredTokens[i + 1].value;
+            }
+            else if (lowerDir.compare("align") == 0)
+            {
+                size_t newAlign = std::stoull(filteredTokens[i + 1].value);
+                if (newAlign % 2 != 0)
+                    context.warningManager->add(Warning::GeneralWarning("Alignment not even", token.line, token.column));
+                align = newAlign;
             }
 
             while (i < filteredTokens.size() && filteredTokens[i].type != Token::Type::EOL)
@@ -390,8 +399,9 @@ void x86::Parser::Parse(const std::vector<Token::Token>& tokens)
                 }
             }
 
-            // TODO
-            data.alignment = 0;
+            data.alignment = align;
+            if (align != 0)
+                align = 0;
 
             currentSection->entries.push_back(data);
 
@@ -465,8 +475,9 @@ void x86::Parser::Parse(const std::vector<Token::Token>& tokens)
             if (filteredTokens[i].type != Token::Type::EOL)
                 throw Exception::SyntaxError("Expected end of line after second argument for 'mov'", operand1.line, operand1.column);
 
-            // TODO
-            instruction.alignment = 0;
+            instruction.alignment = align;
+            if (align != 0)
+                align = 0;
 
             currentSection->entries.push_back(instruction);
 

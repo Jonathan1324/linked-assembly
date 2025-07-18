@@ -14,21 +14,22 @@ public:
         Argument
     };
 
-    Warning(Type type, const std::string& message, int line);
+    Warning(Type _type, const std::string& _message, int _line, int _column);
 
     const char* what() const noexcept;
-    Type type() const noexcept;
+    Type getType() const noexcept;
 
     void print(std::ostream& os = std::cerr) const;
 
 
-    static Warning GeneralWarning(const std::string& message);
-    static Warning ArgumentWarning(const std::string& message);
+    static Warning GeneralWarning(const std::string& message, int line = -1, int column = -1);
+    static Warning ArgumentWarning(const std::string& message, int line = -1, int column = -1);
 
 private:
-    Type type_;
-    std::string message_;
-    int line_;
+    Type type;
+    std::string message;
+    int line;
+    int column;
 
     std::string typeToString() const;
 };
