@@ -114,6 +114,10 @@ public:
     virtual void Parse(const std::vector<Token::Token>& tokens) = 0;
     void Print();
 
+    const std::string& getOrg() const;
+    const std::vector<Section>& getSections() const;
+    const std::vector<std::string>& getExterns() const;
+
 protected:
     Context context;
     Architecture arch;

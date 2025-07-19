@@ -145,6 +145,7 @@ int main(int argc, const char *argv[])
         if (!parser)
             throw Exception::InternalError("Couldn't get encoder");
 
+        encoder->Encode();
         if (debug)
             encoder->Print();
 

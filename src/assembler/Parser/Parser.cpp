@@ -199,6 +199,21 @@ void Parser::Print()
     }
 }
 
+const std::string& Parser::getOrg() const
+{
+    return org;
+}
+
+const std::vector<Section>& Parser::getSections() const
+{
+    return sections;
+}
+
+const std::vector<std::string>& Parser::getExterns() const
+{
+    return externs;
+}
+
 #include "x86/Parser.hpp"
 
 // FIXME: only temporary solution
