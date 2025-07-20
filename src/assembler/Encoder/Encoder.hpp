@@ -15,6 +15,8 @@ public:
     void Print();
     
 protected:
+
+
     Context context;
     Architecture arch;
     BitMode bits;
