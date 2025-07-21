@@ -3,13 +3,15 @@
 #include <util/string.hpp>
 #include <algorithm>
 
-Parser::Parser(const Context& _context, Architecture _arch, BitMode _bits)
+using namespace Parser;
+
+Parser::Parser::Parser(const Context& _context, Architecture _arch, BitMode _bits)
     : context(_context), arch(_arch), bits(_bits)
 {
 
 }
 
-void Parser::Print()
+void Parser::Parser::Print() const
 {
     if (!org.empty())
         std::cout << "org: " << org << std::endl;
@@ -231,17 +233,17 @@ void Parser::Print()
     }
 }
 
-const std::string& Parser::getOrg() const
+const std::string& Parser::Parser::getOrg() const
 {
     return org;
 }
 
-const std::vector<Section>& Parser::getSections() const
+const std::vector<Parser::Section>& Parser::Parser::getSections() const
 {
     return sections;
 }
 
-const std::vector<std::string>& Parser::getExterns() const
+const std::vector<std::string>& Parser::Parser::getExterns() const
 {
     return externs;
 }
@@ -249,7 +251,7 @@ const std::vector<std::string>& Parser::getExterns() const
 #include "x86/Parser.hpp"
 
 // FIXME: only temporary solution
-Parser* getParser(const Context& context, Architecture arch, BitMode bits)
+Parser::Parser* Parser::getParser(const Context& context, Architecture arch, BitMode bits)
 {
     return new x86::Parser(context, arch, bits);
 }

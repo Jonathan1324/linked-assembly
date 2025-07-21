@@ -12,7 +12,22 @@
 #include "Parser/Tokenizer.hpp"
 #include "Parser/Parser.hpp"
 #include "Encoder/Encoder.hpp"
-#include "ObjectWriter/ObjectWriter.hpp"
+#include "OutputWriter/OutputWriter.hpp"
+
+#define CLEANUP                             \
+    do {                                    \
+    if (parser) delete parser;              \
+    if (encoder) delete encoder;            \
+    if (outputWriter) delete outputWriter;  \
+    } while(0)                              \
+
+#define ERROR_HANDLER                       \
+    do {                                    \
+    /* delete outputFile */                 \
+    objectFile.close();                     \
+    std::remove(outputFile.c_str());        \
+    CLEANUP;                                \
+    } while(0)                              \
 
 int handleError(const std::exception& e)
 {
@@ -32,6 +47,10 @@ int main(int argc, const char *argv[])
     Architecture arch;
     Format format;
     bool debug;
+
+    Parser::Parser* parser = nullptr;
+    Encoder::Encoder* encoder = nullptr;
+    Output::Writer* outputWriter = nullptr;
 
     // Parse arguments
     try
@@ -84,27 +103,19 @@ int main(int argc, const char *argv[])
     catch(const Exception& e)
     {
         e.print(std::cerr);
-
-        // delete outputFile
-        objectFile.close();
-        std::remove(outputFile.c_str());
-
+        ERROR_HANDLER;
         return 1;
     }
     catch(const std::exception& e)
     {
-        // delete outputFile
-        objectFile.close();
-        std::remove(outputFile.c_str());
-
+        ERROR_HANDLER;
         return handleError(e);
     }
 
     // Parse
-    Parser* parser = nullptr;
     try
     {
-        parser = getParser(context, arch, bitMode);
+        parser = Parser::getParser(context, arch, bitMode);
         if (!parser)
             throw Exception::InternalError("Couldn't get parser");
         
@@ -121,28 +132,20 @@ int main(int argc, const char *argv[])
     catch(const Exception& e)
     {
         e.print(std::cerr);
-        
-        // delete outputFile
-        objectFile.close();
-        std::remove(outputFile.c_str());
-
+        ERROR_HANDLER;
         return 1;
     }
     catch(const std::exception& e)
     {
-        // delete outputFile
-        objectFile.close();
-        std::remove(outputFile.c_str());
-        
+        ERROR_HANDLER;
         return handleError(e);
     }
 
     // Encode
-    Encoder* encoder = nullptr;
     try
     {
-        encoder = getEncoder(context, arch, bitMode, parser);
-        if (!parser)
+        encoder = Encoder::getEncoder(context, arch, bitMode, parser);
+        if (!encoder)
             throw Exception::InternalError("Couldn't get encoder");
 
         encoder->Encode();
@@ -158,30 +161,47 @@ int main(int argc, const char *argv[])
     catch(const Exception& e)
     {
         e.print(std::cerr);
-        
-        // delete outputFile
-        objectFile.close();
-        std::remove(outputFile.c_str());
-
+        ERROR_HANDLER;
         return 1;
     }
     catch(const std::exception& e)
     {
-        // delete outputFile
-        objectFile.close();
-        std::remove(outputFile.c_str());
-        
+        ERROR_HANDLER;
         return handleError(e);
     }
     
 
     // Create .o/.bin file
+    try
+    {
+        outputWriter = Output::getWriter(context, arch, bitMode, format, objectFile, parser, encoder);
+        if (!outputWriter)
+            throw Exception::InternalError("Couldn't get outputWriter");
 
-    // Clean up
-    if (parser)
-        delete parser;
-    if (encoder)
-        delete encoder;
+        outputWriter->Write();
+        if (debug)
+            outputWriter->Print();
+
+        if (warningManager.hasWarnings())
+        {
+            warningManager.printAll(std::cerr);
+            warningManager.clear();
+        }
+    }
+    catch(const Exception& e)
+    {
+        e.print(std::cerr);
+        ERROR_HANDLER;
+        return 1;
+    }
+    catch(const std::exception& e)
+    {
+        ERROR_HANDLER;
+        return handleError(e);
+    }
+
+    // cleanup
+    CLEANUP;
 
     return 0;
 }

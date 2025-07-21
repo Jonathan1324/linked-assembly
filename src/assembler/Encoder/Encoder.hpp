@@ -5,26 +5,45 @@
 #include "../Context.hpp"
 #include "../Parser/Parser.hpp"
 
-class Encoder
+namespace Encoder
 {
-public:
-    Encoder(const Context& _context, Architecture _arch, BitMode _bits, const Parser* _parser);
-    virtual ~Encoder() = default;
+    using SectionBuffer = std::vector<uint8_t>;
 
-    void Encode();
-    void Print();
-    
-protected:
-    virtual std::vector<uint8_t> EncodeInstruction() = 0;
+    struct Section
+    {
+        std::string name;
+        bool isInitialized = true;
+        SectionBuffer buffer;
+        size_t reservedSize = 0;
 
-    Context context;
-    Architecture arch;
-    BitMode bits;
+        size_t size() const;
+    };
 
-    const Parser* parser = nullptr;
+    class Encoder
+    {
+    public:
+        Encoder(const Context& _context, Architecture _arch, BitMode _bits, const Parser::Parser* _parser);
+        virtual ~Encoder() = default;
 
-    std::unordered_map<std::string, std::string> labelSection;
-    std::unordered_map<std::string, size_t> labelOffset;
-};
+        void Encode();
+        void Print() const;
 
-Encoder* getEncoder(const Context& context, Architecture arch, BitMode bits, const Parser* parser);
+        std::vector<Section> getSections() const;
+        
+    protected:
+        virtual std::vector<uint8_t> EncodeInstruction() = 0;
+
+        Context context;
+        Architecture arch;
+        BitMode bits;
+
+        const Parser::Parser* parser = nullptr;
+
+        std::unordered_map<std::string, std::string> labelSection;
+        std::unordered_map<std::string, size_t> labelOffset;
+
+        std::vector<Section> sections;
+    };
+
+    Encoder* getEncoder(const Context& context, Architecture arch, BitMode bits, const Parser::Parser* parser);
+}

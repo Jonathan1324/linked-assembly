@@ -2,14 +2,17 @@
 
 #include "../Encoder.hpp"
 
-namespace x86
+namespace Encoder
 {
-    class Encoder : public ::Encoder
+    namespace x86
     {
-    public:
-        Encoder(const Context& _context, Architecture _arch, BitMode _bits, const Parser* _parser);
-        ~Encoder() = default;
+        class Encoder : public ::Encoder::Encoder
+        {
+        public:
+            Encoder(const Context& _context, Architecture _arch, BitMode _bits, const Parser::Parser* _parser);
+            ~Encoder() = default;
 
-        std::vector<uint8_t> EncodeInstruction() override;
-    };
+            std::vector<uint8_t> EncodeInstruction() override;
+        };
+    }
 }

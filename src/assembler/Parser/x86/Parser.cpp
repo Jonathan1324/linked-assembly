@@ -4,52 +4,52 @@
 #include <unordered_set>
 #include <array>
 #include <algorithm>
-#include "registers.hpp"
-#include "Instructions.hpp"
+#include <x86/Registers.hpp>
+#include <x86/Instructions.hpp>
 
-x86::Parser::Parser(const Context& _context, Architecture _arch, BitMode _bits)
-    : ::Parser(_context, _arch, _bits)
+Parser::x86::Parser::Parser(const Context& _context, Architecture _arch, BitMode _bits)
+    : ::Parser::Parser(_context, _arch, _bits)
 {
 
 }
 
-ImmediateOperand getOperand(const Token::Token& token)
+Parser::ImmediateOperand getOperand(const Token::Token& token)
 {
     if (token.type == Token::Type::Operator || token.type == Token::Type::Bracket)
     {
-        Operator op;
+        Parser::Operator op;
         op.op = token.value;
         return op;
     }
     else if (std::isdigit(static_cast<unsigned char>(token.value[0])) != 0)
     {
-        Integer integer;
+        Parser::Integer integer;
         integer.value = token.value;
         integer.isString = true;
         return integer;
     }
     else if (token.type == Token::Type::Character)
     {
-        Integer integer;
+        Parser::Integer integer;
         integer.val = static_cast<uint64_t>(static_cast<unsigned char>(token.value[0]));
         integer.isString = false;
         return integer;
     }
     else if (token.type == Token::Type::Token && (token.value == "$" ||token.value == "$$"))
     {
-        CurrentPosition curPos;
+        Parser::CurrentPosition curPos;
         curPos.sectionPos = (token.value == "$") ? false : true;
         return curPos;
     }
     else
     {
-        String str;
+        Parser::String str;
         str.value = token.value;
         return str;
     }
 }
 
-void x86::Parser::Parse(const std::vector<Token::Token>& tokens)
+void Parser::x86::Parser::Parse(const std::vector<Token::Token>& tokens)
 {
     std::vector<Token::Token> filteredTokens;
     Token::Type before = Token::Type::_EOF;
@@ -320,7 +320,7 @@ void x86::Parser::Parse(const std::vector<Token::Token>& tokens)
 
         // Labels
         if (token.type == Token::Type::Token &&
-           ((filteredTokens[i + 1].type == Token::Type::Punctuation && filteredTokens[i + 1].value == ":" && /*TODO: not segment:offset*/ std::find(registers.begin(), registers.end(), token.value) == registers.end())
+           ((filteredTokens[i + 1].type == Token::Type::Punctuation && filteredTokens[i + 1].value == ":" && /*TODO: not segment:offset*/ std::find(::x86::registers.begin(), ::x86::registers.end(), token.value) == ::x86::registers.end())
          || (filteredTokens[i + 1].type == Token::Type::Token && std::find(dataDefinitions.begin(), dataDefinitions.end(), toLower(filteredTokens[i + 1].value)) != dataDefinitions.end())))
         {
             Label label;
@@ -459,10 +459,10 @@ void x86::Parser::Parse(const std::vector<Token::Token>& tokens)
             instruction.bits = currentBitMode;
             instruction.lineNumber = token.line;
             instruction.column = token.column;
-            instruction.mnemonic = Instructions::MOV;
+            instruction.mnemonic = ::x86::Instructions::MOV;
 
             const Token::Token& operand1 = filteredTokens[++i];
-            if (registers.find(toLower(operand1.value)) != registers.end()
+            if (::x86::registers.find(toLower(operand1.value)) != ::x86::registers.end()
              && filteredTokens[i + 1].type != Token::Type::Punctuation)
             {
                 // reg
@@ -472,7 +472,7 @@ void x86::Parser::Parse(const std::vector<Token::Token>& tokens)
                 i++;
             }
             else if ((operand1.type == Token::Type::Bracket && operand1.value == "[")
-                  || (registers.find(toLower(operand1.value)) != registers.end()
+                  || (::x86::registers.find(toLower(operand1.value)) != ::x86::registers.end()
                    && filteredTokens[i + 1].type != Token::Type::Punctuation))
             {
                 // TODO: memory
@@ -487,7 +487,7 @@ void x86::Parser::Parse(const std::vector<Token::Token>& tokens)
             i++;
 
             const Token::Token& operand2 = filteredTokens[i];
-            if (registers.find(toLower(operand2.value)) != registers.end()
+            if (::x86::registers.find(toLower(operand2.value)) != ::x86::registers.end()
              && filteredTokens[i + 1].type != Token::Type::Punctuation)
             {
                 // reg
@@ -497,7 +497,7 @@ void x86::Parser::Parse(const std::vector<Token::Token>& tokens)
                 i++;
             }
             else if ((operand1.type == Token::Type::Bracket && operand1.value == "[")
-                  || (registers.find(toLower(operand1.value)) != registers.end()
+                  || (::x86::registers.find(toLower(operand1.value)) != ::x86::registers.end()
                    && filteredTokens[i + 1].type == Token::Type::Punctuation))
             {
                 // TODO: memory

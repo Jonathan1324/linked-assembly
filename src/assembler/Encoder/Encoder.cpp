@@ -1,62 +1,89 @@
 #include "Encoder.hpp"
 
-Encoder::Encoder(const Context& _context, Architecture _arch, BitMode _bits, const Parser* _parser)
+using namespace Encoder;
+
+size_t Encoder::Section::size() const
+{
+    return isInitialized ? buffer.size() : reservedSize;
+}
+
+
+Encoder::Encoder::Encoder(const Context& _context, Architecture _arch, BitMode _bits, const Parser::Parser* _parser)
     : context(_context), arch(_arch), bits(_bits), parser(_parser)
 {
 
 }
 
-void Encoder::Encode()
+void Encoder::Encoder::Encode()
 {
-    const std::vector<Section>& sections = parser->getSections();
+    const std::vector<Parser::Section>& parsedSections = parser->getSections();
 
     size_t bytesWritten = 0;
 
-    for (const auto& section : sections)
+    for (const auto& section : parsedSections)
     {
+        Section sec;
+        sec.name = section.name;
+        sec.isInitialized = true;
+        if (section.name.compare(".bss") == 0)
+        {
+            sec.isInitialized = false;
+        }
+
         size_t offset = 0;
         for (size_t i = 0; i < section.entries.size(); i++)
         {
-            const SectionEntry& entry = section.entries[i];
+            const Parser::SectionEntry& entry = section.entries[i];
             
-            if (std::holds_alternative<Instruction::Instruction>(entry))
+            if (std::holds_alternative<Parser::Instruction::Instruction>(entry))
             {
-                const Instruction::Instruction& instruction = std::get<Instruction::Instruction>(entry);
-                std::cout << "Instruction" << std::endl;
+                const Parser::Instruction::Instruction& instruction = std::get<Parser::Instruction::Instruction>(entry);
+                //std::cout << "Instruction" << std::endl;
             }
-            else if (std::holds_alternative<DataDefinition>(entry))
+            else if (std::holds_alternative<Parser::DataDefinition>(entry))
             {
-                const DataDefinition& dataDefinition = std::get<DataDefinition>(entry);
-                std::cout << "DataDefinition" << std::endl;
+                const Parser::DataDefinition& dataDefinition = std::get<Parser::DataDefinition>(entry);
+                //std::cout << "DataDefinition" << std::endl;
             }
-            else if (std::holds_alternative<Label>(entry))
+            else if (std::holds_alternative<Parser::Label>(entry))
             {
-                const Label& label = std::get<Label>(entry);
-                std::cout << "Label" << std::endl;
+                const Parser::Label& label = std::get<Parser::Label>(entry);
+                //std::cout << "Label" << std::endl;
             }
-            else if (std::holds_alternative<Constant>(entry))
+            else if (std::holds_alternative<Parser::Constant>(entry))
             {
-                const Constant& constant = std::get<Constant>(entry);
-                std::cout << "Constant" << std::endl;
+                const Parser::Constant& constant = std::get<Parser::Constant>(entry);
+                //std::cout << "Constant" << std::endl;
             }
-            else if (std::holds_alternative<Repetition>(entry))
+            else if (std::holds_alternative<Parser::Repetition>(entry))
             {
-                const Repetition& repetition = std::get<Repetition>(entry);
-                std::cout << "Repetition" << std::endl;
+                const Parser::Repetition& repetition = std::get<Parser::Repetition>(entry);
+                //std::cout << "Repetition" << std::endl;
             }
         }
+
+        sections.push_back(sec);
     }
 }
 
-void Encoder::Print()
+void Encoder::Encoder::Print() const
 {
-    
+    for (const auto& section : sections)
+    {
+        std::cout << section.name << ":" << std::endl;
+        std::cout << "  Size: " << section.size() << std::endl;
+    }
+}
+
+std::vector<Section> Encoder::Encoder::getSections() const
+{
+    return sections;
 }
 
 #include "x86/Encoder.hpp"
 
 // FIXME: only temporary solution
-Encoder* getEncoder(const Context& context, Architecture arch, BitMode bits, const Parser* parser)
+Encoder::Encoder* Encoder::getEncoder(const Context& context, Architecture arch, BitMode bits, const Parser::Parser* parser)
 {
     return new x86::Encoder(context, arch, bits, parser);
 }
