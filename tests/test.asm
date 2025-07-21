@@ -4,4 +4,4 @@ section .text
     global _start
 
 _start:
-    mov eax, $
+    mov eax, 0
