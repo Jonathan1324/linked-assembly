@@ -11,11 +11,11 @@ public:
     Encoder(const Context& _context, Architecture _arch, BitMode _bits, const Parser* _parser);
     virtual ~Encoder() = default;
 
-    virtual void Encode() = 0;
+    void Encode();
     void Print();
     
 protected:
-
+    virtual std::vector<uint8_t> EncodeInstruction() = 0;
 
     Context context;
     Architecture arch;

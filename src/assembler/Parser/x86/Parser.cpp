@@ -35,6 +35,12 @@ ImmediateOperand getOperand(const Token::Token& token)
         integer.isString = false;
         return integer;
     }
+    else if (token.type == Token::Type::Token && (token.value == "$" ||token.value == "$$"))
+    {
+        CurrentPosition curPos;
+        curPos.sectionPos = (token.value == "$") ? false : true;
+        return curPos;
+    }
     else
     {
         String str;

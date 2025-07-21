@@ -27,7 +27,12 @@ struct String
     std::string value;
 };
 
-using ImmediateOperand = std::variant<Integer, Operator, String>;
+struct CurrentPosition
+{
+    bool sectionPos;
+};
+
+using ImmediateOperand = std::variant<Integer, Operator, String, CurrentPosition>;
 
 struct Immediate
 {

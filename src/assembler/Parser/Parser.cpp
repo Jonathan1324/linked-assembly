@@ -71,12 +71,20 @@ void Parser::Print()
                             else if (std::holds_alternative<Operator>(op))
                             {
                                 const Operator& Op = std::get<Operator>(op);
-                                std::cout << "'" << Op.op << "'" << std::endl;;
+                                std::cout << "'" << Op.op << "'" << std::endl;
                             }
                             else if (std::holds_alternative<String>(op))
                             {
                                 const String& str = std::get<String>(op);
-                                std::cout << "'" << str.value << "'" << std::endl;;
+                                std::cout << "'" << str.value << "'" << std::endl;
+                            }
+                            else if (std::holds_alternative<CurrentPosition>(op))
+                            {
+                                const CurrentPosition& curPos = std::get<CurrentPosition>(op);
+                                if (curPos.sectionPos)
+                                    std::cout << "current position in section" << std::endl;
+                                else
+                                    std::cout << "current position" << std::endl;
                             }
                         }
                     }
@@ -124,6 +132,14 @@ void Parser::Print()
                             const String& str = std::get<String>(op);
                             std::cout << "'" << str.value << "'" << std::endl;;
                         }
+                        else if (std::holds_alternative<CurrentPosition>(op))
+                        {
+                            const CurrentPosition& curPos = std::get<CurrentPosition>(op);
+                            if (curPos.sectionPos)
+                                std::cout << "current position in section" << std::endl;
+                            else
+                                std::cout << "current position" << std::endl;
+                        }
                     }
                 }
             }
@@ -164,6 +180,14 @@ void Parser::Print()
                         const String& str = std::get<String>(op);
                         std::cout << "'" << str.value << "'" << std::endl;;
                     }
+                    else if (std::holds_alternative<CurrentPosition>(op))
+                    {
+                        const CurrentPosition& curPos = std::get<CurrentPosition>(op);
+                        if (curPos.sectionPos)
+                            std::cout << "current position in section" << std::endl;
+                        else
+                            std::cout << "current position" << std::endl;
+                    }
                 }
             }
             else if (std::holds_alternative<Repetition>(entry))
@@ -192,6 +216,14 @@ void Parser::Print()
                     {
                         const String& str = std::get<String>(op);
                         std::cout << "'" << str.value << "'" << std::endl;;
+                    }
+                    else if (std::holds_alternative<CurrentPosition>(op))
+                    {
+                        const CurrentPosition& curPos = std::get<CurrentPosition>(op);
+                        if (curPos.sectionPos)
+                            std::cout << "current position in section" << std::endl;
+                        else
+                            std::cout << "current position" << std::endl;
                     }
                 }
             }

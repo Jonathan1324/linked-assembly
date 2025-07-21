@@ -10,6 +10,6 @@ namespace x86
         Encoder(const Context& _context, Architecture _arch, BitMode _bits, const Parser* _parser);
         ~Encoder() = default;
 
-        void Encode() override;
+        std::vector<uint8_t> EncodeInstruction() override;
     };
 }
