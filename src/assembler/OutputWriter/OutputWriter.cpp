@@ -18,5 +18,10 @@ void Output::Writer::Print() const
 // FIXME: only temporary solution
 Output::Writer* Output::getWriter(const Context& context, Architecture arch, BitMode bits, Format format, std::ofstream& file, const Parser::Parser* parser, const Encoder::Encoder* encoder)
 {
-    return new Binary::Writer(context, arch, bits, format, file, parser, encoder);
+    switch(format)
+    {
+        case Format::Binary: return new Binary::Writer(context, arch, bits, format, file, parser, encoder);
+        
+        default: return nullptr;
+    }
 }
