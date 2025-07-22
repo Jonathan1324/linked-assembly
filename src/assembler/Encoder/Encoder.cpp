@@ -38,12 +38,38 @@ void Encoder::Encoder::Encode()
             if (std::holds_alternative<Parser::Instruction::Instruction>(entry))
             {
                 const Parser::Instruction::Instruction& instruction = std::get<Parser::Instruction::Instruction>(entry);
-                //std::cout << "Instruction" << std::endl;
+                const std::vector<uint8_t> encoded = EncodeInstruction(instruction);
+                const size_t size = encoded.size();
+
+                size_t alignment = instruction.alignment;
+                size_t padding = (alignment - (offset % alignment)) % alignment;
+
+                if (padding > 0)
+                {
+                    if (sec.isInitialized)
+                    {
+                        const std::vector<uint8_t> pad = EncodePadding(padding);
+                        sec.buffer.insert(sec.buffer.end(), pad.begin(), pad.end());
+                    }
+                    else
+                        sec.reservedSize += padding;
+
+                    offset += padding;
+                    bytesWritten += padding;
+                }
+                
+                if (sec.isInitialized)
+                    sec.buffer.insert(sec.buffer.end(), encoded.begin(), encoded.end());
+                else
+                    sec.reservedSize += size;
+                
+                offset += size;
+                bytesWritten += size;
             }
             else if (std::holds_alternative<Parser::DataDefinition>(entry))
             {
                 const Parser::DataDefinition& dataDefinition = std::get<Parser::DataDefinition>(entry);
-                //std::cout << "DataDefinition" << std::endl;
+                
             }
             else if (std::holds_alternative<Parser::Label>(entry))
             {

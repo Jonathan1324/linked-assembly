@@ -12,7 +12,8 @@ namespace Encoder
             Encoder(const Context& _context, Architecture _arch, BitMode _bits, const Parser::Parser* _parser);
             ~Encoder() = default;
 
-            std::vector<uint8_t> EncodeInstruction() override;
+            std::vector<uint8_t> EncodeInstruction(const Parser::Instruction::Instruction& instruction) override;
+            std::vector<uint8_t> EncodePadding(size_t length) override;
         };
     }
 }

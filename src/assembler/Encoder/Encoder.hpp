@@ -31,7 +31,8 @@ namespace Encoder
         std::vector<Section> getSections() const;
         
     protected:
-        virtual std::vector<uint8_t> EncodeInstruction() = 0;
+        virtual std::vector<uint8_t> EncodeInstruction(const Parser::Instruction::Instruction& instruction) = 0;
+        virtual std::vector<uint8_t> EncodePadding(size_t length) = 0;
 
         Context context;
         Architecture arch;
