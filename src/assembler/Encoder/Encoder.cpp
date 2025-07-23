@@ -38,7 +38,7 @@ void Encoder::Encoder::Encode()
             if (std::holds_alternative<Parser::Instruction::Instruction>(entry))
             {
                 const Parser::Instruction::Instruction& instruction = std::get<Parser::Instruction::Instruction>(entry);
-                const std::vector<uint8_t> encoded = EncodeInstruction(instruction);
+                const std::vector<uint8_t> encoded = _EncodeInstruction(instruction);
                 const size_t size = encoded.size();
 
                 size_t alignment = instruction.alignment;
@@ -48,7 +48,7 @@ void Encoder::Encoder::Encode()
                 {
                     if (sec.isInitialized)
                     {
-                        const std::vector<uint8_t> pad = EncodePadding(padding);
+                        const std::vector<uint8_t> pad = _EncodePadding(padding);
                         sec.buffer.insert(sec.buffer.end(), pad.begin(), pad.end());
                     }
                     else
@@ -69,7 +69,30 @@ void Encoder::Encoder::Encode()
             else if (std::holds_alternative<Parser::DataDefinition>(entry))
             {
                 const Parser::DataDefinition& dataDefinition = std::get<Parser::DataDefinition>(entry);
-                
+                const std::vector<uint8_t> encoded = _EncodeData(dataDefinition);
+                const size_t size = dataDefinition.size;
+
+                size_t alignment = dataDefinition.alignment;
+                size_t padding = (alignment - (offset % alignment)) % alignment;
+
+                if (padding > 0)
+                {
+                    if (sec.isInitialized)
+                    {
+                        const std::vector<uint8_t> pad(padding, 0);
+                        sec.buffer.insert(sec.buffer.end(), pad.begin(), pad.end());
+                    }
+                    else
+                        sec.reservedSize += padding;
+                }
+
+                if (sec.isInitialized)
+                    sec.buffer.insert(sec.buffer.end(), encoded.begin(), encoded.end());
+                else
+                    sec.reservedSize += size;
+
+                offset += size;
+                bytesWritten += size;
             }
             else if (std::holds_alternative<Parser::Label>(entry))
             {

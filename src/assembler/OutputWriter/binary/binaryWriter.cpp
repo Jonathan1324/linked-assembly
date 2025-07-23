@@ -10,9 +10,22 @@ void Output::Binary::Writer::Write()
 {
     const std::vector<Encoder::Section> sections = encoder->getSections();
 
+    std::vector<Encoder::Section> uninitialized;
+
     // TODO
     for (const auto& section : sections)
     {
+        if (!section.isInitialized)
+        {
+            uninitialized.push_back(section);
+            continue;
+        }
+
         file.write(reinterpret_cast<const char*>(section.buffer.data()), section.buffer.size());
+    }
+
+    for (const auto& section : uninitialized)
+    {
+        // TODO
     }
 }
