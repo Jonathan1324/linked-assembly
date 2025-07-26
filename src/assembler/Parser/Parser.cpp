@@ -43,7 +43,7 @@ void Parser::Parser::Print() const
                     default: std::cout << "Unknown bits "; break;
                 }
                 std::cout << "instruction 0x" << std::hex << instruction.mnemonic << std::dec;
-                std::cout << " aligned to " << instruction.alignment << " on line " << instruction.lineNumber << " in column " << instruction.column;
+                std::cout << "on line " << instruction.lineNumber << " in column " << instruction.column;
                 std::cout << ": " << std::endl;
                 for (const auto& operand : instruction.operands)
                 {
@@ -102,9 +102,6 @@ void Parser::Parser::Print() const
                     std::cout << "Data";
 
                 std::cout << " of size " << dataDefinition.size;
-                
-                if (dataDefinition.alignment != 0)
-                    std::cout << " aligned to " << dataDefinition.alignment;
 
                 std::cout << " in line " << dataDefinition.lineNumber << " at column " << dataDefinition.column << std::endl;
 
@@ -199,6 +196,43 @@ void Parser::Parser::Print() const
                 std::cout << "Repetition on line " << repeat.lineNumber << " in column " << repeat.column << std::endl;
 
                 for (const auto& op : repeat.count.operands)
+                {
+                    std::cout << "      ";  // 3x '  '
+                    if (std::holds_alternative<Integer>(op))
+                    {
+                        const Integer& integer = std::get<Integer>(op);
+                        if (integer.isString)
+                            std::cout << "'" << integer.value << "'" << std::endl;
+                        else
+                            std::cout << "0x" << std::hex << integer.val << std::dec << std::endl;
+                    }
+                    else if (std::holds_alternative<Operator>(op))
+                    {
+                        const Operator& Op = std::get<Operator>(op);
+                        std::cout << "'" << Op.op << "'" << std::endl;;
+                    }
+                    else if (std::holds_alternative<String>(op))
+                    {
+                        const String& str = std::get<String>(op);
+                        std::cout << "'" << str.value << "'" << std::endl;;
+                    }
+                    else if (std::holds_alternative<CurrentPosition>(op))
+                    {
+                        const CurrentPosition& curPos = std::get<CurrentPosition>(op);
+                        if (curPos.sectionPos)
+                            std::cout << "current position in section" << std::endl;
+                        else
+                            std::cout << "current position" << std::endl;
+                    }
+                }
+            }
+            else if (std::holds_alternative<Alignment>(entry))
+            {
+                const Alignment& alignment = std::get<Alignment>(entry);
+                std::cout << "  ";  // '  '
+                std::cout << "Alignment on line " << alignment.lineNumber << " in column " << alignment.column << std::endl;
+
+                for (const auto& op : alignment.align.operands)
                 {
                     std::cout << "      ";  // 3x '  '
                     if (std::holds_alternative<Integer>(op))

@@ -162,8 +162,6 @@ void Parser::x86::Parser::Parse(const std::vector<Token::Token>& tokens)
     Section* currentSection = &sections.at(0);
     BitMode currentBitMode = bits;
 
-    size_t align = 0;
-
     for (size_t i = 0; i < filteredTokens.size(); i++)
     {
         const Token::Token& token = filteredTokens[i];
@@ -307,10 +305,32 @@ void Parser::x86::Parser::Parse(const std::vector<Token::Token>& tokens)
             }
             else if (lowerDir.compare("align") == 0)
             {
-                size_t newAlign = std::stoull(filteredTokens[i + 1].value);
-                if (newAlign % 2 != 0)
-                    context.warningManager->add(Warning::GeneralWarning("Alignment not even", token.line, token.column));
-                align = newAlign;
+                Alignment align;
+                align.lineNumber = directive.line;
+                align.column = directive.column;
+                i++;
+                // TODO: strange way
+                while (i < filteredTokens.size())
+                {
+                    if (filteredTokens[i].type == Token::Type::Token
+                    || filteredTokens[i].type == Token::Type::Operator
+                    || filteredTokens[i].type == Token::Type::Character
+                    || filteredTokens[i].type == Token::Type::Bracket)
+                    {
+                        ImmediateOperand op = getOperand(filteredTokens[i]);
+                        align.align.operands.push_back(op);
+                    }
+                    else
+                        throw Exception::SyntaxError("Unknown value type after 'align'", filteredTokens[i].line, filteredTokens[i].column);
+                    
+                    i++;
+                    if (filteredTokens[i].type == Token::Type::Token && (
+                        filteredTokens[i - 1].type == Token::Type::Token ||
+                        filteredTokens[i - 1].type == Token::Type::Bracket && filteredTokens[i - 1].value == ")"
+                    ))
+                        break;
+                }
+                i--;
             }
 
             while (i < filteredTokens.size() && filteredTokens[i].type != Token::Type::EOL)
@@ -443,10 +463,6 @@ void Parser::x86::Parser::Parse(const std::vector<Token::Token>& tokens)
                 }
             }
 
-            data.alignment = align;
-            if (align != 0)
-                align = 0;
-
             currentSection->entries.push_back(data);
 
             continue;
@@ -518,10 +534,6 @@ void Parser::x86::Parser::Parse(const std::vector<Token::Token>& tokens)
 
             if (filteredTokens[i].type != Token::Type::EOL)
                 throw Exception::SyntaxError("Expected end of line after second argument for 'mov'", operand1.line, operand1.column);
-
-            instruction.alignment = align;
-            if (align != 0)
-                align = 0;
 
             currentSection->entries.push_back(instruction);
 

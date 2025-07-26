@@ -40,23 +40,6 @@ void Encoder::Encoder::Encode()
                 const Parser::Instruction::Instruction& instruction = std::get<Parser::Instruction::Instruction>(entry);
                 const std::vector<uint8_t> encoded = _EncodeInstruction(instruction);
                 const size_t size = encoded.size();
-
-                size_t alignment = instruction.alignment;
-                size_t padding = (alignment - (offset % alignment)) % alignment;
-
-                if (padding > 0)
-                {
-                    if (sec.isInitialized)
-                    {
-                        const std::vector<uint8_t> pad = _EncodePadding(padding);
-                        sec.buffer.insert(sec.buffer.end(), pad.begin(), pad.end());
-                    }
-                    else
-                        sec.reservedSize += padding;
-
-                    offset += padding;
-                    bytesWritten += padding;
-                }
                 
                 if (sec.isInitialized)
                     sec.buffer.insert(sec.buffer.end(), encoded.begin(), encoded.end());
@@ -71,20 +54,6 @@ void Encoder::Encoder::Encode()
                 const Parser::DataDefinition& dataDefinition = std::get<Parser::DataDefinition>(entry);
                 const std::vector<uint8_t> encoded = _EncodeData(dataDefinition);
                 const size_t size = dataDefinition.size;
-
-                size_t alignment = dataDefinition.alignment;
-                size_t padding = (alignment - (offset % alignment)) % alignment;
-
-                if (padding > 0)
-                {
-                    if (sec.isInitialized)
-                    {
-                        const std::vector<uint8_t> pad(padding, 0);
-                        sec.buffer.insert(sec.buffer.end(), pad.begin(), pad.end());
-                    }
-                    else
-                        sec.reservedSize += padding;
-                }
 
                 if (sec.isInitialized)
                     sec.buffer.insert(sec.buffer.end(), encoded.begin(), encoded.end());
@@ -109,6 +78,11 @@ void Encoder::Encoder::Encode()
                 const Parser::Repetition& repetition = std::get<Parser::Repetition>(entry);
                 //std::cout << "Repetition" << std::endl;
             }
+            else if (std::holds_alternative<Parser::Alignment>(entry))
+            {
+                const Parser::Alignment& alignment = std::get<Parser::Alignment>(entry);
+                //std::cout << "Alignment" << std::endl;
+            }  
         }
 
         sections.push_back(sec);

@@ -60,7 +60,6 @@ namespace Parser
             uint64_t mnemonic;
             std::vector<Operand> operands;
             BitMode bits;
-            int alignment;
 
             size_t lineNumber;
             size_t column;
@@ -72,7 +71,6 @@ namespace Parser
         size_t size;
         bool reserved;
         std::vector<Immediate> values;
-        int alignment;
 
         size_t lineNumber;
         size_t column;
@@ -104,7 +102,15 @@ namespace Parser
         size_t column;
     };
 
-    using SectionEntry = std::variant<Instruction::Instruction, DataDefinition, Label, Constant, Repetition>;
+    struct Alignment
+    {
+        Immediate align;
+
+        size_t lineNumber;
+        size_t column;
+    };
+
+    using SectionEntry = std::variant<Instruction::Instruction, DataDefinition, Label, Constant, Repetition, Alignment>;
 
     struct Section
     {
