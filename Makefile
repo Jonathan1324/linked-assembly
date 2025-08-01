@@ -3,13 +3,14 @@ include build_scripts/os.mk
 
 SRC_DIR = src
 BUILD_DIR = build
+BIN_DIR = bin
 
 SRC_DIR := $(shell pwd)/$(SRC_DIR)
 BUILD_DIR := $(shell pwd)/$(BUILD_DIR)
 
-.PHONY: all clean library assembler linker
+.PHONY: all clean bin library assembler linker
 
-all: library assembler linker
+all: bin library assembler linker
 
 library:
 	@$(MAKE) -C $(SRC_DIR)/lib 				\
@@ -47,6 +48,12 @@ linker: library
 		LIB=core							\
 		EXE_EXT=$(EXE_EXT)
 
+bin: assembler linker
+	@mkdir -p $(BIN_DIR)
+	@cp $(BUILD_DIR)/assembler/assembler$(EXE_EXT) $(BIN_DIR)/assembler$(EXE_EXT)
+	@cp $(BUILD_DIR)/linker/linker$(EXE_EXT) $(BIN_DIR)/linker$(EXE_EXT)
+
+
 clean:
 	@$(MAKE) -C $(SRC_DIR)/assembler clean 	\
 		SRC_DIR=$(SRC_DIR)/assembler 		\
@@ -57,3 +64,9 @@ clean:
 		SRC_DIR=$(SRC_DIR)/linker 			\
 		BUILD_DIR=$(BUILD_DIR)/linker		\
 		EXE_EXT=$(EXE_EXT)
+
+	@$(MAKE) -C $(SRC_DIR)/lib clean 		\
+		SRC_DIR=$(SRC_DIR)/lib 				\
+		BUILD_DIR=$(BUILD_DIR)/lib
+
+	@rm -rf $(BUILD_DIR)/bin

@@ -2,15 +2,16 @@
 
 make DEBUG=1
 
-chmod +x build/assembler/assembler
+chmod +x bin/assembler
+chmod +x bin/linker
 
 cd tests
 
 mkdir -p build
-../build/assembler/assembler test.asm -o build/test.bin \
-    --arch x86 --format raw -m32 -d
+../bin/assembler test.asm -o build/test.bin \
+    --arch x86 --format raw -m32
 
-../build/assembler/assembler test.asm -o build/test.o \
+../bin/assembler test.asm -o build/test.o \
     --arch x86 --format elf -m32
 
 ld -m elf_i386 -o build/test build/test.o
