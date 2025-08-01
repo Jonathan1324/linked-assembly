@@ -32,14 +32,14 @@ Build the assembler using `make`:
 make
 ```
 
-This will produce the binary in `build/assembler/assembler`.
+This will produce the binary in `bin/assembler`.
 
 ## Usage
 
 Build your assembly file into an object file with:
 
 ```bash
-build/assembler/assembler input.asm -o output.o --arch x86 --format elf --endian little -m32
+bin/assembler input.asm -o output.o --arch x86 --format elf --endian little -m32
 ```
 
 ([see full guide](docs/usage.md))

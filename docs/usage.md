@@ -11,7 +11,7 @@ make
 This will compile the source code and produce the binary at:
 
 ```bash
-build/assembler/assembler
+bin/assembler
 ```
 
 ---
@@ -21,7 +21,7 @@ build/assembler/assembler
 To assemble an assembly source file (`input.asm`) into an object file (`output.o`), use the following command:
 
 ```bash
-build/assembler/assembler input.asm -o output.o --arch x86 --format elf -m32
+bin/assembler input.asm -o output.o --arch x86 --format elf -m32
 ```
 
 ### Command-Line Flags
@@ -62,7 +62,7 @@ build/assembler/assembler input.asm -o output.o --arch x86 --format elf -m32
 Given an assembly source file `examples/example.asm`, assemble it like this:
 
 ```bash
-build/assembler/assembler examples/example.asm -o examples/build/example.o --arch x86 --format elf -m32
+bin/assembler examples/example.asm -o examples/build/example.o --arch x86 --format elf -m32
 ```
 
 ---

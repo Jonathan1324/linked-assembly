@@ -29,7 +29,7 @@ Currently, you can:
 You assemble your `.asm` file into an `.o` file using `assembler`, then link it with a linker like `gcc`:
 
 ```bash
-build/assembler/assembler file.asm -o file.o --arch x86 --format elf -m32
+bin/assembler file.asm -o file.o --arch x86 --format elf -m32
 gcc file.o -o file
 ./file
 ```
