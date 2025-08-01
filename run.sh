@@ -8,7 +8,8 @@ if [ "$1" = "-c" ]; then
     cd ..
 else
     make DEBUG=1
-    chmod +x build/assembly/assembly
+    chmod +x bin/assembly
+    chmod +x bin/linker
     chmod +x tests/test.sh
     chmod +x tests/debug.sh
 
