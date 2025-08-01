@@ -19,6 +19,13 @@ namespace Encoder
         size_t size() const;
     };
 
+    struct Label
+    {
+        std::string name;
+        std::string section;
+        size_t offset = 0;
+    };
+
     class Encoder
     {
     public:
@@ -35,16 +42,21 @@ namespace Encoder
         virtual std::vector<uint8_t> _EncodePadding(size_t length) = 0;
         std::vector<uint8_t> _EncodeData(const Parser::DataDefinition& dataDefinition);
 
+        uint64_t Evaluate(const Parser::Immediate& immediate) const;
+
         Context context;
         Architecture arch;
         BitMode bits;
 
         const Parser::Parser* parser = nullptr;
 
-        std::unordered_map<std::string, std::string> labelSection;
-        std::unordered_map<std::string, size_t> labelOffset;
-
         std::vector<Section> sections;
+
+        std::unordered_map<std::string, Label> labels;
+        std::unordered_map<std::string, uint32_t> constants;
+
+        size_t bytesWritten = 0;
+        size_t sectionOffset = 0;
     };
 
     Encoder* getEncoder(const Context& context, Architecture arch, BitMode bits, const Parser::Parser* parser);

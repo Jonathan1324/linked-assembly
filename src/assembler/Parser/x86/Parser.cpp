@@ -245,10 +245,7 @@ void Parser::x86::Parser::Parse(const std::vector<Token::Token>& tokens)
                     throw Exception::SyntaxError("Unknown value type after 'times'", filteredTokens[i].line, filteredTokens[i].column);
                 
                 i++;
-                if (filteredTokens[i].type == Token::Type::Token && (
-                    filteredTokens[i - 1].type == Token::Type::Token ||
-                    filteredTokens[i - 1].type == Token::Type::Bracket && filteredTokens[i - 1].value == ")"
-                ))
+                if ( i < filteredTokens.size() && filteredTokens[i].type == Token::Type::EOL)
                     break;
             }
             i--;
@@ -324,13 +321,12 @@ void Parser::x86::Parser::Parse(const std::vector<Token::Token>& tokens)
                         throw Exception::SyntaxError("Unknown value type after 'align'", filteredTokens[i].line, filteredTokens[i].column);
                     
                     i++;
-                    if (filteredTokens[i].type == Token::Type::Token && (
-                        filteredTokens[i - 1].type == Token::Type::Token ||
-                        filteredTokens[i - 1].type == Token::Type::Bracket && filteredTokens[i - 1].value == ")"
-                    ))
+                    if ( i < filteredTokens.size() && filteredTokens[i].type == Token::Type::EOL)
                         break;
                 }
                 i--;
+
+                currentSection->entries.push_back(align);
             }
 
             while (i < filteredTokens.size() && filteredTokens[i].type != Token::Type::EOL)
@@ -541,5 +537,11 @@ void Parser::x86::Parser::Parse(const std::vector<Token::Token>& tokens)
         }
 
         context.warningManager->add(Warning::GeneralWarning("Unhandled token: " + token.what()));
+    }
+
+    // TODO: probably better way to handle this
+    if (sections.at(0).entries.empty())
+    {
+        sections.erase(sections.begin());
     }
 }
