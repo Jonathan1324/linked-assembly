@@ -5,3 +5,4 @@ section .text
 
 _start:
     db 0, 1, 2
+    dw 2
