@@ -6,6 +6,7 @@
 #include <algorithm>
 #include <x86/Registers.hpp>
 #include <x86/Instructions.hpp>
+#include "../evaluate.hpp"
 
 Parser::x86::Parser::Parser(const Context& _context, Architecture _arch, BitMode _bits)
     : ::Parser::Parser(_context, _arch, _bits)
@@ -24,15 +25,14 @@ Parser::ImmediateOperand getOperand(const Token::Token& token)
     else if (std::isdigit(static_cast<unsigned char>(token.value[0])) != 0)
     {
         Parser::Integer integer;
-        integer.value = token.value;
-        integer.isString = true;
+        // TODO: currently only integer
+        integer.value = evalInteger(token.value, 8, token.line, token.column);
         return integer;
     }
     else if (token.type == Token::Type::Character)
     {
         Parser::Integer integer;
-        integer.val = static_cast<uint64_t>(static_cast<unsigned char>(token.value[0]));
-        integer.isString = false;
+        integer.value = static_cast<uint64_t>(static_cast<unsigned char>(token.value[0]));
         return integer;
     }
     else if (token.type == Token::Type::Token && (token.value == "$" ||token.value == "$$"))
@@ -434,8 +434,7 @@ void Parser::x86::Parser::Parse(const std::vector<Token::Token>& tokens)
                         Immediate value;
 
                         Integer integer;
-                        integer.val = combined;
-                        integer.isString = false;
+                        integer.value = combined;
                         value.operands.push_back(integer);
 
                         data.values.push_back(value);

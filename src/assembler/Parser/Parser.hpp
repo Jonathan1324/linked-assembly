@@ -13,10 +13,7 @@ namespace Parser
 {
     struct Integer
     {
-        std::string value;
-        uint64_t val;
-
-        bool isString;
+        uint64_t value;
     };
 
     struct Operator

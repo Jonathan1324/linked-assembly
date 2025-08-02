@@ -17,12 +17,9 @@ static int64_t sign_extend(uint64_t val, size_t size_bytes)
     }
 }
 
-uint64_t evalInteger(std::string str, size_t size, std::unordered_map<std::string, std::string> constants, int lineNumber, int column)
+uint64_t evalInteger(std::string str, size_t size, int lineNumber, int column)
 {
-    // TODO: operations
-    std::string value = str;
-    if (constants.find(str) != constants.end())
-        value = constants[str];
+    std::string& value = str;
 
     int base = 0;
 

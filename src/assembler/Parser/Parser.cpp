@@ -65,10 +65,7 @@ void Parser::Parser::Print() const
                             if (std::holds_alternative<Integer>(op))
                             {
                                 const Integer& integer = std::get<Integer>(op);
-                                if (integer.isString)
-                                    std::cout << "'" << integer.value << "'" << std::endl;
-                                else
-                                    std::cout << "0x" << std::hex << integer.val << std::dec << std::endl;
+                                std::cout << "0x" << std::hex << integer.value << std::dec << std::endl;
                             }
                             else if (std::holds_alternative<Operator>(op))
                             {
@@ -116,10 +113,7 @@ void Parser::Parser::Print() const
                         if (std::holds_alternative<Integer>(op))
                         {
                             const Integer& integer = std::get<Integer>(op);
-                            if (integer.isString)
-                                std::cout << "'" << integer.value << "'" << std::endl;
-                            else
-                                std::cout << "0x" << std::hex << integer.val << std::dec << std::endl;
+                            std::cout << "0x" << std::hex << integer.value << std::dec << std::endl;
                         }
                         else if (std::holds_alternative<Operator>(op))
                         {
@@ -164,10 +158,7 @@ void Parser::Parser::Print() const
                     if (std::holds_alternative<Integer>(op))
                     {
                         const Integer& integer = std::get<Integer>(op);
-                        if (integer.isString)
-                            std::cout << "'" << integer.value << "'" << std::endl;
-                        else
-                            std::cout << "0x" << std::hex << integer.val << std::dec << std::endl;
+                        std::cout << "0x" << std::hex << integer.value << std::dec << std::endl;
                     }
                     else if (std::holds_alternative<Operator>(op))
                     {
@@ -201,10 +192,7 @@ void Parser::Parser::Print() const
                     if (std::holds_alternative<Integer>(op))
                     {
                         const Integer& integer = std::get<Integer>(op);
-                        if (integer.isString)
-                            std::cout << "'" << integer.value << "'" << std::endl;
-                        else
-                            std::cout << "0x" << std::hex << integer.val << std::dec << std::endl;
+                        std::cout << "0x" << std::hex << integer.value << std::dec << std::endl;
                     }
                     else if (std::holds_alternative<Operator>(op))
                     {
@@ -238,10 +226,7 @@ void Parser::Parser::Print() const
                     if (std::holds_alternative<Integer>(op))
                     {
                         const Integer& integer = std::get<Integer>(op);
-                        if (integer.isString)
-                            std::cout << "'" << integer.value << "'" << std::endl;
-                        else
-                            std::cout << "0x" << std::hex << integer.val << std::dec << std::endl;
+                        std::cout << "0x" << std::hex << integer.value << std::dec << std::endl;
                     }
                     else if (std::holds_alternative<Operator>(op))
                     {
