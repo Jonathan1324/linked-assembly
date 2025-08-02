@@ -5,6 +5,13 @@ std::vector<uint8_t> Encoder::Encoder::_EncodeData(const Parser::DataDefinition&
     // TODO: placeholder implementation
     if(!dataDefinition.reserved)
     {
+        for (const auto& value : dataDefinition.values)
+        {
+            if (value.operands.empty())
+                throw Exception::SemanticError("Data definition cannot be empty", dataDefinition.lineNumber, dataDefinition.column);
+
+            uint64_t evaluatedValue = Evaluate(value);
+        }
         size_t size = dataDefinition.size * dataDefinition.values.size();
         std::vector<uint8_t> buffer(size, 0x00);
         return buffer;

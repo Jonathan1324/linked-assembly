@@ -104,11 +104,7 @@ void Encoder::Encoder::Encode()
                 if (padding > 0)
                 {
                     // TODO: really ugly, but works for now
-                    std::vector<uint8_t> paddingBytes;
-                    if (sec.name.compare(".text") == 0)
-                        paddingBytes = _EncodePadding(padding);
-                    else
-                        paddingBytes.resize(padding, 0);
+                    std::vector<uint8_t> paddingBytes = _EncodePadding(padding);
 
                     if (sec.isInitialized)
                         sec.buffer.insert(sec.buffer.end(), paddingBytes.begin(), paddingBytes.end());

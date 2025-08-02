@@ -43,7 +43,7 @@ void Parser::Parser::Print() const
                     default: std::cout << "Unknown bits "; break;
                 }
                 std::cout << "instruction 0x" << std::hex << instruction.mnemonic << std::dec;
-                std::cout << "on line " << instruction.lineNumber << " in column " << instruction.column;
+                std::cout << " on line " << instruction.lineNumber << " in column " << instruction.column;
                 std::cout << ": " << std::endl;
                 for (const auto& operand : instruction.operands)
                 {
