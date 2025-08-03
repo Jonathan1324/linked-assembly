@@ -4,4 +4,4 @@ section .text
     global _start
 
 _start:
-    mov eax, 15 + 0b1001
+    mov eax, 9 + 0b1010

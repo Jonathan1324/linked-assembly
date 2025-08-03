@@ -83,7 +83,14 @@ void Encoder::Encoder::Encode()
                 const Parser::Constant& constant = std::get<Parser::Constant>(entry);
                 if (constants.find(constant.name) == constants.end())
                 {
-                    constants[constant.name] = 0;
+                    Constant c;
+                    c.name = constant.name;
+                    c.value = 0;    // FIXME: not implemented yet
+                    c.offset = sectionOffset;
+                    c.bytesWritten = bytesWritten;
+                    c.resolved = true;
+
+                    constants[constant.name] = c;
                 }
                 else
                     throw Exception::SemanticError("Constant '" + constant.name + "' already defined", constant.lineNumber, constant.column);
@@ -123,7 +130,13 @@ void Encoder::Encoder::Encode()
     // TODO: debug output
     for (const auto& constant : constants)
     {
-        std::cout << "Constant: '" << constant.first << "' = " << constant.second << std::endl;
+        const Constant& c = constant.second;
+        if (c.resolved)
+            std::cout << "Resolved constant '";
+        else
+            std::cout << "Unresolved constant '";
+        
+        std::cout << c.name << "': " << c.value << " - at offset " << c.offset << " with bytesWritten " << c.bytesWritten << std::endl;
     }
 
     for (const auto& label : labels)

@@ -12,6 +12,12 @@ std::vector<uint8_t> Encoder::x86::Encoder::_EncodeInstruction(const Parser::Ins
     return {};
 }
 
+uint64_t Encoder::x86::Encoder::_GetSize(const Parser::Instruction::Instruction& instruction)
+{
+    const std::vector<uint8_t> instr = _EncodeInstruction(instruction);
+    return instr.size();
+}
+
 std::vector<uint8_t> Encoder::x86::Encoder::_EncodePadding(size_t length)
 {
     std::vector<uint8_t> buffer(length, 0x90);  // TODO: not cool

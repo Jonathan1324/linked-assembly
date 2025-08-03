@@ -26,6 +26,18 @@ namespace Encoder
         size_t offset = 0;
     };
 
+    struct Constant
+    {
+        std::string name;
+        uint32_t value;
+
+        size_t offset;
+        size_t bytesWritten;
+
+        bool resolved;
+    };
+    
+
     class Encoder
     {
     public:
@@ -39,8 +51,10 @@ namespace Encoder
         
     protected:
         virtual std::vector<uint8_t> _EncodeInstruction(const Parser::Instruction::Instruction& instruction) = 0;
+        virtual uint64_t _GetSize(const Parser::Instruction::Instruction& instruction) = 0;
         virtual std::vector<uint8_t> _EncodePadding(size_t length) = 0;
         std::vector<uint8_t> _EncodeData(const Parser::DataDefinition& dataDefinition);
+        uint64_t _GetSize(const Parser::DataDefinition& dataDefinition);
 
         uint64_t Evaluate(const Parser::Immediate& immediate) const;
 
@@ -53,7 +67,7 @@ namespace Encoder
         std::vector<Section> sections;
 
         std::unordered_map<std::string, Label> labels;
-        std::unordered_map<std::string, uint32_t> constants;
+        std::unordered_map<std::string, Constant> constants;
 
         size_t bytesWritten = 0;
         size_t sectionOffset = 0;
