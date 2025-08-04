@@ -150,7 +150,12 @@ void Parser::Parser::Print() const
             {
                 const Constant& constant = std::get<Constant>(entry);
                 std::cout << "  ";  // '  '
-                std::cout << "Constant '" << constant.name << "' on line " << constant.lineNumber << " in column " << constant.column << std::endl;
+                std::cout << "Constant '" << constant.name << "' ";
+
+                if (constant.hasPos)
+                    std::cout << "with current position";
+                
+                std::cout << " on line " << constant.lineNumber << " in column " << constant.column << std::endl;
 
                 for (const auto& op : constant.value.operands)
                 {

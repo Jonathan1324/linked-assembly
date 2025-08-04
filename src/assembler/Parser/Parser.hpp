@@ -87,6 +87,8 @@ namespace Parser
         std::string name;
         Immediate value;
 
+        bool hasPos;
+
         size_t lineNumber;
         size_t column;
     };

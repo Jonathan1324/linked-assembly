@@ -188,6 +188,7 @@ void Parser::x86::Parser::Parse(const std::vector<Token::Token>& tokens)
             constant.column = token.column;
             // TODO: case sensitive
             constant.name = token.value;
+            constant.hasPos = false;
             i += 2;
 
             while (i < filteredTokens.size() && filteredTokens[i].type != Token::Type::EOL)
@@ -201,6 +202,8 @@ void Parser::x86::Parser::Parse(const std::vector<Token::Token>& tokens)
                            !(filteredTokens[i].type == Token::Type::Comma || filteredTokens[i].type == Token::Type::EOL))
                     {
                         ImmediateOperand op = getOperand(filteredTokens[i]);
+                        if (std::holds_alternative<CurrentPosition>(op) && !constant.hasPos)
+                            constant.hasPos = true;
                         constant.value.operands.push_back(op);
                         i++;
                     }
