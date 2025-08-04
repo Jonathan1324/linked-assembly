@@ -20,6 +20,20 @@ void Encoder::Encoder::Encode()
 
     for (const auto& section : parsedSections)
     {
+        for (size_t i = 0; i < section.entries.size(); i++)
+        {
+            const Parser::SectionEntry& entry = section.entries[i];
+
+            if (std::holds_alternative<Parser::Constant>(entry))
+            {
+                const Parser::Constant& constant = std::get<Parser::Constant>(entry);
+                // TODO
+            }
+        }
+    }
+
+    for (const auto& section : parsedSections)
+    {
         Section sec;
         sec.name = section.name;
         sec.isInitialized = true;
