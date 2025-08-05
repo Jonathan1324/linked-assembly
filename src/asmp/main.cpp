@@ -22,10 +22,11 @@ int main(int argc, const char *argv[])
 
     std::string inputFile;
     std::string outputFile;
+    bool debug;
 
     try
     {
-        bool stop = parseArguments(argc, argv, inputFile, outputFile, context);
+        bool stop = parseArguments(argc, argv, inputFile, outputFile, debug, context);
         if (stop)
             return 0;
 
@@ -35,14 +36,19 @@ int main(int argc, const char *argv[])
             warningManager.clear();
         }
 
-        std::ofstream output = openOfstream(outputFile, std::ios::out | std::ios::trunc);
-        std::ifstream input = openIfstream(inputFile);
+        std::ostream* output = openOstream(outputFile, std::ios::out | std::ios::trunc);
+        std::istream* input = openIstream(inputFile);
 
         PreProcessor preprocessor(context, output, input);
         preprocessor.Process();
 
-        input.close();
-        output.close();
+        if (debug)
+            preprocessor.Print();
+
+        if (inputFile != "-")
+            delete input;
+        if (outputFile != "-")
+            delete output;
     }
     catch(const Exception& e)
     {

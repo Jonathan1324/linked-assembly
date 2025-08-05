@@ -2,7 +2,7 @@
 #include <vector>
 #include <filesystem>
 #include <fstream>
-#include <cstring>
+#include <string>
 
 #include "architecture/architecture.hpp"
 
@@ -54,10 +54,10 @@ int main(int argc, const char *argv[])
     {
         context.filename = std::filesystem::path(inputFile).filename().string();
 
-        std::ifstream file;
+        std::istream* file = nullptr;
         try
         {
-            file = openIfstream(inputFile);
+            file = openIstream(inputFile);
         }
         catch(const Exception& e)
         {
@@ -68,17 +68,18 @@ int main(int argc, const char *argv[])
 
         char buffer[4];
 
-        file.read(buffer, 4);
+        file->read(buffer, 4);
 
         Format format = getFormat(buffer);
 
-        file.close();
+        if (inputFile != "-")
+            delete file;
     }
 
-    std::ofstream objectFile;
+    std::ostream* objectFile = nullptr;
     try
     {
-        objectFile = openOfstream(output, std::ios::out | std::ios::trunc | std::ios::binary);
+        objectFile = openOstream(output, std::ios::out | std::ios::trunc | std::ios::binary);
     }
     catch(const Exception& e)
     {
@@ -88,6 +89,9 @@ int main(int argc, const char *argv[])
     catch(const std::exception& e) { handleError(e); }
 
     std::cout << "Linker not implemented yet. ):" << std::endl;
+
+    if (output != "-")
+        delete objectFile;
 
     return 0;
 }

@@ -11,7 +11,7 @@ void printHelp()
     fflush(stdout);
 }
 
-bool parseArguments(int argc, const char *argv[], std::string& input, std::string& output, const Context& context)
+bool parseArguments(int argc, const char *argv[], std::string& input, std::string& output, bool& debug, const Context& context)
 {
     if (argc < 2)
     {
@@ -29,6 +29,8 @@ bool parseArguments(int argc, const char *argv[], std::string& input, std::strin
         return true;
     }
 
+    debug = false;
+
     bool inputSet = false;
     for (int i = 1; i < argc; ++i)
     {
@@ -39,7 +41,11 @@ bool parseArguments(int argc, const char *argv[], std::string& input, std::strin
             else
                 throw Exception::ArgumentError("Missing output file after '-o'");
         }
-        else if (!std::string(argv[i]).empty() && argv[i][0] == '-')
+        else if (std::string(argv[i]).compare("--debug") == 0 || std::string(argv[i]).compare("-d") == 0)
+        {
+            debug = true;
+        }
+        else if (argv[i][0] == '-' && argv[i][1] != '\0')
         {
             context.warningManager->add(Warning::ArgumentWarning("Unknown option: " + std::string(argv[i])));
         }

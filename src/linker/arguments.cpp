@@ -1,11 +1,12 @@
 #include "arguments.hpp"
 
 #include <vector>
-#include <cstring>
+#include <string>
 #include <Exception.hpp>
 #include <version.h>
 #include <util/string.hpp>
 #include <filesystem>
+#include <cstring>
 
 #include "cli/help.h"
 
@@ -148,7 +149,7 @@ bool parseArguments(int argc, const char *argv[],
             debug = true;
         }
 
-        else if (!std::string(argv[i]).empty() && argv[i][0] == '-')
+        else if (argv[i][0] == '-' && argv[i][1] != '\0')
         {
             context.warningManager->add(Warning::ArgumentWarning("Unknown option: " + std::string(argv[i])));
         }

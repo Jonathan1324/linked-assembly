@@ -3,19 +3,31 @@
 #include <Exception.hpp>
 #include <cstdio>
 
-std::ifstream openIfstream(const std::string& path)
+std::istream* openIstream(const std::string& path)
 {
-    std::ifstream file(path);
-    if (!file.is_open())
+    if (path == "-")
+        return &std::cin;
+
+    std::ifstream* file = new std::ifstream(path);
+    if (!file->is_open())
+    {
+        delete file;
         throw Exception::IOError("Couldn't open file " + path);
+    }
     return file;
 }
 
-std::ofstream openOfstream(const std::string& path, std::ios::openmode mode)
+std::ostream* openOstream(const std::string& path, std::ios::openmode mode)
 {
-    std::ofstream file(path, mode);
-    if (!file.is_open())
+    if (path == "-")
+        return &std::cout;
+
+    std::ofstream* file = new std::ofstream(path, mode);
+    if (!file->is_open())
+    {
+        delete file;
         throw Exception::IOError("Couldn't open file " + path);
+    }
     return file;
 }
 

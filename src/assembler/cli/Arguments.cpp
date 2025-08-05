@@ -14,7 +14,7 @@ void printHelp()
 bool parseArguments(int argc, const char *argv[],
                     std::vector<std::string>& inputs, std::string& output,
                     BitMode& bits, Architecture& arch, Format& format,
-                    bool& debug, Context& context)
+                    bool& debug, bool& preprocess, Context& context)
 {
 #ifdef __x86_64__
     bits = BitMode::Bits64;
@@ -65,6 +65,7 @@ bool parseArguments(int argc, const char *argv[],
     }
     
     debug = false;
+    preprocess = true;
 
     for (int i = 1; i < argc; ++i)
     {
@@ -149,8 +150,12 @@ bool parseArguments(int argc, const char *argv[],
         {
             debug = true;
         }
+        else if (std::string(argv[i]).compare("--no-preprocess") == 0)
+        {
+            preprocess = false;
+        }
 
-        else if (!std::string(argv[i]).empty() && argv[i][0] == '-')
+        else if (argv[i][0] == '-' && argv[i][1] != '\0')
         {
             context.warningManager->add(Warning::ArgumentWarning("Unknown option: " + std::string(argv[i])));
         }

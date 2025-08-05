@@ -12,12 +12,12 @@ void Tokenizer::clear() {
     tokens.clear();
 }
 
-void Tokenizer::tokenize(std::istream& input)
+void Tokenizer::tokenize(std::istream* input)
 {
     std::string line;
     size_t lineNumber = 0;
 
-    while (std::getline(input, line))
+    while (std::getline(*input, line))
     {
         lineNumber++;
         size_t pos = 0;

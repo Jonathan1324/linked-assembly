@@ -2,7 +2,7 @@
 
 #include <string>
 #include <iostream>
-#include <cinttypes>
+#include <inttypes.h>
 #include <cstring>
 #include <cstdint>
 

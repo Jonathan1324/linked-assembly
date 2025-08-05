@@ -8,8 +8,7 @@ chmod +x bin/linker
 cd tests
 
 mkdir -p build
-../bin/asmp test.asm -o build/test.i.asm
-../bin/assembler build/test.i.asm -o build/test.bin \
+../bin/assembler test.asm -o build/test.bin \
     --arch x86 --format raw -m32 -d
 
 ../bin/assembler test.asm -o build/test.o \

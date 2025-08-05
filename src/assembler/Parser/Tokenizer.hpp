@@ -56,7 +56,7 @@ namespace Token
         Tokenizer();
 
         void clear();
-        void tokenize(std::istream& input);
+        void tokenize(std::istream* input);
         std::vector<Token> getTokens();
         void print();
     private:
