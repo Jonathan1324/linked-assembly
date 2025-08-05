@@ -1,6 +1,6 @@
 #include "Encoder.hpp"
 
-uint64_t Encoder::Encoder::Evaluate(const Parser::Immediate& immediate) const
+Int128 Encoder::Encoder::Evaluate(const Parser::Immediate& immediate) const
 {
     // TODO
     

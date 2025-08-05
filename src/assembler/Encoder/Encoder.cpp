@@ -1,4 +1,5 @@
 #include "Encoder.hpp"
+#include <limits>
 
 using namespace Encoder;
 
@@ -27,11 +28,124 @@ void Encoder::Encoder::Encode()
             if (std::holds_alternative<Parser::Constant>(entry))
             {
                 const Parser::Constant& constant = std::get<Parser::Constant>(entry);
-                // TODO
+                if (constants.find(constant.name) == constants.end())
+                {
+                    Constant c;
+                    c.name = constant.name;
+
+                    if (!constant.hasPos)
+                    {
+                        c.value = 0xff;    // FIXME: not implemented yet
+                        c.resolved = true;
+                    }
+                    else
+                    {
+                        c.resolved = false;
+                    }
+
+                    constants[constant.name] = c;
+                }
+                else
+                    throw Exception::SemanticError("Constant '" + constant.name + "' already defined", constant.lineNumber, constant.column);
             }
         }
     }
 
+    bytesWritten = 0;
+    for (const auto& section : parsedSections)
+    {
+        sectionOffset = 0;
+        for (size_t i = 0; i < section.entries.size(); i++)
+        {
+            const Parser::SectionEntry& entry = section.entries[i];
+            
+            if (std::holds_alternative<Parser::Instruction::Instruction>(entry))
+            {
+                const Parser::Instruction::Instruction& instruction = std::get<Parser::Instruction::Instruction>(entry);
+                const uint64_t size = _GetSize(instruction);
+                
+                sectionOffset += size;
+                bytesWritten += size;
+            }
+            else if (std::holds_alternative<Parser::DataDefinition>(entry))
+            {
+                const Parser::DataDefinition& dataDefinition = std::get<Parser::DataDefinition>(entry);
+                const uint64_t size = _GetSize(dataDefinition);
+
+                sectionOffset += size;
+                bytesWritten += size;
+            }
+            else if (std::holds_alternative<Parser::Label>(entry))
+            {
+                const Parser::Label& label = std::get<Parser::Label>(entry);
+                Label lbl;
+                lbl.name = label.name;
+                lbl.section = section.name;
+                lbl.offset = sectionOffset;
+                if (labels.find(lbl.name) == labels.end())
+                {
+                    labels[lbl.name] = lbl;
+                }
+                else
+                    throw Exception::SemanticError("Label '" + lbl.name + "' already defined", label.lineNumber, label.column);
+            }
+            else if (std::holds_alternative<Parser::Constant>(entry))
+            {
+                const Parser::Constant& constant = std::get<Parser::Constant>(entry);
+                auto it = constants.find(constant.name);
+                if (it != constants.end())
+                {
+                    Constant c = it->second;
+                    c.offset = sectionOffset;
+                    c.bytesWritten = bytesWritten;
+
+                    if (!c.resolved)
+                    {
+                        c.value = 0;    // FIXME: not implemented yet
+                        c.resolved = true;
+                    }
+
+                    constants[constant.name] = c;
+                }
+                else
+                    throw Exception::InternalError("Constant '" + constant.name + "' isn't found in constants", constant.lineNumber, constant.column);
+            }
+            else if (std::holds_alternative<Parser::Repetition>(entry))
+            {
+                const Parser::Repetition& repetition = std::get<Parser::Repetition>(entry);
+                const Int128 count128 = Evaluate(repetition.count);
+                if (count128 < 0)
+                    throw Exception::SemanticError("Repetition count can't be negative", repetition.lineNumber, repetition.column);
+                
+                if (count128 > std::numeric_limits<uint64_t>::max())
+                    throw Exception::InternalError("Repetition count to large for unsigned 64-bit integer", repetition.lineNumber, repetition.column);
+
+                const uint64_t count = static_cast<uint64_t>(count128);
+                // TODO
+            }
+            else if (std::holds_alternative<Parser::Alignment>(entry))
+            {
+                const Parser::Alignment& alignment = std::get<Parser::Alignment>(entry);
+                const Int128 align = Evaluate(alignment.align);
+                if (align <= 0)
+                    throw Exception::SemanticError("Alignment cannot be zero or lower", alignment.lineNumber, alignment.column);
+
+                const Int128 offset128 = static_cast<Int128>(sectionOffset);
+                const Int128 padding128 = (align - (offset128 % align)) % align;
+                if (padding128 > std::numeric_limits<uint64_t>::max())
+                    throw Exception::InternalError("Padding too large for unsigned 64-bit integer", alignment.lineNumber, alignment.column);
+
+                const uint64_t padding = static_cast<uint64_t>(padding128);
+                if (padding > 0)
+                {
+                    sectionOffset += padding;
+                    bytesWritten += padding;
+                }
+            }  
+        }
+    }
+
+    bytesWritten = 0;
     for (const auto& section : parsedSections)
     {
         Section sec;
@@ -76,52 +190,32 @@ void Encoder::Encoder::Encode()
                 sectionOffset += size;
                 bytesWritten += size;
             }
-            else if (std::holds_alternative<Parser::Label>(entry))
-            {
-                const Parser::Label& label = std::get<Parser::Label>(entry);
-                Label lbl;
-                lbl.name = label.name;
-                lbl.section = sec.name;
-                lbl.offset = sectionOffset;
-                if (labels.find(lbl.name) == labels.end())
-                {
-                    labels[lbl.name] = lbl;
-                }
-                else
-                {
-                    throw Exception::SemanticError("Label '" + lbl.name + "' already defined", label.lineNumber, label.column);
-                }
-            }
-            else if (std::holds_alternative<Parser::Constant>(entry))
-            {
-                const Parser::Constant& constant = std::get<Parser::Constant>(entry);
-                if (constants.find(constant.name) == constants.end())
-                {
-                    Constant c;
-                    c.name = constant.name;
-                    c.value = 0;    // FIXME: not implemented yet
-                    c.offset = sectionOffset;
-                    c.bytesWritten = bytesWritten;
-                    c.resolved = true;
-
-                    constants[constant.name] = c;
-                }
-                else
-                    throw Exception::SemanticError("Constant '" + constant.name + "' already defined", constant.lineNumber, constant.column);
-            }
             else if (std::holds_alternative<Parser::Repetition>(entry))
             {
                 const Parser::Repetition& repetition = std::get<Parser::Repetition>(entry);
-                //std::cout << "Repetition" << std::endl;
+                const Int128 count128 = Evaluate(repetition.count);
+                if (count128 < 0)
+                    throw Exception::SemanticError("Repetition count can't be negative", repetition.lineNumber, repetition.column);
+                
+                if (count128 > std::numeric_limits<uint64_t>::max())
+                    throw Exception::InternalError("Repetition count to large for unsigned 64-bit integer", repetition.lineNumber, repetition.column);
+
+                const uint64_t count = static_cast<uint64_t>(count128);
+                // TODO
             }
             else if (std::holds_alternative<Parser::Alignment>(entry))
             {
                 const Parser::Alignment& alignment = std::get<Parser::Alignment>(entry);
-                const uint64_t align = Evaluate(alignment.align);
-                if (align == 0)
-                    throw Exception::SemanticError("Alignment cannot be zero", alignment.lineNumber, alignment.column);
+                const Int128 align = Evaluate(alignment.align);
+                if (align <= 0)
+                    throw Exception::SemanticError("Alignment cannot be zero or lower", alignment.lineNumber, alignment.column);
                 
-                const size_t padding = (align - (sectionOffset % align)) % align;
+                const Int128 offset128 = static_cast<Int128>(sectionOffset);
+                const Int128 padding128 = (align - (offset128 % align)) % align;
+                if (padding128 > std::numeric_limits<size_t>::max())
+                    throw Exception::InternalError("Padding too large for size_t", alignment.lineNumber, alignment.column);
+
+                const size_t padding = static_cast<size_t>(padding128);
                 if (padding > 0)
                 {
                     // TODO: really ugly, but works for now

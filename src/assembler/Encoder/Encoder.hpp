@@ -2,6 +2,7 @@
 
 #include <Architecture.hpp>
 #include <vector>
+#include <IntTypes.h>
 #include "../Context.hpp"
 #include "../Parser/Parser.hpp"
 
@@ -56,7 +57,7 @@ namespace Encoder
         std::vector<uint8_t> _EncodeData(const Parser::DataDefinition& dataDefinition);
         uint64_t _GetSize(const Parser::DataDefinition& dataDefinition);
 
-        uint64_t Evaluate(const Parser::Immediate& immediate) const;
+        Int128 Evaluate(const Parser::Immediate& immediate) const;
 
         Context context;
         Architecture arch;

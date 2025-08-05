@@ -531,8 +531,24 @@ void Parser::x86::Parser::Parse(const std::vector<Token::Token>& tokens)
             }
 
             if (filteredTokens[i].type != Token::Type::EOL)
-                throw Exception::SyntaxError("Expected end of line after second argument for 'mov'", operand1.line, operand1.column);
+                throw Exception::SyntaxError("Expected end of line after second argument for 'mov'", operand2.line, operand2.column);
 
+            currentSection->entries.push_back(instruction);
+
+            continue;
+        }
+        else if (lowerVal.compare("nop") == 0)
+        {
+            Instruction::Instruction instruction;
+            instruction.bits = currentBitMode;
+            instruction.lineNumber = token.line;
+            instruction.column = token.column;
+            instruction.mnemonic = ::x86::Instructions::NOP;
+
+            i++;
+            if (filteredTokens[i].type != Token::Type::EOL)
+                throw Exception::SyntaxError("Expected end of line after second argument for 'nop'", token.line, token.column);
+            
             currentSection->entries.push_back(instruction);
 
             continue;

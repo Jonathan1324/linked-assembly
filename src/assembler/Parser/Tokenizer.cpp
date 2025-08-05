@@ -225,10 +225,8 @@ std::string Token::Token::what() const
 
         case Type::Character:
         {
-            char buf[80];
             unsigned char c = static_cast<unsigned char>(value[0]);
-            snprintf(buf, sizeof(buf), " 0x%02x ('%c') in line %zu at column %zu", c, value[0], line, column);
-            result += buf;
+            result += std::to_string(c) + "in line " + std::to_string(line) + " at column " + std::to_string(column);
             break;
         }
 

@@ -10,7 +10,7 @@ std::vector<uint8_t> Encoder::Encoder::_EncodeData(const Parser::DataDefinition&
             if (value.operands.empty())
                 throw Exception::SemanticError("Data definition cannot be empty", dataDefinition.lineNumber, dataDefinition.column);
 
-            uint64_t evaluatedValue = Evaluate(value);
+            Int128 evaluatedValue = Evaluate(value);
         }
         size_t size = dataDefinition.size * dataDefinition.values.size();
         std::vector<uint8_t> buffer(size, 0x00);
@@ -32,11 +32,10 @@ uint64_t Encoder::Encoder::_GetSize(const Parser::DataDefinition& dataDefinition
             if (value.operands.empty())
                 throw Exception::SemanticError("Data definition cannot be empty", dataDefinition.lineNumber, dataDefinition.column);
 
-            uint64_t evaluatedValue = Evaluate(value);
+            Int128 evaluatedValue = Evaluate(value);
         }
         size_t size = dataDefinition.size * dataDefinition.values.size();
-        std::vector<uint8_t> buffer(size, 0x00);
-        return buffer.size();
+        return size;
     }
     else
     {
