@@ -7,3 +7,8 @@ section .text
 
 _start:
     t.a
+
+a equ 2
+b equ a
+c equ $
+d equ a + c

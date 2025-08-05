@@ -21,14 +21,17 @@
     if (parser) delete parser;              \
     if (encoder) delete encoder;            \
     if (outputWriter) delete outputWriter;  \
-    if (objectFile) delete objectFile;      \
+    if (outputFile != "-" && objectFile) delete objectFile;\
     } while(0)                              \
 
 #define ERROR_HANDLER                       \
     do {                                    \
     /* delete outputFile */                 \
-    if (outputFile != "-")                  \
+    if (outputFile != "-" && objectFile)    \
+    {                                       \
         delete objectFile;                  \
+        objectFile = nullptr;               \
+    }                                       \
     std::remove(outputFile.c_str());        \
     CLEANUP;                                \
     } while(0)                              \
@@ -194,7 +197,6 @@ int main(int argc, const char *argv[])
         ERROR_HANDLER;
         return handleError(e);
     }
-    
 
     // Create .o/.bin file
     try

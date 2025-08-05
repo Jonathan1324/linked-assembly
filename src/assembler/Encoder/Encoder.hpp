@@ -3,6 +3,7 @@
 #include <Architecture.hpp>
 #include <vector>
 #include <IntTypes.h>
+#include <unordered_set>
 #include "../Context.hpp"
 #include "../Parser/Parser.hpp"
 
@@ -27,9 +28,18 @@ namespace Encoder
         size_t offset = 0;
     };
 
+    enum class HasPos
+    {
+        UNKNOWN,
+        TRUE,
+        FALSE
+    };
+
     struct Constant
     {
         std::string name;
+        Parser::Immediate expression;
+        HasPos hasPos;
         uint32_t value;
 
         size_t offset;
@@ -58,6 +68,9 @@ namespace Encoder
         uint64_t _GetSize(const Parser::DataDefinition& dataDefinition);
 
         Int128 Evaluate(const Parser::Immediate& immediate) const;
+
+        bool hasPos(Constant& c, std::unordered_set<std::string>& visited);
+        std::vector<std::string> getDependencies(Parser::Immediate immediate);
 
         Context context;
         Architecture arch;

@@ -32,16 +32,9 @@ void Encoder::Encoder::Encode()
                 {
                     Constant c;
                     c.name = constant.name;
-
-                    if (!constant.hasPos)
-                    {
-                        c.value = 0xff;    // FIXME: not implemented yet
-                        c.resolved = true;
-                    }
-                    else
-                    {
-                        c.resolved = false;
-                    }
+                    c.expression = constant.value;
+                    c.resolved = false;
+                    c.hasPos = constant.hasPos ? HasPos::TRUE : HasPos::UNKNOWN;
 
                     constants[constant.name] = c;
                 }
@@ -49,6 +42,14 @@ void Encoder::Encoder::Encode()
                     throw Exception::SemanticError("Constant '" + constant.name + "' already defined", constant.lineNumber, constant.column);
             }
         }
+    }
+
+    for (auto& constant : constants)
+    {
+        Constant& c = constant.second;
+
+        std::unordered_set<std::string> visited;
+        hasPos(c, visited);
     }
 
     bytesWritten = 0;
@@ -240,11 +241,18 @@ void Encoder::Encoder::Encode()
     {
         const Constant& c = constant.second;
         if (c.resolved)
-            std::cout << "Resolved constant '";
+            std::cout << "Resolved constant ";
         else
-            std::cout << "Unresolved constant '";
+            std::cout << "Unresolved constant ";
+
+        switch (c.hasPos)
+        {
+            case HasPos::TRUE: std::cout << "with pos "; break;
+            case HasPos::FALSE: std::cout << "without pos "; break;
+            case HasPos::UNKNOWN: default: std::cout << "with/without (unknown) pos "; break;
+        }
         
-        std::cout << c.name << "': " << c.value << " - at offset " << c.offset << " with bytesWritten " << c.bytesWritten << std::endl;
+        std::cout << "'" << c.name << "': " << c.value << " - at offset " << c.offset << " with bytesWritten " << c.bytesWritten << std::endl;
     }
 
     for (const auto& label : labels)
