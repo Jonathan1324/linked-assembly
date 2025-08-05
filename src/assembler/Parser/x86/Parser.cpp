@@ -553,6 +553,33 @@ void Parser::x86::Parser::Parse(const std::vector<Token::Token>& tokens)
 
             continue;
         }
+        else if (lowerVal.compare("int") == 0)
+        {
+            Instruction::Instruction instruction;
+            instruction.bits = currentBitMode;
+            instruction.lineNumber = token.line;
+            instruction.column = token.column;
+            instruction.mnemonic = ::x86::Instructions::INT;
+
+            i++;
+            
+            // TODO: immediate?
+            Immediate imm;
+            while (i < filteredTokens.size() && filteredTokens[i].type != Token::Type::EOL)
+            {
+                ImmediateOperand op = getOperand(filteredTokens[i]);
+                imm.operands.push_back(op);
+                i++;
+            }
+            instruction.operands.push_back(imm);
+
+            if (filteredTokens[i].type != Token::Type::EOL)
+                throw Exception::SyntaxError("Expected end of line after second argument for 'nop'", token.line, token.column);
+            
+            currentSection->entries.push_back(instruction);
+
+            continue;
+        }
 
         context.warningManager->add(Warning::GeneralWarning("Unhandled token: " + token.what()));
     }

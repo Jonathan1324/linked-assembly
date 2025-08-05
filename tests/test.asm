@@ -4,6 +4,4 @@ section .text
     global _start
 
 _start:
-    nop
-    nop
-    nop
+    int 0x80
