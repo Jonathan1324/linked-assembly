@@ -170,16 +170,6 @@ void Parser::x86::Parser::Parse(const std::vector<Token::Token>& tokens)
         
         const std::string lowerVal = toLower(token.value);
 
-        // Macros
-        // ('%')
-        if (token.type == Token::Type::Macro)
-        {
-            //TODO
-            while (i < filteredTokens.size() && filteredTokens[i].type != Token::Type::EOL && filteredTokens[i].type != Token::Type::_EOF)
-                i++;
-            continue;
-        }
-
         // Constants
         if (filteredTokens[i + 1].type == Token::Type::Token && filteredTokens[i + 1].value.compare("equ") == 0)
         {

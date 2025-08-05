@@ -1,7 +1,9 @@
 bits 32
 
+%define t nop
+
 section .text
     global _start
 
 _start:
-    int 0x80
+    t

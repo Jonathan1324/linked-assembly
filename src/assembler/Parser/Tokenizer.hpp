@@ -15,7 +15,6 @@ namespace Token
         Operator,
         Comma,
         Punctuation,
-        Macro,
         Bracket,
         EOL,
         _EOF
@@ -30,7 +29,6 @@ namespace Token
             case Type::Character:   return "__Character___";
             case Type::Operator:    return "__Operator____";
             case Type::Comma:       return "__Comma_______";
-            case Type::Macro:       return "__Macro_______";
             case Type::Punctuation: return "__Punctuation_";
             case Type::Bracket:     return "__Bracket_____";
             case Type::EOL:         return "_EOL__________";

@@ -49,12 +49,6 @@ void Tokenizer::tokenize(std::istream& input)
                 tokens.emplace_back(Type::Punctuation, std::string() + line[pos], lineNumber, pos);
                 pos++;
             }
-            // %
-            else if (line[pos] == '%')
-            {
-                tokens.emplace_back(Type::Macro, "", lineNumber, pos);
-                pos++;
-            }
 
             // +,-,*,/
             else if (line[pos] == '+' || line[pos] == '-' || line[pos] == '*' || line[pos] == '/')
@@ -214,7 +208,6 @@ std::string Token::Token::what() const
     switch (type)
     {
         case Type::Comma:
-        case Type::Macro:
         case Type::EOL:
             result += " in line " + std::to_string(line) + " at column " + std::to_string(column);
             break;

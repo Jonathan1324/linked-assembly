@@ -15,13 +15,12 @@ ASM_OBJS = $(patsubst %.asm, $(BUILD_DIR)/%.asm.o, $(ASM_SRCS))
 
 DEPS := $(C_OBJS:.o=.d) $(CPP_OBJS:.o=.d) $(ASM_OBJS:.o=.d)
 
-TARGET = $(BIN_DIR)/linker$(EXE_EXT)
+TARGET = $(BIN_DIR)/asmp$(EXE_EXT)
 
 
 CFLAGS	 += -I$(SRC_DIR)
 CXXFLAGS += -I$(SRC_DIR)
 LDFLAGS  += -L$(LIB_DIR) -l$(LIB)
-
 
 .PHONY: all clean
 
