@@ -275,6 +275,17 @@ void Parser::x86::Parser::Parse(const std::vector<Token::Token>& tokens)
                 {
                     currentSection = &(*it);
                 }
+
+                i++;
+
+                if (toLower(filteredTokens[i].value).find("align") == 0)
+                {
+                    size_t pos = filteredTokens[i].value.find("=");
+                    if (pos != 5)
+                        context.warningManager->add(Warning::GeneralWarning("Unset section attribute 'align'", filteredTokens[i].line, filteredTokens[i].column));
+                    
+                    // TODO
+                }
             }
             else if (lowerDir.compare("bits") == 0)
             {

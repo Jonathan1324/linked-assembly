@@ -25,7 +25,20 @@ void Encoder::Encoder::Encode()
         {
             const Parser::SectionEntry& entry = section.entries[i];
 
-            if (std::holds_alternative<Parser::Constant>(entry))
+            if (std::holds_alternative<Parser::Label>(entry))
+            {
+                const Parser::Label& label = std::get<Parser::Label>(entry);
+                Label lbl;
+                lbl.name = label.name;
+                lbl.section = section.name;
+                if (labels.find(lbl.name) == labels.end())
+                {
+                    labels[lbl.name] = lbl;
+                }
+                else
+                    throw Exception::SemanticError("Label '" + lbl.name + "' already defined", label.lineNumber, label.column);
+            }
+            else if (std::holds_alternative<Parser::Constant>(entry))
             {
                 const Parser::Constant& constant = std::get<Parser::Constant>(entry);
                 if (constants.find(constant.name) == constants.end())
@@ -44,13 +57,8 @@ void Encoder::Encoder::Encode()
         }
     }
 
-    for (auto& constant : constants)
-    {
-        Constant& c = constant.second;
-
-        std::unordered_set<std::string> visited;
-        hasPos(c, visited);
-    }
+    // resolve constant that don't use labels, $ or $$
+    resolveConstants(false);
 
     bytesWritten = 0;
     for (const auto& section : parsedSections)
@@ -79,16 +87,14 @@ void Encoder::Encoder::Encode()
             else if (std::holds_alternative<Parser::Label>(entry))
             {
                 const Parser::Label& label = std::get<Parser::Label>(entry);
-                Label lbl;
-                lbl.name = label.name;
-                lbl.section = section.name;
-                lbl.offset = sectionOffset;
-                if (labels.find(lbl.name) == labels.end())
+                auto it = labels.find(label.name);
+                if (it != labels.end())
                 {
-                    labels[lbl.name] = lbl;
+                    Label lbl = it->second;
+                    lbl.offset = sectionOffset;
                 }
                 else
-                    throw Exception::SemanticError("Label '" + lbl.name + "' already defined", label.lineNumber, label.column);
+                    throw Exception::InternalError("Label '" + label.name + "' isn't found in constants", label.lineNumber, label.column);
             }
             else if (std::holds_alternative<Parser::Constant>(entry))
             {
@@ -100,12 +106,6 @@ void Encoder::Encoder::Encode()
                     c.offset = sectionOffset;
                     c.bytesWritten = bytesWritten;
 
-                    if (!c.resolved)
-                    {
-                        c.value = 0;    // FIXME: not implemented yet
-                        c.resolved = true;
-                    }
-
                     constants[constant.name] = c;
                 }
                 else
@@ -114,7 +114,7 @@ void Encoder::Encoder::Encode()
             else if (std::holds_alternative<Parser::Repetition>(entry))
             {
                 const Parser::Repetition& repetition = std::get<Parser::Repetition>(entry);
-                const Int128 count128 = Evaluate(repetition.count);
+                const Int128 count128 = Evaluate(repetition.count, bytesWritten, sectionOffset);
                 if (count128 < 0)
                     throw Exception::SemanticError("Repetition count can't be negative", repetition.lineNumber, repetition.column);
                 
@@ -127,7 +127,7 @@ void Encoder::Encoder::Encode()
             else if (std::holds_alternative<Parser::Alignment>(entry))
             {
                 const Parser::Alignment& alignment = std::get<Parser::Alignment>(entry);
-                const Int128 align = Evaluate(alignment.align);
+                const Int128 align = Evaluate(alignment.align, bytesWritten, sectionOffset);
                 if (align <= 0)
                     throw Exception::SemanticError("Alignment cannot be zero or lower", alignment.lineNumber, alignment.column);
 
@@ -146,12 +146,16 @@ void Encoder::Encoder::Encode()
         }
     }
 
+    // resolve constant that haven't been resolved yet
+    resolveConstants(true);
+
     bytesWritten = 0;
     for (const auto& section : parsedSections)
     {
         Section sec;
         sec.name = section.name;
         sec.isInitialized = true;
+        sec.align = section.align;
         if (section.name.compare(".bss") == 0)
         {
             sec.isInitialized = false;
@@ -194,7 +198,7 @@ void Encoder::Encoder::Encode()
             else if (std::holds_alternative<Parser::Repetition>(entry))
             {
                 const Parser::Repetition& repetition = std::get<Parser::Repetition>(entry);
-                const Int128 count128 = Evaluate(repetition.count);
+                const Int128 count128 = Evaluate(repetition.count, bytesWritten, sectionOffset);
                 if (count128 < 0)
                     throw Exception::SemanticError("Repetition count can't be negative", repetition.lineNumber, repetition.column);
                 
@@ -207,7 +211,7 @@ void Encoder::Encoder::Encode()
             else if (std::holds_alternative<Parser::Alignment>(entry))
             {
                 const Parser::Alignment& alignment = std::get<Parser::Alignment>(entry);
-                const Int128 align = Evaluate(alignment.align);
+                const Int128 align = Evaluate(alignment.align, bytesWritten, sectionOffset);
                 if (align <= 0)
                     throw Exception::SemanticError("Alignment cannot be zero or lower", alignment.lineNumber, alignment.column);
                 
@@ -235,8 +239,15 @@ void Encoder::Encoder::Encode()
 
         sections.push_back(sec);
     }
+}
 
-    // TODO: debug output
+void Encoder::Encoder::Print() const
+{
+    for (const auto& section : sections)
+    {
+        std::cout << section.name << " (aligned to " + std::to_string(section.align) + "):" << std::endl;
+        std::cout << "  Size: " << section.size() << std::endl;
+    }
     for (const auto& constant : constants)
     {
         const Constant& c = constant.second;
@@ -258,15 +269,6 @@ void Encoder::Encoder::Encode()
     for (const auto& label : labels)
     {
         std::cout << "Label: '" << label.first << "' in section '" << label.second.section << "' at offset " << label.second.offset << std::endl;
-    }
-}
-
-void Encoder::Encoder::Print() const
-{
-    for (const auto& section : sections)
-    {
-        std::cout << section.name << ":" << std::endl;
-        std::cout << "  Size: " << section.size() << std::endl;
     }
 }
 

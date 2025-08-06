@@ -1,14 +1,17 @@
 bits 32
 
-%define t.a nop
-
 section .text
     global _start
 
 _start:
-    t.a
+    nop
+    db a
 
 a equ 2
 b equ a
 c equ $
-d equ a + c
+d equ b + c
+
+section .data
+
+msg db "Hello, World!", 0

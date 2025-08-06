@@ -1,6 +1,23 @@
 #pragma once
 
 #include "Encoder.hpp"
+#include <limits>
+
+void Encoder::Encoder::resolveConstants(bool withPos)
+{
+    std::unordered_set<std::string> visited;
+    
+    for (auto& [name, constant] : constants)
+    {
+        if (!constant.resolved)
+        {
+            if (withPos)
+                resolveConstantWithPos(constant, visited);
+            else
+                resolveConstantWithoutPos(constant, visited);
+        }
+    }
+}
 
 std::vector<std::string> Encoder::Encoder::getDependencies(Parser::Immediate immediate)
 {
@@ -16,41 +33,75 @@ std::vector<std::string> Encoder::Encoder::getDependencies(Parser::Immediate imm
     return deps;
 }
 
-bool Encoder::Encoder::hasPos(Constant& c, std::unordered_set<std::string>& visited)
+bool Encoder::Encoder::resolveConstantWithoutPos(Constant& c, std::unordered_set<std::string>& visited)
 {
-    if (c.hasPos == HasPos::TRUE) return true;
-    if (c.hasPos == HasPos::FALSE) return false;
+    if (c.resolved) return true;
+    if (c.hasPos == HasPos::TRUE) return false;
 
     if (visited.count(c.name))
-        throw Exception::SemanticError("Circular dependency at " + c.name); // TODO: no line or column
-    
+        throw Exception::SemanticError("Circular dependency at " + c.name); // FIXME: no line or column
     visited.insert(c.name);
 
-    auto deps = getDependencies(c.expression);
-
-    for (const auto& depName : deps)
+    for (const auto& dep : getDependencies(c.expression))
     {
-        auto labelIt = labels.find(depName);
-        if (labelIt != labels.end())
+        if (labels.count(dep))
         {
             c.hasPos = HasPos::TRUE;
             visited.erase(c.name);
-            return true;
+            return false;
         }
-        
-        auto constIt = constants.find(depName);
-        if (constIt == constants.end())
-            throw Exception::InternalError("Unknown dependency: " + depName);
 
-        if (hasPos(constIt->second, visited))
+        auto it = constants.find(dep);
+        if (it == constants.end())
+            throw Exception::InternalError("Unknown dependency: " + dep);
+
+        if (!resolveConstantWithoutPos(it->second, visited))
         {
             c.hasPos = HasPos::TRUE;
             visited.erase(c.name);
-            return true;
+            return false;
         }
     }
 
+    Int128 value = Evaluate(c.expression, 0, 0);
+    if (value < static_cast<Int128>(std::numeric_limits<int64_t>::min()) ||
+        value > static_cast<Int128>(std::numeric_limits<int64_t>::max()))
+        throw Exception::OverflowError("Constant '" + c.name + "' too big for a signed 64-bit integer"); // FIXME: no line or column
+    c.value = static_cast<int64_t>(value);
+    c.resolved = true;
+
     c.hasPos = HasPos::FALSE;
     visited.erase(c.name);
-    return false;
+    return true;
+}
+
+bool Encoder::Encoder::resolveConstantWithPos(Constant& c, std::unordered_set<std::string>& visited)
+{
+    if (c.resolved) return true;
+    
+    if (visited.count(c.name))
+        throw Exception::SemanticError("Circular dependency at " + c.name); // FIXME: no line or column
+    visited.insert(c.name);
+
+    for (const auto& dep : getDependencies(c.expression))
+    {
+        if (labels.count(dep)) continue;
+        
+        auto it = constants.find(dep);
+        if (it == constants.end())
+            throw Exception::InternalError("Unknown dependency: " + dep);
+
+        if (!resolveConstantWithPos(it->second, visited))
+            throw Exception::InternalError("Couldn't resolve constant '" + dep + "'");
+    }
+
+    Int128 value = Evaluate(c.expression, c.bytesWritten, c.offset);
+    if (value < static_cast<Int128>(std::numeric_limits<int64_t>::min()) ||
+        value > static_cast<Int128>(std::numeric_limits<int64_t>::max()))
+        throw Exception::OverflowError("Constant '" + c.name + "' too big for a signed 64-bit integer"); // FIXME: no line or column
+    c.value = static_cast<int64_t>(value);
+    c.resolved = true;
+
+    visited.erase(c.name);
+    return true;
 }

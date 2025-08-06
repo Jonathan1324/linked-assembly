@@ -18,6 +18,8 @@ namespace Encoder
         SectionBuffer buffer;
         size_t reservedSize = 0;
 
+        uint64_t align;
+
         size_t size() const;
     };
 
@@ -25,7 +27,7 @@ namespace Encoder
     {
         std::string name;
         std::string section;
-        size_t offset = 0;
+        uint64_t offset = 0;
     };
 
     enum class HasPos
@@ -40,7 +42,7 @@ namespace Encoder
         std::string name;
         Parser::Immediate expression;
         HasPos hasPos;
-        uint32_t value;
+        int64_t value;
 
         size_t offset;
         size_t bytesWritten;
@@ -56,6 +58,7 @@ namespace Encoder
         virtual ~Encoder() = default;
 
         void Encode();
+        void Optimize();
         void Print() const;
 
         std::vector<Section> getSections() const;
@@ -67,10 +70,12 @@ namespace Encoder
         std::vector<uint8_t> _EncodeData(const Parser::DataDefinition& dataDefinition);
         uint64_t _GetSize(const Parser::DataDefinition& dataDefinition);
 
-        Int128 Evaluate(const Parser::Immediate& immediate) const;
+        Int128 Evaluate(const Parser::Immediate& immediate, uint64_t bytesWritten, uint64_t sectionOffset) const;
 
-        bool hasPos(Constant& c, std::unordered_set<std::string>& visited);
+        void resolveConstants(bool withPos);
         std::vector<std::string> getDependencies(Parser::Immediate immediate);
+        bool resolveConstantWithoutPos(Constant& c, std::unordered_set<std::string>& visited);
+        bool resolveConstantWithPos(Constant& c, std::unordered_set<std::string>& visited);
 
         Context context;
         Architecture arch;

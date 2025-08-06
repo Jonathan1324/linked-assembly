@@ -5,15 +5,23 @@ std::vector<uint8_t> Encoder::Encoder::_EncodeData(const Parser::DataDefinition&
     // TODO: placeholder implementation
     if(!dataDefinition.reserved)
     {
+        size_t size = dataDefinition.size * dataDefinition.values.size();
+        std::vector<uint8_t> buffer;
+        buffer.reserve(size);
+
         for (const auto& value : dataDefinition.values)
         {
             if (value.operands.empty())
                 throw Exception::SemanticError("Data definition cannot be empty", dataDefinition.lineNumber, dataDefinition.column);
 
-            Int128 evaluatedValue = Evaluate(value);
+            Int128 evaluatedValue = Evaluate(value, bytesWritten, sectionOffset);
+
+            for (size_t i = 0; i < dataDefinition.size; i++)
+            {
+                uint8_t byte = static_cast<uint8_t>((evaluatedValue >> (i * 8)) & 0xFF);
+                buffer.push_back(byte);
+            }
         }
-        size_t size = dataDefinition.size * dataDefinition.values.size();
-        std::vector<uint8_t> buffer(size, 0x00);
         return buffer;
     }
     else
@@ -24,16 +32,8 @@ std::vector<uint8_t> Encoder::Encoder::_EncodeData(const Parser::DataDefinition&
 
 uint64_t Encoder::Encoder::_GetSize(const Parser::DataDefinition& dataDefinition)
 {
-    // TODO: placeholder implementation
     if(!dataDefinition.reserved)
     {
-        for (const auto& value : dataDefinition.values)
-        {
-            if (value.operands.empty())
-                throw Exception::SemanticError("Data definition cannot be empty", dataDefinition.lineNumber, dataDefinition.column);
-
-            Int128 evaluatedValue = Evaluate(value);
-        }
         size_t size = dataDefinition.size * dataDefinition.values.size();
         return size;
     }

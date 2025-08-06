@@ -115,6 +115,8 @@ namespace Parser
     {
         std::string name;
         std::vector<SectionEntry> entries;
+
+        uint64_t align = 0;
     };
 
     class Parser
