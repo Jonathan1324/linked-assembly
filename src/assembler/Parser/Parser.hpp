@@ -42,7 +42,7 @@ namespace Parser
     {
         struct Register
         {
-            std::string reg;
+            uint64_t reg;
         };
 
         struct Memory

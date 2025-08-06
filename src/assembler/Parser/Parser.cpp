@@ -51,7 +51,7 @@ void Parser::Parser::Print() const
                     {
                         const Instruction::Register& reg = std::get<Instruction::Register>(operand);
                         std::cout << "    "; // 2x '  '
-                        std::cout << "Register '" << reg.reg << "'" << std::endl;
+                        std::cout << "Register: " << reg.reg << std::endl;
                     }
                     else if (std::holds_alternative<Immediate>(operand))
                     {

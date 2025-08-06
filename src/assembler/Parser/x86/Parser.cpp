@@ -340,7 +340,7 @@ void Parser::x86::Parser::Parse(const std::vector<Token::Token>& tokens)
 
         // Labels
         if (token.type == Token::Type::Token &&
-           ((filteredTokens[i + 1].type == Token::Type::Punctuation && filteredTokens[i + 1].value == ":" && /*TODO: not segment:offset*/ std::find(::x86::registers.begin(), ::x86::registers.end(), token.value) == ::x86::registers.end())
+           ((filteredTokens[i + 1].type == Token::Type::Punctuation && filteredTokens[i + 1].value == ":" && /*TODO: not segment:offset*/ ::x86::registers.find(token.value) == ::x86::registers.end())
          || (filteredTokens[i + 1].type == Token::Type::Token && std::find(dataDefinitions.begin(), dataDefinitions.end(), toLower(filteredTokens[i + 1].value)) != dataDefinitions.end())))
         {
             Label label;
@@ -481,8 +481,7 @@ void Parser::x86::Parser::Parse(const std::vector<Token::Token>& tokens)
              && filteredTokens[i + 1].type != Token::Type::Punctuation)
             {
                 // reg
-                Instruction::Register reg;
-                reg.reg = operand1.value;
+                Instruction::Register reg = getReg(operand1);
                 instruction.operands.push_back(reg);
                 i++;
             }
@@ -506,8 +505,7 @@ void Parser::x86::Parser::Parse(const std::vector<Token::Token>& tokens)
              && filteredTokens[i + 1].type != Token::Type::Punctuation)
             {
                 // reg
-                Instruction::Register reg;
-                reg.reg = operand2.value;
+                Instruction::Register reg = getReg(operand2);
                 instruction.operands.push_back(reg);
                 i++;
             }
