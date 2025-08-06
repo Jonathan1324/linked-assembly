@@ -285,5 +285,9 @@ std::vector<Section> Encoder::Encoder::getSections() const
 // FIXME: only temporary solution
 Encoder::Encoder* Encoder::getEncoder(const Context& context, Architecture arch, BitMode bits, const Parser::Parser* parser)
 {
-    return new x86::Encoder(context, arch, bits, parser);
+    switch (arch)
+    {
+        case Architecture::x86: return new x86::Encoder(context, arch, bits, parser);
+        default: return nullptr;
+    }
 }

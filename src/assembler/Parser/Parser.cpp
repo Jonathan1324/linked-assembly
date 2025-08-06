@@ -274,8 +274,12 @@ const std::vector<std::string>& Parser::Parser::getExterns() const
 
 #include "x86/Parser.hpp"
 
-// FIXME: only temporary solution
+// FIXME: add multiple parser support
 Parser::Parser* Parser::getParser(const Context& context, Architecture arch, BitMode bits)
 {
-    return new x86::Parser(context, arch, bits);
+    switch (arch)
+    {
+        case Architecture::x86: return new x86::Parser(context, arch, bits);
+        default: return nullptr;
+    }
 }
