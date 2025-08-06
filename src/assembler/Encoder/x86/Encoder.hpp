@@ -16,6 +16,9 @@ namespace Encoder
             std::vector<uint8_t> _EncodeInstruction(const Parser::Instruction::Instruction& instruction) override;
             uint64_t _GetSize(const Parser::Instruction::Instruction& instruction) override;
             std::vector<uint8_t> _EncodePadding(size_t length) override;
+
+        private:
+            
         };
     }
 }
