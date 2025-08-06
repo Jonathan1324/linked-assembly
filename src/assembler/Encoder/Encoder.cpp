@@ -256,6 +256,9 @@ void Encoder::Encoder::Print() const
         else
             std::cout << "Unresolved constant ";
 
+        if (c.prePass)
+            std::cout << "(pre pass) ";
+
         switch (c.hasPos)
         {
             case HasPos::TRUE: std::cout << "with pos "; break;

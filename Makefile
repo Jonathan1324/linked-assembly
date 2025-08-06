@@ -2,8 +2,13 @@ include build_scripts/config.mk
 include build_scripts/os.mk
 
 SRC_DIR = src
-BUILD_DIR = build
 BIN_DIR = bin
+
+ifeq ($(DEBUG),1)
+	BUILD_DIR = build/debug
+else
+	BUILD_DIR = build/release
+endif
 
 SRC_DIR := $(shell pwd)/$(SRC_DIR)
 BUILD_DIR := $(shell pwd)/$(BUILD_DIR)
@@ -15,6 +20,8 @@ all: library asmp assembler linker
 
 library:
 	@$(MAKE) -C $(SRC_DIR)/lib 				\
+		DEBUG=$(DEBUG)						\
+											\
 		AS=$(AS) ASFLAGS="$(ASFLAGS)"		\
 		CC=$(CC) CFLAGS="$(CFLAGS)" 		\
 		CXX=$(CXX) CXXFLAGS="$(CXXFLAGS)"	\
@@ -28,6 +35,8 @@ library:
 
 asmp: library
 	@$(MAKE) -C $(SRC_DIR)/asmp 			\
+		DEBUG=$(DEBUG)						\
+											\
 		AS=$(AS) ASFLAGS="$(ASFLAGS)"		\
 		CC=$(CC) CFLAGS="$(CFLAGS)" 		\
 		CXX=$(CXX) CXXFLAGS="$(CXXFLAGS)"	\
@@ -41,6 +50,8 @@ asmp: library
 
 assembler: library
 	@$(MAKE) -C $(SRC_DIR)/assembler 		\
+		DEBUG=$(DEBUG)						\
+											\
 		AS=$(AS) ASFLAGS="$(ASFLAGS)"		\
 		CC=$(CC) CFLAGS="$(CFLAGS)" 		\
 		CXX=$(CXX) CXXFLAGS="$(CXXFLAGS)"	\
@@ -54,6 +65,8 @@ assembler: library
 
 linker: library
 	@$(MAKE) -C $(SRC_DIR)/linker 			\
+		DEBUG=$(DEBUG)						\
+											\
 		AS=$(AS) ASFLAGS="$(ASFLAGS)"		\
 		CC=$(CC) CFLAGS="$(CFLAGS)" 		\
 		CXX=$(CXX) CXXFLAGS="$(CXXFLAGS)"	\

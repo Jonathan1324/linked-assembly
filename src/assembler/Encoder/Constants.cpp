@@ -69,6 +69,7 @@ bool Encoder::Encoder::resolveConstantWithoutPos(Constant& c, std::unordered_set
         throw Exception::OverflowError("Constant '" + c.name + "' too big for a signed 64-bit integer"); // FIXME: no line or column
     c.value = static_cast<int64_t>(value);
     c.resolved = true;
+    c.prePass = true;
 
     c.hasPos = HasPos::FALSE;
     visited.erase(c.name);

@@ -5,12 +5,7 @@ section .text
 
 _start:
     nop
-    db a
-
-a equ 2
-b equ a
-c equ $
-d equ b + c
+    ret
 
 section .data
 

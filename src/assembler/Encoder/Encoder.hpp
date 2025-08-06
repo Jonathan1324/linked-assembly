@@ -48,6 +48,7 @@ namespace Encoder
         size_t bytesWritten;
 
         bool resolved;
+        bool prePass = false;
     };
     
 
