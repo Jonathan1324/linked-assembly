@@ -14,13 +14,14 @@ void Output::Writer::Print() const
 }
 
 #include "binary/BinaryWriter.hpp"
+#include "ELF/ELFWriter.hpp"
 
-// FIXME: only temporary solution
 Output::Writer* Output::getWriter(const Context& context, Architecture arch, BitMode bits, Format format, std::ostream* file, const Parser::Parser* parser, const Encoder::Encoder* encoder)
 {
     switch(format)
     {
         case Format::Binary: return new Binary::Writer(context, arch, bits, format, file, parser, encoder);
+        case Format::ELF: return new ELF::Writer(context, arch, bits, format, file, parser, encoder);
         
         default: return nullptr;
     }
