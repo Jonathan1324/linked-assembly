@@ -1,6 +1,7 @@
 #pragma once
 
 #include "../OutputWriter.hpp"
+#include "Headers.hpp"
 
 namespace ELF
 {
@@ -11,5 +12,7 @@ namespace ELF
         ~Writer() = default;
 
         void Write() override;
+
+    protected:
     };
 }
