@@ -28,6 +28,8 @@ namespace Encoder
         std::string name;
         std::string section;
         uint64_t offset = 0;
+
+        bool resolved;
     };
 
     enum class HasPos
@@ -65,16 +67,17 @@ namespace Encoder
         std::vector<Section> getSections() const;
         
     protected:
-        virtual std::vector<uint8_t> _EncodeInstruction(const Parser::Instruction::Instruction& instruction) = 0;
-        virtual uint64_t _GetSize(const Parser::Instruction::Instruction& instruction) = 0;
-        virtual std::vector<uint8_t> _EncodePadding(size_t length) = 0;
-        std::vector<uint8_t> _EncodeData(const Parser::DataDefinition& dataDefinition);
-        uint64_t _GetSize(const Parser::DataDefinition& dataDefinition);
+        virtual std::vector<uint8_t> EncodeInstruction(const Parser::Instruction::Instruction& instruction, bool ignoreUnresolved = false) = 0;
+        virtual uint64_t GetSize(const Parser::Instruction::Instruction& instruction) = 0;
+        virtual std::vector<uint8_t> EncodePadding(size_t length) = 0;
+        std::vector<uint8_t> EncodeData(const Parser::DataDefinition& dataDefinition);
+        uint64_t GetSize(const Parser::DataDefinition& dataDefinition);
 
         Int128 Evaluate(const Parser::Immediate& immediate, uint64_t bytesWritten, uint64_t sectionOffset) const;
 
         void resolveConstants(bool withPos);
-        std::vector<std::string> getDependencies(Parser::Immediate immediate);
+        bool Resolvable(const Parser::Immediate& immediate);
+        std::vector<std::string> getDependencies(const Parser::Immediate& immediate);
         bool resolveConstantWithoutPos(Constant& c, std::unordered_set<std::string>& visited);
         bool resolveConstantWithPos(Constant& c, std::unordered_set<std::string>& visited);
 

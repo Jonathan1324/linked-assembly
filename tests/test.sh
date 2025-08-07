@@ -2,11 +2,11 @@
 
 mkdir -p build
 
-../bin/assembler $1.asm -o build/$1_asm.o \
-    --arch x86      \
-    -m32            \
-    --format elf
+../bin/assembler $1.asm -o build/$1.bin     \
+    --arch x86                              \
+    -m32                                    \
+    --format bin
 
-../bin/linker build/$1_asm.o -o build/$1
+nasm $1.asm -o build/$1-nasm.bin
 
-chmod +x build/$1
+cmp build/$1.bin build/$1-nasm.bin && echo "equal" || echo "different"

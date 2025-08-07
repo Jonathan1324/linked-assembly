@@ -31,6 +31,7 @@ void Encoder::Encoder::Encode()
                 Label lbl;
                 lbl.name = label.name;
                 lbl.section = section.name;
+                lbl.resolved = false;
                 if (labels.find(lbl.name) == labels.end())
                 {
                     labels[lbl.name] = lbl;
@@ -71,7 +72,7 @@ void Encoder::Encoder::Encode()
             if (std::holds_alternative<Parser::Instruction::Instruction>(entry))
             {
                 const Parser::Instruction::Instruction& instruction = std::get<Parser::Instruction::Instruction>(entry);
-                const uint64_t size = _GetSize(instruction);
+                const uint64_t size = GetSize(instruction);
                 
                 sectionOffset += size;
                 bytesWritten += size;
@@ -79,7 +80,7 @@ void Encoder::Encoder::Encode()
             else if (std::holds_alternative<Parser::DataDefinition>(entry))
             {
                 const Parser::DataDefinition& dataDefinition = std::get<Parser::DataDefinition>(entry);
-                const uint64_t size = _GetSize(dataDefinition);
+                const uint64_t size = GetSize(dataDefinition);
 
                 sectionOffset += size;
                 bytesWritten += size;
@@ -92,6 +93,7 @@ void Encoder::Encoder::Encode()
                 {
                     Label lbl = it->second;
                     lbl.offset = sectionOffset;
+                    lbl.resolved = true;
                 }
                 else
                     throw Exception::InternalError("Label '" + label.name + "' isn't found in constants", label.lineNumber, label.column);
@@ -146,6 +148,8 @@ void Encoder::Encoder::Encode()
         }
     }
 
+    const size_t totalBytesWritten = bytesWritten;
+
     // resolve constant that haven't been resolved yet
     resolveConstants(true);
 
@@ -170,7 +174,7 @@ void Encoder::Encoder::Encode()
             if (std::holds_alternative<Parser::Instruction::Instruction>(entry))
             {
                 const Parser::Instruction::Instruction& instruction = std::get<Parser::Instruction::Instruction>(entry);
-                const std::vector<uint8_t> encoded = _EncodeInstruction(instruction);
+                const std::vector<uint8_t> encoded = EncodeInstruction(instruction);
                 const size_t size = encoded.size();
                 
                 if (sec.isInitialized)
@@ -184,7 +188,7 @@ void Encoder::Encoder::Encode()
             else if (std::holds_alternative<Parser::DataDefinition>(entry))
             {
                 const Parser::DataDefinition& dataDefinition = std::get<Parser::DataDefinition>(entry);
-                const std::vector<uint8_t> encoded = _EncodeData(dataDefinition);
+                const std::vector<uint8_t> encoded = EncodeData(dataDefinition);
                 const size_t size = encoded.size();
 
                 if (sec.isInitialized)
@@ -224,7 +228,7 @@ void Encoder::Encoder::Encode()
                 if (padding > 0)
                 {
                     // TODO: really ugly, but works for now
-                    std::vector<uint8_t> paddingBytes = _EncodePadding(padding);
+                    std::vector<uint8_t> paddingBytes = EncodePadding(padding);
 
                     if (sec.isInitialized)
                         sec.buffer.insert(sec.buffer.end(), paddingBytes.begin(), paddingBytes.end());
@@ -239,6 +243,9 @@ void Encoder::Encoder::Encode()
 
         sections.push_back(sec);
     }
+
+    if (totalBytesWritten != bytesWritten)
+        throw Exception::InternalError("Length of pass 1 and pass 2 doesn't match");
 }
 
 void Encoder::Encoder::Print() const
@@ -271,7 +278,13 @@ void Encoder::Encoder::Print() const
 
     for (const auto& label : labels)
     {
-        std::cout << "Label: '" << label.first << "' in section '" << label.second.section << "' at offset " << label.second.offset << std::endl;
+        const Label& l = label.second;
+        if (l.resolved)
+            std::cout << "Resolved label";
+        else
+            std::cout << "Unresolved label";
+        
+        std::cout << ": '" << l.name << "' in section '" << l.section << "' at offset " << l.offset << std::endl;
     }
 }
 

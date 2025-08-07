@@ -2,51 +2,27 @@
 
 ## x86
 
-### 16-bit
-
-> Not supported yet. *(planned)*
-
-### 32-bit
-
-#### Control Flow & CPU
+### Control
 
 - `nop`
-- `ret`
-- `ret imm16`
-- `int3`
-- `int1`
 - `hlt`
-- `pause`
-- `wait` / `fwait`
+
+### Interrupt
+
 - `int imm8`
 
-#### Flags & Interrupts
+### Flags
 
-- `cli` / `sti`
 - `clc` / `stc` / `cmc`
-- `std`
+- `cld` / `std`
+- `cli` / `sti`
+- `lahf` / `sahf`
 
-#### CPU Info
+### Stack
 
-- `cpuid`
-- `rdtsc`
-
-#### MOV
-
-- `mov reg, imm`
-- `mov reg, reg`
-
-#### Stack
-
-- `push reg`
-- `push imm`
-- `pop reg`
-- `pusha`/`popa`
 - `pushf`/`popf`
-
-### 64-bit
-
-> Not supported yet. *(planned)*
+- `pushfd` / `popfd` (16-bit, 32-bit)
+- `pushfq` / `popfq` (64-bit)
 
 ## ARM
 

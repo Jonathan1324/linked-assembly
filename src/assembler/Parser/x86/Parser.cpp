@@ -468,115 +468,142 @@ void Parser::x86::Parser::Parse(const std::vector<Token::Token>& tokens)
         }
 
         // Instructions
-        if (lowerVal.compare("mov") == 0)
+
+        // CONTROL
+        static const std::unordered_map<std::string_view, uint64_t> controlInstructions = {
+            {"nop", ::x86::Instructions::NOP},
+            {"hlt", ::x86::Instructions::HLT}
+        };
+
+        auto it = controlInstructions.find(lowerVal);
+        if (it != controlInstructions.end())
         {
-            Instruction::Instruction instruction;
-            instruction.bits = currentBitMode;
-            instruction.lineNumber = token.line;
-            instruction.column = token.column;
-            instruction.mnemonic = ::x86::Instructions::MOV;
-
-            const Token::Token& operand1 = filteredTokens[++i];
-            if (::x86::registers.find(toLower(operand1.value)) != ::x86::registers.end()
-             && filteredTokens[i + 1].type != Token::Type::Punctuation)
-            {
-                // reg
-                Instruction::Register reg = getReg(operand1);
-                instruction.operands.push_back(reg);
-                i++;
-            }
-            else if ((operand1.type == Token::Type::Bracket && operand1.value == "[")
-                  || (::x86::registers.find(toLower(operand1.value)) != ::x86::registers.end()
-                   && filteredTokens[i + 1].type != Token::Type::Punctuation))
-            {
-                // TODO: memory
-            }
-            else
-            {
-                // TODO: Error
-            }
-
-            if (filteredTokens[i].type != Token::Type::Comma)
-                throw Exception::SyntaxError("Expected ',' after first argument for 'mov'", operand1.line, operand1.column);
+            Instruction::Instruction instruction(it->second, currentBitMode, token.line, token.column);
             i++;
+            switch (instruction.mnemonic)
+            {
+                case ::x86::Instructions::NOP:
+                case ::x86::Instructions::HLT:
+                    break;
 
-            const Token::Token& operand2 = filteredTokens[i];
-            if (::x86::registers.find(toLower(operand2.value)) != ::x86::registers.end()
-             && filteredTokens[i + 1].type != Token::Type::Punctuation)
-            {
-                // reg
-                Instruction::Register reg = getReg(operand2);
-                instruction.operands.push_back(reg);
-                i++;
+                default:
+                    throw Exception::InternalError("Unknown control instruction", token.line, token.column);
             }
-            else if ((operand1.type == Token::Type::Bracket && operand1.value == "[")
-                  || (::x86::registers.find(toLower(operand1.value)) != ::x86::registers.end()
-                   && filteredTokens[i + 1].type == Token::Type::Punctuation))
-            {
-                // TODO: memory
-            }
-            else
-            {
-                // TODO: immediate?
-                Immediate imm;
+            if (i >= filteredTokens.size() || filteredTokens[i].type != Token::Type::EOL)
+                throw Exception::SyntaxError("Expected end of line after second argument for '" + lowerVal + "'", token.line, token.column);
+            
+            currentSection->entries.push_back(instruction);
+            continue;
+        }
 
-                while (i < filteredTokens.size() && filteredTokens[i].type != Token::Type::EOL)
+        // INTERRUPT
+        static const std::unordered_map<std::string_view, uint64_t> interruptInstructions = {
+            {"int", ::x86::Instructions::INT}
+        };
+
+        it = interruptInstructions.find(lowerVal);
+        if (it != interruptInstructions.end())
+        {
+            Instruction::Instruction instruction(it->second, currentBitMode, token.line, token.column);
+            i++;
+            switch (instruction.mnemonic)
+            {
+                case ::x86::Instructions::INT:
                 {
-                    ImmediateOperand op = getOperand(filteredTokens[i]);
-                    imm.operands.push_back(op);
-                    i++;
-                }
-                instruction.operands.push_back(imm);
+                    // TODO: immediate?
+                    Immediate imm;
+                    while (i < filteredTokens.size() && filteredTokens[i].type != Token::Type::EOL)
+                    {
+                        ImmediateOperand op = getOperand(filteredTokens[i]);
+                        imm.operands.push_back(op);
+                        i++;
+                    }
+                    instruction.operands.push_back(imm);
+                } break;
+
+                default:
+                    throw Exception::InternalError("Unknown interrupt instruction", token.line, token.column);
             }
-
-            if (filteredTokens[i].type != Token::Type::EOL)
-                throw Exception::SyntaxError("Expected end of line after second argument for 'mov'", operand2.line, operand2.column);
-
-            currentSection->entries.push_back(instruction);
-
-            continue;
-        }
-        else if (lowerVal.compare("nop") == 0)
-        {
-            Instruction::Instruction instruction;
-            instruction.bits = currentBitMode;
-            instruction.lineNumber = token.line;
-            instruction.column = token.column;
-            instruction.mnemonic = ::x86::Instructions::NOP;
-
-            i++;
-            if (filteredTokens[i].type != Token::Type::EOL)
-                throw Exception::SyntaxError("Expected end of line after second argument for 'nop'", token.line, token.column);
+            if (i >= filteredTokens.size() || filteredTokens[i].type != Token::Type::EOL)
+                throw Exception::SyntaxError("Expected end of line after second argument for '" + lowerVal + "'", token.line, token.column);
             
             currentSection->entries.push_back(instruction);
-
             continue;
         }
-        else if (lowerVal.compare("int") == 0)
-        {
-            Instruction::Instruction instruction;
-            instruction.bits = currentBitMode;
-            instruction.lineNumber = token.line;
-            instruction.column = token.column;
-            instruction.mnemonic = ::x86::Instructions::INT;
 
+        // FLAGS
+        static const std::unordered_map<std::string_view, uint64_t> flagInstructions = {
+            {"clc", ::x86::Instructions::CLC},
+            {"stc", ::x86::Instructions::STC},
+            {"cmc", ::x86::Instructions::CMC},
+            {"cld", ::x86::Instructions::CLD},
+            {"std", ::x86::Instructions::STD},
+            {"cli", ::x86::Instructions::CLI},
+            {"sti", ::x86::Instructions::STI},
+            {"lahf", ::x86::Instructions::LAHF},
+            {"sahf", ::x86::Instructions::SAHF}
+        };
+
+        it = flagInstructions.find(lowerVal);
+        if (it != flagInstructions.end())
+        {
+            Instruction::Instruction instruction(it->second, currentBitMode, token.line, token.column);
             i++;
-            
-            // TODO: immediate?
-            Immediate imm;
-            while (i < filteredTokens.size() && filteredTokens[i].type != Token::Type::EOL)
+            switch (instruction.mnemonic)
             {
-                ImmediateOperand op = getOperand(filteredTokens[i]);
-                imm.operands.push_back(op);
-                i++;
-            }
-            instruction.operands.push_back(imm);
+                case ::x86::Instructions::CLC:
+                case ::x86::Instructions::STC:
+                case ::x86::Instructions::CMC:
+                case ::x86::Instructions::CLD:
+                case ::x86::Instructions::STD:
+                case ::x86::Instructions::CLI:
+                case ::x86::Instructions::STI:
+                case ::x86::Instructions::LAHF:
+                case ::x86::Instructions::SAHF:
+                    break;
 
-            if (filteredTokens[i].type != Token::Type::EOL)
-                throw Exception::SyntaxError("Expected end of line after second argument for 'nop'", token.line, token.column);
+                default:
+                    throw Exception::InternalError("Unknown flag instruction", token.line, token.column);
+            }
+            if (i >= filteredTokens.size() || filteredTokens[i].type != Token::Type::EOL)
+                throw Exception::SyntaxError("Expected end of line after second argument for '" + lowerVal + "'", token.line, token.column);
             
             currentSection->entries.push_back(instruction);
+            continue;
+        }
 
+        // STACK
+        static const std::unordered_map<std::string_view, uint64_t> stackInstructions = {
+            {"pushf", ::x86::Instructions::PUSHF},
+            {"popf", ::x86::Instructions::POPF},
+            {"pushfd", ::x86::Instructions::PUSHFD},
+            {"popfd", ::x86::Instructions::POPFD},
+            {"pushfq", ::x86::Instructions::PUSHFQ},
+            {"popfq", ::x86::Instructions::POPFQ}
+        };
+
+        it = stackInstructions.find(lowerVal);
+        if (it != stackInstructions.end())
+        {
+            Instruction::Instruction instruction(it->second, currentBitMode, token.line, token.column);
+            i++;
+            switch (instruction.mnemonic)
+            {
+                case ::x86::Instructions::PUSHF:
+                case ::x86::Instructions::POPF:
+                case ::x86::Instructions::PUSHFD:
+                case ::x86::Instructions::POPFD:
+                case ::x86::Instructions::PUSHFQ:
+                case ::x86::Instructions::POPFQ:
+                    break;
+                
+                default:
+                    throw Exception::InternalError("Unknown stack instruction", token.line, token.column);
+            }
+            if (i >= filteredTokens.size() || filteredTokens[i].type != Token::Type::EOL)
+                throw Exception::SyntaxError("Expected end of line after second argument for '" + lowerVal + "'", token.line, token.column);
+
+            currentSection->entries.push_back(instruction);
             continue;
         }
 

@@ -1,6 +1,7 @@
 #pragma once
 
 #include "../Encoder.hpp"
+#include <x86/Instructions.hpp>
 
 namespace Encoder
 {
@@ -13,12 +14,15 @@ namespace Encoder
             ~Encoder() = default;
 
         protected:
-            std::vector<uint8_t> _EncodeInstruction(const Parser::Instruction::Instruction& instruction) override;
-            uint64_t _GetSize(const Parser::Instruction::Instruction& instruction) override;
-            std::vector<uint8_t> _EncodePadding(size_t length) override;
+            std::vector<uint8_t> EncodeInstruction(const Parser::Instruction::Instruction& instruction, bool ignoreUnresolved = false) override;
+            uint64_t GetSize(const Parser::Instruction::Instruction& instruction) override;
+            std::vector<uint8_t> EncodePadding(size_t length) override;
 
         private:
-            
+            std::vector<uint8_t> EncodeControlInstruction(const Parser::Instruction::Instruction& instruction, bool ignoreUnresolved);
+            std::vector<uint8_t> EncodeInterruptInstruction(const Parser::Instruction::Instruction& instruction, bool ignoreUnresolved);
+            std::vector<uint8_t> EncodeFlagInstruction(const Parser::Instruction::Instruction& instruction, bool ignoreUnresolved);
+            std::vector<uint8_t> EncodeStackInstruction(const Parser::Instruction::Instruction& instruction, bool ignoreUnresolved);
         };
     }
 }

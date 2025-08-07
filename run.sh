@@ -6,8 +6,12 @@ if [ "$1" = "-c" ]; then
     cd tests
     sh clean.sh $@
     cd ..
-else
+elif [ "$1" = "-m" ]; then
     make DEBUG=1
+else
+    if [ "$2" != "-no-make" ]; then
+        make DEBUG=1
+    fi
     chmod +x bin/assembler
     chmod +x bin/linker
     chmod +x tests/test.sh

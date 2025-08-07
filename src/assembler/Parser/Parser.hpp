@@ -60,6 +60,9 @@ namespace Parser
 
             size_t lineNumber;
             size_t column;
+
+            Instruction(uint64_t _mnemonic, BitMode _bits, size_t _lineNumber = 0, size_t _column = 0)
+                : mnemonic(_mnemonic), bits(_bits), lineNumber(_lineNumber), column(_column) {}
         };
     }
 

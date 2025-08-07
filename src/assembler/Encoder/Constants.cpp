@@ -19,7 +19,22 @@ void Encoder::Encoder::resolveConstants(bool withPos)
     }
 }
 
-std::vector<std::string> Encoder::Encoder::getDependencies(Parser::Immediate immediate)
+bool Encoder::Encoder::Resolvable(const Parser::Immediate& immediate)
+{
+    for (const auto& dep : getDependencies(immediate))
+    {
+        auto itLabel = labels.find(dep);
+        if (itLabel != labels.end())
+            if (!itLabel->second.resolved) return false;
+
+        auto itConstant = constants.find(dep);
+        if (itConstant != constants.end())
+            if (!itConstant->second.resolved) return false;
+    }
+    return true;
+}
+
+std::vector<std::string> Encoder::Encoder::getDependencies(const Parser::Immediate& immediate)
 {
     std::vector<std::string> deps;
     for (const auto& operand : immediate.operands)

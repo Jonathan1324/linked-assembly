@@ -1,6 +1,6 @@
 #include "Encoder.hpp"
 
-std::vector<uint8_t> Encoder::Encoder::_EncodeData(const Parser::DataDefinition& dataDefinition)
+std::vector<uint8_t> Encoder::Encoder::EncodeData(const Parser::DataDefinition& dataDefinition)
 {
     // TODO: placeholder implementation
     if(!dataDefinition.reserved)
@@ -30,7 +30,7 @@ std::vector<uint8_t> Encoder::Encoder::_EncodeData(const Parser::DataDefinition&
     }
 }
 
-uint64_t Encoder::Encoder::_GetSize(const Parser::DataDefinition& dataDefinition)
+uint64_t Encoder::Encoder::GetSize(const Parser::DataDefinition& dataDefinition)
 {
     if(!dataDefinition.reserved)
     {
