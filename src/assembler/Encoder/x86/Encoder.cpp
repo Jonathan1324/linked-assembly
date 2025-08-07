@@ -27,6 +27,8 @@ std::vector<uint8_t> Encoder::x86::Encoder::EncodeInstruction(const Parser::Inst
             return EncodeFlagInstruction(instruction, ignoreUnresolved);
 
         // STACK
+        case ::x86::Instructions::PUSHA: case ::x86::Instructions::POPA:
+        case ::x86::Instructions::PUSHAD: case ::x86::Instructions::POPAD:
         case ::x86::Instructions::PUSHF: case ::x86::Instructions::POPF:
         case ::x86::Instructions::PUSHFD: case ::x86::Instructions::POPFD:
         case ::x86::Instructions::PUSHFQ: case ::x86::Instructions::POPFQ:

@@ -574,6 +574,10 @@ void Parser::x86::Parser::Parse(const std::vector<Token::Token>& tokens)
 
         // STACK
         static const std::unordered_map<std::string_view, uint64_t> stackInstructions = {
+            {"pusha", ::x86::Instructions::PUSHA},
+            {"popa", ::x86::Instructions::POPA},
+            {"pushad", ::x86::Instructions::PUSHAD},
+            {"popad", ::x86::Instructions::POPAD},
             {"pushf", ::x86::Instructions::PUSHF},
             {"popf", ::x86::Instructions::POPF},
             {"pushfd", ::x86::Instructions::PUSHFD},
@@ -589,6 +593,10 @@ void Parser::x86::Parser::Parse(const std::vector<Token::Token>& tokens)
             i++;
             switch (instruction.mnemonic)
             {
+                case ::x86::Instructions::PUSHA:
+                case ::x86::Instructions::POPA:
+                case ::x86::Instructions::PUSHAD:
+                case ::x86::Instructions::POPAD:
                 case ::x86::Instructions::PUSHF:
                 case ::x86::Instructions::POPF:
                 case ::x86::Instructions::PUSHFD:

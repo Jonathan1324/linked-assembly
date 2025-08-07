@@ -1,7 +1,8 @@
-bits 64
+bits 32
 
 section .text
     global _start
 
 _start:
-    hlt
+    pusha
+    popa

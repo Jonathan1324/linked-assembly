@@ -20,9 +20,11 @@
 
 ### Stack
 
+- `pusha` / `popa`      (16-bit, 32-bit)
+- `pushad` / `popad`    (16-bit, 32-bit)
 - `pushf`/`popf`
-- `pushfd` / `popfd` (16-bit, 32-bit)
-- `pushfq` / `popfq` (64-bit)
+- `pushfd` / `popfd`    (16-bit, 32-bit)
+- `pushfq` / `popfq`    (64-bit)
 
 ## ARM
 
