@@ -122,7 +122,7 @@ void ELF::Writer::Write()
         header.ProgramHeaderTableEntryCount = 0;
 
         header.SectionHeaderTableEntrySize; // TODO
-        header.SectionHeaderTableEntryCount; // TODO
+        header.SectionHeaderTableEntryCount = 0; // TODO
         header.SectionNamesIndex; // TODO
 
         file->write(reinterpret_cast<const char*>(&header), sizeof(header));
