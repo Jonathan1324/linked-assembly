@@ -155,5 +155,56 @@ namespace ELF
         uint64_t MemorySize;
         uint64_t Align;
     };
+
+
+
+    enum SectionType : uint32_t
+    {
+        S_None = 0,
+        ProgBits        = 1,        // Programmdaten (.text, .data, etc.)
+        SymTab          = 2,        // Symboltabelle
+        StrTab          = 3,        // Stringtabelle
+        Rela            = 4,        // Relocation mit Addend
+        Hash            = 5,        // Hash-Tabelle
+        Dynamic         = 6,        // Dynamische Linking-Information
+        Note            = 7,        // Notiz-Sektion
+        NoBits          = 8,        // Section ohne Daten, nur Größe (.bss)
+        Rel             = 9,        // Relocation ohne Addend
+        ShLib           = 10,       // Reserviert
+        DynSym          = 11,       // Dynamische Symboltabelle
+        InitArray       = 14,       // Array von Funktionen für Initialisierung
+        FiniArray       = 15,       // Array von Funktionen für Destruktion
+        PreInitArray    = 16,       // Array von Funktionen für Pre-Init
+        Group           = 17,       // Gruppierung von Sections
+        SymTabShndx     = 18,       // Erweiterte Symboltabellen-Indizes
+        //...
+    };
     
+    struct SectionHeader32
+    {
+        uint32_t OffsetInSectionNameStringTable;
+        uint32_t Type;
+        uint32_t Flags;
+        uint32_t VirtualAddress;
+        uint32_t Offset;
+        uint32_t SectionSize;
+        uint32_t LinkIndex;
+        uint32_t Info;
+        uint32_t AddressAlignment;
+        uint32_t EntrySize;
+    };
+
+    struct SectionHeader64
+    {
+        uint32_t OffsetInSectionNameStringTable;
+        uint32_t Type;
+        uint64_t Flags;
+        uint64_t VirtualAddress;
+        uint64_t Offset;
+        uint64_t SectionSize;
+        uint32_t LinkIndex;
+        uint32_t Info;
+        uint64_t AddressAlignment;
+        uint64_t EntrySize;
+    };
 }

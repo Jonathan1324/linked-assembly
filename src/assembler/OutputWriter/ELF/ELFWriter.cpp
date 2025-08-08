@@ -62,7 +62,7 @@ void ELF::Writer::Write()
         header.ProgramHeaderTableEntrySize = sizeof(ProgramHeader32);
         header.ProgramHeaderTableEntryCount = 0;
 
-        header.SectionHeaderTableEntrySize; // TODO
+        header.SectionHeaderTableEntrySize = sizeof(SectionHeader32);
         header.SectionHeaderTableEntryCount = 0; // TODO
         header.SectionNamesIndex; // TODO
 
@@ -121,7 +121,7 @@ void ELF::Writer::Write()
         header.ProgramHeaderTableEntrySize = sizeof(ProgramHeader64);
         header.ProgramHeaderTableEntryCount = 0;
 
-        header.SectionHeaderTableEntrySize; // TODO
+        header.SectionHeaderTableEntrySize = sizeof(SectionHeader64);
         header.SectionHeaderTableEntryCount = 0; // TODO
         header.SectionNamesIndex; // TODO
 
