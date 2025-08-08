@@ -3,12 +3,25 @@
 #include <Exception.hpp>
 #include <cstdio>
 
-std::istream* openIstream(const std::string& path)
+#ifdef _WIN32
+#include <fcntl.h>
+#include <io.h>
+#endif
+
+std::istream* openIstream(const std::string& path, std::ios::openmode mode)
 {
     if (path == "-")
+    {
+#ifdef _WIN32
+        if (mode & std::ios::binary)
+        {
+            _setmode(_fileno(stdin), _O_BINARY);
+        }
+#endif
         return &std::cin;
+    }
 
-    std::ifstream* file = new std::ifstream(path);
+    std::ifstream* file = new std::ifstream(path, mode);
     if (!file->is_open())
     {
         delete file;
@@ -20,7 +33,15 @@ std::istream* openIstream(const std::string& path)
 std::ostream* openOstream(const std::string& path, std::ios::openmode mode)
 {
     if (path == "-")
+    {
+#ifdef _WIN32
+        if (mode & std::ios::binary)
+        {
+            _setmode(_fileno(stdout), _O_BINARY);
+        }
+#endif
         return &std::cout;
+    }
 
     std::ofstream* file = new std::ofstream(path, mode);
     if (!file->is_open())

@@ -3,7 +3,7 @@
 #include <fstream>
 #include <string>
 
-std::istream* openIstream(const std::string& path);
+std::istream* openIstream(const std::string& path, std::ios::openmode mode = std::ios::in);
 std::ostream* openOstream(const std::string& path, std::ios::openmode mode = std::ios::out);
 void deleteFile(const std::string& path);
 

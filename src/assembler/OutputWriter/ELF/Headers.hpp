@@ -31,7 +31,15 @@ namespace ELF
         RELOCATABLE = 1,
         EXECUTABLE = 2,
         SHARED = 3,
-        CORE = 4
+        CORE = 4,
+
+        // Reserved inclusive range. Operating system specific.
+        T_LOOS = 0xfe00,
+        T_HIOS = 0xfeff,
+
+        // Reserved inclusive range. Processor specific.
+        T_LOPROC = 0xff00,
+        T_HIPROC = 0xffff
     };
 
     struct Header32
@@ -91,4 +99,61 @@ namespace ELF
         uint16_t SectionHeaderTableEntryCount;
         uint16_t SectionNamesIndex;
     } __attribute__((packed));
+
+
+
+    enum ProgramType : uint32_t
+    {
+        P_NONE  = 0, // Unused
+        LOAD    = 1, // Loadable
+        DYNAMIC = 2, // Dynamic linking information;
+        INTERP  = 3, // Interpreter information
+        NOTE    = 4, // Auxiliary information
+        SHLIB   = 5, // Reserved
+        PHDR    = 6, // Program header table
+        TLS     = 7, // Thread-Local Storage
+
+        // Reserved inclusive range. Operating system specific.
+        P_LOOS = 0x60000000,
+        P_HIOS = 0x6FFFFFFF,
+
+        // Reserved inclusive range. Processor specific.
+        P_LOPROC = 0x70000000,
+        P_HIPROC = 0x7FFFFFFF
+    };
+
+    enum ProgramFlags : uint32_t
+    {
+        EXECUTE = 1,
+        WRITE   = 2,
+        READ    = 4,
+
+        P_MASKOS   = 0x0ff00000,  // Operating system specific
+        P_MASKPROC = 0xf0000000   // Processor specific
+    };
+
+    struct ProgramHeader32
+    {
+        uint32_t Type;
+        uint32_t Offset;
+        uint32_t VirtualAddress;
+        uint32_t PhysicalAddress;
+        uint32_t FileSize;
+        uint32_t MemorySize;
+        uint32_t Flags;
+        uint32_t Align;
+    };
+
+    struct ProgramHeader64
+    {
+        uint32_t Type;
+        uint32_t Flags;
+        uint64_t Offset;
+        uint64_t VirtualAddress;
+        uint64_t PhysicalAddress;
+        uint64_t FileSize;
+        uint64_t MemorySize;
+        uint64_t Align;
+    };
+    
 }

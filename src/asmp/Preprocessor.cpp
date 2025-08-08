@@ -79,6 +79,7 @@ std::string PreProcessor::ProcessLine(const std::string& line)
 
     while (stream.get(ch))
     {
+        // process '\"'
         if (ch == '"')
         {
             inString = !inString;
