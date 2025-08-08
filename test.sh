@@ -10,6 +10,8 @@ cd tests
     --arch x86 --format elf -m32
 objdump --all-headers build/test.o
 
+nasm -f elf32 test.asm -o build/test-nasm.o
+
 #ld -m elf_i386 -o build/test build/test.o
 #chmod +x build/test
 #build/test

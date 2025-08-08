@@ -124,9 +124,9 @@ namespace ELF
 
     enum ProgramFlags : uint32_t
     {
-        EXECUTE = 1,
-        WRITE   = 2,
-        READ    = 4,
+        P_EXECUTE = 1,
+        P_WRITE   = 2,
+        P_READ    = 4,
 
         P_MASKOS   = 0x0ff00000,  // Operating system specific
         P_MASKPROC = 0xf0000000   // Processor specific
@@ -142,7 +142,7 @@ namespace ELF
         uint32_t MemorySize;
         uint32_t Flags;
         uint32_t Align;
-    };
+    } __attribute__((packed));
 
     struct ProgramHeader64
     {
@@ -154,7 +154,7 @@ namespace ELF
         uint64_t FileSize;
         uint64_t MemorySize;
         uint64_t Align;
-    };
+    } __attribute__((packed));
 
 
 
@@ -179,6 +179,20 @@ namespace ELF
         SymTabShndx     = 18,       // Erweiterte Symboltabellen-Indizes
         //...
     };
+
+    enum SectionFalgs : uint64_t
+    {
+        S_WRITE = 1,
+        S_ALLOC = 2,
+        S_EXECINSTR = 4,
+        S_MERGE = 0x10,
+        S_STRINGS = 0x20,
+        S_INFO_LINK = 0x40,
+        S_LINK_ORDER = 0x80,
+        S_OS_NONCONFORMING = 0x100,
+        S_GROUP = 0x200,
+        S_TLS = 0x400
+    };
     
     struct SectionHeader32
     {
@@ -192,7 +206,7 @@ namespace ELF
         uint32_t Info;
         uint32_t AddressAlignment;
         uint32_t EntrySize;
-    };
+    } __attribute__((packed));
 
     struct SectionHeader64
     {
@@ -206,5 +220,5 @@ namespace ELF
         uint32_t Info;
         uint64_t AddressAlignment;
         uint64_t EntrySize;
-    };
+    } __attribute__((packed));
 }

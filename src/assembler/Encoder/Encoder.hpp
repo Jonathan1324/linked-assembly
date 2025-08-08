@@ -64,7 +64,7 @@ namespace Encoder
         void Optimize();
         void Print() const;
 
-        std::vector<Section> getSections() const;
+        const std::vector<Section>& getSections() const;
         
     protected:
         virtual std::vector<uint8_t> EncodeInstruction(const Parser::Instruction::Instruction& instruction, bool ignoreUnresolved = false) = 0;

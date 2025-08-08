@@ -288,7 +288,7 @@ void Encoder::Encoder::Print() const
     }
 }
 
-std::vector<Section> Encoder::Encoder::getSections() const
+const std::vector<Section>& Encoder::Encoder::getSections() const
 {
     return sections;
 }

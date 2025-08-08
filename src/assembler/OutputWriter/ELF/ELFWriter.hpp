@@ -5,6 +5,16 @@
 
 namespace ELF
 {
+    struct Section
+    {
+        const std::vector<uint8_t>* buffer;
+        bool writeBuffer = true;
+        
+        std::variant<SectionHeader32, SectionHeader64> header;
+
+        bool nullSection = false;
+    };
+
     class Writer : public Output::Writer
     {
     public:
@@ -14,5 +24,6 @@ namespace ELF
         void Write() override;
 
     protected:
+        std::vector<Section> sections;
     };
 }

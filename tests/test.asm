@@ -4,5 +4,7 @@ section .text
     global _start
 
 _start:
-    pusha
-    popa
+    db "Hello, World", 0x00
+
+section .data
+db "DATA"
