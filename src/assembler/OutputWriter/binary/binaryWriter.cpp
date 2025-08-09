@@ -29,7 +29,10 @@ void Binary::Writer::Write()
 
         uint64_t offset = static_cast<uint64_t>(pos);
 
-        uint64_t padding = (section.align - (offset % section.align)) % section.align;
+        uint64_t align = section.align;
+        if (align < 4) align = 4; // TODO: minimal alignment of 4, check if useful
+
+        uint64_t padding = (align - (offset % align)) % align;
 
         if (padding > 0)
         {

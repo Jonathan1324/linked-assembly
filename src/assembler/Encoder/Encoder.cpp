@@ -44,14 +44,14 @@ void Encoder::Encoder::Encode()
             else if (std::holds_alternative<Parser::Constant>(entry))
             {
                 const Parser::Constant& constant = std::get<Parser::Constant>(entry);
+                Constant c;
+                c.name = constant.name;
+                c.section = section.name;
+                c.expression = constant.value;
+                c.resolved = false;
+                c.hasPos = constant.hasPos ? HasPos::TRUE : HasPos::UNKNOWN;
                 if (constants.find(constant.name) == constants.end())
                 {
-                    Constant c;
-                    c.name = constant.name;
-                    c.expression = constant.value;
-                    c.resolved = false;
-                    c.hasPos = constant.hasPos ? HasPos::TRUE : HasPos::UNKNOWN;
-
                     constants[constant.name] = c;
                     symbols.push_back(&constants[constant.name]);
                 }

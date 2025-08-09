@@ -118,6 +118,8 @@ void ELF::Writer::Write()
     else throw Exception::InternalError("Unknown bit mode");
 
 
+    std::unordered_map<std::string, uint16_t> sectionIndexes;
+
     for (size_t i = 0; i < eSections.size(); i++)
     {
         const Encoder::Section& section = eSections[i];
@@ -132,8 +134,8 @@ void ELF::Writer::Write()
         {
             SectionHeader32 header;
             header.OffsetInSectionNameStringTable = nameOffset;
-            header.Type = SectionType::ProgBits;    // TODO
-            header.Flags = 0;                       // TODO
+            header.Type = getSectionType(section.name);
+            header.Flags = static_cast<uint32_t>(getSectionFlags(section.name));
             header.VirtualAddress = 0;
             if (section.isInitialized)
                 header.SectionSize = static_cast<uint32_t>(section.buffer.size());
@@ -161,8 +163,8 @@ void ELF::Writer::Write()
         {
             SectionHeader64 header;
             header.OffsetInSectionNameStringTable = nameOffset;
-            header.Type = SectionType::ProgBits;    // TODO
-            header.Flags = 0;                       // TODO
+            header.Type = getSectionType(section.name);
+            header.Flags = getSectionFlags(section.name);
             header.VirtualAddress = 0;
             if (section.isInitialized)
                 header.SectionSize = static_cast<uint64_t>(section.buffer.size());
@@ -188,6 +190,7 @@ void ELF::Writer::Write()
         }
         else throw Exception::InternalError("Unknown bit mode");
 
+        sectionIndexes[section.name] = static_cast<uint16_t>(sections.size());
         sections.push_back(std::move(s));
     }
 
@@ -233,7 +236,9 @@ void ELF::Writer::Write()
                 entry.Size = 0;
                 entry.Info = Symbol::SetInfo(label->isGlobal ? Symbol::Bind::GLOBAL : Symbol::Bind::LOCAL, Symbol::Type::NONE);
                 entry.Other = 0;
-                entry.IndexInSectionHeaderTable = Symbol::XINDEX; // TODO
+                auto it = sectionIndexes.find(label->section);
+                if (it == sectionIndexes.end()) throw Exception::InternalError("Unknown section for label");
+                entry.IndexInSectionHeaderTable = it->second;
                 
                 if (label->isGlobal) globalSymbols.push_back(std::move(entry));
                 else localSymbols.push_back(std::move(entry));
@@ -244,7 +249,9 @@ void ELF::Writer::Write()
                 entry.OffsetInNameStringTable = nameOffset;
                 entry.Info = Symbol::SetInfo(label->isGlobal ? Symbol::Bind::GLOBAL : Symbol::Bind::LOCAL, Symbol::Type::NONE);
                 entry.Other = 0;
-                entry.IndexInSectionHeaderTable = Symbol::XINDEX; // TODO
+                auto it = sectionIndexes.find(label->section);
+                if (it == sectionIndexes.end()) throw Exception::InternalError("Unknown section for label");
+                entry.IndexInSectionHeaderTable = it->second;
                 entry.Value = label->offset;
                 entry.Size = 0;
                 
@@ -269,7 +276,9 @@ void ELF::Writer::Write()
                 entry.Size = 0;
                 entry.Info = Symbol::SetInfo(Symbol::Bind::LOCAL, Symbol::Type::NONE);
                 entry.Other = 0;
-                entry.IndexInSectionHeaderTable = Symbol::XINDEX;
+                auto it = sectionIndexes.find(constant->section);
+                if (it == sectionIndexes.end()) throw Exception::InternalError("Unknown section for label");
+                entry.IndexInSectionHeaderTable = it->second;
                 
                 localSymbols.push_back(std::move(entry));
             }
@@ -279,7 +288,9 @@ void ELF::Writer::Write()
                 entry.OffsetInNameStringTable = nameOffset;
                 entry.Info = Symbol::SetInfo(Symbol::Bind::LOCAL, Symbol::Type::NONE);
                 entry.Other = 0;
-                entry.IndexInSectionHeaderTable = Symbol::XINDEX;
+                auto it = sectionIndexes.find(constant->section);
+                if (it == sectionIndexes.end()) throw Exception::InternalError("Unknown section for label");
+                entry.IndexInSectionHeaderTable = it->second;
                 entry.Value = constant->value;
                 entry.Size = 0;
                 

@@ -53,6 +53,7 @@ void PreProcessor::Process()
                 }
 
                 definitions[def.name] = def;
+                (*output) << "\n";
                 continue;
             }
             else if (trimmed.find("%undef") == 0)
@@ -60,12 +61,25 @@ void PreProcessor::Process()
                 std::string rest = trim(trimmed.substr(6));
                 if (!rest.empty())
                     definitions.erase(rest);
+                (*output) << "\n";
                 continue;
             }
         }
         
         (*output) << ProcessLine(line) << "\n";
     }
+}
+
+size_t countTrailingBackslashes(const std::ostringstream& oss)
+{
+    std::string s = oss.str();
+    size_t count = 0;
+    for (auto it = s.rbegin(); it != s.rend(); ++it)
+    {
+        if (*it == '\\') count++;
+        else break;
+    }
+    return count;
 }
 
 std::string PreProcessor::ProcessLine(const std::string& line)
@@ -79,10 +93,12 @@ std::string PreProcessor::ProcessLine(const std::string& line)
 
     while (stream.get(ch))
     {
-        // process '\"'
         if (ch == '"')
         {
-            inString = !inString;
+            size_t bsCount = countTrailingBackslashes(result);
+            bool escaped = (bsCount % 2 == 1);
+
+            if (!escaped) inString = !inString;
             result << ch;
             continue;
         }

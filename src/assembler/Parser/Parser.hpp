@@ -89,6 +89,7 @@ namespace Parser
     {
         std::string name;
         Immediate value;
+        bool isGlobal;
 
         bool hasPos;
 

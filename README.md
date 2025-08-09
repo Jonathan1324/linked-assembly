@@ -1,7 +1,7 @@
 # linked-assembly
 
 A modular assembler (and linker planned).  
-Currently only supports **x86**, **32-bit mode**, and **ELF `.o` object files**/**Binary `.bin` files**.
+Currently only supports **x86**, and **ELF `.o` object files**/**Binary `.bin` files**.
 
 ## Documentation
 

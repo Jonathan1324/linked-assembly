@@ -31,5 +31,8 @@ namespace ELF
         std::vector<SymbolEntry> localSymbols;
         std::vector<SymbolEntry> globalSymbols;
         std::vector<SymbolEntry> weakSymbols;
+
+        uint64_t getSectionFlags(const std::string& name);
+        uint32_t getSectionType(const std::string& name);
     };
 }

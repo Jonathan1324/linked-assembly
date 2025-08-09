@@ -160,7 +160,7 @@ namespace ELF
 
     enum SectionType : uint32_t
     {
-        S_None = 0,
+        S_None          = 0,
         ProgBits        = 1,        // Programmdaten (.text, .data, etc.)
         SymTab          = 2,        // Symboltabelle
         StrTab          = 3,        // Stringtabelle
@@ -180,7 +180,7 @@ namespace ELF
         //...
     };
 
-    enum SectionFalgs : uint64_t
+    enum SectionFlags : uint64_t
     {
         S_WRITE = 1,
         S_ALLOC = 2,

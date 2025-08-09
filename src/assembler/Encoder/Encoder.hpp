@@ -43,6 +43,7 @@ namespace Encoder
     struct Constant
     {
         std::string name;
+        std::string section;
         Parser::Immediate expression;
         HasPos hasPos;
         int64_t value;
