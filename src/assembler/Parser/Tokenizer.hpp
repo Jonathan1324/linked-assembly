@@ -1,9 +1,11 @@
 #pragma once
 
+#include "../Context.hpp"
 #include <fstream>
 #include <string>
 #include <vector>
 #include <iostream>
+#include <StringPool.hpp>
 
 namespace Token
 {
@@ -43,9 +45,10 @@ namespace Token
         std::string value;
         size_t line;
         size_t column;
+        uint64_t file;
 
-        Token(Type t, std::string v, size_t l, size_t c)
-            : type(t), value(std::move(v)), line(l), column(c) {}
+        Token(Type t, std::string v, size_t l, size_t c, uint64_t f)
+            : type(t), value(std::move(v)), line(l), column(c), file(f) {}
 
         std::string what() const;
     };
@@ -53,13 +56,14 @@ namespace Token
     class Tokenizer
     {
     public:
-        Tokenizer();
+        Tokenizer(const Context& _context);
 
         void clear();
         void tokenize(std::istream* input);
         std::vector<Token> getTokens();
         void print();
     private:
+        const Context* context;
         std::vector<Token> tokens;
     };
 }

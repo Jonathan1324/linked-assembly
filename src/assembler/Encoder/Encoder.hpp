@@ -51,6 +51,7 @@ namespace Encoder
         size_t offset;
         size_t bytesWritten;
 
+        bool isGlobal;
         bool resolved;
         bool prePass = false;
     };

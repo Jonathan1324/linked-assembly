@@ -6,6 +6,7 @@
 #include <io/file.hpp>
 #include <Architecture.hpp>
 #include <Exception.hpp>
+#include <StringPool.hpp>
 #include "cli/Arguments.hpp"
 #include "Context.hpp"
 
@@ -60,6 +61,8 @@ int main(int argc, const char *argv[])
     Encoder::Encoder* encoder = nullptr;
     Output::Writer* outputWriter = nullptr;
 
+    StringPool filenamePool;
+
     // Parse arguments
     try
     {
@@ -87,7 +90,7 @@ int main(int argc, const char *argv[])
 
     // Create file handles and tokenize
     std::ostream* objectFile = nullptr;
-    Token::Tokenizer tokenizer;
+    Token::Tokenizer tokenizer(context);
     try
     {
         objectFile = openOstream(outputFile, std::ios::out | std::ios::trunc | std::ios::binary);

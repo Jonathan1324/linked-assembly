@@ -39,8 +39,10 @@ int main(int argc, const char *argv[])
         std::ostream* output = openOstream(outputFile, std::ios::out | std::ios::trunc);
         std::istream* input = openIstream(inputFile);
 
-        PreProcessor preprocessor(context, output, input);
-        preprocessor.Process();
+        context.filename = inputFile;
+
+        PreProcessor preprocessor(context);
+        preprocessor.Process(output, input, context.filename);
 
         if (debug)
             preprocessor.Print();

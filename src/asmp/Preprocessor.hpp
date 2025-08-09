@@ -13,16 +13,14 @@ struct Definition
 class PreProcessor
 {
 public:
-    PreProcessor(const Context& _context, std::ostream* _output, std::istream* _input);
+    PreProcessor(const Context& _context);
     ~PreProcessor() = default;
 
-    void Process();
+    void Process(std::ostream* output, std::istream* input, const std::string& filename);
     void Print();
 
 private:
     const Context& context;
-    std::ostream* output;
-    std::istream* input;
 
     std::unordered_map<std::string, Definition> definitions;
 

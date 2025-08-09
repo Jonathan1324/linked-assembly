@@ -5,4 +5,5 @@
 struct Context
 {
     WarningManager* warningManager;
+    std::string filename;
 };

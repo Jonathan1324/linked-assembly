@@ -150,7 +150,10 @@ void Parser::Parser::Print() const
             {
                 const Constant& constant = std::get<Constant>(entry);
                 std::cout << "  ";  // '  '
-                std::cout << "Constant '" << constant.name << "' ";
+                if (constant.isGlobal)
+                    std::cout << "Global constant '" << constant.name << "' ";
+                else
+                    std::cout << "Constant '" << constant.name << "' ";
 
                 if (constant.hasPos)
                     std::cout << "with current position";

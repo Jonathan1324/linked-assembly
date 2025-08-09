@@ -4,7 +4,9 @@
 
 using namespace Token;
 
-Tokenizer::Tokenizer() {
+Tokenizer::Tokenizer(const Context& _context)
+    : context(&_context)
+{
 	
 }
 
@@ -14,6 +16,7 @@ void Tokenizer::clear() {
 
 void Tokenizer::tokenize(std::istream* input)
 {
+    uint64_t file;
     std::string line;
     size_t lineNumber = 0;
 
@@ -22,6 +25,12 @@ void Tokenizer::tokenize(std::istream* input)
         lineNumber++;
         size_t pos = 0;
         size_t length = line.size();
+
+        if (line.find("%file") == 0)
+        {
+            // TODO: parse (including when seeing '-' as filename to put the main file there)
+            continue;
+        }
 
         while (pos < length)
         {
@@ -39,21 +48,22 @@ void Tokenizer::tokenize(std::istream* input)
                     Type::Comma,
                     ",",
                     lineNumber,
-                    pos + 1
+                    pos + 1,
+                    file
                 );
                 pos++;
             }
             // ; or :
             else if (line[pos] == ';' || line[pos] == ':')
             {
-                tokens.emplace_back(Type::Punctuation, std::string() + line[pos], lineNumber, pos);
+                tokens.emplace_back(Type::Punctuation, std::string() + line[pos], lineNumber, pos, file);
                 pos++;
             }
 
             // +,-,*,/
             else if (line[pos] == '+' || line[pos] == '-' || line[pos] == '*' || line[pos] == '/' || line[pos] == '%')
             {
-                tokens.emplace_back(Type::Operator, std::string() + line[pos], lineNumber, pos);
+                tokens.emplace_back(Type::Operator, std::string() + line[pos], lineNumber, pos, file);
                 pos++;
             }
 
@@ -66,7 +76,8 @@ void Tokenizer::tokenize(std::istream* input)
                     Type::Bracket,
                     std::string(1, line[pos]),
                     lineNumber,
-                    pos + 1
+                    pos + 1,
+                    file
                 );
                 pos++;
             }
@@ -104,7 +115,7 @@ void Tokenizer::tokenize(std::istream* input)
                     }
                 }
 
-                tokens.emplace_back(Type::String, value, lineNumber, startPos);
+                tokens.emplace_back(Type::String, value, lineNumber, startPos, file);
 
                 if (pos < length && line[pos] == '"')
                     pos++; // skip closing "
@@ -145,7 +156,7 @@ void Tokenizer::tokenize(std::istream* input)
                     throw Exception::SyntaxError("Expected closing '", lineNumber, pos);
                 }
 
-                tokens.emplace_back(Type::Character, std::string() + value, lineNumber, startPos);
+                tokens.emplace_back(Type::Character, std::string() + value, lineNumber, startPos, file);
 
                 pos++; // skip closing '
             }
@@ -166,7 +177,8 @@ void Tokenizer::tokenize(std::istream* input)
                     Type::Token,
                     line.substr(startPos, pos - startPos),
                     lineNumber,
-                    startPos + 1
+                    startPos + 1,
+                    file
                 );
             }
         }
@@ -175,14 +187,16 @@ void Tokenizer::tokenize(std::istream* input)
             Type::EOL,
             "",
             lineNumber,
-            length + 1
+            length + 1,
+            file
         );
     }
     tokens.emplace_back(
         Type::_EOF,
         "",
         lineNumber + 1,
-        0
+        0,
+        file
     );
 }
 
@@ -209,7 +223,7 @@ std::string Token::Token::what() const
     {
         case Type::Comma:
         case Type::EOL:
-            result += " in line " + std::to_string(line) + " at column " + std::to_string(column);
+            result += " in line " + std::to_string(line) + " at column " + std::to_string(column) + " in file " + std::to_string(file);
             break;
 
         case Type::_EOF:
@@ -219,7 +233,7 @@ std::string Token::Token::what() const
         case Type::Character:
         {
             unsigned char c = static_cast<unsigned char>(value[0]);
-            result += std::to_string(c) + "in line " + std::to_string(line) + " at column " + std::to_string(column);
+            result += std::to_string(c) + "in line " + std::to_string(line) + " at column " + std::to_string(column) + " in file " + std::to_string(file);
             break;
         }
 
@@ -228,7 +242,7 @@ std::string Token::Token::what() const
         case Type::Bracket:
         case Type::Punctuation:
         default:
-            result += " '" + value + "' in line " + std::to_string(line) + " at column " + std::to_string(column);
+            result += " '" + value + "' in line " + std::to_string(line) + " at column " + std::to_string(column) + " in file " + std::to_string(file);
             break;
     }
 

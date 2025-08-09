@@ -181,6 +181,11 @@ void Parser::x86::Parser::Parse(const std::vector<Token::Token>& tokens)
             constant.hasPos = false;
             i += 2;
 
+            if (std::find(globals.begin(), globals.end(), token.value) != globals.end())
+                constant.isGlobal = true;
+            else
+                constant.isGlobal = false;
+
             while (i < filteredTokens.size() && filteredTokens[i].type != Token::Type::EOL)
             {
                 if (filteredTokens[i].type == Token::Type::Token

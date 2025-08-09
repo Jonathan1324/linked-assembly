@@ -274,27 +274,25 @@ void ELF::Writer::Write()
                 entry.OffsetInNameStringTable = nameOffset;
                 entry.Value = static_cast<uint32_t>(constant->value);
                 entry.Size = 0;
-                entry.Info = Symbol::SetInfo(Symbol::Bind::LOCAL, Symbol::Type::NONE);
+                entry.Info = Symbol::SetInfo(constant->isGlobal ? Symbol::Bind::GLOBAL : Symbol::Bind::LOCAL, Symbol::Type::NONE);
                 entry.Other = 0;
-                auto it = sectionIndexes.find(constant->section);
-                if (it == sectionIndexes.end()) throw Exception::InternalError("Unknown section for label");
-                entry.IndexInSectionHeaderTable = it->second;
+                entry.IndexInSectionHeaderTable = Symbol::XINDEX;
                 
-                localSymbols.push_back(std::move(entry));
+                if (constant->isGlobal) globalSymbols.push_back(std::move(entry));
+                else localSymbols.push_back(std::move(entry));
             }
             else if (bits == BitMode::Bits64)
             {
                 Symbol::Entry64 entry;
                 entry.OffsetInNameStringTable = nameOffset;
-                entry.Info = Symbol::SetInfo(Symbol::Bind::LOCAL, Symbol::Type::NONE);
+                entry.Info = Symbol::SetInfo(constant->isGlobal ? Symbol::Bind::GLOBAL : Symbol::Bind::LOCAL, Symbol::Type::NONE);
                 entry.Other = 0;
-                auto it = sectionIndexes.find(constant->section);
-                if (it == sectionIndexes.end()) throw Exception::InternalError("Unknown section for label");
-                entry.IndexInSectionHeaderTable = it->second;
+                entry.IndexInSectionHeaderTable = Symbol::XINDEX;
                 entry.Value = constant->value;
                 entry.Size = 0;
                 
-                localSymbols.push_back(std::move(entry));
+                if (constant->isGlobal) globalSymbols.push_back(std::move(entry));
+                else localSymbols.push_back(std::move(entry));
             }
             else throw Exception::InternalError("Unknown bit mode");
         }

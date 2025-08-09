@@ -50,6 +50,7 @@ void Encoder::Encoder::Encode()
                 c.expression = constant.value;
                 c.resolved = false;
                 c.hasPos = constant.hasPos ? HasPos::TRUE : HasPos::UNKNOWN;
+                c.isGlobal = constant.isGlobal;
                 if (constants.find(constant.name) == constants.end())
                 {
                     constants[constant.name] = c;
