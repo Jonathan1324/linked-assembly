@@ -57,24 +57,13 @@ jobs:
         run: make VERSION=${{ github.event.release.tag_name }}
         shell: bash
 
-      - name: Move binaries
-        run: |
-          mkdir -p binaries
-          EXT=""
-          if [[ "${{ matrix.os_name }}" == "windows" ]]; then
-            EXT=".exe"
-          fi
-          cp build/assembly/assembly$EXT binaries/assembly$EXT
-          cp build/linker/linker$EXT binaries/linker$EXT
-        shell: bash
-
       - name: Archive binaries
         run: |
-          cd binaries
+          cd bin
           if [[ "${{ matrix.os_name }}" == "windows" ]]; then
-            7z a -tzip ../linked-assembly-${{ matrix.os_name }}-${{ matrix.arch }}.zip assembly.exe linker.exe
+            7z a -tzip ../linked-assembly-${{ matrix.os_name }}-${{ matrix.arch }}.zip *
           else
-            tar -czf ../linked-assembly-${{ matrix.os_name }}-${{ matrix.arch }}.tar.gz assembly linker
+            tar -czf ../linked-assembly-${{ matrix.os_name }}-${{ matrix.arch }}.tar.gz *
           fi
           cd ..
         shell: bash
