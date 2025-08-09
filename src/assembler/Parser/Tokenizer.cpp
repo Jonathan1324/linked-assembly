@@ -2,6 +2,7 @@
 
 #include <Exception.hpp>
 #include <util/string.hpp>
+#include <cstdint>
 
 using namespace Token;
 

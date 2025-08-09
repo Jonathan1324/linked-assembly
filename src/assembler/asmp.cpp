@@ -67,7 +67,8 @@ bool preprocess(std::istream* input, std::ostream* output)
 
     std::string line;
     DWORD written;
-    while (std::getline(*input, line)) {
+    while (std::getline(*input, line))
+    {
         line += "\n";
         if (!WriteFile(hChildStd_IN_Wr, line.data(), (DWORD)line.size(), &written, NULL))
             throw Exception::InternalError("WriteFile failed");
@@ -76,7 +77,8 @@ bool preprocess(std::istream* input, std::ostream* output)
 
     char buffer[4096];
     DWORD readBytes;
-    while (ReadFile(hChildStd_OUT_Rd, buffer, sizeof(buffer), &readBytes, NULL) && readBytes > 0) {
+    while (ReadFile(hChildStd_OUT_Rd, buffer, sizeof(buffer), &readBytes, NULL) && readBytes > 0)
+    {
         output->write(buffer, readBytes);
     }
     CloseHandle(hChildStd_OUT_Rd);

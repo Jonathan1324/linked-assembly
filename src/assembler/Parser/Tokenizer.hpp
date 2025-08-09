@@ -6,6 +6,7 @@
 #include <vector>
 #include <iostream>
 #include <StringPool.hpp>
+#include <cstdint>
 
 namespace Token
 {

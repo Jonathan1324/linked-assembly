@@ -67,7 +67,11 @@
         "system_error": "cpp",
         "type_traits": "cpp",
         "utility": "cpp",
-        "numbers": "cpp"
+        "numbers": "cpp",
+        "charconv": "cpp",
+        "ranges": "cpp",
+        "span": "cpp",
+        "text_encoding": "cpp"
     },
     "C_Cpp.errorSquiggles": "enabled"
 }

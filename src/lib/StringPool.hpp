@@ -5,6 +5,7 @@
 #include <string_view>
 #include <string>
 #include <inttypes.h>
+#include <Architecture.hpp>
 
 class StringPool
 {
