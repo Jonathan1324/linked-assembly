@@ -8,6 +8,7 @@ namespace ELF
     struct Section
     {
         const std::vector<uint8_t>* buffer;
+
         bool writeBuffer = true;
         
         std::variant<SectionHeader32, SectionHeader64> header;
@@ -25,5 +26,10 @@ namespace ELF
 
     protected:
         std::vector<Section> sections;
+
+        using SymbolEntry = std::variant<Symbol::Entry32, Symbol::Entry64>;
+        std::vector<SymbolEntry> localSymbols;
+        std::vector<SymbolEntry> globalSymbols;
+        std::vector<SymbolEntry> weakSymbols;
     };
 }

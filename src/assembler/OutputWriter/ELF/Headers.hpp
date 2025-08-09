@@ -221,4 +221,70 @@ namespace ELF
         uint64_t AddressAlignment;
         uint64_t EntrySize;
     } __attribute__((packed));
+
+
+    namespace Symbol
+    {
+        constexpr uint16_t XINDEX = 0xFFF1;
+
+
+        enum Bind : uint8_t
+        {
+            LOCAL = 0,
+            GLOBAL = 1,
+            WEAK = 2,
+
+            // Reserved inclusive range. Operating system specific.
+            B_LOOS = 10,
+            B_HIOS = 12,
+
+            // Reserved inclusive range. Processor specific.
+            B_LOPROC = 13,
+            B_HIPROC = 15
+        };
+
+        enum Type : uint8_t
+        {
+            NONE = 0,
+            OBJECT = 1,
+            FUNC = 2,
+            SECTION = 3,
+            FILE = 4,
+            COMMON = 5,
+            TLS = 6,
+
+            // Reserved inclusive range. Operating system specific.
+            T_LOOS = 10,
+            T_HIOS = 12,
+
+            // Reserved inclusive range. Processor specific.
+            T_LOPROC = 13,
+            T_HIPROC = 15
+        };
+
+        inline uint8_t SetInfo(uint8_t bind, uint8_t type)
+        {
+            return (bind << 4) | (type & 0xf);
+        }
+
+        struct Entry32
+        {
+            uint32_t OffsetInNameStringTable;
+            uint32_t Value;
+            uint32_t Size;
+            uint8_t Info;
+            uint8_t Other;
+            uint16_t IndexInSectionHeaderTable;
+        } __attribute__((packed));
+
+        struct Entry64
+        {
+            uint32_t OffsetInNameStringTable;
+            uint8_t Info;
+            uint8_t Other;
+            uint16_t IndexInSectionHeaderTable;
+            uint64_t Value;
+            uint64_t Size;
+        } __attribute__((packed));
+    }
 }

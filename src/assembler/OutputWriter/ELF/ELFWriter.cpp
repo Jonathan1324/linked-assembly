@@ -1,5 +1,7 @@
 #include "ELFWriter.hpp"
 
+#include <cstring>
+
 ELF::Writer::Writer(const Context &_context, Architecture _arch, BitMode _bits, Format _format, std::ostream *_file, const Parser::Parser *_parser, const Encoder::Encoder *_encoder)
     : ::Output::Writer::Writer(_context, _arch, _bits, _format, _file, _parser, _encoder)
 {
@@ -8,6 +10,7 @@ ELF::Writer::Writer(const Context &_context, Architecture _arch, BitMode _bits, 
 void ELF::Writer::Write()
 {
     constexpr std::streamoff alignTo = 0x10;
+    constexpr uint64_t alignment = static_cast<uint64_t>(alignTo);
 
     const std::vector<Encoder::Section>& eSections = encoder->getSections();
 
@@ -53,8 +56,71 @@ void ELF::Writer::Write()
     std::vector<uint8_t> shstrtabBuffer;
     shstrtabBuffer.push_back(0);
 
-    for (const auto& section : eSections)
+    std::vector<uint8_t> symtabBuffer;
+    if (bits == BitMode::Bits16 || bits == BitMode::Bits32)
     {
+        Symbol::Entry32 entry;
+        entry.OffsetInNameStringTable = 0;
+        entry.Value = 0;
+        entry.Size = 0;
+        entry.Info = 0;
+        entry.Other = 0;
+        entry.IndexInSectionHeaderTable = 0;
+        
+        localSymbols.push_back(std::move(entry));
+    }
+    else if (bits == BitMode::Bits64)
+    {
+        Symbol::Entry64 entry;
+        entry.OffsetInNameStringTable = 0;
+        entry.Info = 0;
+        entry.Other = 0;
+        entry.IndexInSectionHeaderTable = 0;
+        entry.Value = 0;
+        entry.Size = 0;
+        
+        localSymbols.push_back(std::move(entry));
+    }
+    else throw Exception::InternalError("Unknown bit mode");
+
+    std::vector<uint8_t> strtabBuffer;
+    strtabBuffer.push_back(0);
+
+
+    uint32_t filenameOffset = static_cast<uint32_t>(strtabBuffer.size());
+    strtabBuffer.insert(strtabBuffer.end(), context.filename.begin(), context.filename.end());
+    strtabBuffer.push_back(0);
+
+    if (bits == BitMode::Bits16 || bits == BitMode::Bits32)
+    {
+        Symbol::Entry32 entry;
+        entry.OffsetInNameStringTable = filenameOffset;
+        entry.Value = 0;
+        entry.Size = 0;
+        entry.Info = Symbol::SetInfo(Symbol::Bind::LOCAL, Symbol::Type::FILE);
+        entry.Other = 0;
+        entry.IndexInSectionHeaderTable = Symbol::XINDEX;
+        
+        localSymbols.push_back(std::move(entry));
+    }
+    else if (bits == BitMode::Bits64)
+    {
+        Symbol::Entry64 entry;
+        entry.OffsetInNameStringTable = filenameOffset;
+        entry.Info = Symbol::SetInfo(Symbol::Bind::LOCAL, Symbol::Type::FILE);
+        entry.Other = 0;
+        entry.IndexInSectionHeaderTable = Symbol::XINDEX;
+        entry.Value = 0;
+        entry.Size = 0;
+        
+        localSymbols.push_back(std::move(entry));
+    }
+    else throw Exception::InternalError("Unknown bit mode");
+
+
+    for (size_t i = 0; i < eSections.size(); i++)
+    {
+        const Encoder::Section& section = eSections[i];
         Section s;
         s.buffer = &section.buffer;
 
@@ -69,7 +135,6 @@ void ELF::Writer::Write()
             header.Type = SectionType::ProgBits;    // TODO
             header.Flags = 0;                       // TODO
             header.VirtualAddress = 0;
-            header.Offset;  // TODO: set when writing
             if (section.isInitialized)
                 header.SectionSize = static_cast<uint32_t>(section.buffer.size());
             else
@@ -80,6 +145,17 @@ void ELF::Writer::Write()
             header.EntrySize = 0;
             
             s.header = header;
+
+
+            Symbol::Entry32 entry;
+            entry.OffsetInNameStringTable = 0;
+            entry.Value = 0;
+            entry.Size = 0;
+            entry.Info = Symbol::SetInfo(Symbol::Bind::LOCAL, Symbol::Type::SECTION);
+            entry.Other = 0;
+            entry.IndexInSectionHeaderTable = i + 1; // TODO: ugly
+            
+            localSymbols.push_back(std::move(entry));
         }
         else if (bits == BitMode::Bits64)
         {
@@ -88,7 +164,6 @@ void ELF::Writer::Write()
             header.Type = SectionType::ProgBits;    // TODO
             header.Flags = 0;                       // TODO
             header.VirtualAddress = 0;
-            header.Offset;  // TODO: set when writing
             if (section.isInitialized)
                 header.SectionSize = static_cast<uint64_t>(section.buffer.size());
             else
@@ -99,6 +174,17 @@ void ELF::Writer::Write()
             header.EntrySize = 0;
 
             s.header = header;
+
+
+            Symbol::Entry64 entry;
+            entry.OffsetInNameStringTable = 0;
+            entry.Info = Symbol::SetInfo(Symbol::Bind::LOCAL, Symbol::Type::SECTION);
+            entry.Other = 0;
+            entry.IndexInSectionHeaderTable = i + 1; // TODO: ugly
+            entry.Value = 0;
+            entry.Size = 0;
+            
+            localSymbols.push_back(std::move(entry));
         }
         else throw Exception::InternalError("Unknown bit mode");
 
@@ -110,18 +196,89 @@ void ELF::Writer::Write()
     shstrtab.buffer = &shstrtabBuffer;
     std::string shstrtabName = ".shstrtab";
 
-    uint32_t nameOffset = static_cast<uint32_t>(shstrtabBuffer.size());
+    uint32_t shstrtabNameOffset = static_cast<uint32_t>(shstrtabBuffer.size());
     shstrtabBuffer.insert(shstrtabBuffer.end(), shstrtabName.begin(), shstrtabName.end());
     shstrtabBuffer.push_back(0);
+
+    uint16_t shstrtabIndex = static_cast<uint16_t>(sections.size());
+
+    // SYMTAB
+    Section symtab;
+    symtab.buffer = &symtabBuffer;
+    std::string symtabName = ".symtab";
+
+    uint32_t symtabNameOffset = static_cast<uint32_t>(shstrtabBuffer.size());
+    shstrtabBuffer.insert(shstrtabBuffer.end(), symtabName.begin(), symtabName.end());
+    shstrtabBuffer.push_back(0);
+
+    for (const SymbolEntry& symbol : localSymbols)
+    {
+        if (std::holds_alternative<Symbol::Entry32>(symbol))
+        {
+            const Symbol::Entry32& entry = std::get<Symbol::Entry32>(symbol);
+            symtabBuffer.resize(symtabBuffer.size() + sizeof(Symbol::Entry32));
+            std::memcpy(symtabBuffer.data() + symtabBuffer.size() - sizeof(Symbol::Entry32), &entry, sizeof(Symbol::Entry32));
+        }
+        else if (std::holds_alternative<Symbol::Entry64>(symbol))
+        {
+            const Symbol::Entry64& entry = std::get<Symbol::Entry64>(symbol);
+            symtabBuffer.resize(symtabBuffer.size() + sizeof(Symbol::Entry64));
+            std::memcpy(symtabBuffer.data() + symtabBuffer.size() - sizeof(Symbol::Entry64), &entry, sizeof(Symbol::Entry64));
+        }
+        else throw Exception::InternalError("Unknown symbol entry");
+    }
+
+    for (const SymbolEntry& symbol : globalSymbols)
+    {
+        if (std::holds_alternative<Symbol::Entry32>(symbol))
+        {
+            const Symbol::Entry32& entry = std::get<Symbol::Entry32>(symbol);
+            symtabBuffer.resize(symtabBuffer.size() + sizeof(Symbol::Entry32));
+            std::memcpy(symtabBuffer.data() + symtabBuffer.size() - sizeof(Symbol::Entry32), &entry, sizeof(Symbol::Entry32));
+        }
+        else if (std::holds_alternative<Symbol::Entry64>(symbol))
+        {
+            const Symbol::Entry64& entry = std::get<Symbol::Entry64>(symbol);
+            symtabBuffer.resize(symtabBuffer.size() + sizeof(Symbol::Entry64));
+            std::memcpy(symtabBuffer.data() + symtabBuffer.size() - sizeof(Symbol::Entry64), &entry, sizeof(Symbol::Entry64));
+        }
+        else throw Exception::InternalError("Unknown symbol entry");
+    }
+
+    for (const SymbolEntry& symbol : weakSymbols)
+    {
+        if (std::holds_alternative<Symbol::Entry32>(symbol))
+        {
+            const Symbol::Entry32& entry = std::get<Symbol::Entry32>(symbol);
+            symtabBuffer.resize(symtabBuffer.size() + sizeof(Symbol::Entry32));
+            std::memcpy(symtabBuffer.data() + symtabBuffer.size() - sizeof(Symbol::Entry32), &entry, sizeof(Symbol::Entry32));
+        }
+        else if (std::holds_alternative<Symbol::Entry64>(symbol))
+        {
+            const Symbol::Entry64& entry = std::get<Symbol::Entry64>(symbol);
+            symtabBuffer.resize(symtabBuffer.size() + sizeof(Symbol::Entry64));
+            std::memcpy(symtabBuffer.data() + symtabBuffer.size() - sizeof(Symbol::Entry64), &entry, sizeof(Symbol::Entry64));
+        }
+        else throw Exception::InternalError("Unknown symbol entry");
+    }
+
+    // STRTAB
+    Section strtab;
+    strtab.buffer = &strtabBuffer;
+    std::string strtabName = ".strtab";
+
+    uint32_t strtabNameOffset = static_cast<uint32_t>(shstrtabBuffer.size());
+    shstrtabBuffer.insert(shstrtabBuffer.end(), strtabName.begin(), strtabName.end());
+    shstrtabBuffer.push_back(0);
+
 
     if (bits == BitMode::Bits16 || bits == BitMode::Bits32)
     {
         SectionHeader32 header;
-        header.OffsetInSectionNameStringTable = nameOffset;
+        header.OffsetInSectionNameStringTable = shstrtabNameOffset;
         header.Type = SectionType::StrTab;
         header.Flags = 0;
         header.VirtualAddress = 0;
-        header.Offset;  // TODO: set when writing
         header.SectionSize = static_cast<uint32_t>(shstrtabBuffer.size());
         header.LinkIndex = 0;
         header.Info = 0;
@@ -133,11 +290,10 @@ void ELF::Writer::Write()
     else if (bits == BitMode::Bits64)
     {
         SectionHeader64 header;
-        header.OffsetInSectionNameStringTable = nameOffset;
+        header.OffsetInSectionNameStringTable = shstrtabNameOffset;
         header.Type = SectionType::StrTab;
         header.Flags = 0;
         header.VirtualAddress = 0;
-        header.Offset;  // TODO: set when writing
         header.SectionSize = static_cast<uint32_t>(shstrtabBuffer.size());
         header.LinkIndex = 0;
         header.Info = 0;
@@ -147,10 +303,75 @@ void ELF::Writer::Write()
         shstrtab.header = header;
     }
     else throw Exception::InternalError("Unknown bit mode");
+    sections.push_back(std::move(shstrtab));
 
-    uint16_t shstrtabIndex = static_cast<uint16_t>(sections.size());
+    const uint32_t strtabIndex = static_cast<uint32_t>(sections.size()) + 1; // TODO: ugly
 
-    sections.push_back(shstrtab);
+    if (bits == BitMode::Bits16 || bits == BitMode::Bits32)
+    {
+        SectionHeader32 header;
+        header.OffsetInSectionNameStringTable = symtabNameOffset;
+        header.Type = SectionType::SymTab;
+        header.Flags = 0;
+        header.VirtualAddress = 0;
+        header.SectionSize = static_cast<uint32_t>(symtabBuffer.size());
+        header.LinkIndex = strtabIndex;
+        header.Info = static_cast<uint32_t>(localSymbols.size());
+        header.AddressAlignment = 4;
+        header.EntrySize = sizeof(Symbol::Entry32);
+        
+        symtab.header = header;
+    }
+    else if (bits == BitMode::Bits64)
+    {
+        SectionHeader64 header;
+        header.OffsetInSectionNameStringTable = symtabNameOffset;
+        header.Type = SectionType::SymTab;
+        header.Flags = 0;
+        header.VirtualAddress = 0;
+        header.SectionSize = static_cast<uint32_t>(symtabBuffer.size());
+        header.LinkIndex = strtabIndex;
+        header.Info = static_cast<uint32_t>(localSymbols.size());
+        header.AddressAlignment = 4;
+        header.EntrySize = sizeof(Symbol::Entry64);
+
+        symtab.header = header;
+    }
+    else throw Exception::InternalError("Unknown bit mode");
+    sections.push_back(std::move(symtab));
+
+    if (bits == BitMode::Bits16 || bits == BitMode::Bits32)
+    {
+        SectionHeader32 header;
+        header.OffsetInSectionNameStringTable = strtabNameOffset;
+        header.Type = SectionType::StrTab;
+        header.Flags = 0;
+        header.VirtualAddress = 0;
+        header.SectionSize = static_cast<uint32_t>(strtabBuffer.size());
+        header.LinkIndex = 0;
+        header.Info = 0;
+        header.AddressAlignment = 1;
+        header.EntrySize = 0;
+        
+        strtab.header = header;
+    }
+    else if (bits == BitMode::Bits64)
+    {
+        SectionHeader64 header;
+        header.OffsetInSectionNameStringTable = strtabNameOffset;
+        header.Type = SectionType::StrTab;
+        header.Flags = 0;
+        header.VirtualAddress = 0;
+        header.SectionSize = static_cast<uint32_t>(strtabBuffer.size());
+        header.LinkIndex = 0;
+        header.Info = 0;
+        header.AddressAlignment = 1;
+        header.EntrySize = 0;
+
+        strtab.header = header;
+    }
+    else throw Exception::InternalError("Unknown bit mode");
+    sections.push_back(std::move(strtab));
 
     if (bits == BitMode::Bits16 || bits == BitMode::Bits32)
     {
@@ -272,11 +493,8 @@ void ELF::Writer::Write()
 
         file->write(reinterpret_cast<const char*>(&header), sizeof(header));
     }
-    else
-    {
-        throw Exception::InternalError("Unknown bit mode");
-    }
-    auto pos = file->tellp();
+    else throw Exception::InternalError("Unknown bit mode");
+    std::streampos pos = file->tellp();
     std::streamoff padSize = (alignTo - (pos % alignTo)) % alignTo;
     if (padSize)
     {
@@ -284,20 +502,49 @@ void ELF::Writer::Write()
         file->write(padding.data(), padSize);
     }
 
-    for (const auto& section : sections)
+    uint64_t offset = 0x40; // TODO: ugly way
+    if (bits == BitMode::Bits16 || bits == BitMode::Bits32)
+        offset += static_cast<uint64_t>(sections.size()) * sizeof(SectionHeader32);
+    else if (bits == BitMode::Bits64)
+        offset += static_cast<uint64_t>(sections.size()) * sizeof(SectionHeader64);
+    else throw Exception::InternalError("Unknown bit mode");
+
+    offset = (offset + alignment - 1) / alignment * alignment;
+
+    for (const Section& section : sections)
     {
         if (std::holds_alternative<SectionHeader32>(section.header))
         {
             SectionHeader32 header = std::get<SectionHeader32>(section.header);
-            // TODO: set offset
+            if (!section.nullSection) header.Offset = static_cast<uint64_t>(offset);
+
+            file->write(reinterpret_cast<const char*>(&header), sizeof(header));
         }
         else if (std::holds_alternative<SectionHeader64>(section.header))
         {
             SectionHeader64 header = std::get<SectionHeader64>(section.header);
-            // TODO: set offset
+            if (!section.nullSection) header.Offset = offset;
 
             file->write(reinterpret_cast<const char*>(&header), sizeof(header));
         }
         else throw Exception::InternalError("Unknown section header");
+
+        if (section.writeBuffer) offset += section.buffer->size();
+
+        offset = (offset + alignment - 1) / alignment * alignment;
+    }
+
+    for (const Section& section : sections)
+    {
+        if (section.writeBuffer) file->write(reinterpret_cast<const char*>(section.buffer->data()), section.buffer->size());
+
+        // align to 0x10
+        std::streampos pos = file->tellp();
+        std::streamoff padSize = (alignTo - (pos % alignTo)) % alignTo;
+        if (padSize)
+        {
+            std::vector<char> padding(padSize, 0);
+            file->write(padding.data(), padSize);
+        }
     }
 }

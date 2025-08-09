@@ -29,6 +29,7 @@ namespace Encoder
         std::string section;
         uint64_t offset = 0;
 
+        bool isGlobal;
         bool resolved;
     };
 
@@ -64,7 +65,9 @@ namespace Encoder
         void Optimize();
         void Print() const;
 
-        const std::vector<Section>& getSections() const;
+        const std::vector<Section>& getSections() const { return sections; };
+        const std::unordered_map<std::string, Label>& getLabels() const { return labels; };
+        const std::unordered_map<std::string, Constant>& getConstants() const { return constants; };
         
     protected:
         virtual std::vector<uint8_t> EncodeInstruction(const Parser::Instruction::Instruction& instruction, bool ignoreUnresolved = false) = 0;

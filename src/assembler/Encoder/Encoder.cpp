@@ -32,6 +32,7 @@ void Encoder::Encoder::Encode()
                 lbl.name = label.name;
                 lbl.section = section.name;
                 lbl.resolved = false;
+                lbl.isGlobal = label.isGlobal;
                 if (labels.find(lbl.name) == labels.end())
                 {
                     labels[lbl.name] = lbl;
@@ -280,17 +281,17 @@ void Encoder::Encoder::Print() const
     {
         const Label& l = label.second;
         if (l.resolved)
-            std::cout << "Resolved label";
+            std::cout << "Resolved";
         else
-            std::cout << "Unresolved label";
+            std::cout << "Unresolved";
+
+        if (l.isGlobal)
+            std::cout << "global label";
+        else
+            std::cout << "local label";
         
         std::cout << ": '" << l.name << "' in section '" << l.section << "' at offset " << l.offset << std::endl;
     }
-}
-
-const std::vector<Section>& Encoder::Encoder::getSections() const
-{
-    return sections;
 }
 
 #include "x86/Encoder.hpp"
