@@ -1,5 +1,3 @@
-#pragma once
-
 #include "Encoder.hpp"
 #include <limits>
 
