@@ -5,6 +5,7 @@ section .text
 
 _start:
     db "Hello, World", 0x00
+l2:
 
 section .data
 db "DATA"
