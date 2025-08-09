@@ -225,7 +225,7 @@ std::string Token::Token::what() const
     {
         case Type::Comma:
         case Type::EOL:
-            result += " in line " + std::to_string(line) + " at column " + std::to_string(column) + " in file " + std::to_string(file);
+            result += " in line " + std::to_string(line) + " at column " + std::to_string(column);
             break;
 
         case Type::_EOF:
@@ -235,7 +235,7 @@ std::string Token::Token::what() const
         case Type::Character:
         {
             unsigned char c = static_cast<unsigned char>(value[0]);
-            result += std::to_string(c) + "in line " + std::to_string(line) + " at column " + std::to_string(column) + " in file " + std::to_string(file);
+            result += std::to_string(c) + "in line " + std::to_string(line) + " at column " + std::to_string(column);
             break;
         }
 
@@ -244,7 +244,7 @@ std::string Token::Token::what() const
         case Type::Bracket:
         case Type::Punctuation:
         default:
-            result += " '" + value + "' in line " + std::to_string(line) + " at column " + std::to_string(column) + " in file " + std::to_string(file);
+            result += " '" + value + "' in line " + std::to_string(line) + " at column " + std::to_string(column);
             break;
     }
 
