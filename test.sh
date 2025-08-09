@@ -14,8 +14,8 @@ nasm -f elf32 test.asm -o build/test-nasm.o
 objdump --all-headers build/test-nasm.o
 objdump --all-headers build/test.o
 
-#ld -m elf_i386 -o build/test build/test.o
-#chmod +x build/test
+ld -m elf_i386 -o build/test build/test.o
+chmod +x build/test
 #build/test
 #echo "exit code: $?"
 

@@ -1,6 +1,7 @@
 #include "Tokenizer.hpp"
 
 #include <Exception.hpp>
+#include <util/string.hpp>
 
 using namespace Token;
 
@@ -26,8 +27,9 @@ void Tokenizer::tokenize(std::istream* input)
         size_t pos = 0;
         size_t length = line.size();
 
-        if (line.find("%file") == 0)
+        if (trim(line).find("%line") == 0)
         {
+
             // TODO: parse (including when seeing '-' as filename to put the main file there)
             continue;
         }

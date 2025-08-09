@@ -8,9 +8,10 @@
 section .text
     global _start
 
-_start: \
+_start:
+    ;mov eax, 1
+    ;mov ebx, 0
     int 0x80
-    nop
 
 section .data
 msg db "Hello, World!", ENDL
