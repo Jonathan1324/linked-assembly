@@ -36,6 +36,7 @@ void Encoder::Encoder::Encode()
                 if (labels.find(lbl.name) == labels.end())
                 {
                     labels[lbl.name] = lbl;
+                    symbols.push_back(&labels[lbl.name]);
                 }
                 else
                     throw Exception::SemanticError("Label '" + lbl.name + "' already defined", label.lineNumber, label.column);
@@ -52,6 +53,7 @@ void Encoder::Encoder::Encode()
                     c.hasPos = constant.hasPos ? HasPos::TRUE : HasPos::UNKNOWN;
 
                     constants[constant.name] = c;
+                    symbols.push_back(&constants[constant.name]);
                 }
                 else
                     throw Exception::SemanticError("Constant '" + constant.name + "' already defined", constant.lineNumber, constant.column);
@@ -92,7 +94,7 @@ void Encoder::Encoder::Encode()
                 auto it = labels.find(label.name);
                 if (it != labels.end())
                 {
-                    Label lbl = it->second;
+                    Label& lbl = it->second;
                     lbl.offset = sectionOffset;
                     lbl.resolved = true;
                 }

@@ -65,9 +65,9 @@ namespace Encoder
         void Optimize();
         void Print() const;
 
+        using Symbol = std::variant<Label*, Constant*>;
         const std::vector<Section>& getSections() const { return sections; };
-        const std::unordered_map<std::string, Label>& getLabels() const { return labels; };
-        const std::unordered_map<std::string, Constant>& getConstants() const { return constants; };
+        const std::vector<Symbol>& getSymbols() const { return symbols; };
         
     protected:
         virtual std::vector<uint8_t> EncodeInstruction(const Parser::Instruction::Instruction& instruction, bool ignoreUnresolved = false) = 0;
@@ -94,6 +94,8 @@ namespace Encoder
 
         std::unordered_map<std::string, Label> labels;
         std::unordered_map<std::string, Constant> constants;
+
+        std::vector<Symbol> symbols;
 
         size_t bytesWritten = 0;
         size_t sectionOffset = 0;

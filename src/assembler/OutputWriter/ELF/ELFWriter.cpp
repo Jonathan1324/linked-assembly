@@ -191,6 +191,105 @@ void ELF::Writer::Write()
         sections.push_back(std::move(s));
     }
 
+
+    const std::vector<Encoder::Encoder::Symbol>& symbols = encoder->getSymbols();
+    std::unordered_map<std::string, uint32_t> labelNameOffsets;
+
+    for (const auto& symbol : symbols)
+    {
+        uint32_t offset = static_cast<uint32_t>(strtabBuffer.size());
+
+        if (std::holds_alternative<Encoder::Label*>(symbol))
+        {
+            const Encoder::Label* label = std::get<Encoder::Label*>(symbol);
+            strtabBuffer.insert(strtabBuffer.end(), label->name.begin(), label->name.end());
+            strtabBuffer.push_back(0);
+            labelNameOffsets[label->name] = offset;
+        }
+        else if (std::holds_alternative<Encoder::Constant*>(symbol))
+        {
+            const Encoder::Constant* constant = std::get<Encoder::Constant*>(symbol);
+            strtabBuffer.insert(strtabBuffer.end(), constant->name.begin(), constant->name.end());
+            strtabBuffer.push_back(0);
+            labelNameOffsets[constant->name] = offset;
+        }
+    }
+
+    for (const auto& symbol : symbols)
+    {
+        if (std::holds_alternative<Encoder::Label*>(symbol))
+        {
+            const Encoder::Label* label = std::get<Encoder::Label*>(symbol);
+
+            auto it = labelNameOffsets.find(label->name);
+            if (it == labelNameOffsets.end()) throw Exception::InternalError("Couldn't find offset for label in .strtab");
+            uint32_t nameOffset = it->second;
+
+            if (bits == BitMode::Bits16 || bits == BitMode::Bits32)
+            {
+                Symbol::Entry32 entry;
+                entry.OffsetInNameStringTable = nameOffset;
+                entry.Value = static_cast<uint32_t>(label->offset);
+                entry.Size = 0;
+                entry.Info = Symbol::SetInfo(label->isGlobal ? Symbol::Bind::GLOBAL : Symbol::Bind::LOCAL, Symbol::Type::NONE);
+                entry.Other = 0;
+                entry.IndexInSectionHeaderTable = Symbol::XINDEX; // TODO
+                
+                if (label->isGlobal) globalSymbols.push_back(std::move(entry));
+                else localSymbols.push_back(std::move(entry));
+            }
+            else if (bits == BitMode::Bits64)
+            {
+                Symbol::Entry64 entry;
+                entry.OffsetInNameStringTable = nameOffset;
+                entry.Info = Symbol::SetInfo(label->isGlobal ? Symbol::Bind::GLOBAL : Symbol::Bind::LOCAL, Symbol::Type::NONE);
+                entry.Other = 0;
+                entry.IndexInSectionHeaderTable = Symbol::XINDEX; // TODO
+                entry.Value = label->offset;
+                entry.Size = 0;
+                
+                if (label->isGlobal) globalSymbols.push_back(std::move(entry));
+                else localSymbols.push_back(std::move(entry));
+            }
+            else throw Exception::InternalError("Unknown bit mode");
+        }
+        else if (std::holds_alternative<Encoder::Constant*>(symbol))
+        {
+            const Encoder::Constant* constant = std::get<Encoder::Constant*>(symbol);
+            
+            auto it = labelNameOffsets.find(constant->name);
+            if (it == labelNameOffsets.end()) throw Exception::InternalError("Couldn't find offset for constant in .strtab");
+            uint32_t nameOffset = it->second;
+
+            if (bits == BitMode::Bits16 || bits == BitMode::Bits32)
+            {
+                Symbol::Entry32 entry;
+                entry.OffsetInNameStringTable = nameOffset;
+                entry.Value = static_cast<uint32_t>(constant->value);
+                entry.Size = 0;
+                entry.Info = Symbol::SetInfo(Symbol::Bind::LOCAL, Symbol::Type::NONE);
+                entry.Other = 0;
+                entry.IndexInSectionHeaderTable = Symbol::XINDEX;
+                
+                localSymbols.push_back(std::move(entry));
+            }
+            else if (bits == BitMode::Bits64)
+            {
+                Symbol::Entry64 entry;
+                entry.OffsetInNameStringTable = nameOffset;
+                entry.Info = Symbol::SetInfo(Symbol::Bind::LOCAL, Symbol::Type::NONE);
+                entry.Other = 0;
+                entry.IndexInSectionHeaderTable = Symbol::XINDEX;
+                entry.Value = constant->value;
+                entry.Size = 0;
+                
+                localSymbols.push_back(std::move(entry));
+            }
+            else throw Exception::InternalError("Unknown bit mode");
+        }
+    }
+
+
     // SHSTRTAB
     Section shstrtab;
     shstrtab.buffer = &shstrtabBuffer;
