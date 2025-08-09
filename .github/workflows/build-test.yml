@@ -1,0 +1,58 @@
+name: release-build
+
+on:
+  workflow_dispatch:
+
+jobs:
+  build:
+    strategy:
+      matrix:
+        include:
+          - os: ubuntu-24.04
+            arch: x86_64
+            os_name: linux
+          - os: ubuntu-24.04-arm
+            arch: arm64
+            os_name: linux
+          - os: windows-2025
+            arch: x86_64
+            os_name: windows
+          - os: windows-11-arm
+            arch: arm64
+            os_name: windows
+          - os: macos-13
+            arch: x86_64
+            os_name: macos
+          - os: macos-15
+            arch: arm64
+            os_name: macos
+    
+    runs-on: ${{ matrix.os }}
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v3
+
+      - name: Install build tools (Linux)
+        if: matrix.os_name == 'linux'
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y build-essential nasm
+
+      - name: Install build tools (Windows)
+        if: matrix.os_name == 'windows'
+        run: choco install make nasm 7zip -y
+
+      - name: Install build tools (macOS)
+        if: matrix.os_name == 'macos'
+        run: brew install make nasm
+
+      - name: Build the project
+        run: make VERSION=${{ github.event.release.tag_name }}
+        shell: bash
+
+      - name: Upload binaries as artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: binaries
+          path: bin/
