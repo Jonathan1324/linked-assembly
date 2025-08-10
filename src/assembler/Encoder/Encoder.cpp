@@ -284,9 +284,9 @@ void Encoder::Encoder::Print() const
     {
         const Label& l = label.second;
         if (l.resolved)
-            std::cout << "Resolved";
+            std::cout << "Resolved ";
         else
-            std::cout << "Unresolved";
+            std::cout << "Unresolved ";
 
         if (l.isGlobal)
             std::cout << "global label";
