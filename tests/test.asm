@@ -1,9 +1,6 @@
 [bits 32]
 
-%include "inc.asm"
-
 %define ENDL 10, 0
-
 
 section .text
     global _start
@@ -11,7 +8,14 @@ section .text
 _start:
     ;mov eax, 1
     ;mov ebx, 0
-    int 0x80
+    int _start
+
+    ;lea eax, err
 
 section .data
+
+d db 0xff
+
 msg db "Hello, World!", ENDL
+
+err db "Error found!", ENDL

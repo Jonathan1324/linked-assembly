@@ -55,6 +55,11 @@ namespace Encoder
         bool resolved;
         bool prePass = false;
     };
+
+    struct Relocation
+    {
+
+    };
     
 
     class Encoder
