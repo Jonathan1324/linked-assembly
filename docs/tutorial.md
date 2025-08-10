@@ -40,7 +40,7 @@ bin/assembler
 Use the assembler to compile your `.asm` file into an object file:
 
 ```bash
-bin/assembler ret42.asm -o ret42.o --arch x86 --format elf --endian little -m32
+bin/assembler ret42.asm -o ret42.o --arch x86 --format elf -m32
 ```
 
 ---

@@ -29,25 +29,19 @@ bin/assembler input.asm -o output.o --arch x86 --format elf -m32
 * `--arch <arch>`
   Specify the target architecture. Supported values:
 
-  * `x86` (currently fully supported)
+  * `x86` (currently supported)
   * `arm` (planned)
   * `riscv` (planned)
 
 * `--format <format>`
   Specify the output file format. Supported values:
 
-  * `elf` (currently fully supported)
+  * `elf` (currently supported)
   * `macho` (planned)
   * `coff` (planned)
 
-* `--endian <endianness>`
-  Specify the target endianness. Supported values:
-
-  * `little` (currently fully supported)
-  * `big` (currently not fully supported)
-
 * `-m64`, `-m32`, `-m16`
-  Select the bit mode (64-bit, 32-bit, or 16-bit). Currently only `-m32` is supported.
+  Select the bit mode (64-bit, 32-bit, or 16-bit).
 
 * `-v` / `--version`
   Show version information.
@@ -69,7 +63,7 @@ bin/assembler examples/example.asm -o examples/build/example.o --arch x86 --form
 
 ## Notes & Limitations
 
-* Currently, only the x86 architecture in 32-bit mode with ELF or binary output is implemented.
+* Currently, only the x86 architecture with ELF or binary output is possible.
 * The assembler supports a minimal subset of x86 instructions. See [instructions.md](instructions.md) for the full list.
 * Error handling and diagnostics are basic and will be improved in future releases.
 

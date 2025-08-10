@@ -23,14 +23,14 @@ The assembler consists of several key components:
 
 ## Supported Architectures and Formats
 
-- Currently, only **x86 32-bit mode** is fully supported.
+- Currently, only **x86** is fully supported.
 - Output is limited to **ELF object files**.
 - Command-line flags allow specifying other architectures (`arm`, `riscv`) and formats (`macho`, `coff`), but these are placeholders for future development.
 
 ## Design Decisions
 
-- **Why x86 32-bit ELF?**  
-  x86 remains a widely used architecture and 32-bit mode simplifies instruction encoding. ELF is the standard object format on Linux systems.
+- **Why x86 ELF?**  
+  x86 remains a widely used architecture and ELF is the standard object format on Linux systems.
 
 - **Modularity:**  
   The assembler is designed to be extensible. Adding support for new architectures or output formats involves implementing new parsers, encoders, or file writers without rewriting the entire system.
