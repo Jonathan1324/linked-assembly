@@ -8,14 +8,14 @@ section .text
 _start:
     ;mov eax, 1
     ;mov ebx, 0
-    int _start
+    int msg_len
 
     ;lea eax, err
 
 section .data
 
-d db 0xff
-
+msg_start equ $
 msg db "Hello, World!", ENDL
+msg_len equ $ - msg_start
 
 err db "Error found!", ENDL

@@ -7,7 +7,7 @@ chmod +x run.sh
 cd tests
 
 ../bin/assembler test.asm -o build/test.o \
-    --arch x86 --format elf -m32
+    --arch x86 --format elf -m32 -d
 
 nasm -f elf32 test.asm -o build/test-nasm.o
 
@@ -22,3 +22,5 @@ chmod +x build/test
 cd ..
 
 sh run.sh test -no-make
+
+cmp tests/build/test.o tests/build/test-nasm.o && echo ".o: equal" || echo ".o: different"
