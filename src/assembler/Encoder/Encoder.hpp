@@ -60,6 +60,15 @@ namespace Encoder
     {
 
     };
+
+
+    struct Evaluation
+    {
+        Int128 result;
+        bool relocationPossible;
+        uint64_t offset;
+    };
+    
     
 
     class Encoder
@@ -83,7 +92,7 @@ namespace Encoder
         std::vector<uint8_t> EncodeData(const Parser::DataDefinition& dataDefinition);
         uint64_t GetSize(const Parser::DataDefinition& dataDefinition);
 
-        Int128 Evaluate(const Parser::Immediate& immediate, uint64_t bytesWritten, uint64_t sectionOffset) const;
+        Evaluation Evaluate(const Parser::Immediate& immediate, uint64_t bytesWritten, uint64_t sectionOffset) const;
 
         void resolveConstants(bool withPos);
         bool Resolvable(const Parser::Immediate& immediate);

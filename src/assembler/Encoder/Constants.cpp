@@ -76,7 +76,10 @@ bool Encoder::Encoder::resolveConstantWithoutPos(Constant& c, std::unordered_set
         }
     }
 
-    Int128 value = Evaluate(c.expression, 0, 0);
+    Evaluation evaluated = Evaluate(c.expression, 0, 0);
+    if (evaluated.relocationPossible) throw Exception::InternalError("Constants.cpp: Evaluation not possible");
+    const Int128& value = evaluated.result;
+
     if (value < static_cast<Int128>(std::numeric_limits<int64_t>::min()) ||
         value > static_cast<Int128>(std::numeric_limits<int64_t>::max()))
         throw Exception::OverflowError("Constant '" + c.name + "' too big for a signed 64-bit integer"); // FIXME: no line or column
@@ -109,7 +112,10 @@ bool Encoder::Encoder::resolveConstantWithPos(Constant& c, std::unordered_set<st
             throw Exception::InternalError("Couldn't resolve constant '" + dep + "'");
     }
 
-    Int128 value = Evaluate(c.expression, c.bytesWritten, c.offset);
+    Evaluation evaluated = Evaluate(c.expression, c.bytesWritten, c.offset);
+    if (evaluated.relocationPossible) throw Exception::InternalError("Constants.cpp: Evaluation not possible");
+    const Int128& value = evaluated.result;
+    
     if (value < static_cast<Int128>(std::numeric_limits<int64_t>::min()) ||
         value > static_cast<Int128>(std::numeric_limits<int64_t>::max()))
         throw Exception::OverflowError("Constant '" + c.name + "' too big for a signed 64-bit integer"); // FIXME: no line or column

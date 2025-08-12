@@ -114,10 +114,10 @@ std::vector<ShuntingYard::Token> ShuntingYard::prepareTokens(
                 operatorStack.push(opStr);
             }
         }
-        else if (std::holds_alternative<Parser::CurrentPosition>(op))
-        {
-            const Parser::CurrentPosition& curPos = std::get<Parser::CurrentPosition>(op);
-        }
+        //else if (std::holds_alternative<Parser::CurrentPosition>(op))
+        //{
+        //    const Parser::CurrentPosition& curPos = std::get<Parser::CurrentPosition>(op);
+        //}
         else
         {
             Int128 val = getValue(op);

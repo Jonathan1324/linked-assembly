@@ -16,6 +16,8 @@ section .data
 
 ;msg_start equ $
 msg db "Hello, World!", ENDL
-;msg_len equ $ - msg_start
+;msg_len equ $ - msg
 
 err db "Error found!", ENDL
+
+db 0xff, 0xff, $, $

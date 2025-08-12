@@ -120,7 +120,9 @@ void Encoder::Encoder::Encode()
             else if (std::holds_alternative<Parser::Repetition>(entry))
             {
                 const Parser::Repetition& repetition = std::get<Parser::Repetition>(entry);
-                const Int128 count128 = Evaluate(repetition.count, bytesWritten, sectionOffset);
+                const Evaluation countEval = Evaluate(repetition.count, bytesWritten, sectionOffset);
+                const Int128& count128 = countEval.result;
+
                 if (count128 < 0)
                     throw Exception::SemanticError("Repetition count can't be negative", repetition.lineNumber, repetition.column);
                 
@@ -133,7 +135,9 @@ void Encoder::Encoder::Encode()
             else if (std::holds_alternative<Parser::Alignment>(entry))
             {
                 const Parser::Alignment& alignment = std::get<Parser::Alignment>(entry);
-                const Int128 align = Evaluate(alignment.align, bytesWritten, sectionOffset);
+                const Evaluation alignEval = Evaluate(alignment.align, bytesWritten, sectionOffset);
+                const Int128& align = alignEval.result;
+
                 if (align <= 0)
                     throw Exception::SemanticError("Alignment cannot be zero or lower", alignment.lineNumber, alignment.column);
 
@@ -206,7 +210,9 @@ void Encoder::Encoder::Encode()
             else if (std::holds_alternative<Parser::Repetition>(entry))
             {
                 const Parser::Repetition& repetition = std::get<Parser::Repetition>(entry);
-                const Int128 count128 = Evaluate(repetition.count, bytesWritten, sectionOffset);
+                const Evaluation countEval = Evaluate(repetition.count, bytesWritten, sectionOffset);
+                const Int128& count128 = countEval.result;
+
                 if (count128 < 0)
                     throw Exception::SemanticError("Repetition count can't be negative", repetition.lineNumber, repetition.column);
                 
@@ -219,7 +225,9 @@ void Encoder::Encoder::Encode()
             else if (std::holds_alternative<Parser::Alignment>(entry))
             {
                 const Parser::Alignment& alignment = std::get<Parser::Alignment>(entry);
-                const Int128 align = Evaluate(alignment.align, bytesWritten, sectionOffset);
+                const Evaluation alignEval = Evaluate(alignment.align, bytesWritten, sectionOffset);
+                const Int128& align = alignEval.result;
+                
                 if (align <= 0)
                     throw Exception::SemanticError("Alignment cannot be zero or lower", alignment.lineNumber, alignment.column);
                 

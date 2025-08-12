@@ -18,7 +18,9 @@ std::vector<uint8_t> Encoder::x86::Encoder::EncodeInterruptInstruction(const Par
             if (!Resolvable(immediate) && ignoreUnresolved)
                 return {opcode, 0};
 
-            Int128 interrupt128 = Evaluate(immediate, bytesWritten, sectionOffset);
+            Evaluation interruptEval = Evaluate(immediate, bytesWritten, sectionOffset);
+            Int128& interrupt128 = interruptEval.result;
+
             if (interrupt128 < 0) throw Exception::SemanticError("'int' can't have a negative operand", instruction.lineNumber, instruction.column);
             if (interrupt128 > 255) throw Exception::SemanticError("Operand too large for 'int'", instruction.lineNumber, instruction.column);
 

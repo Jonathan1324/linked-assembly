@@ -14,11 +14,13 @@ std::vector<uint8_t> Encoder::Encoder::EncodeData(const Parser::DataDefinition& 
             if (value.operands.empty())
                 throw Exception::SemanticError("Data definition cannot be empty", dataDefinition.lineNumber, dataDefinition.column);
 
-            Int128 evaluatedValue = Evaluate(value, bytesWritten, sectionOffset);
+            Evaluation evaluated = Evaluate(value, bytesWritten, sectionOffset);
+
+            if (evaluated.relocationPossible) throw Exception::InternalError("Data.cpp: Evaluation not possible");
 
             for (size_t i = 0; i < dataDefinition.size; i++)
             {
-                uint8_t byte = static_cast<uint8_t>((evaluatedValue >> (i * 8)) & 0xFF);
+                uint8_t byte = static_cast<uint8_t>((evaluated.result >> (i * 8)) & 0xFF);
                 buffer.push_back(byte);
             }
         }
