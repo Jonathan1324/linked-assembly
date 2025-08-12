@@ -11,8 +11,8 @@ void Encoder::Encoder::resolveConstants(bool withPos)
         {
             if (withPos)
                 resolveConstantWithPos(constant, visited);
-            else
-                resolveConstantWithoutPos(constant, visited);
+            else throw Exception::InternalError("Currently constants using $ and $$ aren't supported");
+                // TODO: resolveConstantWithoutPos(constant, visited);
         }
     }
 }
