@@ -14,7 +14,7 @@ jobs:
 
       - name: Install build dependencies
         run: python3 scripts/install_build_deps.py
-        shell: python
+        shell: bash
 
       - name: Build the project
         run: make DEBUG=1
