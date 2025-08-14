@@ -8,7 +8,7 @@ all: $(TARGET)
 $(TARGET): $(RUST_SRCS)
 	@echo "Compiling Rust static library"
 	@mkdir -p $(LIB_DIR)
-	@rustc $(RUSTFLAGS) --target $(RUST_TARGET) $(SRC_DIR)/lib.rs -o $@
+	@rustc $(RUSTFLAGS) $(SRC_DIR)/lib.rs -o $@
 #	Rust just uses one file and modules inside of it
 #	@cbindgen --config cbindgen.toml --crate rustlib --output $(LIB_DIR)/rustlib.h
 
