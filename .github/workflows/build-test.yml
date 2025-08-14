@@ -17,9 +17,9 @@ jobs:
           - os: windows-2025
             arch: x86_64
             os_name: windows
-          - os: windows-11-arm
-            arch: arm64
-            os_name: windows
+          #- os: windows-11-arm
+          #  arch: arm64
+          #  os_name: windows
           - os: macos-13
             arch: x86_64
             os_name: macos
