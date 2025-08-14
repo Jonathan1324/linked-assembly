@@ -9,8 +9,3 @@ _start:
 section .data
 data1:
     db 0
-
-data2: dw 2
-
-msg db "Hello, World!"
-testChar:   db 'a'

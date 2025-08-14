@@ -19,7 +19,7 @@ DEBUG ?= 0
 VERSION ?= commit
 
 # Basis-Flags
-INCLUDE_FLAGS = -I$(abspath src/lib/)
+INCLUDE_FLAGS = -I$(abspath src/lib/) -I$(abspath src/rust/)
 COMMON_WARNINGS = -Wall -Wextra
 OPT_FLAGS = -O2
 DEBUG_FLAGS = -g
@@ -30,6 +30,13 @@ CFLAGS = $(INCLUDE_FLAGS) $(COMMON_WARNINGS)
 CXXFLAGS = $(INCLUDE_FLAGS) -std=c++17 $(COMMON_WARNINGS)
 LDFLAGS =
 RUSTFLAGS = --crate-type staticlib
+
+ifeq ($(UNAME_S),Linux)
+    LDFLAGS += -lpthread -ldl -lm
+endif
+ifeq ($(UNAME_S),Darwin)
+    LDFLAGS += -lpthread -lm -lc++
+endif
 
 ifeq ($(DEBUG),0)
 	CFLAGS += -DVERSION=\"$(VERSION)\"
