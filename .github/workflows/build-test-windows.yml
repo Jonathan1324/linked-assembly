@@ -12,15 +12,9 @@ jobs:
       - name: Checkout repository
         uses: actions/checkout@v3
 
-      - name: Install Rust
-        uses: actions-rs/toolchain@v1
-        with:
-          toolchain: stable
-          profile: minimal
-          override: true
-
-      - name: Install build tools
-        run: choco install make nasm
+      - name: Install build dependencies
+        run: python3 scripts/install_build_deps.py
+        shell: python
 
       - name: Build the project
         run: make DEBUG=1

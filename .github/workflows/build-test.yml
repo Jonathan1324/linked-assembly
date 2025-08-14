@@ -33,26 +33,9 @@ jobs:
       - name: Checkout repository
         uses: actions/checkout@v3
 
-      - name: Install Rust
-        uses: actions-rs/toolchain@v1
-        with:
-          toolchain: stable
-          profile: minimal
-          override: true
-
-      - name: Install build tools (Linux)
-        if: matrix.os_name == 'linux'
-        run: |
-          sudo apt-get update
-          sudo apt-get install -y build-essential nasm
-
-      - name: Install build tools (Windows)
-        if: matrix.os_name == 'windows'
-        run: choco install make nasm 7zip -y
-
-      - name: Install build tools (macOS)
-        if: matrix.os_name == 'macos'
-        run: brew install make nasm
+      - name: Install build dependencies
+        run: python3 scripts/install_build_deps.py
+        shell: python
 
       - name: Build the project
         run: make
