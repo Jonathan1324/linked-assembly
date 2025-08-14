@@ -14,10 +14,7 @@
 #include "Parser/Parser.hpp"
 #include "Encoder/Encoder.hpp"
 #include "OutputWriter/OutputWriter.hpp"
-
 #include <rust.h>
-
-#include "asmp.hpp"
 
 #define CLEANUP                             \
     do {                                    \
