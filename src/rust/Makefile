@@ -1,6 +1,9 @@
 TARGET = $(LIB_DIR)/lib$(LIB).a
 RUST_SRCS = $(shell find $(SRC_DIR) -name '*.rs' | sed "s|$(SRC_DIR)/||")
 
+UNAME_S := $(shell uname)
+ARCH    := $(shell uname -m)
+
 ifeq ($(OS),Windows_NT)
   ifeq ($(ARCH),arm64)
     RUST_TARGET = aarch64-pc-windows-gnu
