@@ -1,8 +1,6 @@
 #include "Encoder.hpp"
 #include <limits>
 
-using namespace Encoder;
-
 size_t Encoder::Section::size() const
 {
     return isInitialized ? buffer.size() : reservedSize;
@@ -307,7 +305,7 @@ void Encoder::Encoder::Print() const
 
 #include "x86/Encoder.hpp"
 
-Encoder::Encoder* Encoder::getEncoder(const Context& context, Architecture arch, BitMode bits, const Parser::Parser* parser)
+::Encoder::Encoder* ::Encoder::getEncoder(const Context& context, Architecture arch, BitMode bits, const Parser::Parser* parser)
 {
     switch (arch)
     {

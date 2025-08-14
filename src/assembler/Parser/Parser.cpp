@@ -3,8 +3,6 @@
 #include <util/string.hpp>
 #include <algorithm>
 
-using namespace Parser;
-
 Parser::Parser::Parser(const Context& _context, Architecture _arch, BitMode _bits)
     : context(_context), arch(_arch), bits(_bits)
 {
