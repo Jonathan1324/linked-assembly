@@ -10,15 +10,15 @@ def run(cmd):
 
 def install_linux():
     run("sudo apt-get update")
-    run("sudo apt-get install -y build-essential nasm")
+    run("sudo apt-get install -y build-essential nasm bazelisk")
     install_rust()
 
 def install_macos():
-    run("brew install make nasm")
+    run("brew install make nasm bazelisk")
     install_rust()
 
 def install_windows():
-    run("choco install make nasm 7zip -y")
+    run("choco install make nasm bazelisk 7zip -y")
     install_rust()
 
 def install_rust():
