@@ -4,19 +4,17 @@
 #include <util/string.hpp>
 #include <cstdint>
 
-using namespace Token;
-
-Tokenizer::Tokenizer(const Context& _context)
+Token::Tokenizer::Tokenizer(const Context& _context)
     : context(&_context)
 {
 	
 }
 
-void Tokenizer::clear() {
+void Token::Tokenizer::clear() {
     tokens.clear();
 }
 
-void Tokenizer::tokenize(std::istream* input)
+void Token::Tokenizer::tokenize(std::istream* input)
 {
     uint64_t file;
     std::string line;
@@ -203,12 +201,12 @@ void Tokenizer::tokenize(std::istream* input)
     );
 }
 
-std::vector<Token::Token> Tokenizer::getTokens()
+std::vector<Token::Token> Token::Tokenizer::getTokens()
 {
     return tokens;
 }
 
-void Tokenizer::print()
+void Token::Tokenizer::print()
 {
     std::cout << "Tokens: " << std::endl;
     for (size_t i = 0; i < tokens.size(); i++)

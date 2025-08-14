@@ -14,11 +14,11 @@ SRC_DIR := $(shell pwd)/$(SRC_DIR)
 BUILD_DIR := $(shell pwd)/$(BUILD_DIR)
 BIN_DIR := $(shell pwd)/$(BIN_DIR)
 
-.PHONY: all clean library asmp assembler linker
+.PHONY: all clean libcore asmp assembler linker
 
-all: library asmp assembler linker
+all: libcore asmp assembler linker
 
-library:
+libcore:
 	@$(MAKE) -C $(SRC_DIR)/lib 				\
 		DEBUG=$(DEBUG)						\
 											\
@@ -33,7 +33,9 @@ library:
 		BUILD_DIR=$(BUILD_DIR)/lib			\
 		BIN_DIR=$(BIN_DIR)
 
-asmp: library
+
+
+asmp: libcore
 	@$(MAKE) -C $(SRC_DIR)/asmp 			\
 		DEBUG=$(DEBUG)						\
 											\
@@ -48,7 +50,7 @@ asmp: library
 		LIB=core							\
 		EXE_EXT=$(EXE_EXT)
 
-assembler: library
+assembler: libcore
 	@$(MAKE) -C $(SRC_DIR)/assembler 		\
 		DEBUG=$(DEBUG)						\
 											\
@@ -63,7 +65,7 @@ assembler: library
 		LIB=core							\
 		EXE_EXT=$(EXE_EXT)
 
-linker: library
+linker: libcore
 	@$(MAKE) -C $(SRC_DIR)/linker 			\
 		DEBUG=$(DEBUG)						\
 											\
@@ -82,7 +84,12 @@ linker: library
 clean:
 	@$(MAKE) -C $(SRC_DIR)/assembler clean 	\
 		SRC_DIR=$(SRC_DIR)/assembler 		\
-		BUILD_DIR=$(BUILD_DIR)/assembler		\
+		BUILD_DIR=$(BUILD_DIR)/assembler	\
+		EXE_EXT=$(EXE_EXT)
+
+	@$(MAKE) -C $(SRC_DIR)/asmp clean   	\
+		SRC_DIR=$(SRC_DIR)/asmp 			\
+		BUILD_DIR=$(BUILD_DIR)/asmp 		\
 		EXE_EXT=$(EXE_EXT)
 	
 	@$(MAKE) -C $(SRC_DIR)/linker clean 	\
@@ -94,4 +101,4 @@ clean:
 		SRC_DIR=$(SRC_DIR)/lib 				\
 		BUILD_DIR=$(BUILD_DIR)/lib
 
-	@rm -rf $(BUILD_DIR)/bin
+	@rm -rf bin
