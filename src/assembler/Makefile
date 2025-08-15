@@ -15,7 +15,7 @@ ASM_OBJS = $(patsubst %.asm, $(BUILD_DIR)/%.asm.o, $(ASM_SRCS))
 
 DEPS := $(C_OBJS:.o=.d) $(CPP_OBJS:.o=.d) $(ASM_OBJS:.o=.d)
 
-TARGET = $(BIN_DIR)/assembler$(EXE_EXT)
+TARGET = $(BUILD_DIR)/assembler$(EXE_EXT)
 
 
 CFLAGS	 += -I$(SRC_DIR)
@@ -46,7 +46,7 @@ $(BUILD_DIR)/%.asm.o: $(SRC_DIR)/%.asm
 # link files
 $(TARGET): $(C_OBJS) $(CPP_OBJS) $(ASM_OBJS) $(wildcard $(LIB_DIR)/*.a)
 	@echo "Linking " $@
-	@mkdir -p $(BIN_DIR)
+	@mkdir -p $(BUILD_DIR)
 	@$(CXX) $(CXXFLAGS) $(LDFLAGS) -o $@ $^
 
 -include $(DEPS)
