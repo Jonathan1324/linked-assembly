@@ -61,5 +61,5 @@ jobs:
         uses: softprops/action-gh-release@v2
         with:
           files: |
-            ${{ matrix.os_name == 'windows' && format('linked-assembly-{0}-{1}.zip', matrix.os_name, matrix.arch) || format('linked-assembly-{0}-{1}.tar.gz', matrix.os_name, matrix.arch) }}
+            archives/${{ matrix.os_name == 'windows' && format('linked-assembly-{0}-{1}.zip', matrix.os_name, matrix.arch) || format('linked-assembly-{0}-{1}.tar.gz', matrix.os_name, matrix.arch) }}
           token: ${{ secrets.GITHUB_TOKEN }}
