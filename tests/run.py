@@ -1,6 +1,23 @@
-import subprocess
 from pathlib import Path
 from enum import Enum
+import subprocess
+import logging
+
+# Logger
+logger = logging.getLogger("ci")
+logger.setLevel(logging.DEBUG)
+
+file_handler = logging.FileHandler("logs/tests.log", mode="w", encoding="utf-8")
+file_handler.setLevel(logging.DEBUG)
+file_formatter = logging.Formatter("%(asctime)s [%(levelname)s] %(message)s")
+file_handler.setFormatter(file_formatter)
+logger.addHandler(file_handler)
+
+console_handler = logging.StreamHandler()
+console_handler.setLevel(logging.INFO)
+console_formatter = logging.Formatter("[%(levelname)s] %(message)s")
+console_handler.setFormatter(console_formatter)
+logger.addHandler(console_handler)
 
 class Format(Enum):
     BIN = 1
@@ -21,8 +38,8 @@ class Arch(Enum):
 log_dir = Path("logs/tests-verbose")
 
 def runAssembler(src: str, dst: str, debug: bool, logs: Path,
-                 arch: Arch, bits: Bits, format: Format):
-    cmd = ["dist/bin/assembler", src, "-o", dst]
+                 arch: Arch, bits: Bits, format: Format) -> bool:
+    cmd = ["dist/bin/assembler", src]
     if (debug): cmd.append("-d")
 
     arch_str: str
@@ -65,10 +82,19 @@ def runAssembler(src: str, dst: str, debug: bool, logs: Path,
             format_str = "macho"
             cmd.extend(["--format", "macho"])
 
+    ext: str
+    if format == Format.BIN:
+        ext = "bin"
+    else:
+        ext = "o"
+
+    cmd.extend(["-o", f"{dst}-{arch_str}-{bits_str}-{format_str}.{ext}"])
     log_path = Path(f"{logs}/{Path(src).name}-{arch_str}-{bits_str}-{format_str}.txt")
     
     with open(log_path.resolve(), "w") as f:
-        subprocess.run(cmd, stdout=f, stderr=f)
+        result = subprocess.run(cmd, stdout=f, stderr=f)
+
+    return result.returncode == 0
 
 if __name__ == "__main__":
     build_dir = Path("tests/build")
@@ -86,24 +112,38 @@ if __name__ == "__main__":
         log_path = Path(*log_parts[:2], *log_parts[4:], asmfile.name)
         log_path.parent.mkdir(parents=True, exist_ok=True)
 
-        runAssembler(
-            src=str(asmfile),
-            dst=f"{dst_path}.bin",
-            debug=True,
-            logs=log_path.parent,
-            arch=Arch.X86,
-            bits=Bits.B32,
-            format=Format.BIN
-        )
-
-        runAssembler(
-            src=str(asmfile),
-            dst=f"{dst_path}-elf.o",
-            debug=True,
-            logs=log_path.parent,
-            arch=Arch.X86,
-            bits=Bits.B32,
-            format=Format.ELF
-        )
+        for arch in [Arch.X86]:
+            for bits in [Bits.B16, Bits.B32, Bits.B64]:
+                for format in [Format.BIN, Format.ELF]:
+                    arch_str: str
+                    bits_str: str
+                    format_str: str
+                    match arch:
+                        case Arch.X86: arch_str = "x86"
+                        case Arch.ARM: arch_str = "arm"
+                        case Arch.RISCV: arch_str = "riscv"
+                    match bits:
+                        case Bits.B16: bits_str = "16bit"
+                        case Bits.B32: bits_str = "32bit"
+                        case Bits.B64: bits_str = "64bit"
+                    match format:
+                        case Format.BIN: format_str = "bin"
+                        case Format.ELF: format_str = "elf"
+                        case Format.COFF: format_str = "coff"
+                        case Format.MACHO: format_str = "macho"
+                            
+                    result = runAssembler(
+                        src=str(asmfile),
+                        dst=f"{dst_path}",
+                        debug=True,
+                        logs=log_path.parent,
+                        arch=arch,
+                        bits=bits,
+                        format=format
+                    )
+                    if (result):
+                        logger.debug(f"Arch: {arch_str}, Bits: {bits_str}, Format: {format_str}; {asmfile} successful")
+                    else:
+                        logger.warning(f"Arch: {arch_str}, Bits: {bits_str}, Format: {format_str}; {asmfile} failed")
 
     exit(0)
