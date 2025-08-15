@@ -119,7 +119,9 @@ if __name__ == "__main__":
     archive_name = args.archive_name or "linked-assembly"
     logger.debug(f"Archive name: {archive_name}")
 
-    main(args=args)
+    result: bool = main(args=args)
+    if not result:
+        sys.exit(1)
 
     if args.archive:
         Path("archives").mkdir(parents=True, exist_ok=True)
