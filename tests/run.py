@@ -5,8 +5,8 @@ from enum import Enum
 class Format(Enum):
     BIN = 1
     ELF = 2
-#   COFF = 3
-#   MACHO = 4
+    COFF = 3
+    MACHO = 4
 
 class Bits(Enum):
     B16 = 1
@@ -15,10 +15,10 @@ class Bits(Enum):
 
 class Arch(Enum):
     X86 = 1
-#   ARM = 2
-#   RISCV = 3
+    ARM = 2
+    RISCV = 3
 
-log_dir = Path("logs/tests")
+log_dir = Path("logs/tests-verbose")
 
 def runAssembler(src: str, dst: str, debug: bool, logs: Path,
                  arch: Arch, bits: Bits, format: Format):
@@ -33,6 +33,12 @@ def runAssembler(src: str, dst: str, debug: bool, logs: Path,
         case Arch.X86:
             arch_str = "x86"
             cmd.extend(["--arch", "x86"])
+        case Arch.ARM:
+            arch_str = "arm"
+            cmd.extend(["--arch", "arm"])
+        case Arch.RISCV:
+            arch_str = "riscv"
+            cmd.extend(["--arch", "riscv"])
 
     match bits:
         case Bits.B16:
@@ -52,6 +58,12 @@ def runAssembler(src: str, dst: str, debug: bool, logs: Path,
         case Format.ELF:
             format_str = "elf"
             cmd.extend(["--format", "elf"])
+        case Format.COFF:
+            format_str = "coff"
+            cmd.extend(["--format", "coff"])
+        case Format.MACHO:
+            format_str = "macho"
+            cmd.extend(["--format", "macho"])
 
     log_path = Path(f"{logs}/{Path(src).name}-{arch_str}-{bits_str}-{format_str}.txt")
     
