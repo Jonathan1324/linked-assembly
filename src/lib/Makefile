@@ -15,12 +15,10 @@ ASM_OBJS = $(patsubst %.asm, $(BUILD_DIR)/%.asm.o, $(ASM_SRCS))
 
 DEPS := $(C_OBJS:.o=.d) $(CPP_OBJS:.o=.d) $(ASM_OBJS:.o=.d)
 
-TARGET = $(BUILD_DIR)/lib$(LIB).a
-
+TARGET = $(LIB_DIR)/lib$(LIB).a
 
 CFLAGS	 += -I$(SRC_DIR)
 CXXFLAGS += -I$(SRC_DIR)
-
 
 .PHONY: all clean
 
@@ -47,6 +45,7 @@ $(BUILD_DIR)/%.asm.o: $(SRC_DIR)/%.asm
 # Create static library
 $(TARGET): $(C_OBJS) $(CPP_OBJS) $(ASM_OBJS)
 	@echo "Creating static library " $@
+	@mkdir -p $(LIB_DIR)
 	@$(AR) $(ARFLAGS) $@ $^
 	@$(RANLIB) $@
 
