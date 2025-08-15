@@ -3,14 +3,18 @@ import logging
 
 logger = logging.getLogger("ci")
 
-def build(debug):
+def build(debug: bool) -> bool:
     logger.info("Building the project")
     cmd = ["make"]
     if (debug): cmd.append("DEBUG=1")
     subprocess.run(cmd)
 
-def clean(debug):
+    return True
+
+def clean(debug: bool) -> bool:
     logger.info("Cleaning")
     cmd = ["make", "clean"]
     if (debug): cmd.append("DEBUG=1")
     subprocess.run(cmd)
+
+    return True

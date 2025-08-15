@@ -1,5 +1,5 @@
-include build_scripts/config.mk
-include build_scripts/os.mk
+include scripts/config.mk
+include scripts/os.mk
 
 SRC_DIR = src
 BIN_DIR = bin

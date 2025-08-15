@@ -62,6 +62,14 @@ if __name__ == "__main__":
         logger.debug("Stopping before building")
         sys.exit(0)
 
-    build(debug=args.debug)
+    result: bool = build(debug=args.debug)
+    if (not result):
+        logger.error("Building failed")
+        sys.exit(0)
 
-    stage_artifacts()
+    result = stage_artifacts(debug=args.debug)
+    if (not result):
+        logger.error("Staging artifacts failed")
+        sys.exit(0)
+
+    

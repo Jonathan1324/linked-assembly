@@ -24,7 +24,7 @@ CXXFLAGS += -I$(SRC_DIR)
 
 .PHONY: all clean
 
-all: $(TARGET)
+all: $(TARGET) record
 
 # Compile C files
 $(BUILD_DIR)/%.c.o: $(SRC_DIR)/%.c
@@ -49,7 +49,9 @@ $(TARGET): $(C_OBJS) $(CPP_OBJS) $(ASM_OBJS) $(wildcard $(LIB_DIR)/*.a)
 	@echo "Linking " $@
 	@mkdir -p $(BUILD_DIR)
 	@$(CXX) $(CXXFLAGS) $(LDFLAGS) -o $@ $^
-	@echo "$@" >> $(BIN_DIR)/binaries.txt
+
+record:
+	@echo $(TARGET) >> $(BIN_DIR)/binaries.txt
 
 -include $(DEPS)
 
