@@ -85,7 +85,7 @@ int main(int argc, const char *argv[])
         return handleError(e);
     }
 
-    context.filename = std::filesystem::path(inputFiles.at(0)).filename().string();
+    context.filename = std::filesystem::path(inputFiles.at(0)).string();
 
     // Create file handles and tokenize
     std::ostream* objectFile = nullptr;
