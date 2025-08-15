@@ -49,18 +49,12 @@ jobs:
         shell: bash
 
       - name: Build the project
-        run: make VERSION=${{ github.event.release.tag_name }}
-        shell: bash
-
-      - name: Archive binaries
         run: |
-          cd bin
-          if [[ "${{ matrix.os_name }}" == "windows" ]]; then
-            7z a -tzip ../linked-assembly-${{ matrix.os_name }}-${{ matrix.arch }}.zip *
+          if [ "${{ matrix.os_name }}" = "windows" ]; then
+            python -m ci.ci --no-test --no-log -a -A linked-assembly-${{ matrix.os_name }}-${{ matrix.arch }}
           else
-            tar -czf ../linked-assembly-${{ matrix.os_name }}-${{ matrix.arch }}.tar.gz *
+            python -m ci.ci --no-test --no-log -a -A linked-assembly-${{ matrix.os_name }}-${{ matrix.arch }}
           fi
-          cd ..
         shell: bash
 
       - name: Upload archive as release asset

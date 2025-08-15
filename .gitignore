@@ -1,4 +1,5 @@
 build/
 dist/
+archives/
 logs/
 __pycache__/

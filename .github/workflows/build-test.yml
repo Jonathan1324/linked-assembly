@@ -43,11 +43,22 @@ jobs:
         shell: bash
 
       - name: Build the project
-        run: make
+        run: |
+          if [ "${{ matrix.os_name }}" = "windows" ]; then
+            python -m ci.ci --no-test -a -A linked-assembly-${{ matrix.os_name }}-${{ matrix.arch }}
+          else
+            python -m ci.ci --no-test -a -A linked-assembly-${{ matrix.os_name }}-${{ matrix.arch }}
+          fi
         shell: bash
 
       - name: Upload binaries as artifact
         uses: actions/upload-artifact@v4
         with:
-          name: binaries-${{ matrix.os_name }}-${{ matrix.arch }}
-          path: bin/
+          name: linked-assembly-${{ matrix.os_name }}-${{ matrix.arch }}
+          path: dist/
+
+      - name: Upload logs as artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: linked-assembly-${{ matrix.os_name }}-${{ matrix.arch }}-logs
+          path: logs/
