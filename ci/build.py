@@ -1,5 +1,6 @@
 import subprocess
 import logging
+import shutil
 
 logger = logging.getLogger("ci")
 
@@ -16,5 +17,7 @@ def clean(debug: bool) -> bool:
     cmd = ["make", "clean"]
     if (debug): cmd.append("DEBUG=1")
     subprocess.run(cmd)
+
+    shutil.rmtree("dist", ignore_errors=True)
 
     return True

@@ -1,6 +1,9 @@
 import logging
 from pathlib import Path
 import shutil
+import os
+import sys
+import stat
 
 logger = logging.getLogger("ci")
 
@@ -26,6 +29,10 @@ def stage_artifacts(debug: bool) -> bool:
                 dst = dist_bin / binary.name
                 shutil.copy2(binary, dst)
                 logger.debug(f"Copied {binary} to {dst}")
+                if sys.platform != "win32":
+                    st = os.stat(dst)
+                    os.chmod(dst, st.st_mode | stat.S_IEXEC)
+                    logger.debug(f"Set executable permission for {dst}")
             else:
                 logger.warning(f"{binary} does not exist")
     

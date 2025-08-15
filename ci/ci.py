@@ -5,6 +5,7 @@ from pathlib import Path
 import argparse
 import logging
 import sys
+import subprocess
 
 # Logger
 Path("logs").mkdir(exist_ok=True)
@@ -72,4 +73,9 @@ if __name__ == "__main__":
         logger.error("Staging artifacts failed")
         sys.exit(0)
 
-    
+    logger.info("Starting tests")
+    ret = subprocess.run([sys.executable, "tests/run.py"])
+    if ret.returncode != 0:
+        logger.error("Tests failed")
+        sys.exit(1)
+    logger.info("Finished tests")
