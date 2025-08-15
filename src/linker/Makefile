@@ -49,6 +49,7 @@ $(TARGET): $(C_OBJS) $(CPP_OBJS) $(ASM_OBJS) $(wildcard $(LIB_DIR)/*.a)
 	@echo "Linking " $@
 	@mkdir -p $(BUILD_DIR)
 	@$(CXX) $(CXXFLAGS) $(LDFLAGS) -o $@ $^
+	@echo "$@" >> $(BIN_DIR)/binaries.txt
 
 -include $(DEPS)
 

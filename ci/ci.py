@@ -1,4 +1,5 @@
 from ci.build import build, clean
+from ci.artifacts import stage_artifacts
 
 from pathlib import Path
 import argparse
@@ -55,13 +56,12 @@ if __name__ == "__main__":
     args = parser.parse_args()
     logger.debug(f"Debug: {args.debug}, Clean: {args.clean}, Build: {args.build}")
 
-    if (args.clean):
-        logger.debug("Cleaning")
-        clean(debug=args.debug)
+    if (args.clean): clean(debug=args.debug)
 
     if (not args.build):
         logger.debug("Stopping before building")
         sys.exit(0)
 
-    logger.info("Building the project")
     build(debug=args.debug)
+
+    stage_artifacts()
