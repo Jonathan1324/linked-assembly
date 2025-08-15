@@ -8,7 +8,7 @@ section .text
 _start:
     ;mov eax, 1
     ;mov ebx, 0
-    int 1
+    int 0
 
     ;lea eax, err
 

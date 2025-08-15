@@ -14,8 +14,7 @@
 #include "Parser/Parser.hpp"
 #include "Encoder/Encoder.hpp"
 #include "OutputWriter/OutputWriter.hpp"
-
-#include "asmp.hpp"
+#include <rust.h>
 
 #define CLEANUP                             \
     do {                                    \
@@ -86,7 +85,7 @@ int main(int argc, const char *argv[])
         return handleError(e);
     }
 
-    context.filename = std::filesystem::path(inputFiles.at(0)).filename().string();
+    context.filename = std::filesystem::path(inputFiles.at(0)).string();
 
     // Create file handles and tokenize
     std::ostream* objectFile = nullptr;
@@ -103,10 +102,39 @@ int main(int argc, const char *argv[])
 
             if (doPreprocess)
             {
-                auto preprocessed = new std::stringstream();
+                std::stringstream* preprocessed = new std::stringstream();
 
-                if (!preprocess(file, preprocessed))
+                std::string in_buf((std::istreambuf_iterator<char>(*file)),
+                      std::istreambuf_iterator<char>());
+
+                char* out_buf = nullptr;
+                char* err_buf = nullptr;
+
+                std::string cmd = getExecutableDir() + "/asmp";
+                cmd += " - -o -";
+                int32_t code = run_program(cmd.c_str(), in_buf.c_str(), &out_buf, &err_buf);
+
+                if (code != 0)
+                {
+                    if (err_buf)
+                    {
+                        std::cerr << err_buf;
+                        free_c_string(err_buf);
+                    }
                     throw Exception::InternalError("Preprocessor failed");
+                }
+
+                if (out_buf)
+                {
+                    *preprocessed << out_buf;
+                    free_c_string(out_buf);
+                }
+
+                if (err_buf)
+                {
+                    std::cerr << err_buf;;
+                    free_c_string(err_buf);
+                }
 
                 if (inputFiles.at(i) != "-")
                     delete file;

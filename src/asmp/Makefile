@@ -15,16 +15,15 @@ ASM_OBJS = $(patsubst %.asm, $(BUILD_DIR)/%.asm.o, $(ASM_SRCS))
 
 DEPS := $(C_OBJS:.o=.d) $(CPP_OBJS:.o=.d) $(ASM_OBJS:.o=.d)
 
-TARGET = $(BIN_DIR)/asmp$(EXE_EXT)
+TARGET = $(BUILD_DIR)/asmp$(EXE_EXT)
 
 
 CFLAGS	 += -I$(SRC_DIR)
 CXXFLAGS += -I$(SRC_DIR)
-LDFLAGS  += -L$(LIB_DIR) -l$(LIB)
 
 .PHONY: all clean
 
-all: $(TARGET)
+all: $(TARGET) record
 
 # Compile C files
 $(BUILD_DIR)/%.c.o: $(SRC_DIR)/%.c
@@ -45,10 +44,13 @@ $(BUILD_DIR)/%.asm.o: $(SRC_DIR)/%.asm
 	@$(AS) $(ASFLAGS) -MD -MF $(@:.o=.d) -o $@ $<
 
 # link files
-$(TARGET): $(C_OBJS) $(CPP_OBJS) $(ASM_OBJS) $(LIB_DIR)/lib$(LIB).a
+$(TARGET): $(C_OBJS) $(CPP_OBJS) $(ASM_OBJS) $(wildcard $(LIB_DIR)/*.a)
 	@echo "Linking " $@
-	@mkdir -p $(BIN_DIR)
+	@mkdir -p $(BUILD_DIR)
 	@$(CXX) $(CXXFLAGS) $(LDFLAGS) -o $@ $^
+
+record:
+	@echo $(TARGET) >> $(BIN_DIR)/binaries.txt
 
 -include $(DEPS)
 

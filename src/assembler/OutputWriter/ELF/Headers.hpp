@@ -79,7 +79,7 @@ namespace ELF
         uint8_t Endianness;
         uint8_t HeaderVersion = 1;
         uint8_t ABI;
-        uint8_t _Padding[8];
+        uint8_t _Padding[8] = {0,0,0,0,0,0,0,0};
 
         uint16_t Type;
         uint16_t InstructionSet;

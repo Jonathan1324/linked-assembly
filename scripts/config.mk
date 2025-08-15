@@ -19,7 +19,7 @@ DEBUG ?= 0
 VERSION ?= commit
 
 # Basis-Flags
-INCLUDE_FLAGS = -I$(abspath src/lib/)
+INCLUDE_FLAGS = -I$(abspath src/lib/) -I$(abspath src/rust/)
 COMMON_WARNINGS = -Wall -Wextra
 OPT_FLAGS = -O2
 DEBUG_FLAGS = -g
@@ -29,6 +29,14 @@ SECURITY_FLAGS = -fstack-protector-strong -D_FORTIFY_SOURCE=2 -fPIC
 CFLAGS = $(INCLUDE_FLAGS) $(COMMON_WARNINGS)
 CXXFLAGS = $(INCLUDE_FLAGS) -std=c++17 $(COMMON_WARNINGS)
 LDFLAGS =
+RUSTFLAGS = --crate-type staticlib
+
+ifeq ($(UNAME_S),Linux)
+    LDFLAGS += -lpthread -ldl -lm
+endif
+ifeq ($(UNAME_S),Darwin)
+    LDFLAGS += -lpthread -lm -lc++
+endif
 
 ifeq ($(DEBUG),0)
 	CFLAGS += -DVERSION=\"$(VERSION)\"
@@ -38,9 +46,11 @@ endif
 ifeq (${DEBUG},1)
 	CFLAGS += $(DEBUG_FLAGS)
 	CXXFLAGS += $(DEBUG_FLAGS)
+	RUSTFLAGS += -C opt-level=0
 else
 	CFLAGS += $(OPT_FLAGS) $(RELEASE_FLAGS)
 	CXXFLAGS += $(OPT_FLAGS) $(RELEASE_FLAGS) $(SECURITY_FLAGS)
+	RUSTFLAGS += -C opt-level=3
 endif
 
 ifeq ($(UNAME_S),Darwin)

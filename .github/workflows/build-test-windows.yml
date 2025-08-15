@@ -17,23 +17,17 @@ jobs:
         shell: bash
 
       - name: Build the project
-        run: make DEBUG=1
+        run: python -m ci.ci --no-test -a -A linked-assembly-windows-x86
         shell: bash
 
-      - name: Upload build artifact
+      - name: Upload binaries as artifact
         uses: actions/upload-artifact@v4
         with:
-          name: bin-artifacts
-          path: bin/
+          name: linked-assembly-windows-x86
+          path: dist/
 
-  test:
-    needs: build
-
-    runs-on: windows-2025
-
-    steps:
-      - name: Download build artifact
-        uses: actions/download-artifact@v4
+      - name: Upload logs as artifact
+        uses: actions/upload-artifact@v4
         with:
-          name: bin-artifacts
-          path: bin
+          name: linked-assembly-windows-x86-logs
+          path: logs/
