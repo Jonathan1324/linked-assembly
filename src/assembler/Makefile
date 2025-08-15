@@ -48,6 +48,9 @@ $(TARGET): $(C_OBJS) $(CPP_OBJS) $(ASM_OBJS) $(wildcard $(LIB_DIR)/*.a)
 	@echo "Linking " $@
 	@mkdir -p $(BUILD_DIR)
 	@$(CXX) $(CXXFLAGS) $(LDFLAGS) -o $@ $^
+ifeq (${DEBUG},0)
+	@strip $(STRIPFLAGS) $@
+endif
 
 record:
 	@echo $(TARGET) >> $(BIN_DIR)/binaries.txt

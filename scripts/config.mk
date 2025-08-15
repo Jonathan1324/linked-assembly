@@ -30,12 +30,18 @@ CFLAGS = $(INCLUDE_FLAGS) $(COMMON_WARNINGS)
 CXXFLAGS = $(INCLUDE_FLAGS) -std=c++17 $(COMMON_WARNINGS)
 LDFLAGS =
 RUSTFLAGS = --crate-type staticlib
+STRIPFLAGS =
 
 ifeq ($(UNAME_S),Linux)
     LDFLAGS += -lpthread -ldl -lm
+	LDFLAGS += -Wl,--gc-sections
+	CFLAGS += -ffunction-sections -fdata-sections
+	CXXFLAGS += -ffunction-sections -fdata-sections
+	STRIPFLAGS += --strip-unneeded
 endif
 ifeq ($(UNAME_S),Darwin)
     LDFLAGS += -lpthread -lm -lc++
+	STRIPFLAGS += -x -S
 endif
 
 ifeq ($(DEBUG),0)

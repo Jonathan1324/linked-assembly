@@ -31,6 +31,7 @@ libcore:
 		CXX=$(CXX) CXXFLAGS="$(CXXFLAGS)"	\
 		AR=$(AR) ARFLAGS=$(ARFLAGS)			\
 		LDFLAGS=$(LDFLAGS)					\
+		STRIPFLAGS="$(STRIPFLAGS)"			\
 		RANLIB=$(RANLIB)					\
 		SRC_DIR=$(SRC_DIR)/lib 				\
 		LIB_DIR=$(LIB_DIR)					\
@@ -45,6 +46,7 @@ librust:
 		RUSTFLAGS="$(RUSTFLAGS)"			\
 		SRC_DIR=$(SRC_DIR)/rust 			\
 		LIB_DIR=$(LIB_DIR)					\
+		STRIPFLAGS="$(STRIPFLAGS)"			\
 		LIB=rust							\
 		BUILD_DIR=$(BUILD_DIR)/rust			\
 		BIN_DIR=$(BIN_DIR)
@@ -57,6 +59,7 @@ asmp: libcore librust
 		CC=$(CC) CFLAGS="$(CFLAGS)" 		\
 		CXX=$(CXX) CXXFLAGS="$(CXXFLAGS)"	\
 		LDFLAGS="$(LDFLAGS) $(LDFLAGSSRC)"	\
+		STRIPFLAGS="$(STRIPFLAGS)"			\
 		SRC_DIR=$(SRC_DIR)/asmp		 		\
 		BUILD_DIR=$(BUILD_DIR)/asmp			\
 		BIN_DIR=$(BIN_DIR)					\
@@ -71,6 +74,7 @@ assembler: libcore librust
 		CC=$(CC) CFLAGS="$(CFLAGS)" 		\
 		CXX=$(CXX) CXXFLAGS="$(CXXFLAGS)"	\
 		LDFLAGS="$(LDFLAGS) $(LDFLAGSSRC)"	\
+		STRIPFLAGS="$(STRIPFLAGS)"			\
 		SRC_DIR=$(SRC_DIR)/assembler 		\
 		BUILD_DIR=$(BUILD_DIR)/assembler	\
 		BIN_DIR=$(BIN_DIR)					\
@@ -85,6 +89,7 @@ linker: libcore librust
 		CC=$(CC) CFLAGS="$(CFLAGS)" 		\
 		CXX=$(CXX) CXXFLAGS="$(CXXFLAGS)"	\
 		LDFLAGS="$(LDFLAGS) $(LDFLAGSSRC)"	\
+		STRIPFLAGS="$(STRIPFLAGS)"			\
 		SRC_DIR=$(SRC_DIR)/linker 			\
 		BUILD_DIR=$(BUILD_DIR)/linker		\
 		BIN_DIR=$(BIN_DIR)					\
