@@ -105,11 +105,11 @@ if __name__ == "__main__":
 
     for asmfile in src_path.rglob("*.asm"):
         dst_parts = (Path(build_dir) / asmfile.parent).parts
-        dst_path = Path(*dst_parts[:2], *dst_parts[4:], asmfile.name)
+        dst_path = Path(*dst_parts[:2], *dst_parts[3:], asmfile.name)
         dst_path.parent.mkdir(parents=True, exist_ok=True)
 
         log_parts = (Path(log_dir) / asmfile.parent).parts
-        log_path = Path(*log_parts[:2], *log_parts[4:], asmfile.name)
+        log_path = Path(*log_parts[:2], *log_parts[3:], asmfile.name)
         log_path.parent.mkdir(parents=True, exist_ok=True)
 
         for arch in [Arch.X86]:
