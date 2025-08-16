@@ -44,6 +44,7 @@ librust:
 		DEBUG=$(DEBUG)						\
 											\
 		RUSTFLAGS="$(RUSTFLAGS)"			\
+		RUST_TARGET="$(RUST_TARGET)"		\
 		SRC_DIR=$(SRC_DIR)/rust 			\
 		LIB_DIR=$(LIB_DIR)					\
 		STRIPFLAGS="$(STRIPFLAGS)"			\
