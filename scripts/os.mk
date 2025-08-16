@@ -6,7 +6,7 @@ else ifeq ($(UNAME_S),Darwin)
     UNAME_M := $(shell sysctl -n hw.machine)
 else
     # Linux
-    UNAME_M := $(shell lscpu -p=ARCH | grep -v '^#' | head -n1)
+    UNAME_M := $(shell uname -m)
 endif
 
 ifeq ($(UNAME_S),Linux)
