@@ -12,13 +12,13 @@ else
 endif
 
 ifeq ($(OS),Windows_NT)
-    ifeq ($(UNAME_M),AMD64)
+    ifeq ($(UNAME_M),x86_64)
         RUST_TARGET = x86_64-pc-windows-gnu
-    else ifeq ($(UNAME_M),ARM64)
+    else ifneq (,$(filter arm64 aarch64,$(UNAME_M)))
         RUST_TARGET = aarch64-pc-windows-gnu
     endif
 else ifeq ($(UNAME_S),Darwin)
-    ifeq ($(UNAME_M),arm64)
+    ifneq (,$(filter arm64 aarch64,$(UNAME_M)))
         RUST_TARGET = aarch64-apple-darwin
     else
         RUST_TARGET = x86_64-apple-darwin
@@ -27,7 +27,7 @@ else
     # Linux
     ifeq ($(UNAME_M),x86_64)
         RUST_TARGET = x86_64-unknown-linux-gnu
-    else ifeq ($(UNAME_M),aarch64)
+    else ifneq (,$(filter arm64 aarch64,$(UNAME_M)))
         RUST_TARGET = aarch64-unknown-linux-gnu
     endif
 endif
