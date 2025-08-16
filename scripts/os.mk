@@ -1,5 +1,13 @@
 UNAME_S := $(shell uname -s)
-UNAME_M := $(shell uname -m)
+
+ifeq ($(OS),Windows_NT)
+    UNAME_M := $(shell echo $(PROCESSOR_ARCHITECTURE) | tr '[:upper:]' '[:lower:]')
+else ifeq ($(UNAME_S),Darwin)
+    UNAME_M := $(shell sysctl -n hw.machine)
+else
+    # Linux
+    UNAME_M := $(shell lscpu -p=ARCH | grep -v '^#' | head -n1)
+endif
 
 ifeq ($(UNAME_S),Linux)
   EXE_EXT :=
@@ -12,9 +20,9 @@ else
 endif
 
 ifeq ($(OS),Windows_NT)
-    ifeq ($(UNAME_M),x86_64)
+    ifeq ($(UNAME_M),amd64)
         RUST_TARGET = x86_64-pc-windows-gnu
-    else ifneq (,$(filter arm64 aarch64,$(UNAME_M)))
+    else ifeq ($(UNAME_M),arm64)
         RUST_TARGET = aarch64-pc-windows-gnu
     endif
 else ifeq ($(UNAME_S),Darwin)
