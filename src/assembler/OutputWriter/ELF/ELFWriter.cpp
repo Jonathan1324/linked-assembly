@@ -621,7 +621,7 @@ void ELF::Writer::Write()
         header.SectionSize = static_cast<uint32_t>(symtabBuffer.size());
         header.LinkIndex = strtabIndex;
         header.Info = static_cast<uint32_t>(localSymbols.size());
-        header.AddressAlignment = 4;
+        header.AddressAlignment = 8;
         header.EntrySize = sizeof(Symbol::Entry64);
 
         symtab.header = header;
