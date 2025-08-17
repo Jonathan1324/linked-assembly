@@ -28,48 +28,49 @@ on:
         required: false
         default: 'false'
 
-permissions:
-  actions: 'write'
-
 jobs:
-  build:
-    strategy:
-      matrix:
-        include:
-          - os: ubuntu-24.04
-            arch: x86_64
-            os_name: linux
-            input: ubuntu_x86_64
-          - os: ubuntu-24.04-arm
-            arch: arm64
-            os_name: linux
-            input: ubuntu_arm
-          - os: windows-2025
-            arch: x86_64
-            os_name: windows
-            input: windows_x86_64
-          - os: windows-11-arm
-            arch: arm64
-            os_name: windows
-            input: windows_arm
-          - os: macos-13
-            arch: x86_64
-            os_name: macos
-            input: macos_x86_64
-          - os: macos-15
-            arch: arm64
-            os_name: macos
-            input: macos_arm
-    
-    runs-on: ${{ matrix.os }}
-
+  planner:
+    name: Determine matrix
+    runs-on: ubuntu-latest
+    outputs:
+      matrix: ${{ steps.set-matrix.outputs.matrix }}
     steps:
-      - name: Skip job if not selected
-        if: ${{ github.event.inputs[matrix.input] != 'true' }}
+      - id: set-matrix
         run: |
-          gh run cancel ${{ github.run_id }}
-          gh run watch ${{ github.run_id }}
+          MATRIX='{"include":['
 
+          if [[ "${{ github.event.inputs.ubuntu_x86_64 }}" == "true" ]]; then
+            MATRIX+='{"os":"ubuntu-24.04","arch":"x86_64","os_name":"linux"},'
+          fi
+          if [[ "${{ github.event.inputs.ubuntu_arm }}" == "true" ]]; then
+            MATRIX+='{"os":"ubuntu-24.04-arm","arch":"arm64","os_name":"linux"},'
+          fi
+          if [[ "${{ github.event.inputs.windows_x86_64 }}" == "true" ]]; then
+            MATRIX+='{"os":"windows-2025","arch":"x86_64","os_name":"windows"},'
+          fi
+          if [[ "${{ github.event.inputs.windows_arm }}" == "true" ]]; then
+            MATRIX+='{"os":"windows-11-arm","arch":"arm64","os_name":"windows"},'
+          fi
+          if [[ "${{ github.event.inputs.macos_x86_64 }}" == "true" ]]; then
+            MATRIX+='{"os":"macos-13","arch":"x86_64","os_name":"macos"},'
+          fi
+          if [[ "${{ github.event.inputs.macos_arm }}" == "true" ]]; then
+            MATRIX+='{"os":"macos-15","arch":"arm64","os_name":"macos"},'
+          fi
+
+          # Entferne letztes Komma
+          MATRIX="${MATRIX%,}"
+          MATRIX+=']}'
+
+          echo "Matrix=$MATRIX" >> $GITHUB_OUTPUT
+
+  build:
+    name: Build
+    needs: planner
+    runs-on: ${{ matrix.os }}
+    strategy:
+      matrix: ${{ fromJson(needs.planner.outputs.matrix).include }}
+    steps:
       - name: Checkout repository
         uses: actions/checkout@v3
 
