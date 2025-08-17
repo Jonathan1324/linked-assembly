@@ -5,28 +5,34 @@ on:
     inputs:
       ubuntu_x86_64:
         description: "Build for Ubuntu x86_64"
-        required: false
-        default: 'false'
+        required: true
+        default: false
+        type: boolean
       ubuntu_arm:
         description: "Build for Ubuntu arm"
-        required: false
-        default: 'false'
+        required: true
+        default: false
+        type: boolean
       windows_x86_64:
         description: "Build for Windows x86_64"
-        required: false
-        default: 'false'
+        required: true
+        default: false
+        type: boolean
       windows_arm:
         description: "Build for Windows arm"
-        required: false
-        default: 'false'
+        required: true
+        default: false
+        type: boolean
       macos_x86_64:
         description: "Build for macOS x86_64"
-        required: false
-        default: 'false'
+        required: true
+        default: false
+        type: boolean
       macos_arm:
         description: "Build for macOS arm"
-        required: false
-        default: 'false'
+        required: true
+        default: false
+        type: boolean
 
 jobs:
   planner:
