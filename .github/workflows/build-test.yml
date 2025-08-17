@@ -2,6 +2,31 @@ name: build-test
 
 on:
   workflow_dispatch:
+    inputs:
+      ubuntu_x86_64:
+        description: "Build for Ubuntu x86_64"
+        required: false
+        default: 'false'
+      ubuntu_arm:
+        description: "Build for Ubuntu arm"
+        required: false
+        default: 'false'
+      windows_x86_64:
+        description: "Build for Windows x86_64"
+        required: false
+        default: 'false'
+      windows_arm:
+        description: "Build for Windows arm"
+        required: false
+        default: 'false'
+      macos_x86_64:
+        description: "Build for macOS x86_64"
+        required: false
+        default: 'false'
+      macos_arm:
+        description: "Build for macOS arm"
+        required: false
+        default: 'false'
 
 jobs:
   build:
@@ -11,25 +36,35 @@ jobs:
           - os: ubuntu-24.04
             arch: x86_64
             os_name: linux
+            input: ubuntu_x86_64
           - os: ubuntu-24.04-arm
             arch: arm64
             os_name: linux
+            input: ubuntu_arm
           - os: windows-2025
             arch: x86_64
             os_name: windows
+            input: windows_x86_64
           - os: windows-11-arm
             arch: arm64
             os_name: windows
+            input: windows_arm
           - os: macos-13
             arch: x86_64
             os_name: macos
+            input: macos_x86_64
           - os: macos-15
             arch: arm64
             os_name: macos
+            input: macos_arm
     
     runs-on: ${{ matrix.os }}
 
     steps:
+      - name: Skip if not selected
+        if: ${{ github.event.inputs[matrix.input] != 'true' }}
+        run: echo "Skipping ${{ matrix.os }}-${{ matrix.arch }}" && exit 0
+
       - name: Checkout repository
         uses: actions/checkout@v3
 
