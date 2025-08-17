@@ -28,6 +28,9 @@ on:
         required: false
         default: 'false'
 
+permissions:
+  actions: 'write'
+
 jobs:
   build:
     strategy:
@@ -61,12 +64,16 @@ jobs:
     runs-on: ${{ matrix.os }}
 
     steps:
-      - name: Checkout repository
+      - name: Skip job if not selected
         if: ${{ github.event.inputs[matrix.input] != 'true' }}
+        run: |
+          gh run cancel ${{ github.run_id }}
+          gh run watch ${{ github.run_id }}
+
+      - name: Checkout repository
         uses: actions/checkout@v3
 
       - name: Install build dependencies
-        if: ${{ github.event.inputs[matrix.input] != 'true' }}
         run: |
           if [ "${{ matrix.os_name }}" = "windows" ]; then
             python scripts/install_build_deps.py
@@ -76,7 +83,6 @@ jobs:
         shell: bash
 
       - name: Build the project
-        if: ${{ github.event.inputs[matrix.input] != 'true' }}
         run: |
           if [ "${{ matrix.os_name }}" = "windows" ]; then
             python -m ci.ci --no-test -a -A linked-assembly-${{ matrix.os_name }}-${{ matrix.arch }}
@@ -86,14 +92,12 @@ jobs:
         shell: bash
 
       - name: Upload binaries as artifact
-        if: ${{ github.event.inputs[matrix.input] != 'true' }}
         uses: actions/upload-artifact@v4
         with:
           name: linked-assembly-${{ matrix.os_name }}-${{ matrix.arch }}
           path: dist/
 
       - name: Upload logs as artifact
-        if: ${{ github.event.inputs[matrix.input] != 'true' }}
         uses: actions/upload-artifact@v4
         with:
           name: linked-assembly-${{ matrix.os_name }}-${{ matrix.arch }}-logs
