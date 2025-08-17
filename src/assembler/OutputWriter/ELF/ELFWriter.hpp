@@ -5,13 +5,26 @@
 
 namespace ELF
 {
+    struct RelocationSection
+    {
+        std::vector<uint8_t> buffer;
+        std::string name;
+
+        std::variant<SectionHeader32, SectionHeader64> header;
+    };
+
     struct Section
     {
         const std::vector<uint8_t>* buffer;
+        std::string name;
 
         bool writeBuffer = true;
         
         std::variant<SectionHeader32, SectionHeader64> header;
+
+        std::vector<Encoder::Relocation> relocations;
+        bool hasRelocations = false;
+        bool hasAddend = false;
 
         bool nullSection = false;
     };
@@ -26,6 +39,7 @@ namespace ELF
 
     protected:
         std::vector<Section> sections;
+        std::vector<RelocationSection> relocationSections;
 
         using SymbolEntry = std::variant<Symbol::Entry32, Symbol::Entry64>;
         std::vector<SymbolEntry> localSymbols;

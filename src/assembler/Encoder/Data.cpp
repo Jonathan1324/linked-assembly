@@ -14,14 +14,39 @@ std::vector<uint8_t> Encoder::Encoder::EncodeData(const Parser::DataDefinition& 
             if (value.operands.empty())
                 throw Exception::SemanticError("Data definition cannot be empty", dataDefinition.lineNumber, dataDefinition.column);
 
-            Evaluation evaluated = Evaluate(value, bytesWritten, sectionOffset);
+            Evaluation evaluated = Evaluate(value, bytesWritten, sectionOffset, currentSection);
 
-            if (evaluated.relocationPossible) throw Exception::InternalError("Data.cpp: Evaluation not possible");
-
-            for (size_t i = 0; i < dataDefinition.size; i++)
+            if (evaluated.useOffset)
             {
-                uint8_t byte = static_cast<uint8_t>((evaluated.result >> (i * 8)) & 0xFF);
-                buffer.push_back(byte);
+                for (size_t i = 0; i < dataDefinition.size; i++)
+                {
+                    uint8_t byte = static_cast<uint8_t>((evaluated.offset >> (i * 8)) & 0xFF);
+                    buffer.push_back(byte);
+                }
+                Relocation reloc;
+                reloc.offsetInSection = sectionOffset;
+                reloc.addend = evaluated.offset;
+                reloc.addendInCode = true;
+                reloc.section = *currentSection;
+                reloc.usedSection = evaluated.usedSection;
+                reloc.type = RelocationType::Absolute;
+                switch (dataDefinition.size)
+                {
+                    case 1: reloc.size = RelocationSize::Bit8; break;
+                    case 2: reloc.size = RelocationSize::Bit16; break;
+                    case 3: reloc.size = RelocationSize::Bit24; break;
+                    case 4: reloc.size = RelocationSize::Bit32; break;
+                    case 8: reloc.size = RelocationSize::Bit64; break;
+                }
+                relocations.push_back(std::move(reloc));
+            }
+            else
+            {
+                for (size_t i = 0; i < dataDefinition.size; i++)
+                {
+                    uint8_t byte = static_cast<uint8_t>((evaluated.result >> (i * 8)) & 0xFF);
+                    buffer.push_back(byte);
+                }
             }
         }
         return buffer;

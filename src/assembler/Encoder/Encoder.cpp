@@ -63,9 +63,12 @@ void Encoder::Encoder::Encode()
     // resolve constant that don't use labels, $ or $$
     resolveConstants(false);
 
+    relocations.clear();
+
     bytesWritten = 0;
     for (const auto& section : parsedSections)
     {
+        currentSection = &section.name;
         sectionOffset = 0;
         for (size_t i = 0; i < section.entries.size(); i++)
         {
@@ -118,7 +121,7 @@ void Encoder::Encoder::Encode()
             else if (std::holds_alternative<Parser::Repetition>(entry))
             {
                 const Parser::Repetition& repetition = std::get<Parser::Repetition>(entry);
-                const Evaluation countEval = Evaluate(repetition.count, bytesWritten, sectionOffset);
+                const Evaluation countEval = Evaluate(repetition.count, bytesWritten, sectionOffset, currentSection);
                 const Int128& count128 = countEval.result;
 
                 if (count128 < 0)
@@ -133,7 +136,7 @@ void Encoder::Encoder::Encode()
             else if (std::holds_alternative<Parser::Alignment>(entry))
             {
                 const Parser::Alignment& alignment = std::get<Parser::Alignment>(entry);
-                const Evaluation alignEval = Evaluate(alignment.align, bytesWritten, sectionOffset);
+                const Evaluation alignEval = Evaluate(alignment.align, bytesWritten, sectionOffset, currentSection);
                 const Int128& align = alignEval.result;
 
                 if (align <= 0)
@@ -171,6 +174,7 @@ void Encoder::Encoder::Encode()
             sec.isInitialized = false;
         }
 
+        currentSection = &section.name;
         sectionOffset = 0;
 
         for (size_t i = 0; i < section.entries.size(); i++)
@@ -208,7 +212,7 @@ void Encoder::Encoder::Encode()
             else if (std::holds_alternative<Parser::Repetition>(entry))
             {
                 const Parser::Repetition& repetition = std::get<Parser::Repetition>(entry);
-                const Evaluation countEval = Evaluate(repetition.count, bytesWritten, sectionOffset);
+                const Evaluation countEval = Evaluate(repetition.count, bytesWritten, sectionOffset, currentSection);
                 const Int128& count128 = countEval.result;
 
                 if (count128 < 0)
@@ -223,7 +227,7 @@ void Encoder::Encoder::Encode()
             else if (std::holds_alternative<Parser::Alignment>(entry))
             {
                 const Parser::Alignment& alignment = std::get<Parser::Alignment>(entry);
-                const Evaluation alignEval = Evaluate(alignment.align, bytesWritten, sectionOffset);
+                const Evaluation alignEval = Evaluate(alignment.align, bytesWritten, sectionOffset, currentSection);
                 const Int128& align = alignEval.result;
                 
                 if (align <= 0)
@@ -265,6 +269,7 @@ void Encoder::Encoder::Print() const
         std::cout << section.name << " (aligned to " + std::to_string(section.align) + "):" << std::endl;
         std::cout << "  Size: " << section.size() << std::endl;
     }
+
     for (const auto& constant : constants)
     {
         const Constant& c = constant.second;
@@ -274,16 +279,26 @@ void Encoder::Encoder::Print() const
             std::cout << "Unresolved constant ";
 
         if (c.prePass)
-            std::cout << "(pre pass) ";
+            std::cout << "(pre pass): ";
+
+        std::cout << "'" << c.name << "' - at offset " << c.offset << " with bytesWritten " << c.bytesWritten << std::endl;
+
+        if (c.useOffset)
+        {
+            std::cout << "  offset: " << c.off << " in section '" << c.usedSection << "'" << std::endl;
+        }
+        else
+        {
+            std::cout << "  value: " << c.value << std::endl;
+        }
 
         switch (c.hasPos)
         {
-            case HasPos::TRUE: std::cout << "with pos "; break;
-            case HasPos::FALSE: std::cout << "without pos "; break;
-            case HasPos::UNKNOWN: default: std::cout << "with/without (unknown) pos "; break;
+            case HasPos::TRUE: std::cout << "  with pos "; break;
+            case HasPos::FALSE: std::cout << "  without pos "; break;
+            case HasPos::UNKNOWN: default: std::cout << "  with/without (unknown) pos "; break;
         }
-        
-        std::cout << "'" << c.name << "': " << c.value << " - at offset " << c.offset << " with bytesWritten " << c.bytesWritten << std::endl;
+        std::cout << std::endl;
     }
 
     for (const auto& label : labels)
@@ -300,6 +315,26 @@ void Encoder::Encoder::Print() const
             std::cout << "local label";
         
         std::cout << ": '" << l.name << "' in section '" << l.section << "' at offset " << l.offset << std::endl;
+    }
+
+    for (const auto& reloc : relocations)
+    {
+        std::cout << "Relocation in '" << reloc.section << "' at " << reloc.offsetInSection << " using '" << reloc.usedSection << "':" << std::endl;
+        std::cout << "  Bits: ";
+        switch (reloc.size)
+        {
+            case RelocationSize::Bit8: std::cout << "8"; break;
+            case RelocationSize::Bit16: std::cout << "16"; break;
+            case RelocationSize::Bit24: std::cout << "24"; break;
+            case RelocationSize::Bit32: std::cout << "32"; break;
+            case RelocationSize::Bit64: std::cout << "64"; break;
+        }
+        std::cout << std::endl << "  Type: ";
+        switch (reloc.type)
+        {
+            case RelocationType::Absolute: std::cout << "Absolute"; break;
+        }
+        std::cout << std::endl << "  Addend: " << reloc.addend << std::endl;
     }
 }
 
