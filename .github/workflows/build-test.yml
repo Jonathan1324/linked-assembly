@@ -34,42 +34,64 @@ jobs:
     runs-on: ubuntu-latest
     outputs:
       matrix: ${{ steps.set-matrix.outputs.matrix }}
+      should_run: ${{ steps.set-matrix.outputs.should_run }}
     steps:
       - id: set-matrix
         run: |
           MATRIX='{"include":['
+          COUNT=0
 
           if [[ "${{ github.event.inputs.ubuntu_x86_64 }}" == "true" ]]; then
             MATRIX+='{"os":"ubuntu-24.04","arch":"x86_64","os_name":"linux"},'
+            COUNT=$((COUNT+1))
           fi
           if [[ "${{ github.event.inputs.ubuntu_arm }}" == "true" ]]; then
             MATRIX+='{"os":"ubuntu-24.04-arm","arch":"arm64","os_name":"linux"},'
+            COUNT=$((COUNT+1))
           fi
           if [[ "${{ github.event.inputs.windows_x86_64 }}" == "true" ]]; then
             MATRIX+='{"os":"windows-2025","arch":"x86_64","os_name":"windows"},'
+            COUNT=$((COUNT+1))
           fi
           if [[ "${{ github.event.inputs.windows_arm }}" == "true" ]]; then
             MATRIX+='{"os":"windows-11-arm","arch":"arm64","os_name":"windows"},'
+            COUNT=$((COUNT+1))
           fi
           if [[ "${{ github.event.inputs.macos_x86_64 }}" == "true" ]]; then
             MATRIX+='{"os":"macos-13","arch":"x86_64","os_name":"macos"},'
+            COUNT=$((COUNT+1))
           fi
           if [[ "${{ github.event.inputs.macos_arm }}" == "true" ]]; then
             MATRIX+='{"os":"macos-15","arch":"arm64","os_name":"macos"},'
+            COUNT=$((COUNT+1))
           fi
 
-          # Entferne letztes Komma
-          MATRIX="${MATRIX%,}"
+          if [ $COUNT -eq 0 ]; then
+            # dummy
+            MATRIX+='{"os":"ubuntu-latest","arch":"x86_64","os_name":"skip","skip":"true"}'
+            SHOULD_RUN=false
+          else
+            # remove last comma
+            MATRIX="${MATRIX%,}"
+            SHOULD_RUN=true
+          fi
+
           MATRIX+=']}'
 
           echo "Matrix=$MATRIX" >> $GITHUB_OUTPUT
+          echo "should_run=$SHOULD_RUN" >> $GITHUB_OUTPUT
 
   build:
     name: Build
     needs: planner
-    runs-on: ${{ matrix.os }}
+
     strategy:
       matrix: ${{ fromJson(needs.planner.outputs.matrix) }}
+  
+    runs-on: ${{ matrix.os }}
+
+    if: ${{ needs.planner.outputs.should_run == 'true' }}
+    
     steps:
       - name: Checkout repository
         uses: actions/checkout@v3
