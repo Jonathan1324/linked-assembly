@@ -69,7 +69,7 @@ jobs:
     needs: planner
     runs-on: ${{ matrix.os }}
     strategy:
-      matrix: ${{ fromJson(needs.planner.outputs.matrix).include }}
+      matrix: ${{ fromJson(needs.planner.outputs.matrix) }}
     steps:
       - name: Checkout repository
         uses: actions/checkout@v3
