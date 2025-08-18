@@ -35,6 +35,25 @@ class Arch(Enum):
     ARM = 2
     RISCV = 3
 
+arch_map = {
+    Arch.X86: "x86",
+    Arch.ARM: "arm",
+    Arch.RISCV: "riscv"
+}
+
+bits_map = {
+    Bits.B16: "16bit",
+    Bits.B32: "32bit",
+    Bits.B64: "64bit"
+}
+
+format_map = {
+    Format.BIN: "bin",
+    Format.ELF: "elf",
+    Format.COFF: "coff",
+    Format.MACHO: "macho"
+}
+
 def runAssembler(src: str, dst: str, debug: bool, logs: Path,
                  arch: Arch, bits: Bits, format: Format) -> bool:
     cmd = ["dist/bin/assembler", src]
@@ -44,41 +63,44 @@ def runAssembler(src: str, dst: str, debug: bool, logs: Path,
     bits_str: str
     format_str: str
 
-    match arch:
-        case Arch.X86:
-            arch_str = "x86"
-            cmd.extend(["--arch", "x86"])
-        case Arch.ARM:
-            arch_str = "arm"
-            cmd.extend(["--arch", "arm"])
-        case Arch.RISCV:
-            arch_str = "riscv"
-            cmd.extend(["--arch", "riscv"])
+    if arch == Arch.X86:
+        arch_str = "x86"
+        cmd.extend(["--arch", "x86"])
+    elif arch == Arch.ARM:
+        arch_str = "arm"
+        cmd.extend(["--arch", "arm"])
+    elif arch == Arch.RISCV:
+        arch_str = "riscv"
+        cmd.extend(["--arch", "riscv"])
+    else:
+        raise ValueError(f"Unsupported architecture: {arch}")
 
-    match bits:
-        case Bits.B16:
-            bits_str = "16bit"
-            cmd.append("-m16")
-        case Bits.B32:
-            bits_str = "32bit"
-            cmd.append("-m32")
-        case Bits.B64:
-            bits_str = "64bit"
-            cmd.append("-m64")
+    if bits == Bits.B16:
+        bits_str = "16bit"
+        cmd.append("-m16")
+    elif bits == Bits.B32:
+        bits_str = "32bit"
+        cmd.append("-m32")
+    elif bits == Bits.B64:
+        bits_str = "64bit"
+        cmd.append("-m64")
+    else:
+        raise ValueError(f"Unsupported bit size: {bits}")
 
-    match format:
-        case Format.BIN:
-            format_str = "bin"
-            cmd.extend(["--format", "bin"])
-        case Format.ELF:
-            format_str = "elf"
-            cmd.extend(["--format", "elf"])
-        case Format.COFF:
-            format_str = "coff"
-            cmd.extend(["--format", "coff"])
-        case Format.MACHO:
-            format_str = "macho"
-            cmd.extend(["--format", "macho"])
+    if format == Format.BIN:
+        format_str = "bin"
+        cmd.extend(["--format", "bin"])
+    elif format == Format.ELF:
+        format_str = "elf"
+        cmd.extend(["--format", "elf"])
+    elif format == Format.COFF:
+        format_str = "coff"
+        cmd.extend(["--format", "coff"])
+    elif format == Format.MACHO:
+        format_str = "macho"
+        cmd.extend(["--format", "macho"])
+    else:
+        raise ValueError(f"Unsupported format: {format}")
 
     ext: str
     if format == Format.BIN:
@@ -110,19 +132,12 @@ def testAssembler(src_dir: Path, build_dir: Path, log_dir: Path):
                     arch_str: str
                     bits_str: str
                     format_str: str
-                    match arch:
-                        case Arch.X86: arch_str = "x86"
-                        case Arch.ARM: arch_str = "arm"
-                        case Arch.RISCV: arch_str = "riscv"
-                    match bits:
-                        case Bits.B16: bits_str = "16bit"
-                        case Bits.B32: bits_str = "32bit"
-                        case Bits.B64: bits_str = "64bit"
-                    match format:
-                        case Format.BIN: format_str = "bin"
-                        case Format.ELF: format_str = "elf"
-                        case Format.COFF: format_str = "coff"
-                        case Format.MACHO: format_str = "macho"
+                    try:
+                        arch_str = arch_map[arch]
+                        bits_str = bits_map[bits]
+                        format_str = format_map[format]
+                    except KeyError as e:
+                        raise ValueError(f"Unsupported value: {e}")
                             
                     result = runAssembler(
                         src=str(asmfile),
