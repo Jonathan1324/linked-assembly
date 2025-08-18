@@ -66,6 +66,10 @@ def main(args) -> bool:
         clean(debug=args.debug)
         shutil.rmtree("dist", ignore_errors=True)
         shutil.rmtree("archives", ignore_errors=True)
+        if (args.test):
+            shutil.rmtree("tests/build", ignore_errors=True) # TODO: call tests/run.py to clean
+        if (args.log):
+            shutil.rmtree("logs", ignore_errors=True)
 
     if (not args.build):
         logger.debug("Stopping before building")

@@ -6,8 +6,6 @@ RUST_SRCS = $(shell find $(SRC_DIR) -name '*.rs' | sed "s|$(SRC_DIR)/||")
 all: $(TARGET)
 
 $(TARGET): $(RUST_SRCS)
-	uname -s
-	uname -m
 	@echo "Compiling Rust static library"
 	@mkdir -p $(LIB_DIR)
 	@rustc $(RUSTFLAGS) --target=$(RUST_TARGET) $(SRC_DIR)/lib.rs -o $@
