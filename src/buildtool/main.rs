@@ -1,4 +1,7 @@
-mod args;
+mod args
+{
+    pub mod args;
+}
 
 fn main()
 {
@@ -6,15 +9,12 @@ fn main()
 
     if args.iter().any(|a| a == "-v" || a == "--version")
     {
-        unsafe
-        {
-            args::print_version();
-        }
+        args::args::print_version();
         std::process::exit(0);
     }
     if args.iter().any(|a| a == "-h" || a == "--help")
     {
-        args::print_help();
+        args::args::print_help();
         std::process::exit(0);
     }
 

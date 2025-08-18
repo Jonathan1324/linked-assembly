@@ -30,6 +30,7 @@ def install_rust():
 
     run("cargo download serde --version 1.0")
     run("cargo download serde_yaml --version 0.9")
+    run("cargo install cargo-license")
 
 if __name__ == "__main__":
     import shutil

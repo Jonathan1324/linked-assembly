@@ -15,7 +15,11 @@ $(TARGET): $(RUST_SRCS)
 #	Rust just uses one file and modules inside of it
 
 record:
+	@mkdir -p $(BUILD_DIR)
+	@cargo license | grep -v "buildtool" \
+		> $(BUILD_DIR)/LICENSES.txt
 	@echo $(TARGET) >> $(BIN_DIR)/binaries.txt
+	@echo $(BUILD_DIR)/LICENSES.txt >> $(BIN_DIR)/licenses.txt
 
 clean:
 	@rm -rf $(BUILD_DIR)

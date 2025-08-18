@@ -10,11 +10,29 @@ logger = logging.getLogger("ci")
 def stage_artifacts(debug: bool) -> bool:
     logger.debug("Staging the artifacts")
 
-    dist_bin = Path("dist/bin")
+    dist_dir = Path("dist")
+
+    dist_bin = Path(f"{dist_dir}/bin")
     dist_bin.mkdir(parents=True, exist_ok=True)
+    third_party_license_file = Path(f"{dist_dir}/THIRD_PARTY_LICENSES.txt")
 
     build_type = "debug" if debug else "release"
     binaries = Path(f"build/{build_type}/binaries.txt")
+    licenses = Path(f"build/{build_type}/licenses.txt")
+
+    with third_party_license_file.open("w", encoding="utf-8") as out_f:
+        for line in licenses.read_text(encoding="utf-8").splitlines():
+            license_path = Path(line.strip())
+            if license_path.is_file():
+                content = license_path.read_text(encoding="utf-8")
+                out_f.write(content)
+                out_f.write("\n\n")
+                logger.debug(f"Copied content of {license_path} to {third_party_license_file}")
+            else:
+                logger.warning(f"{license_path} does not exist")
+
+    licenses.unlink()
+    logger.debug(f"Deleted {licenses}")
     
     if not binaries.exists():
         logger.error(f"{binaries} does not exist")
@@ -39,6 +57,6 @@ def stage_artifacts(debug: bool) -> bool:
     logger.info(f"Staged {len(list(dist_bin.iterdir()))} binaries in dist/bin")
 
     binaries.unlink()
-    logger.debug("Deleted {binaries}")
+    logger.debug(f"Deleted {binaries}")
 
     return True
