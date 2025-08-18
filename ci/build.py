@@ -1,9 +1,10 @@
 import subprocess
 import logging
+from ci.os import OS, ARCH, getOS, getArch
 
 logger = logging.getLogger("ci")
 
-def build(debug: bool, os: str, arch: str) -> bool:
+def build(debug: bool, os: OS, arch: ARCH) -> bool:
     logger.info("Building the project")
     cmd = ["make"]
     if (debug): cmd.append("DEBUG=1")
@@ -12,7 +13,7 @@ def build(debug: bool, os: str, arch: str) -> bool:
     result = subprocess.run(cmd)
     return result.returncode == 0
 
-def clean(debug: bool, os: str, arch: str) -> bool:
+def clean(debug: bool, os: OS, arch: ARCH) -> bool:
     logger.info("Cleaning")
     cmd = ["make", "clean"]
     if (debug): cmd.append("DEBUG=1")

@@ -1,6 +1,7 @@
 from ci.build import build, clean
 from ci.artifacts import stage_artifacts
 from ci.archive import archive
+from ci.os import OS, ARCH, getOS, getArch
 
 from pathlib import Path
 import argparse
@@ -9,7 +10,6 @@ import sys
 import subprocess
 import shutil
 import platform
-import struct
 
 # Logger
 logger = logging.getLogger("ci")
@@ -79,9 +79,13 @@ parser.add_argument(
     help="windows, macos or linux"
 )
 
-def main(args, os_name: str, arch_name: str) -> bool:
+def main(args, os: OS, arch: ARCH) -> bool:
+    if (os == OS.Windows and arch == ARCH.ARM64):
+        print("Windows ARM isn't supported")
+        exit(1)
+
     if (args.clean):
-        clean(debug=args.debug, os=os_name, arch=arch_name)
+        clean(debug=args.debug, os=os, arch=arch)
         shutil.rmtree("dist", ignore_errors=True)
         shutil.rmtree("archives", ignore_errors=True)
         if (args.test):
@@ -93,7 +97,7 @@ def main(args, os_name: str, arch_name: str) -> bool:
         logger.debug("Stopping before building")
         return False
 
-    result: bool = build(debug=args.debug, os=os_name, arch=arch_name)
+    result: bool = build(debug=args.debug, os=os, arch=arch)
     if (not result):
         logger.error("Building failed")
         return False
@@ -139,27 +143,29 @@ if __name__ == "__main__":
 
     logger.debug(f"Debug: {args.debug}, Clean: {args.clean}, Build: {args.build}, Test: {args.test}, Archive: {args.archive}")
     archive_name = args.archive_name or "linked-assembly"
-    os = ""
-    arch = ""
-
-    os_uname = platform.system().lower()
-    if (os_uname == "windows"): os = "windows"
-    elif (os_uname == "darwin"): os = "macos"
-    elif (os_uname == "linux"): os = "linux"
-    else: raise ValueError("Unknown architecture")
-
-    cpu_arch = platform.machine().lower()
-    if (cpu_arch in ["x86_64", "amd64"]): arch = "x86_64"
-    elif (cpu_arch in ["arm64", "aarch64"]): arch = "arm64"
-    else: raise ValueError("Unknown architecture")
-
-    os_name = args.os_name or os
-    arch_name = args.arch_name or arch
-
     logger.debug(f"Archive name: {archive_name}")
-    logger.debug(f"OS: {os_name}, ARCH: {arch_name}")
 
-    result: bool = main(args=args, os_name=os_name, arch_name=arch_name)
+    os: OS
+    arch: ARCH
+    os_uname = platform.system().lower()
+    if (os_uname == "windows"): os = OS.Windows
+    elif (os_uname == "darwin"): os = OS.macOS
+    elif (os_uname == "linux"): os = OS.Linux
+    else: raise ValueError("Unknown architecture")
+    cpu_arch = platform.machine().lower()
+    if (cpu_arch in ["x86_64", "amd64"]): arch = ARCH.x86_64
+    elif (cpu_arch in ["arm64", "aarch64"]): arch = ARCH.ARM64
+    else: raise ValueError("Unknown architecture")
+    if (args.os_name):
+        if (args.os_name == "windows"): os = OS.Windows
+        elif (args.os_name == "macos"): os = OS.macOS
+        elif (args.os_name == "linux"): os = OS.Linux
+    if (args.arch_name):
+        if (args.arch_name == "x86_64"): arch = ARCH.x86_64
+        elif (args.arch_name == "arm64"): arch = ARCH.ARM64
+    logger.debug(f"OS: {getOS(os)}, ARCH: {getArch(arch)}")
+
+    result: bool = main(args, os, arch)
     if not result:
         sys.exit(1)
 
