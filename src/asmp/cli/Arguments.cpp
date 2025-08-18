@@ -20,7 +20,7 @@ bool parseArguments(int argc, const char *argv[], std::string& input, std::strin
 
     if (strcmp(argv[1], "--version") == 0 || strcmp(argv[1], "-v") == 0)
     {
-        printVersion(VERSION_STR);
+        printVersion();
         return true;
     }
     else if (strcmp(argv[1], "--help") == 0 || strcmp(argv[1], "-h") == 0)

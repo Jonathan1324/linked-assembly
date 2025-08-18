@@ -1,0 +1,20 @@
+files:
+  C_SOURCES:
+    dir: ${SRC_DIR}
+    filter: *.c
+    type: glob
+    target: C_SOURCE
+
+targets:
+  MAIN:
+    toolchain: myToolchain
+    depends:
+    - C_SOURCES
+    outputs:
+    - ${BUILD_DIR}/main
+
+
+  C_SOURCE:
+    toolchain: myToolchain
+    outputs:
+    - ${BUILD_DIR}/${{NAME}}.o

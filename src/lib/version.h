@@ -12,6 +12,6 @@ HCB
 #define STR(x) STR_HELPER(x)
 #define VERSION_STR STR(VERSION)
 
-void printVersion(const char* version);
+void printVersion();
 
 HCE
