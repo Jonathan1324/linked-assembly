@@ -15,11 +15,11 @@ ifeq ($(OS_NAME),windows)
 endif
 ifeq ($(OS_NAME),macos)
     LDFLAGS += -lpthread -lm -lc++
-    ifeq ($(ARCH),arm64)
-        RUST_TARGET = aarch64-apple-darwin
-    endif
     ifeq ($(ARCH),x86_64)
         RUST_TARGET = x86_64-apple-darwin
+    endif
+    ifeq ($(ARCH),arm64)
+        RUST_TARGET = aarch64-apple-darwin
     endif
 endif
 ifeq ($(OS_NAME),linux)
