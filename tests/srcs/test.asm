@@ -6,7 +6,9 @@ section .text
     global _start
 
 _start:
+    int msg
     
-    
-section .data    
-test:   dd 0x12345678
+section .data
+
+msg db "Hello, world!", ENDL
+msg_len equ $ - msg

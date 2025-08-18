@@ -45,8 +45,13 @@ namespace Encoder
         std::string name;
         std::string section;
         Parser::Immediate expression;
-        HasPos hasPos;
         int64_t value;
+
+        int64_t off;
+        std::string usedSection;
+
+        HasPos hasPos;
+        bool useOffset = false;
 
         size_t offset;
         size_t bytesWritten;
@@ -54,19 +59,45 @@ namespace Encoder
         bool isGlobal;
         bool resolved;
         bool prePass = false;
+        bool relocationPossible = false;
+    };
+
+    enum class RelocationType
+    {
+        Absolute
+    };
+
+    enum class RelocationSize
+    {
+        Bit8 = 8,
+        Bit16 = 16,
+        Bit24 = 24,
+        Bit32 = 32,
+        Bit64 = 64
     };
 
     struct Relocation
     {
+        uint64_t offsetInSection;
+        int64_t addend;
+        std::string section;
+        std::string usedSection;
 
+        RelocationType type;
+        RelocationSize size;
+
+        bool addendInCode = false;
     };
 
 
     struct Evaluation
     {
         Int128 result;
+        int64_t offset;
+        bool useOffset;
         bool relocationPossible;
-        uint64_t offset;
+
+        std::string usedSection;
     };
     
     
@@ -84,6 +115,7 @@ namespace Encoder
         using Symbol = std::variant<Label*, Constant*>;
         const std::vector<Section>& getSections() const { return sections; };
         const std::vector<Symbol>& getSymbols() const { return symbols; };
+        const std::vector<Relocation>& getRelocations() const { return relocations; }
         
     protected:
         virtual std::vector<uint8_t> EncodeInstruction(const Parser::Instruction::Instruction& instruction, bool ignoreUnresolved = false) = 0;
@@ -92,7 +124,7 @@ namespace Encoder
         std::vector<uint8_t> EncodeData(const Parser::DataDefinition& dataDefinition);
         uint64_t GetSize(const Parser::DataDefinition& dataDefinition);
 
-        Evaluation Evaluate(const Parser::Immediate& immediate, uint64_t bytesWritten, uint64_t sectionOffset) const;
+        Evaluation Evaluate(const Parser::Immediate& immediate, uint64_t bytesWritten, uint64_t sectionOffset, const std::string* curSection) const;
 
         void resolveConstants(bool withPos);
         bool Resolvable(const Parser::Immediate& immediate);
@@ -107,6 +139,7 @@ namespace Encoder
         const Parser::Parser* parser = nullptr;
 
         std::vector<Section> sections;
+        std::vector<Relocation> relocations;
 
         std::unordered_map<std::string, Label> labels;
         std::unordered_map<std::string, Constant> constants;
@@ -115,6 +148,7 @@ namespace Encoder
 
         size_t bytesWritten = 0;
         size_t sectionOffset = 0;
+        const std::string* currentSection;
     };
 
     Encoder* getEncoder(const Context& context, Architecture arch, BitMode bits, const Parser::Parser* parser);

@@ -15,48 +15,25 @@ static bool isLeftAssociative(const std::string& op)
     return op != "^";
 }
 
-std::vector<ShuntingYard::Token> ShuntingYard::prepareTokens(
+ShuntingYard::PreparedTokens ShuntingYard::prepareTokens(
         const std::vector<Parser::ImmediateOperand>& operands,
         const std::unordered_map<std::string, Encoder::Label>& labels,
         const std::unordered_map<std::string, Encoder::Constant>& constants,
         uint64_t bytesWritten,
-        uint64_t sectionOffset
+        uint64_t sectionOffset,
+        const std::string* currentSection
     )
 {
+    PreparedTokens output;
+    output.relocationPossible = true;
+
     std::vector<Token> outputQueue;
     std::stack<std::string> operatorStack;
 
-    auto getValue = [&](const Parser::ImmediateOperand& op) -> Int128
-    {
-        if (std::holds_alternative<Parser::Integer>(op))
-        {
-            return static_cast<Int128>(std::get<Parser::Integer>(op).value);
-        }
-        else if (std::holds_alternative<Parser::String>(op))
-        {
-            const std::string& name = std::get<Parser::String>(op).value;
-            if (auto it = labels.find(name); it != labels.end())
-                return static_cast<Int128>(it->second.offset);
-            if (auto it = constants.find(name); it != constants.end())
-            {
-                if (!it->second.resolved)
-                    throw Exception::InternalError("Unresolved constants '" + name + "' used in expression");
-                return static_cast<Int128>(it->second.value);
-            }
-            throw Exception::InternalError("Unknown string '" + name + "'");
-        }
-        else if (std::holds_alternative<Parser::CurrentPosition>(op))
-        {
-            const Parser::CurrentPosition& curPos = std::get<Parser::CurrentPosition>(op);
-            return curPos.sectionPos ? static_cast<Int128>(sectionOffset) : static_cast<Int128>(bytesWritten);
-        }
-        else
-        {
-            throw Exception::InternalError("Expected value operand");
-        }
-    };
-
     bool expectUnaryMinus = false;
+
+    const std::string* usedSection;
+    bool useSection = false;
 
     for (size_t i = 0; i < operands.size(); i++)
     {
@@ -114,19 +91,96 @@ std::vector<ShuntingYard::Token> ShuntingYard::prepareTokens(
                 operatorStack.push(opStr);
             }
         }
-        /*else if (std::holds_alternative<Parser::CurrentPosition>(op))
+        else if (std::holds_alternative<Parser::Integer>(op))
         {
-            const Parser::CurrentPosition& curPos = std::get<Parser::CurrentPosition>(op);
-        }*/
-        else
-        {
-            Int128 val = getValue(op);
+            Int128 val = static_cast<Int128>(std::get<Parser::Integer>(op).value);
             if (expectUnaryMinus)
             {
                 val = -val;
                 expectUnaryMinus = false;
             }
             outputQueue.emplace_back(val);
+        }
+        else if (std::holds_alternative<Parser::String>(op))
+        {
+            const std::string& name = std::get<Parser::String>(op).value;
+            if (auto it = labels.find(name); it != labels.end())
+            {
+                if (useSection && it->second.section.compare(*usedSection) != 0)
+                {
+                    output.relocationPossible = false;
+                }
+                Token token;
+                token.type = Token::Type::Position;
+                token.offset = it->second.offset;
+                if (expectUnaryMinus)
+                {
+                    token.negative = true;
+                    expectUnaryMinus = false;
+                }
+                outputQueue.push_back(std::move(token));
+                usedSection = &it->second.section;
+                useSection = true;
+            }
+            else if (auto it = constants.find(name); it != constants.end())
+            {
+                const Encoder::Constant& c = it->second;
+                if (useSection && c.usedSection.compare(*usedSection) != 0 && c.hasPos == Encoder::HasPos::TRUE || !it->second.relocationPossible)
+                {
+                    output.relocationPossible = false;
+                }
+                if (!c.resolved)
+                    throw Exception::InternalError("Unresolved constants '" + name + "' used in expression");
+
+                if (c.useOffset)
+                {
+                    Token token;
+                    token.type = Token::Type::Position;
+                    token.offset = c.off;
+                    if (expectUnaryMinus)
+                    {
+                        token.negative = true;
+                        expectUnaryMinus = false;
+                    }
+                    outputQueue.push_back(std::move(token));
+                    usedSection = &c.usedSection;
+                    useSection = true;
+                }
+                else
+                {
+                    Int128 val = static_cast<Int128>(c.value);
+                    if (expectUnaryMinus)
+                    {
+                        val = -val;
+                        expectUnaryMinus = false;
+                    }
+                    outputQueue.emplace_back(val);
+                }
+            }
+            else throw Exception::InternalError("Unknown string '" + name + "'");
+        }
+        else if (std::holds_alternative<Parser::CurrentPosition>(op))
+        {
+            const Parser::CurrentPosition& curPos = std::get<Parser::CurrentPosition>(op);
+            Token token;
+            token.type = Token::Type::Position;
+            token.offset = curPos.sectionPos ? 0 : sectionOffset;
+            if (expectUnaryMinus)
+            {
+                token.negative = true;
+                expectUnaryMinus = false;
+            }
+            outputQueue.push_back(std::move(token));
+            if (useSection && currentSection->compare(*usedSection) != 0)
+            {
+                output.relocationPossible = false;
+            }
+            usedSection = currentSection;
+            useSection = true;
+        }
+        else
+        {
+            throw Exception::InternalError("Expected value operand");
         }
     }
 
@@ -139,10 +193,16 @@ std::vector<ShuntingYard::Token> ShuntingYard::prepareTokens(
         operatorStack.pop();
     }
 
-    return outputQueue;
+    output.tokens = outputQueue;
+    if (useSection)
+        output.usedSection = *usedSection;
+    else
+        output.usedSection = *currentSection;
+
+    return output;
 }
 
-Int128 ShuntingYard::evaluate(const std::vector<ShuntingYard::Token>& tokens)
+Int128 ShuntingYard::evaluate(const std::vector<ShuntingYard::Token>& tokens, uint64_t offset)
 {
     std::stack<Int128> stack;
 
@@ -150,6 +210,8 @@ Int128 ShuntingYard::evaluate(const std::vector<ShuntingYard::Token>& tokens)
     {
         if (token.type == Token::Type::Number)
             stack.push(token.number);
+        else if (token.type == Token::Type::Position)
+            stack.push((token.negative ? -token.offset : token.offset) + offset);
         else if (token.type == Token::Type::Operator)
         {
             if (stack.size() < 2)

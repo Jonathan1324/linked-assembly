@@ -61,8 +61,8 @@ if [ "$OS" = "Linux" ]; then
 
     chmod +x build/test
 else
-    echo "[ERROR] Can't link on this OS: $OS" >> logs/elf/ld.txt 2>&1
-    echo "[ERROR] Can't link on this OS: $OS"
+    echo "[WARNING] Can't link on this OS: $OS" >> logs/elf/ld.txt 2>&1
+    echo "[WARNING] Can't link on this OS: $OS"
     exit 0
 fi
 

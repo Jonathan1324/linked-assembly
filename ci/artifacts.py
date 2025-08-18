@@ -13,7 +13,7 @@ def stage_artifacts(debug: bool) -> bool:
     dist_bin = Path("dist/bin")
     dist_bin.mkdir(parents=True, exist_ok=True)
 
-    build_type = debug if debug else "release"
+    build_type = "debug" if debug else "release"
     binaries = Path(f"build/{build_type}/binaries.txt")
     
     if not binaries.exists():

@@ -18,14 +18,31 @@ std::vector<uint8_t> Encoder::x86::Encoder::EncodeInterruptInstruction(const Par
             if (!Resolvable(immediate) && ignoreUnresolved)
                 return {opcode, 0};
 
-            Evaluation interruptEval = Evaluate(immediate, bytesWritten, sectionOffset);
-            Int128& interrupt128 = interruptEval.result;
+            uint8_t interrupt;
 
-            if (interrupt128 < 0) throw Exception::SemanticError("'int' can't have a negative operand", instruction.lineNumber, instruction.column);
-            if (interrupt128 > 255) throw Exception::SemanticError("Operand too large for 'int'", instruction.lineNumber, instruction.column);
+            Evaluation interruptEval = Evaluate(immediate, bytesWritten, sectionOffset, currentSection);
+            if (interruptEval.useOffset)
+            {
+                interrupt = interruptEval.offset;
+                Relocation reloc;
+                reloc.offsetInSection = sectionOffset + 1; // opcode
+                reloc.addend = interruptEval.offset;
+                reloc.addendInCode = true;
+                reloc.section = *currentSection;
+                reloc.usedSection = interruptEval.usedSection;
+                reloc.type = RelocationType::Absolute;
+                reloc.size = RelocationSize::Bit8;
+                relocations.push_back(std::move(reloc));
+            }
+            else
+            {
+                Int128& interrupt128 = interruptEval.result;
 
-            uint8_t interrupt = static_cast<uint8_t>(interrupt128);
+                if (interrupt128 < 0) throw Exception::SemanticError("'int' can't have a negative operand", instruction.lineNumber, instruction.column);
+                if (interrupt128 > 255) throw Exception::SemanticError("Operand too large for 'int'", instruction.lineNumber, instruction.column);
 
+                interrupt = static_cast<uint8_t>(interrupt128);
+            }
             return {opcode, interrupt};
         }
 

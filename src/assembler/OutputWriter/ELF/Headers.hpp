@@ -222,6 +222,58 @@ namespace ELF
         uint64_t EntrySize;
     } __attribute__((packed));
 
+    inline uint32_t SetRelocationInfo32(uint32_t symbol, uint8_t type)
+    {
+        return (symbol << 8) | (type & 0xff);
+    }
+
+    inline uint64_t SetRelocationInfo64(uint32_t symbol, uint32_t type)
+    {
+        return (static_cast<uint64_t>(symbol) << 32) | (type & 0xffffffff);
+    }
+
+    enum RelocationType32 : uint8_t
+    {
+        R386_None   = 0,
+        R386_ABS32  = 1,
+        R386_ABS16  = 20,
+        R386_ABS8   = 22,
+    };
+
+    enum RelocationType64 : uint32_t
+    {
+        RX64_None   = 0,
+        RX64_ABS64  = 1,
+        RX64_ABS32  = 10,
+        RX64_ABS16  = 12,
+        RX64_ABS8   = 14,
+    };
+
+    struct RelEntry32
+    {
+        uint32_t offset;
+        uint32_t info;
+    } __attribute__((packed));
+
+    struct RelEntry64
+    {
+        uint64_t offset;
+        uint64_t info;
+    } __attribute__((packed));
+
+    struct RelaEntry32
+    {
+        uint32_t offset;
+        uint32_t info;
+        int32_t addend;
+    } __attribute__((packed));
+
+    struct RelaEntry64
+    {
+        uint64_t offset;
+        uint64_t info;
+        int64_t addend;
+    } __attribute__((packed));
 
     namespace Symbol
     {
