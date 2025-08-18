@@ -20,9 +20,9 @@ else
 endif
 
 ifeq ($(OS),Windows_NT)
+    LDFLAGS += -lws2_32 -luser32 -lkernel32 -lwsock32 -lntdll -luserenv
     ifeq ($(UNAME_M),amd64)
         RUST_TARGET = x86_64-pc-windows-gnu
-        LDFLAGS += -lws2_32 -luser32 -lkernel32 -lwsock32 -lntdll
     else ifeq ($(UNAME_M),arm64)
         RUST_TARGET = aarch64-pc-windows-gnu
     endif
