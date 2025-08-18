@@ -35,8 +35,6 @@ class Arch(Enum):
     ARM = 2
     RISCV = 3
 
-log_dir = Path("logs/tests-verbose")
-
 def runAssembler(src: str, dst: str, debug: bool, logs: Path,
                  arch: Arch, bits: Bits, format: Format) -> bool:
     cmd = ["dist/bin/assembler", src]
@@ -96,14 +94,8 @@ def runAssembler(src: str, dst: str, debug: bool, logs: Path,
 
     return result.returncode == 0
 
-if __name__ == "__main__":
-    build_dir = Path("tests/build")
-    build_dir.mkdir(parents=True, exist_ok=True)
-    log_dir.mkdir(parents=True, exist_ok=True)
-
-    src_path = Path("tests/srcs")
-
-    for asmfile in src_path.rglob("*.asm"):
+def testAssembler(src_dir: Path, build_dir: Path, log_dir: Path):
+    for asmfile in src_dir.rglob("*.asm"):
         dst_parts = (Path(build_dir) / asmfile.parent).parts
         dst_path = Path(*dst_parts[:2], *dst_parts[3:], asmfile.name)
         dst_path.parent.mkdir(parents=True, exist_ok=True)
@@ -145,5 +137,15 @@ if __name__ == "__main__":
                         logger.debug(f"Arch: {arch_str}, Bits: {bits_str}, Format: {format_str}; {asmfile} successful")
                     else:
                         logger.warning(f"Arch: {arch_str}, Bits: {bits_str}, Format: {format_str}; {asmfile} failed")
+
+
+if __name__ == "__main__":
+    build_dir = Path("tests/build")
+    build_dir.mkdir(parents=True, exist_ok=True)
+    log_dir = Path("logs/tests-verbose")
+    log_dir.mkdir(parents=True, exist_ok=True)
+    src_dir = Path("tests/srcs")
+
+    testAssembler(src_dir, build_dir, log_dir)
 
     exit(0)

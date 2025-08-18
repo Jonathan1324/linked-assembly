@@ -277,11 +277,17 @@ void ELF::Writer::Write()
             {
                 Symbol::Entry32 entry;
                 entry.OffsetInNameStringTable = nameOffset;
-                entry.Value = static_cast<uint32_t>(constant->value);
+                entry.Value = static_cast<uint32_t>(constant->useOffset ? constant->off : constant->value); // TODO: overflow
                 entry.Size = 0;
                 entry.Info = Symbol::SetInfo(constant->isGlobal ? Symbol::Bind::GLOBAL : Symbol::Bind::LOCAL, Symbol::Type::NONE);
                 entry.Other = 0;
-                entry.IndexInSectionHeaderTable = Symbol::XINDEX;
+                if (constant->useOffset)
+                {
+                    auto it = sectionIndexes.find(constant->usedSection);
+                    if (it == sectionIndexes.end()) throw Exception::InternalError("Unknown section for label");
+                    entry.IndexInSectionHeaderTable = it->second;
+                }
+                else entry.IndexInSectionHeaderTable = Symbol::XINDEX;
                 
                 if (constant->isGlobal) globalSymbols.push_back(std::move(entry));
                 else localSymbols.push_back(std::move(entry));
@@ -292,8 +298,14 @@ void ELF::Writer::Write()
                 entry.OffsetInNameStringTable = nameOffset;
                 entry.Info = Symbol::SetInfo(constant->isGlobal ? Symbol::Bind::GLOBAL : Symbol::Bind::LOCAL, Symbol::Type::NONE);
                 entry.Other = 0;
-                entry.IndexInSectionHeaderTable = Symbol::XINDEX;
-                entry.Value = constant->value;
+                if (constant->useOffset)
+                {
+                    auto it = sectionIndexes.find(constant->usedSection);
+                    if (it == sectionIndexes.end()) throw Exception::InternalError("Unknown section for label");
+                    entry.IndexInSectionHeaderTable = it->second;
+                }
+                else entry.IndexInSectionHeaderTable = Symbol::XINDEX;
+                entry.Value = constant->useOffset ? constant->off : constant->value;
                 entry.Size = 0;
                 
                 if (constant->isGlobal) globalSymbols.push_back(std::move(entry));
