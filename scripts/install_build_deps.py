@@ -27,7 +27,6 @@ def install_rust():
             run("powershell -Command \"iwr https://win.rustup.rs -UseBasicParsing | iex\"")
         else:
             run("curl --proto '=https' --tlsv1.2 -sSf https://sh.rustup.rs | sh -s -- -y")
-    run("cargo install cbindgen")
 
 if __name__ == "__main__":
     import shutil
