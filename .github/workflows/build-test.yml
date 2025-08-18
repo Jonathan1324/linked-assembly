@@ -34,6 +34,12 @@ on:
         default: false
         type: boolean
 
+      run_tests:
+        description: "Run tests"
+        required: true
+        default: true
+        type: boolean
+
 jobs:
   planner:
     name: Planner
@@ -41,6 +47,7 @@ jobs:
     outputs:
       matrix: ${{ steps.set-matrix.outputs.matrix }}
       should_run: ${{ steps.set-matrix.outputs.should_run }}
+      run_tests: ${{ steps.set-matrix.outputs.run_tests }}
     steps:
       - id: set-matrix
         run: |
@@ -82,10 +89,17 @@ jobs:
             SHOULD_RUN=true
           fi
 
+          if [[ "${{ github.event.inputs.run_tests }}" == "true" ]]; then
+            RUN_TESTS=true
+          else
+            RUN_TESTS=false
+          fi
+
           MATRIX+=']}'
 
           echo "Matrix=$MATRIX" >> $GITHUB_OUTPUT
           echo "should_run=$SHOULD_RUN" >> $GITHUB_OUTPUT
+          echo "run_tests=$RUN_TESTS" >> $GITHUB_OUTPUT
 
   build:
     name: Build
@@ -113,10 +127,15 @@ jobs:
 
       - name: Build the project
         run: |
+          FLAGS=""
+          if [ "${{ needs.planner.outputs.run_tests }}" != "true" ]; then
+            FLAGS="--no-tests"
+          fi
+
           if [ "${{ matrix.os_name }}" = "windows" ]; then
-            python -m ci.ci -a -A linked-assembly-${{ matrix.os_name }}-${{ matrix.arch }}
+            python -m ci.ci -a -A linked-assembly-${{ matrix.os_name }}-${{ matrix.arch }} $FLAGS
           else
-            python -m ci.ci -a -A linked-assembly-${{ matrix.os_name }}-${{ matrix.arch }}
+            python -m ci.ci -a -A linked-assembly-${{ matrix.os_name }}-${{ matrix.arch }} $FLAGS
           fi
         shell: bash
 
