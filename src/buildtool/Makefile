@@ -1,4 +1,4 @@
-TARGET = $(BUILD_DIR)/buildtool$(EXE_EXT)
+TARGET = $(BUILD_DIR)/$(RUST_TARGET)/release/buildtool$(EXE_EXT)
 RUST_SRCS = $(shell find $(SRC_DIR) -name '*.rs' | sed "s|$(SRC_DIR)/||")
 
 .PHONY: all clean
@@ -16,10 +16,11 @@ $(TARGET): $(RUST_SRCS)
 
 record:
 	@mkdir -p $(BUILD_DIR)
-	@cargo license | grep -v "buildtool" \
+	@cargo license --do-not-bundle \
+		| grep -v "buildtool" \
 		> $(BUILD_DIR)/LICENSES.txt
-	@echo $(TARGET) >> $(BIN_DIR)/binaries.txt
 	@echo $(BUILD_DIR)/LICENSES.txt >> $(BIN_DIR)/licenses.txt
+	@echo $(TARGET) >> $(BIN_DIR)/binaries.txt
 
 clean:
 	@rm -rf $(BUILD_DIR)

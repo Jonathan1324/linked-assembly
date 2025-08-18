@@ -1,3 +1,7 @@
 python3 -m ci.ci
 
-dist/bin/buildtool $@
+cd tests/buildtool
+
+../../dist/bin/buildtool $@
+
+cd ../..

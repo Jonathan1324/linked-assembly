@@ -1,6 +1,14 @@
+use std::path::Path;
+use std::fs;
+
 mod args
 {
     pub mod args;
+}
+
+mod yaml
+{
+    pub mod config;
 }
 
 fn main()
@@ -18,5 +26,24 @@ fn main()
         std::process::exit(0);
     }
 
-    println!("Hello, world!");
+    let config_path = Path::new("build.yaml");
+
+    if !config_path.exists()
+    {
+        eprintln!("Config file not found: {:?}", config_path);
+        std::process::exit(1);
+    }
+    
+    let yaml_str = fs::read_to_string(config_path)
+        .expect("Failed to read YAML file");
+
+    let config: yaml::config::Config = serde_yaml::from_str(&yaml_str)
+        .expect("Failed to parse YAML");
+
+    for (name, tc) in &config.toolchains
+    {
+        println!("Toolchain '{}':", name);
+        println!("\tDescription: '{}'", tc.description);
+        println!("");
+    }
 }
