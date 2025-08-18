@@ -141,6 +141,7 @@ namespace Encoder
         std::vector<Section> sections;
         std::vector<Relocation> relocations;
 
+        std::unordered_map<std::string, uint64_t> sectionStarts;
         std::unordered_map<std::string, Label> labels;
         std::unordered_map<std::string, Constant> constants;
 

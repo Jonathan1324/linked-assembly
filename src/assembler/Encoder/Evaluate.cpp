@@ -2,21 +2,6 @@
 
 #include "ShuntingYard.hpp"
 
-std::string int128_to_string(__int128 value) {
-    if (value == 0) return "0";
-    bool negative = value < 0;
-    if (negative) value = -value;
-
-    std::string result;
-    while (value > 0) {
-        result += '0' + (value % 10);
-        value /= 10;
-    }
-    if (negative) result += '-';
-    std::reverse(result.begin(), result.end());
-    return result;
-}
-
 Encoder::Evaluation Encoder::Encoder::Evaluate(const Parser::Immediate& immediate, uint64_t bytesWritten, uint64_t sectionOffset, const std::string* curSection) const
 {
     // substitute position with two different values:
@@ -27,7 +12,9 @@ Encoder::Evaluation Encoder::Encoder::Evaluate(const Parser::Immediate& immediat
 
     if (tokens.relocationPossible)
     {
-        uint64_t off1 = bytesWritten - sectionOffset; //FIXME: should also work when usedSection is different
+        auto it = sectionStarts.find(tokens.usedSection);
+        if (it == sectionStarts.end()) throw Exception::InternalError("Couldn't find start of used section");
+        uint64_t off1 = it->second;
         uint64_t off2 = off1 + 0x12345678;
 
         Int128 res1 = ShuntingYard::evaluate(tokens.tokens, off1);

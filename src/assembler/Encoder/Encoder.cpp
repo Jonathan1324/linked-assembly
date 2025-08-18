@@ -68,6 +68,7 @@ void Encoder::Encoder::Encode()
     bytesWritten = 0;
     for (const auto& section : parsedSections)
     {
+        sectionStarts[section.name] = bytesWritten;
         currentSection = &section.name;
         sectionOffset = 0;
         for (size_t i = 0; i < section.entries.size(); i++)
