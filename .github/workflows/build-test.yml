@@ -129,7 +129,7 @@ jobs:
         run: |
           FLAGS=""
           if [ "${{ needs.planner.outputs.run_tests }}" != "true" ]; then
-            FLAGS="--no-tests"
+            FLAGS="--no-test"
           fi
 
           if [ "${{ matrix.os_name }}" = "windows" ]; then
