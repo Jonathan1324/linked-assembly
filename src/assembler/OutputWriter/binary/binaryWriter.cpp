@@ -76,8 +76,59 @@ void Binary::Writer::Write()
                         if (value < std::numeric_limits<int8_t>::min() ||
                             value > std::numeric_limits<int8_t>::max())
                             throw Exception::OverflowError("Relocation would overflow");
+                        
                         const int8_t val = static_cast<int8_t>(value);
                         std::memcpy(sectionBuffer->data() + offset, &val, sizeof(uint8_t));
+                        break;
+                    }
+                    case Encoder::RelocationSize::Bit16:
+                    {
+                        if (value < std::numeric_limits<int16_t>::min() ||
+                            value > std::numeric_limits<int16_t>::max())
+                            throw Exception::OverflowError("Relocation would overflow");
+
+                        const int16_t val = static_cast<int16_t>(value);
+                        std::memcpy(sectionBuffer->data() + offset, &val, sizeof(uint16_t));
+                        break;
+                    }
+                    case Encoder::RelocationSize::Bit24:
+                    {
+                        constexpr int32_t min24 = -(1 << 23);      // -8388608
+                        constexpr int32_t max24 =  (1 << 23) - 1;  //  8388607
+
+                        if (value < min24 || value > max24)
+                            throw Exception::OverflowError("Relocation would overflow (24-bit)");
+
+                        int32_t val = static_cast<int32_t>(value);
+
+                        // Little-endian
+                        uint8_t bytes[3];
+                        bytes[0] = static_cast<uint8_t>(val & 0xFF);
+                        bytes[1] = static_cast<uint8_t>((val >> 8) & 0xFF);
+                        bytes[2] = static_cast<uint8_t>((val >> 16) & 0xFF);
+
+                        std::memcpy(sectionBuffer->data() + offset, bytes, 3);
+                        break;
+                    }
+                    case Encoder::RelocationSize::Bit32:
+                    {
+                        if (value < std::numeric_limits<int32_t>::min() ||
+                            value > std::numeric_limits<int32_t>::max())
+                            throw Exception::OverflowError("Relocation would overflow (32-bit)");
+
+                        const int32_t val = static_cast<int32_t>(value);
+                        std::memcpy(sectionBuffer->data() + offset, &val, sizeof(uint32_t));
+                        break;
+                    }
+                    case Encoder::RelocationSize::Bit64:
+                    {
+                        if (value < std::numeric_limits<int64_t>::min() ||
+                            value > std::numeric_limits<int64_t>::max())
+                            throw Exception::OverflowError("Relocation would overflow (64-bit)");
+
+                        const int64_t val = static_cast<int64_t>(value);
+                        std::memcpy(sectionBuffer->data() + offset, &val, sizeof(uint64_t));
+                        break;
                     }
                 }
                 break;

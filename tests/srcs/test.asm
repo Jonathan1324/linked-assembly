@@ -7,6 +7,9 @@ section .text
 
 _start:
     int msg
+    dw msg
+    dd msg
+    dq msg
     
 section .data
 

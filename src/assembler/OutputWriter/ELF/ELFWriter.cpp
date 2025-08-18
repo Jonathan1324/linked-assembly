@@ -427,6 +427,7 @@ void ELF::Writer::Write()
                         case Encoder::RelocationSize::Bit8: return RelocationType32::R386_ABS8;
                         case Encoder::RelocationSize::Bit16: return RelocationType32::R386_ABS16;
                         case Encoder::RelocationSize::Bit32: return RelocationType32::R386_ABS32;
+                        case Encoder::RelocationSize::Bit64: return RelocationType32::R386_ABS32; // FIXME: not very nice way of doing it
                         default: throw Exception::InternalError("Unknown relocation size");
                     }
                 default: throw Exception::InternalError("Unknown relocation type");
