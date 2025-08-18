@@ -1,4 +1,4 @@
-name: build-test
+name: Build
 
 on:
   workflow_dispatch:
@@ -114,9 +114,9 @@ jobs:
       - name: Build the project
         run: |
           if [ "${{ matrix.os_name }}" = "windows" ]; then
-            python -m ci.ci --no-test -a -A linked-assembly-${{ matrix.os_name }}-${{ matrix.arch }}
+            python -m ci.ci -a -A linked-assembly-${{ matrix.os_name }}-${{ matrix.arch }}
           else
-            python -m ci.ci --no-test -a -A linked-assembly-${{ matrix.os_name }}-${{ matrix.arch }}
+            python -m ci.ci -a -A linked-assembly-${{ matrix.os_name }}-${{ matrix.arch }}
           fi
         shell: bash
 
