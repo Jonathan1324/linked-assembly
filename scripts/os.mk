@@ -23,10 +23,12 @@ ifeq ($(OS),Windows_NT)
     LDFLAGS += -lws2_32 -luser32 -lkernel32 -lwsock32 -lntdll -luserenv
     ifeq ($(UNAME_M),amd64)
         RUST_TARGET = x86_64-pc-windows-gnu
-    else ifeq ($(UNAME_M),arm64)
+    endif
+    ifeq ($(UNAME_M),arm64)
         RUST_TARGET = aarch64-pc-windows-gnu
     endif
-else ifeq ($(UNAME_S),Darwin)
+endif
+ifeq ($(UNAME_S),Darwin)
     LDFLAGS += -lpthread -lm -lc++
     ifneq (,$(filter arm64 aarch64,$(UNAME_M)))
         RUST_TARGET = aarch64-apple-darwin
@@ -38,7 +40,8 @@ else
     LDFLAGS += -lpthread -ldl -lm
     ifeq ($(UNAME_M),x86_64)
         RUST_TARGET = x86_64-unknown-linux-gnu
-    else ifneq (,$(filter arm64 aarch64,$(UNAME_M)))
+    endif
+    ifneq (,$(filter arm64 aarch64,$(UNAME_M)))
         RUST_TARGET = aarch64-unknown-linux-gnu
     endif
 endif
