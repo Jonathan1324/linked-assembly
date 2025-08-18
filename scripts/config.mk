@@ -33,7 +33,6 @@ RUSTFLAGS = --crate-type staticlib
 STRIPFLAGS =
 
 ifeq ($(UNAME_S),Linux)
-    LDFLAGS += -lpthread -ldl -lm
 	LDFLAGS += -Wl,--gc-sections
 	CFLAGS += -ffunction-sections -fdata-sections
 	CXXFLAGS += -ffunction-sections -fdata-sections

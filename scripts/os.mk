@@ -27,6 +27,7 @@ ifeq ($(OS),Windows_NT)
         RUST_TARGET = aarch64-pc-windows-gnu
     endif
 else ifeq ($(UNAME_S),Darwin)
+    LDFLAGS += -lpthread -lm -lc++
     ifneq (,$(filter arm64 aarch64,$(UNAME_M)))
         RUST_TARGET = aarch64-apple-darwin
     else
@@ -34,6 +35,7 @@ else ifeq ($(UNAME_S),Darwin)
     endif
 else
     # Linux
+    LDFLAGS += -lpthread -ldl -lm
     ifeq ($(UNAME_M),x86_64)
         RUST_TARGET = x86_64-unknown-linux-gnu
     else ifneq (,$(filter arm64 aarch64,$(UNAME_M)))
