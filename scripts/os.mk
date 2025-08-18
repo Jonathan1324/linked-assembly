@@ -1,7 +1,9 @@
 UNAME_S := $(shell uname -s)
 
 ifeq ($(OS),Windows_NT)
-    UNAME_M := $(shell echo $(PROCESSOR_ARCHITECTURE) | tr '[:upper:]' '[:lower:]')
+    UNAME_M := UNAME_M := $(shell \
+        if defined PROCESSOR_ARCHITEW6432 (echo %PROCESSOR_ARCHITEW6432%) else (echo %PROCESSOR_ARCHITECTURE%) \
+        | tr '[:upper:]' '[:lower:]')
 else ifeq ($(UNAME_S),Darwin)
     UNAME_M := $(shell sysctl -n hw.machine)
 else
