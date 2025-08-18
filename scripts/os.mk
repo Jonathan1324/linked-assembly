@@ -10,7 +10,7 @@ ifeq ($(OS_NAME),windows)
         RUST_TARGET = x86_64-pc-windows-gnu
     endif
     ifeq ($(ARCH),arm64)
-        RUST_TARGET = aarch64-pc-windows-gnu
+        RUST_TARGET = aarch64-pc-windows-gnullvm
     endif
 endif
 ifeq ($(OS_NAME),macos)
