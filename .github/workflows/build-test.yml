@@ -127,15 +127,16 @@ jobs:
 
       - name: Build the project
         run: |
-          FLAGS=""
+          FLAGS="-a -A linked-assembly-${{ matrix.os_name }}-${{ matrix.arch }} "
+          FLAGS+="--os ${{ matrix.os_name }} --arch ${{ matrix.arch }} "
           if [ "${{ needs.planner.outputs.run_tests }}" != "true" ]; then
-            FLAGS="--no-test"
+            FLAGS+="--no-test "
           fi
 
           if [ "${{ matrix.os_name }}" = "windows" ]; then
-            python -m ci.ci -a -A linked-assembly-${{ matrix.os_name }}-${{ matrix.arch }} $FLAGS
+            python -m ci.ci $FLAGS
           else
-            python -m ci.ci -a -A linked-assembly-${{ matrix.os_name }}-${{ matrix.arch }} $FLAGS
+            python -m ci.ci $FLAGS
           fi
         shell: bash
 

@@ -51,9 +51,9 @@ jobs:
       - name: Build the project
         run: |
           if [ "${{ matrix.os_name }}" = "windows" ]; then
-            python -m ci.ci --no-test --no-log -a -A linked-assembly-${{ matrix.os_name }}-${{ matrix.arch }}
+            python -m ci.ci --no-test --no-log -a -A linked-assembly-${{ matrix.os_name }}-${{ matrix.arch }} --os ${{ matrix.os_name }} --arch ${{ matrix.arch }}
           else
-            python -m ci.ci --no-test --no-log -a -A linked-assembly-${{ matrix.os_name }}-${{ matrix.arch }}
+            python -m ci.ci --no-test --no-log -a -A linked-assembly-${{ matrix.os_name }}-${{ matrix.arch }} --os ${{ matrix.os_name }} --arch ${{ matrix.arch }}
           fi
         shell: bash
 

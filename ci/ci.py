@@ -8,6 +8,8 @@ import logging
 import sys
 import subprocess
 import shutil
+import platform
+import struct
 
 # Logger
 logger = logging.getLogger("ci")
@@ -61,9 +63,25 @@ parser.add_argument(
     help="Name of the archive to create"
 )
 
-def main(args) -> bool:
+parser.add_argument(
+    "--arch",
+    dest="arch_name",
+    metavar="NAME",
+    type=str,
+    help="x86_64 or arm64"
+)
+
+parser.add_argument(
+    "--os",
+    dest="os_name",
+    metavar="NAME",
+    type=str,
+    help="windows, macos or linux"
+)
+
+def main(args, os_name: str, arch_name: str) -> bool:
     if (args.clean):
-        clean(debug=args.debug)
+        clean(debug=args.debug, os=os_name, arch=arch_name)
         shutil.rmtree("dist", ignore_errors=True)
         shutil.rmtree("archives", ignore_errors=True)
         if (args.test):
@@ -75,7 +93,7 @@ def main(args) -> bool:
         logger.debug("Stopping before building")
         return False
 
-    result: bool = build(debug=args.debug)
+    result: bool = build(debug=args.debug, os=os_name, arch=arch_name)
     if (not result):
         logger.error("Building failed")
         return False
@@ -121,9 +139,27 @@ if __name__ == "__main__":
 
     logger.debug(f"Debug: {args.debug}, Clean: {args.clean}, Build: {args.build}, Test: {args.test}, Archive: {args.archive}")
     archive_name = args.archive_name or "linked-assembly"
-    logger.debug(f"Archive name: {archive_name}")
+    os = ""
+    arch = ""
 
-    result: bool = main(args=args)
+    os_uname = platform.system().lower()
+    if (os_uname == "windows"): os = "windows"
+    elif (os_uname == "darwin"): os = "macos"
+    elif (os_uname == "linux"): os = "linux"
+    else: raise ValueError("Unknown architecture")
+
+    cpu_arch = platform.machine().lower()
+    if (cpu_arch in ["x86_64", "amd64"]): arch = "x86_64"
+    elif (cpu_arch in ["arm64", "aarch64"]): arch = "arm64"
+    else: raise ValueError("Unknown architecture")
+
+    os_name = args.os_name or os
+    arch_name = args.arch_name or arch
+
+    logger.debug(f"Archive name: {archive_name}")
+    logger.debug(f"OS: {os_name}, ARCH: {arch_name}")
+
+    result: bool = main(args=args, os_name=os_name, arch_name=arch_name)
     if not result:
         sys.exit(1)
 

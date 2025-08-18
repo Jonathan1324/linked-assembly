@@ -1,52 +1,33 @@
-UNAME_S := $(shell uname -s)
-
-ifeq ($(OS),Windows_NT)
-    UNAME_M := $(shell \
-        if [ -n "$$PROCESSOR_ARCHITEW6432" ]; then \
-            echo $$PROCESSOR_ARCHITEW6432; \
-        else \
-            echo $$PROCESSOR_ARCHITECTURE; \
-        fi | tr '[:upper:]' '[:lower:]')
-else ifeq ($(UNAME_S),Darwin)
-    UNAME_M := $(shell sysctl -n hw.machine)
-else
-    # Linux
-    UNAME_M := $(shell uname -m)
-endif
-
-ifeq ($(UNAME_S),Linux)
-  EXE_EXT :=
-else ifeq ($(UNAME_S),Darwin)
-  EXE_EXT :=
-else ifneq (,$(findstring MINGW,$(UNAME_S)))
+ifeq ($(OS_NAME), windows)
   EXE_EXT := .exe
 else
   EXE_EXT :=
 endif
 
-ifeq ($(OS),Windows_NT)
+ifeq ($(OS_NAME),windows)
     LDFLAGS += -lws2_32 -luser32 -lkernel32 -lwsock32 -lntdll -luserenv
-    ifeq ($(UNAME_M),amd64)
+    ifeq ($(ARCH),x86_64)
         RUST_TARGET = x86_64-pc-windows-gnu
     endif
-    ifeq ($(UNAME_M),arm64)
+    ifeq ($(ARCH),arm64)
         RUST_TARGET = aarch64-pc-windows-gnu
     endif
 endif
-ifeq ($(UNAME_S),Darwin)
+ifeq ($(OS_NAME),macos)
     LDFLAGS += -lpthread -lm -lc++
-    ifneq (,$(filter arm64 aarch64,$(UNAME_M)))
+    ifeq ($(ARCH),arm64)
         RUST_TARGET = aarch64-apple-darwin
-    else
+    endif
+    ifeq ($(ARCH),x86_64)
         RUST_TARGET = x86_64-apple-darwin
     endif
-else
-    # Linux
+endif
+ifeq ($(OS_NAME),linux)
     LDFLAGS += -lpthread -ldl -lm
-    ifeq ($(UNAME_M),x86_64)
+    ifeq ($(ARCH),x86_64)
         RUST_TARGET = x86_64-unknown-linux-gnu
     endif
-    ifneq (,$(filter arm64 aarch64,$(UNAME_M)))
+    ifeq ($(ARCH),arm64)
         RUST_TARGET = aarch64-unknown-linux-gnu
     endif
 endif

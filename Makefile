@@ -1,3 +1,11 @@
+ifndef OS_NAME
+$(error OS_NAME is not set. Must be one of: windows, macos, linux)
+endif
+
+ifndef ARCH
+$(error ARCH is not set. Must be one of: x86_64, arm64)
+endif
+
 include scripts/config.mk
 include scripts/os.mk
 
