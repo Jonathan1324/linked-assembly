@@ -8,7 +8,7 @@ all: $(TARGET) record
 $(TARGET): $(RUST_SRCS)
 	@echo "Compiling Rust source " $@
 	@mkdir -p $(BUILD_DIR)
-	@rustc $(RUSTFLAGS) -C link-arg=-mmacosx-version-min=15.0 --target=$(RUST_TARGET) $(SRC_DIR)/main.rs $(RUSTLDFLAGS) -o $@
+	@rustc $(RUSTFLAGS) --target=$(RUST_TARGET) $(SRC_DIR)/main.rs $(RUSTLDFLAGS) -o $@
 #	Rust just uses one file and modules inside of it
 
 record:

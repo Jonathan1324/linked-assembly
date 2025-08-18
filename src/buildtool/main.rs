@@ -1,13 +1,4 @@
-extern "C" {
-    fn printVersion();
-}
-
-fn print_help()
-{
-    println!("Usage: buildtool [OPTIONS]");
-    println!("  -v, --version   Show version");
-    println!("  -h, --help      Show this help message");
-}
+mod args;
 
 fn main()
 {
@@ -17,13 +8,13 @@ fn main()
     {
         unsafe
         {
-            printVersion(); // extern C-Funktion aufrufen
+            args::printVersion(); // extern C-Funktion aufrufen
         }
         std::process::exit(0);
     }
     if args.iter().any(|a| a == "-h" || a == "--help")
     {
-        print_help();
+        args::print_help();
         std::process::exit(0);
     }
 
