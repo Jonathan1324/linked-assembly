@@ -19,8 +19,11 @@ LIB_DIR=$(BUILD_DIR)/libs
 LDFLAGSSRC = -L$(LIB_DIR) -lcore -lrust
 
 abc := $(shell \
-        if defined PROCESSOR_ARCHITEW6432 (echo %PROCESSOR_ARCHITEW6432%) else (echo %PROCESSOR_ARCHITECTURE%) \
-        | tr '[:upper:]' '[:lower:]')
+        if [ -n "$$PROCESSOR_ARCHITEW6432" ]; then \
+            echo $$PROCESSOR_ARCHITEW6432; \
+        else \
+            echo $$PROCESSOR_ARCHITECTURE; \
+        fi | tr '[:upper:]' '[:lower:]')
 
 .PHONY: all clean libcore librust asmp assembler linker
 
@@ -44,7 +47,7 @@ libcore:
 		BIN_DIR=$(BIN_DIR)
 
 librust:
-	@echo "$(abc)"
+	@echo "UNAME_M: $(abc)"
 	@$(MAKE) -C $(SRC_DIR)/rust				\
 		DEBUG=$(DEBUG)						\
 											\
