@@ -55,7 +55,6 @@ libcore:
 		BIN_DIR=$(BIN_DIR)
 
 librust:
-	@echo "UNAME_M: $(abc)"
 	@$(MAKE) -C $(SRC_DIR)/rust				\
 		DEBUG=$(DEBUG)						\
 											\
