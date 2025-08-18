@@ -25,7 +25,7 @@ BIN_DIR := $(BUILD_DIR)
 LIB_DIR=$(BUILD_DIR)/libs
 
 LDFLAGSSRC = -L$(LIB_DIR) -lcore -lrust
-RUSTLDFLAGS = -L $(LIB_DIR) -l static=core -l static=rust
+RUSTLDFLAGS = -lstatic=core -lstatic=rust
 
 .PHONY: all clean libcore librust buildtool asmp assembler linker
 

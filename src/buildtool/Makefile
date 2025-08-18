@@ -8,7 +8,10 @@ all: $(TARGET) record
 $(TARGET): $(RUST_SRCS)
 	@echo "Compiling Rust source " $@
 	@mkdir -p $(BUILD_DIR)
-	@rustc $(RUSTFLAGS) --target=$(RUST_TARGET) $(SRC_DIR)/main.rs $(RUSTLDFLAGS) -o $@
+	@RUSTFLAGS="$(RUSTFLAGS)" \
+	  CARGO_TARGET_DIR="$(BUILD_DIR)" \
+	  cargo build --release --target=$(RUST_TARGET) --manifest-path=$(SRC_DIR)/Cargo.toml
+#	@rustc $(RUSTFLAGS) --target=$(RUST_TARGET) $(SRC_DIR)/main.rs $(RUSTLDFLAGS) -o $@
 #	Rust just uses one file and modules inside of it
 
 record:

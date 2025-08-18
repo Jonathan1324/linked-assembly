@@ -1,5 +1,13 @@
-extern "C" {
-    pub fn printVersion();
+unsafe extern "C" {
+    fn printVersion();
+}
+
+pub fn print_version()
+{
+    unsafe
+    {
+        printVersion();
+    }
 }
 
 pub fn print_help()

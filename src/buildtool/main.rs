@@ -8,7 +8,7 @@ fn main()
     {
         unsafe
         {
-            args::printVersion(); // extern C-Funktion aufrufen
+            args::print_version();
         }
         std::process::exit(0);
     }
