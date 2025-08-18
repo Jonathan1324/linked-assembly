@@ -1,7 +1,7 @@
 UNAME_S := $(shell uname -s)
 
 ifeq ($(OS),Windows_NT)
-    UNAME_M := UNAME_M := $(shell \
+    UNAME_M := $(shell \
         if defined PROCESSOR_ARCHITEW6432 (echo %PROCESSOR_ARCHITEW6432%) else (echo %PROCESSOR_ARCHITECTURE%) \
         | tr '[:upper:]' '[:lower:]')
 else ifeq ($(UNAME_S),Darwin)
