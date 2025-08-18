@@ -59,7 +59,7 @@ asmp: libcore librust
 		AS=$(AS) ASFLAGS="$(ASFLAGS)"		\
 		CC=$(CC) CFLAGS="$(CFLAGS)" 		\
 		CXX=$(CXX) CXXFLAGS="$(CXXFLAGS)"	\
-		LDFLAGS="$(LDFLAGS) $(LDFLAGSSRC)"	\
+		LDFLAGS="$(LDFLAGSSRC) $(LDFLAGS)"	\
 		STRIPFLAGS="$(STRIPFLAGS)"			\
 		SRC_DIR=$(SRC_DIR)/asmp		 		\
 		BUILD_DIR=$(BUILD_DIR)/asmp			\
@@ -74,7 +74,7 @@ assembler: libcore librust
 		AS=$(AS) ASFLAGS="$(ASFLAGS)"		\
 		CC=$(CC) CFLAGS="$(CFLAGS)" 		\
 		CXX=$(CXX) CXXFLAGS="$(CXXFLAGS)"	\
-		LDFLAGS="$(LDFLAGS) $(LDFLAGSSRC)"	\
+		LDFLAGS="$(LDFLAGSSRC) $(LDFLAGS)"	\
 		STRIPFLAGS="$(STRIPFLAGS)"			\
 		SRC_DIR=$(SRC_DIR)/assembler 		\
 		BUILD_DIR=$(BUILD_DIR)/assembler	\
@@ -89,7 +89,7 @@ linker: libcore librust
 		AS=$(AS) ASFLAGS="$(ASFLAGS)"		\
 		CC=$(CC) CFLAGS="$(CFLAGS)" 		\
 		CXX=$(CXX) CXXFLAGS="$(CXXFLAGS)"	\
-		LDFLAGS="$(LDFLAGS) $(LDFLAGSSRC)"	\
+		LDFLAGS="$(LDFLAGSSRC) $(LDFLAGS)"	\
 		STRIPFLAGS="$(STRIPFLAGS)"			\
 		SRC_DIR=$(SRC_DIR)/linker 			\
 		BUILD_DIR=$(BUILD_DIR)/linker		\
