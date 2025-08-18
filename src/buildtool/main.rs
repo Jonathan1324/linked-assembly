@@ -9,6 +9,7 @@ mod args
 mod yaml
 {
     pub mod config;
+    pub mod vars;
 }
 
 fn main()
@@ -40,10 +41,5 @@ fn main()
     let config: yaml::config::Config = serde_yaml::from_str(&yaml_str)
         .expect("Failed to parse YAML");
 
-    for (name, tc) in &config.toolchains
-    {
-        println!("Toolchain '{}':", name);
-        println!("\tDescription: '{}'", tc.description);
-        println!("");
-    }
+    config.print_full();
 }
