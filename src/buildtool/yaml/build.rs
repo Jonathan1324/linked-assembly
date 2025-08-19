@@ -1,6 +1,8 @@
+use crate::target::files;
 use crate::yaml::config;
 use crate::yaml::vars::{expand_string, ExpandContext};
 use crate::path::path::normalize_path;
+use crate::yaml::target_config;
 use std::collections::HashMap;
 use std::path::{Path, PathBuf};
 
@@ -117,6 +119,38 @@ impl Build {
             target.config = normalize_path(&target.config, Path::new(""));
         }
     }
+
+
+    pub fn read_target_configs(&mut self) {
+        for (name, target) in &self.targets {
+            let config_path = Path::new(&target.path).join(&target.config);
+
+            if !config_path.exists() {
+                eprintln!("Config file of target {} not found: {:?}", name, config_path);
+                std::process::exit(1);
+            }
+
+            let config_str = std::fs::read_to_string(&config_path)
+                .expect("Failed to read target YAML file");
+
+            let config: target_config::TargetFile = serde_yaml::from_str(&config_str)
+                .expect("Failed to parse target YAML");
+
+            let target_env = self.environments.get(&target.env).unwrap();
+
+            let mut target = files::Target {
+                targetfile: config,
+                path: target.path.clone(),
+                files: HashMap::new(),
+                env: target_env,
+            };
+
+            target.get_files(self);
+
+            println!("{:?}", target);
+        }
+    }
+
 
     pub fn print_full(&self) {
         println!("project_root: {}", self.project_root.display());

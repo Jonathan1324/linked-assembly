@@ -1,0 +1,12 @@
+files:
+  C_SOURCES:
+    filters:
+      patterns:
+      - "*.c"
+    toolchain: myToolchain
+
+  OTHER_FILES:
+    filters:
+      exclude:
+      - "lib.c"
+    # toolchain gets defaulted to env.toolchain

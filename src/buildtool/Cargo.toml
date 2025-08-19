@@ -5,8 +5,10 @@ edition = "2024"
 build = "build.rs"
 
 [dependencies]
+glob = "0.3.3"
 serde = { version = "1.0", features = ["derive"] }
-serde_yaml = "0.9"
+serde_yaml = "0.9.34-deprecated"
+walkdir = "2.5.0"
 
 [[bin]]
 name = "buildtool"

@@ -8,6 +8,10 @@ mod args {
     pub mod args;
 }
 
+mod target {
+    pub mod files;
+}
+
 mod path {
     pub mod path;
 }
@@ -16,6 +20,7 @@ mod yaml {
     pub mod build;
     pub mod config;
     pub mod vars;
+    pub mod target_config;
 }
 
 fn main() {
@@ -69,18 +74,5 @@ fn main() {
     // print debug info
     build.print_full();
 
-    for target_name in &build.default_targets {
-        let target = build.targets.get(target_name).cloned().unwrap();
-        let config_file = target.path.clone() + "/" + &target.config;
-
-        // TODO: currently just runs the shell file
-        let status = std::process::Command::new("sh")
-            .arg(&config_file)
-            .status()
-            .expect("Failed to execute shell script");
-
-        if !status.success() {
-            eprintln!("Shell script failed");
-        }
-    }
+    build.read_target_configs();
 }
