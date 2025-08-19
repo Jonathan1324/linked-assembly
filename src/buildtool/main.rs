@@ -43,23 +43,28 @@ fn main() {
     let buildfile: BuildFile = serde_yaml::from_str(&yaml_str)
         .expect("Failed to parse YAML");
 
+    let env = buildfile.environments
+                       .get(&buildfile.config.default_env)
+                       .cloned().unwrap();
+    
+    let default_env = Some(yaml::build::Environment {
+        description: env.description.clone(),
+        toolchain: env.toolchain.clone(),
+        vars: env.vars.clone(),
+    });
+
     let mut build = Build {
-        default_env: None,
+        default_env: default_env.unwrap(),
         default_targets: Vec::new(),
+        project_root: env::current_dir().expect("Failed to get current directory"),
         environments: std::collections::HashMap::new(),
         targets: std::collections::HashMap::new(),
         toolchains: std::collections::HashMap::new(),
         buildfile,
     };
 
-    let project_root = env::current_dir().expect("Failed to get current directory");
-
-    build.set_default_env();
-    build.set_default_targets();
-    build.copy_envs();
-    build.copy_targets();
-    build.copy_toolchains();
-    build.set_full_paths(&project_root);
+    build.copy_from_file();
+    build.set_full_paths();
 
     // print debug info
     build.print_full();

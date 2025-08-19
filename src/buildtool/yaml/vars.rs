@@ -1,6 +1,7 @@
-use std::collections::HashMap;
 use crate::yaml::build;
+use std::path::Path;
 
+#[allow(dead_code)]
 #[derive(Debug)]
 pub enum ExpandError {
     MissingVariable(String),
@@ -39,11 +40,56 @@ fn push_var_from_env(
     }
 }
 
+#[derive(Debug, Clone)]
+pub struct ExpandContext<'a> {
+    pub default_env: Option<&'a build::Environment>,
+    pub env: Option<&'a build::Environment>,
+    pub local_env: Option<&'a build::Environment>,
+    pub path: Option<&'a Path>,
+    pub project_root: Option<&'a Path>,
+}
+
+impl<'a> ExpandContext<'a> {
+    pub fn new() -> Self {
+        Self {
+            default_env: None,
+            env: None,
+            local_env: None,
+            path: None,
+            project_root: None,
+        }
+    }
+
+    pub fn default_env(&mut self, env: &'a build::Environment) -> &mut Self {
+        self.default_env = Some(env);
+        self
+    }
+
+    pub fn env(&mut self, env: &'a build::Environment) -> &mut Self {
+        self.env = Some(env);
+        self
+    }
+
+    pub fn project_root(&mut self, project_root: &'a Path) -> &mut Self {
+        self.project_root = Some(project_root);
+        self
+    }
+
+    pub fn path(&mut self, path: &'a Path) -> &mut Self {
+        self.path = Some(path);
+        self
+    }
+
+    pub fn with_local_env(&self, env: &'a build::Environment) -> Self {
+        let mut clone = self.clone();
+        clone.local_env = Some(env);
+        clone
+    }
+}
+
 pub fn expand_string(
     input: &str,
-    default_env: Option<&build::Environment>,
-    env: Option<&build::Environment>,
-    local_env: Option<&build::Environment>,
+    ctx: &ExpandContext,
 ) -> Result<String, ExpandError> {
     let mut result = String::new();
     let mut chars = input.chars().peekable();
@@ -63,9 +109,17 @@ pub fn expand_string(
 
             let key = key.trim();
 
-            if push_var_from_env(key, "env.", env, &mut result)? {}
-            else if push_var_from_env(key, "$env.", local_env, &mut result)? {}
-            else if push_var_from_env(key, "!env.", default_env, &mut result)? {}
+            if push_var_from_env(key, "env.", ctx.env, &mut result)? {}
+            else if push_var_from_env(key, "$env.", ctx.local_env, &mut result)? {}
+            else if push_var_from_env(key, "!env.", ctx.default_env, &mut result)? {}
+            else if let Some(stripped) = key.strip_prefix("path.") {
+                match stripped {
+                    "current" => result = ctx.path.unwrap().to_string_lossy().to_string(),
+                    "project_root" => result = ctx.project_root.unwrap().to_string_lossy().to_string(),
+
+                    _ => return Err(ExpandError::UnknownVariable(key.to_string())),
+                }
+            }
             else {
                 return Err(ExpandError::UnknownVariable(key.to_string()));
             }

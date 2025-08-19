@@ -1,5 +1,4 @@
 use std::path::{Path, PathBuf};
-use std::env;
 
 pub fn normalize_path(path_str: &str, project_root: &Path) -> String {
     let path_str = path_str.replace('\\', "/");

@@ -18,7 +18,7 @@ environments:
 targets:
   test:
     path: ${ $env.SRC_DIR }
-    config: build.sh
+    config: build.yaml
     outputs:
       main:
         type: executable
