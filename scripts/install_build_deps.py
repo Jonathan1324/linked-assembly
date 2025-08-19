@@ -28,9 +28,10 @@ def install_rust():
         else:
             run("curl --proto '=https' --tlsv1.2 -sSf https://sh.rustup.rs | sh -s -- -y")
 
+    run("cargo install cargo-download")
+    run("cargo install cargo-license")
     run("cargo download serde --version 1.0")
     run("cargo download serde_yaml --version 0.9")
-    run("cargo install cargo-license")
 
 if __name__ == "__main__":
     import shutil
