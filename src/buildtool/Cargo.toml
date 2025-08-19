@@ -7,8 +7,10 @@ build = "build.rs"
 [dependencies]
 serde = { version = "1.0", features = ["derive"] }
 serde_yaml = "0.9"
-regex = "1"
 
 [[bin]]
 name = "buildtool"
 path = "main.rs"
+
+[profile.release]
+debug = false
