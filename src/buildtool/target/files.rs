@@ -50,6 +50,7 @@ pub struct Files {
 #[derive(Debug, Clone)]
 pub struct Output {
     pub path: String,
+    pub kind: String,
 }
 
 #[derive(Debug, Clone)]
@@ -98,12 +99,11 @@ impl TargetFile<'_> {
             for (name, output) in &target.outputs {
                 let new_output = Output {
                     path: expand_string(&output.path, &ctx).unwrap(),
+                    kind: expand_string(&output.kind, &ctx).unwrap(),
                 };
-                /*
                 if new_output.kind != "executable" && new_output.kind != "object" {
                     panic!("Unknown type of output: {}", new_output.kind);
                 }
-                */
                 outputs.insert(name.clone(), new_output);
             }
 
@@ -142,6 +142,7 @@ impl TargetFile<'_> {
             for (name, output) in &target.outputs {
                 println!("      {}:", name);
                 println!("        path: {}", output.path);
+                println!("        type: {}", output.kind);
             }
         }
     }

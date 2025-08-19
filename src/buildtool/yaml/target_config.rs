@@ -20,6 +20,9 @@ pub struct Files {
 #[derive(Debug, Deserialize, Clone)]
 pub struct Output {
     pub path: String,
+    
+    #[serde(rename = "type")]
+    pub kind: String,
 }
 
 #[derive(Debug, Deserialize, Clone)]
