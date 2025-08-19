@@ -99,6 +99,11 @@ impl TargetFile<'_> {
                 let new_output = Output {
                     path: expand_string(&output.path, &ctx).unwrap(),
                 };
+                /*
+                if new_output.kind != "executable" && new_output.kind != "object" {
+                    panic!("Unknown type of output: {}", new_output.kind);
+                }
+                */
                 outputs.insert(name.clone(), new_output);
             }
 

@@ -1,6 +1,6 @@
 [package]
 name = "buildtool"
-version = "0.1.0"
+version = "0.0.0"
 edition = "2024"
 build = "build.rs"
 
@@ -13,6 +13,3 @@ walkdir = "2.5.0"
 [[bin]]
 name = "buildtool"
 path = "main.rs"
-
-[profile.release]
-debug = false

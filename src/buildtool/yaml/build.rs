@@ -89,8 +89,12 @@ impl Build {
             let mut new_outputs = HashMap::new();
 
             for (o_name, output) in &target.outputs {
+                let kind = expand_string(&output.kind, &local_ctx).unwrap();
+                if kind != "executable" && kind != "object" {
+                    panic!("Unknown type of output: {}", kind);
+                }
                 let new_output = Output {
-                    kind: expand_string(&output.kind, &local_ctx).unwrap(),
+                    kind: kind,
                 };
                 new_outputs.insert(o_name.clone(), new_output);
             }

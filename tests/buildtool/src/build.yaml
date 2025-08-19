@@ -12,9 +12,11 @@ targets:
     - C_SOURCES
     outputs:
       main:
+        type: executable
         path: ${ env.BUILD_DIR }/main
 
   C_SOURCE:
     outputs:
       object:
+        type: object
         path: ${ env.BUILD_DIR }/${ NAME }.o
