@@ -19,6 +19,7 @@ targets:
   test:
     path: ${ $env.SRC_DIR }
     config: build.yaml
+    # target gets defaulted to 'main'
     outputs:
       main:
         type: executable

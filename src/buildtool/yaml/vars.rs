@@ -114,11 +114,14 @@ pub fn expand_string(
             else if push_var_from_env(key, "!env.", ctx.default_env, &mut result)? {}
             else if let Some(stripped) = key.strip_prefix("path.") {
                 match stripped {
-                    "current" => result = ctx.path.unwrap().to_string_lossy().to_string(),
-                    "project_root" => result = ctx.project_root.unwrap().to_string_lossy().to_string(),
+                    "current" => result.push_str(&ctx.path.unwrap().to_string_lossy()),
+                    "project_root" => result.push_str(&ctx.project_root.unwrap().to_string_lossy()),
 
                     _ => return Err(ExpandError::UnknownVariable(key.to_string())),
                 }
+            }
+            else if key == "NAME" {
+                result.push_str("${NAME}");
             }
             else {
                 return Err(ExpandError::UnknownVariable(key.to_string()));

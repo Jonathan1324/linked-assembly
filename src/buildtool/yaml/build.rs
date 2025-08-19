@@ -24,6 +24,7 @@ pub struct Output {
 pub struct Target {
     pub path: String,
     pub config: String,
+    pub target: String,
     pub outputs: HashMap<String, Output>,
     pub env: String,
 }
@@ -97,6 +98,7 @@ impl Build {
             let new_target = Target {
                 path: expand_string(&target.path, &local_ctx).unwrap(),
                 config: expand_string(&target.config, &local_ctx).unwrap(),
+                target: expand_string(&target.target.clone().unwrap_or("main".to_string()), &ctx).unwrap(), // TODO: currently setting 'main' as default target
                 outputs: new_outputs,
                 env: local_env_str,
             };
@@ -138,16 +140,17 @@ impl Build {
 
             let target_env = self.environments.get(&target.env).unwrap();
 
-            let mut target = files::Target {
+            let mut target = files::TargetFile {
                 targetfile: config,
-                path: target.path.clone(),
-                files: HashMap::new(),
+                path: PathBuf::from(target.path.clone()),
                 env: target_env,
+                files: HashMap::new(),
+                targets: HashMap::new(),
             };
 
-            target.get_files(self);
+            target.parse(self);
 
-            println!("{:?}", target);
+            target.print_full();
         }
     }
 
@@ -192,6 +195,7 @@ impl Build {
             println!("Target: {}", name);
             println!("  path: {}", target.path);
             println!("  config: {}", target.config);
+            println!("  target: {}", target.target);
             println!("  env: {}", target.env);
 
             if target.outputs.is_empty() {

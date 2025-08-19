@@ -2,8 +2,7 @@ use std::collections::HashMap;
 use serde::Deserialize;
 
 #[derive(Debug, Deserialize, Clone)]
-pub struct Filters
-{
+pub struct Filters {
     #[serde(default)]
     pub patterns: Vec<String>,
 
@@ -12,16 +11,31 @@ pub struct Filters
 }
 
 #[derive(Debug, Deserialize, Clone)]
-pub struct File
-{
+pub struct Files {
     pub filters: Option<Filters>,
 
-    pub toolchain: Option<String>,
+    pub target: String,
 }
 
 #[derive(Debug, Deserialize, Clone)]
-pub struct TargetFile
-{
+pub struct Output {
+    pub path: String,
+}
+
+#[derive(Debug, Deserialize, Clone)]
+pub struct Target {
+    pub toolchain: Option<String>,
+
     #[serde(default)]
-    pub files: HashMap<String, File>,
+    pub depends: Vec<String>,
+
+    pub outputs: HashMap<String, Output>,
+}
+
+#[derive(Debug, Deserialize, Clone)]
+pub struct TargetFile {
+    #[serde(default)]
+    pub files: HashMap<String, Files>,
+
+    pub targets: HashMap<String, Target>,
 }

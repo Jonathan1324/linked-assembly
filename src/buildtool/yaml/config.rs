@@ -11,6 +11,7 @@ pub struct Output {
 pub struct Target {
     pub path: String,
     pub config: String,
+    pub target: Option<String>,
 
     #[serde(default)]
     pub outputs: HashMap<String, Output>,
