@@ -1,10 +1,11 @@
-use crate::target::files;
+use crate::target::files::{self, TargetFile};
 use crate::yaml::config;
 use crate::yaml::vars::{expand_string, ExpandContext};
 use crate::path::path::normalize_path;
 use crate::yaml::target_config;
 use std::collections::HashMap;
 use std::path::{Path, PathBuf};
+use std::sync::Arc;
 
 #[derive(Debug, Clone)]
 pub struct Environment {
@@ -27,6 +28,9 @@ pub struct Target {
     pub target: String,
     pub outputs: HashMap<String, Output>,
     pub env: String,
+
+    // Target struct
+    pub targetfile: TargetFile,
 }
 
 #[derive(Debug, Clone)]
@@ -36,11 +40,11 @@ pub struct Toolchain {
 
 #[derive(Debug, Clone)]
 pub struct Build {
-    pub default_env: Environment,
+    pub default_env: Arc<Environment>,
     pub default_targets: Vec<String>,
     pub project_root: PathBuf,
 
-    pub environments: HashMap<String, Environment>,
+    pub environments: HashMap<String, Arc<Environment>>,
     pub targets: HashMap<String, Target>,
     pub toolchains: HashMap<String, Toolchain>,
 
@@ -76,7 +80,7 @@ impl Build {
                 vars: new_vars,
             };
 
-            self.environments.insert(name.clone(), new_env);
+            self.environments.insert(name.clone(), Arc::new(new_env));
         }
 
         for (name, target) in &self.buildfile.targets {
@@ -99,12 +103,38 @@ impl Build {
                 new_outputs.insert(o_name.clone(), new_output);
             }
 
+            let target_path = expand_string(&target.path, &local_ctx).unwrap();
+            let target_config_file = expand_string(&target.config, &local_ctx).unwrap();
+
+            let config_path = Path::new(&target_path).join(&target_config_file);
+            if !config_path.exists() {
+                eprintln!("Config file of target {} not found: {:?}", name, config_path);
+                std::process::exit(1);
+            }
+            let config_str = std::fs::read_to_string(&config_path)
+                .expect("Failed to read target YAML file");
+            let config: target_config::TargetFile = serde_yaml::from_str(&config_str)
+                .expect("Failed to parse target YAML");
+            let target_env = self.environments.get(&local_env_str).unwrap();
+
+            let mut targetfile = files::TargetFile {
+                targetfile: config,
+                path: PathBuf::from(target_path.clone()),
+                env: target_env.clone(),
+                files: HashMap::new(),
+                targets: HashMap::new(),
+            };
+            targetfile.parse(self);
+
+            targetfile.print_full();
+
             let new_target = Target {
-                path: expand_string(&target.path, &local_ctx).unwrap(),
-                config: expand_string(&target.config, &local_ctx).unwrap(),
+                path: target_path,
+                config: target_config_file,
                 target: expand_string(&target.target.clone().unwrap_or("main".to_string()), &ctx).unwrap(), // TODO: currently setting 'main' as default target
                 outputs: new_outputs,
                 env: local_env_str,
+                targetfile: targetfile,
             };
 
             self.targets.insert(name.clone(), new_target);
@@ -126,35 +156,18 @@ impl Build {
         }
     }
 
-
-    pub fn read_target_configs(&mut self) {
-        for (name, target) in &self.targets {
-            let config_path = Path::new(&target.path).join(&target.config);
-
-            if !config_path.exists() {
-                eprintln!("Config file of target {} not found: {:?}", name, config_path);
-                std::process::exit(1);
+    pub fn resolve_targets(&mut self) {
+        for (name, target) in &mut self.targets {
+            for (out_name, _out) in &target.outputs {
+                if !target.targetfile.targets
+                    .get(&target.target)
+                    .unwrap()
+                    .outputs
+                    .contains_key(out_name)
+                {
+                    panic!("Output {} isn't defined in {} for {}", out_name, target.config, name);
+                }
             }
-
-            let config_str = std::fs::read_to_string(&config_path)
-                .expect("Failed to read target YAML file");
-
-            let config: target_config::TargetFile = serde_yaml::from_str(&config_str)
-                .expect("Failed to parse target YAML");
-
-            let target_env = self.environments.get(&target.env).unwrap();
-
-            let mut target = files::TargetFile {
-                targetfile: config,
-                path: PathBuf::from(target.path.clone()),
-                env: target_env,
-                files: HashMap::new(),
-                targets: HashMap::new(),
-            };
-
-            target.parse(self);
-
-            target.print_full();
         }
     }
 

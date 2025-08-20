@@ -3,6 +3,7 @@ use glob::Pattern;
 use std::path::Path;
 use std::collections::HashMap;
 use std::path::PathBuf;
+use std::sync::Arc;
 use crate::yaml::target_config;
 use crate::yaml::build;
 use crate::yaml::vars::{expand_string, ExpandContext};
@@ -45,6 +46,7 @@ pub fn find_files(base_dir: &Path, filters: Option<&target_config::Filters>) -> 
 pub struct Files {
     pub file_paths: Vec<String>,
     pub target: String,
+    pub at_once: bool,
 }
 
 #[derive(Debug, Clone)]
@@ -61,17 +63,17 @@ pub struct Target {
 }
 
 #[derive(Debug, Clone)]
-pub struct TargetFile<'a> {
+pub struct TargetFile {
     pub targetfile: target_config::TargetFile,
 
     pub path: PathBuf,
-    pub env: &'a build::Environment,
+    pub env: Arc<build::Environment>,
 
     pub files: HashMap<String, Files>,
     pub targets: HashMap<String, Target>,
 }
 
-impl TargetFile<'_> {
+impl TargetFile {
     pub fn parse(&mut self, build: &build::Build) {
         let  mut ctx = ExpandContext::new();
         ctx.default_env(&build.default_env)
@@ -84,6 +86,7 @@ impl TargetFile<'_> {
             let new_files = Files {
                 file_paths: file_paths,
                 target: expand_string(&files.target, &ctx).unwrap(),
+                at_once: files.at_once
             };
 
             self.files.insert(name.to_string(), new_files);
@@ -124,6 +127,7 @@ impl TargetFile<'_> {
         for (name, file) in &self.files {
             println!("  {}:", name);
             println!("    target: {}", file.target);
+            println!("    at_once: {}", file.at_once);
             println!("    files: ");
             for file_path in &file.file_paths {
                 println!("      {}", file_path);

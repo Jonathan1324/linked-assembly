@@ -52,14 +52,14 @@ fn main() {
                        .get(&buildfile.config.default_env)
                        .cloned().unwrap();
     
-    let default_env = Some(yaml::build::Environment {
+    let default_env = yaml::build::Environment {
         description: env.description.clone(),
         toolchain: env.toolchain.clone(),
         vars: env.vars.clone(),
-    });
+    };
 
     let mut build = Build {
-        default_env: default_env.unwrap(),
+        default_env: std::sync::Arc::new(default_env),
         default_targets: Vec::new(),
         project_root: env::current_dir().expect("Failed to get current directory"),
         environments: std::collections::HashMap::new(),
@@ -70,9 +70,8 @@ fn main() {
 
     build.copy_from_file();
     build.set_full_paths();
+    build.resolve_targets();
 
     // print debug info
     build.print_full();
-
-    build.read_target_configs();
 }

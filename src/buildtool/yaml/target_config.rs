@@ -15,6 +15,9 @@ pub struct Files {
     pub filters: Option<Filters>,
 
     pub target: String,
+
+    #[serde(default)]
+    pub at_once: bool,
 }
 
 #[derive(Debug, Deserialize, Clone)]
