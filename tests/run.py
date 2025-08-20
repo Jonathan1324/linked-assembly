@@ -2,6 +2,7 @@ from pathlib import Path
 from enum import Enum
 import subprocess
 import logging
+import buildtool.test as buildtool
 
 # Logger
 logger = logging.getLogger("ci")
@@ -156,12 +157,17 @@ def testAssembler(src_dir: Path, build_dir: Path, log_dir: Path):
 
 if __name__ == "__main__":
     assembler_dir = Path("tests/assembler")
-    assembler_build_dir = assembler_dir / "build"
-    assembler_build_dir.mkdir(parents=True, exist_ok=True)
     assembler_log_dir = Path("logs/assembler/tests-verbose")
-    assembler_log_dir.mkdir(parents=True, exist_ok=True)
+    assembler_build_dir = assembler_dir / "build"
     assembler_src_dir = assembler_dir / "srcs"
+    assembler_build_dir.mkdir(parents=True, exist_ok=True)
+    assembler_log_dir.mkdir(parents=True, exist_ok=True)
 
     testAssembler(assembler_src_dir, assembler_build_dir, assembler_log_dir)
+
+    buildtool_dir = Path("tests/buildtool")
+    buildtool_log_dir = Path("logs/buildtool")
+    buildtool_log_dir.mkdir(parents=True, exist_ok=True)
+    buildtool.test(buildtool_dir, buildtool_log_dir)
 
     exit(0)
