@@ -17,7 +17,7 @@ pub fn find_files(base_dir: &Path, filters: Option<&target_config::Filters>) -> 
         .collect();
 
     let exclude_patterns: Vec<Pattern> = filters
-        .map(|f| f.exclude.clone()) // kein as_ref nötig
+        .map(|f| f.exclude.clone())
         .unwrap_or_default()
         .iter()
         .map(|p| Pattern::new(&p.replace("\\", "/")).unwrap())
@@ -33,7 +33,9 @@ pub fn find_files(base_dir: &Path, filters: Option<&target_config::Filters>) -> 
             let excluded = !exclude_patterns.is_empty() && exclude_patterns.iter().any(|p| p.matches(&file_name));
 
             if included && !excluded {
-                result.push(entry.path().to_string_lossy().to_string());
+                if let Ok(rel_path) = entry.path().strip_prefix(base_dir) {
+                    result.push(rel_path.to_string_lossy().replace("\\", "/").to_string());
+                }
             }
         }
     }

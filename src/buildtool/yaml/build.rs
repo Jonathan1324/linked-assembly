@@ -1,11 +1,15 @@
 use crate::target::files::{self, TargetFile};
 use crate::yaml::config;
-use crate::yaml::vars::{expand_string, ExpandContext};
+use crate::yaml::vars::{expand_string, ExpandContext, expand_string_with_vars};
 use crate::path::path::normalize_path;
 use crate::yaml::target_config;
 use std::collections::HashMap;
 use std::path::{Path, PathBuf};
 use std::sync::Arc;
+use std::fs;
+use std::process::Command;
+#[cfg(unix)]
+use std::os::unix::fs::PermissionsExt;
 
 #[derive(Debug, Clone)]
 pub struct Environment {
@@ -103,8 +107,8 @@ impl Build {
                 new_outputs.insert(o_name.clone(), new_output);
             }
 
-            let target_path = expand_string(&target.path, &local_ctx).unwrap();
-            let target_config_file = expand_string(&target.config, &local_ctx).unwrap();
+            let target_path = normalize_path(expand_string(&target.path, &local_ctx).unwrap().as_str(), &self.project_root);
+            let target_config_file = normalize_path(expand_string(&target.config, &local_ctx).unwrap().as_str(), Path::new(""));
 
             let config_path = Path::new(&target_path).join(&target_config_file);
             if !config_path.exists() {
@@ -125,8 +129,6 @@ impl Build {
                 targets: HashMap::new(),
             };
             targetfile.parse(self);
-
-            targetfile.print_full();
 
             let new_target = Target {
                 path: target_path,
@@ -149,13 +151,6 @@ impl Build {
         }
     }
 
-    pub fn set_full_paths(&mut self) {
-        for (_name, target) in self.targets.iter_mut() {
-            target.path = normalize_path(&target.path, &self.project_root);
-            target.config = normalize_path(&target.config, Path::new(""));
-        }
-    }
-
     pub fn resolve_targets(&mut self) {
         for (name, target) in &mut self.targets {
             for (out_name, _out) in &target.outputs {
@@ -168,6 +163,112 @@ impl Build {
                     panic!("Output {} isn't defined in {} for {}", out_name, target.config, name);
                 }
             }
+        }
+    }
+
+    pub fn parse_target(&self, target: &files::Target, main_target: &Target, input: Option<&String>, combine_outputs: bool) -> Vec<String> {
+        let mut dep_outputs = Vec::new();
+        for dep in &target.dependencies {
+            let dep_files = main_target.targetfile.files.get(dep)
+                .expect("Couldn't find dependency of target in files");
+
+            let dep_target = main_target.targetfile.targets.get(&dep_files.target)
+                .expect("Couldn't find target of files entry");
+
+            for file_path in &dep_files.file_paths {
+                let outputs = self.parse_target(dep_target, main_target, Some(file_path), false);
+                dep_outputs.extend(outputs);
+            }
+        }
+
+        if let Some(input_file) = input {
+            let full_input_file = normalize_path(&input_file.as_str(), Path::new(&main_target.path));
+            dep_outputs.push(full_input_file.clone());
+        }
+
+        let mut vars = HashMap::new();
+        if let Some(input_file) = input {
+            vars.insert("NAME".to_string(), input_file);
+        }
+
+        let mut outputs_of_this_target = Vec::new();
+        for (_name, output) in &target.outputs {
+            let output_path_str = normalize_path(
+                expand_string_with_vars(&output.path, &vars).unwrap().as_str(),
+                 Path::new(&main_target.path)
+            );
+            let output_path = Path::new(&output_path_str);
+            if let Some(parent) = output_path.parent() {
+                fs::create_dir_all(parent).unwrap();
+            }
+
+            if combine_outputs {
+                let combined_paths: Vec<&Path> = dep_outputs.iter()
+                    .map(|p| Path::new(p))
+                    .collect();
+                self.run_with_toolchain(combined_paths, output_path, &target.toolchain, &output.kind);
+            } else {
+                for in_path in &dep_outputs {
+                    let in_path = Path::new(in_path);
+                    self.run_with_toolchain([in_path].to_vec(), output_path, &target.toolchain, &output.kind);
+                }
+            }
+
+            println!("Output generated in '{}'", output_path_str);
+            outputs_of_this_target.push(output_path_str);
+        }
+
+        outputs_of_this_target
+    }
+
+    pub fn build(&self) {
+        for target_name in &self.default_targets {
+            let main_target = self.targets.get(target_name.as_str())
+                .expect("Couldn't find target in default targets");
+            let targetfile = &main_target.targetfile;
+
+            let target = targetfile.targets.get(&main_target.target)
+                .expect("Couldn't find target in targetfile");
+
+            // TODO: set input
+            let outs = self.parse_target(target, main_target, None, true);
+        }
+    }
+
+    pub fn run_with_toolchain(&self, input: Vec<&Path>, output: &Path, toolchain: &String, kind: &String) {
+        if kind == "object" {
+            let mut cmd = Command::new("gcc");
+            cmd.arg("-c");
+            for file in input {
+                cmd.arg(file);
+            }
+            cmd.arg("-o").arg(output);
+            let status = cmd.status().expect("Failed to run GCC");
+
+            if !status.success() {
+                panic!("GCC returned an error!");
+            }
+        } else if kind == "executable" {
+            let mut cmd = Command::new("gcc");
+            for file in input {
+                cmd.arg(file);
+            }
+            cmd.arg("-o").arg(output);
+            let status = cmd.status().expect("Failed to run GCC");
+            
+            if !status.success() {
+                panic!("GCC returned an error!");
+            }
+
+            // Unix: chmod +x
+            #[cfg(unix)]
+            {
+                let mut perms = fs::metadata(output).unwrap().permissions();
+                perms.set_mode(0o755);
+                fs::set_permissions(output, perms).unwrap();
+            }
+        } else {
+            panic!("Unknown type of target");
         }
     }
 
@@ -210,6 +311,7 @@ impl Build {
         println!("\n--- Targets ---");
         for (name, target) in &self.targets {
             println!("Target: {}", name);
+            target.targetfile.print_full();
             println!("  path: {}", target.path);
             println!("  config: {}", target.config);
             println!("  target: {}", target.target);

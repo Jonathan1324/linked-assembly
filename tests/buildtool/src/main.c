@@ -1,4 +1,9 @@
+#include <stdio.h>
+
+int test();
+
 int main()
 {
-    return 0;
+    printf("Hello, World!\n");
+    return test();
 }

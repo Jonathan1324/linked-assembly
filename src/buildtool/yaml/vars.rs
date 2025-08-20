@@ -1,5 +1,5 @@
 use crate::yaml::build;
-use std::path::Path;
+use std::{collections::HashMap, path::Path};
 
 #[allow(dead_code)]
 #[derive(Debug)]
@@ -125,6 +125,41 @@ pub fn expand_string(
             }
             else {
                 return Err(ExpandError::UnknownVariable(key.to_string()));
+            }
+        } else {
+            result.push(c);
+        }
+    }
+
+    Ok(result)
+}
+
+pub fn expand_string_with_vars(
+    input: &str,
+    vars: &HashMap<String, &String>
+) -> Result<String, ExpandError> {
+    let mut result = String::new();
+    let mut chars = input.chars().peekable();
+
+    while let Some(c) = chars.next() {
+        if c == '$' && chars.peek() == Some(&'{') {
+            chars.next();
+            let mut key = String::new();
+            while let Some(&ch) = chars.peek() {
+                if ch == '}' {
+                    chars.next(); 
+                    break;
+                }
+                key.push(ch);
+                chars.next();
+            }
+
+            let key = key.trim();
+
+            if let Some(value) = vars.get(key) {
+                result.push_str(value);
+            } else {
+                return Err(ExpandError::UnknownVariable(key.to_string()))
             }
         } else {
             result.push(c);

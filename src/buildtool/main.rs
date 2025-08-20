@@ -69,9 +69,10 @@ fn main() {
     };
 
     build.copy_from_file();
-    build.set_full_paths();
     build.resolve_targets();
 
+    build.build();
+
     // print debug info
-    build.print_full();
+    // build.print_full();
 }
