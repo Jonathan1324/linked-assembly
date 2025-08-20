@@ -19,4 +19,4 @@ targets:
     outputs:
       object:
         type: object
-        path: ${ env.BUILD_DIR }/${ NAME }.o
+        path: ${ env.BUILD_DIR }/${ PATH }/${ NAME }.${ EXT }.o

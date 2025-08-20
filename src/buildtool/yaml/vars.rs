@@ -123,6 +123,12 @@ pub fn expand_string(
             else if key == "NAME" {
                 result.push_str("${NAME}");
             }
+            else if key == "EXT" {
+                result.push_str("${EXT}");
+            }
+            else if key == "PATH" {
+                result.push_str("${PATH}");
+            }
             else if key == "INPUT" {
                 result.push_str("${INPUT}");
             }
@@ -142,7 +148,7 @@ pub fn expand_string(
 
 pub fn expand_string_with_vars(
     input: &str,
-    vars: &HashMap<String, &String>
+    vars: &HashMap<String, String>
 ) -> Result<String, ExpandError> {
     let mut result = String::new();
     let mut chars = input.chars().peekable();

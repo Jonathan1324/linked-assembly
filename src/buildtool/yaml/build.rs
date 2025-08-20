@@ -236,7 +236,19 @@ impl Build {
 
         let mut vars = HashMap::new();
         if let Some(input_file) = input {
-            vars.insert("NAME".to_string(), input_file);
+            let path = Path::new(&input_file);
+
+            if let Some(stem) = path.file_stem().and_then(|s| s.to_str()) {
+                vars.insert("NAME".to_string(), stem.to_string());
+            }
+
+            if let Some(ext) = path.extension().and_then(|s| s.to_str()) {
+                vars.insert("EXT".to_string(), ext.to_string());
+            }
+
+            if let Some(parent) = path.parent().and_then(|p| p.to_str()) {
+                vars.insert("PATH".to_string(), parent.to_string());
+            }
         }
 
         let mut outputs_of_this_target = Vec::new();
@@ -325,11 +337,9 @@ impl Build {
                     let ext_match = tool.when.ext.is_empty() || tool.when.ext.iter().any(|e| e == ext);
 
                     if type_match && ext_match {
-                        let mut vars: HashMap<String, &String> = HashMap::new();
-                        let input_path_str = input_path.to_string_lossy().to_string();
-                        let output_path_str = output.to_string_lossy().to_string();
-                        vars.insert("INPUT".to_string(),&input_path_str);
-                        vars.insert("OUTPUT".to_string(),&output_path_str);
+                        let mut vars = HashMap::new();
+                        vars.insert("INPUT".to_string(),input_path.to_string_lossy().to_string());
+                        vars.insert("OUTPUT".to_string(),output.to_string_lossy().to_string());
 
                         let command_str = expand_string_with_vars(&tool.command, &vars).unwrap();
                         let message = expand_string_with_vars(&tool.message, &vars).unwrap();
@@ -367,16 +377,14 @@ impl Build {
                 let ext_match = tool.when.ext.is_empty() || tool.when.ext.iter().any(|e| e == ext);
 
                 if type_match && ext_match {
-                    let mut vars: HashMap<String, &String> = HashMap::new();
+                    let mut vars = HashMap::new();
                     let input_path_strings: Vec<String> = input
                         .iter()
                         .map(|p| p.to_string_lossy().to_string())
                         .collect();
                     let input_path_str = input_path_strings.join(" ");
-
-                    let output_path_str = output.to_string_lossy().to_string();
-                    vars.insert("INPUT".to_string(),&input_path_str);
-                    vars.insert("OUTPUT".to_string(),&output_path_str);
+                    vars.insert("INPUT".to_string(),input_path_str.clone());
+                    vars.insert("OUTPUT".to_string(),output.to_string_lossy().to_string());
 
                     let command_str = expand_string_with_vars(&tool.command, &vars).unwrap();
                     let message = expand_string_with_vars(&tool.message, &vars).unwrap();
