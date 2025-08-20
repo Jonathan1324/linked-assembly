@@ -13,7 +13,7 @@ targets:
     outputs:
       main:
         type: executable
-        path: ${ env.BUILD_DIR }/mainother
+        path: ${ env.BUILD_DIR }/main
 
   C_SOURCE:
     outputs:

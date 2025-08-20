@@ -123,6 +123,12 @@ pub fn expand_string(
             else if key == "NAME" {
                 result.push_str("${NAME}");
             }
+            else if key == "INPUT" {
+                result.push_str("${INPUT}");
+            }
+            else if key == "OUTPUT" {
+                result.push_str("${OUTPUT}");
+            }
             else {
                 return Err(ExpandError::UnknownVariable(key.to_string()));
             }

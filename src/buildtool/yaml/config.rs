@@ -20,10 +20,32 @@ pub struct Target {
 }
 
 #[derive(Debug, Deserialize, Clone)]
-pub struct Toolchain
-{
+pub struct ToolWhen {
+    #[serde(default)]
+    pub ext: Vec<String>,
+    
+    #[serde(rename = "type")]
+    pub kind: String,
+}
+
+#[derive(Debug, Deserialize, Clone)]
+pub struct Tool {
+    #[serde(rename = "type")]
+    pub kind: String,
+
+    pub when: ToolWhen,
+
+    pub command: String,
+    #[serde(default)]
+    pub message: String,
+}
+
+#[derive(Debug, Deserialize, Clone)]
+pub struct Toolchain {
     #[serde(default)]
     pub description: String,
+
+    pub tools: HashMap<String, Tool>,
 }
 
 #[derive(Debug, Deserialize, Clone)]
@@ -47,8 +69,7 @@ pub struct Config {
 }
 
 #[derive(Debug, Deserialize, Clone)]
-pub struct BuildFile
-{
+pub struct BuildFile {
     pub config: Config,
 
     #[serde(default)]

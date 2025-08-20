@@ -7,6 +7,22 @@ toolchains:
   myToolchain:
     description: This is a test toolchain
 
+    tools:
+      CC:
+        type: compiler
+        when:
+          ext:
+          - c
+          type: source
+        command: gcc -c ${ INPUT } -o ${ OUTPUT }
+        message: Compiling ${ INPUT }
+      LD:
+        type: linker
+        when:
+          type: object
+        command: gcc ${ INPUT } -o ${ OUTPUT }
+        message: Linking ${ OUTPUT }
+
 environments:
   general:
     description: This is the general environment

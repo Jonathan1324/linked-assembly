@@ -106,7 +106,7 @@ impl TargetFile {
                     path: expand_string(&output.path, &ctx).unwrap(),
                     kind: expand_string(&output.kind, &ctx).unwrap(),
                 };
-                if new_output.kind != "executable" && new_output.kind != "object" {
+                if new_output.kind != "source" && new_output.kind != "executable" && new_output.kind != "object" {
                     panic!("Unknown type of output: {}", new_output.kind);
                 }
                 outputs.insert(name.clone(), new_output);
@@ -123,32 +123,32 @@ impl TargetFile {
     }
 
     pub fn print_full(&self) {
-        println!("path: {}", self.path.to_string_lossy().to_string());
+        println!("    path: {}", self.path.to_string_lossy().to_string());
 
-        println!("files:");
+        println!("    files:");
         for (name, file) in &self.files {
-            println!("  {}:", name);
-            println!("    target: {}", file.target);
-            println!("    at_once: {}", file.at_once);
-            println!("    files: ");
+            println!("      {}:", name);
+            println!("        target: {}", file.target);
+            println!("        at_once: {}", file.at_once);
+            println!("        files: ");
             for file_path in &file.file_paths {
                 println!("      {}", file_path);
             }
         }
 
-        println!("targets:");
+        println!("    targets:");
         for (name, target) in &self.targets {
-            println!("  {}", name);
-            println!("    toolchain: {}", target.toolchain);
-            println!("    dependencies:");
+            println!("      {}", name);
+            println!("        toolchain: {}", target.toolchain);
+            println!("        dependencies:");
             for dep in &target.dependencies {
-                println!("    - {}", dep);
+                println!("        - {}", dep);
             }
-            println!("    outputs:");
+            println!("        outputs:");
             for (name, output) in &target.outputs {
-                println!("      {}:", name);
-                println!("        path: {}", output.path);
-                println!("        type: {}", output.kind);
+                println!("          {}:", name);
+                println!("            path: {}", output.path);
+                println!("            type: {}", output.kind);
             }
         }
     }

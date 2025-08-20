@@ -7,7 +7,8 @@ use std::collections::HashMap;
 use std::path::{Path, PathBuf};
 use std::sync::Arc;
 use std::fs;
-use std::process::Command;
+use std::io;
+use std::process::{Command, ExitStatus};
 #[cfg(unix)]
 use std::os::unix::fs::PermissionsExt;
 
@@ -38,8 +39,24 @@ pub struct Target {
 }
 
 #[derive(Debug, Clone)]
+pub struct ToolWhen {
+    pub ext: Vec<String>,
+    pub kind: String,
+}
+
+#[derive(Debug, Clone)]
+pub struct Tool {
+    pub kind: String,
+    pub when: ToolWhen,
+    pub command: String,
+    pub message: String,
+}
+
+#[derive(Debug, Clone)]
 pub struct Toolchain {
     pub description: String,
+
+    pub tools: HashMap<String, Tool>,
 }
 
 #[derive(Debug, Clone)]
@@ -98,7 +115,7 @@ impl Build {
 
             for (o_name, output) in &target.outputs {
                 let kind = expand_string(&output.kind, &local_ctx).unwrap();
-                if kind != "executable" && kind != "object" {
+                if kind != "source" && kind != "executable" && kind != "object" {
                     panic!("Unknown type of output: {}", kind);
                 }
                 let new_output = Output {
@@ -143,8 +160,39 @@ impl Build {
         }
 
         for (name, toolchain) in &self.buildfile.toolchains {
+            let mut toolchain_tools = HashMap::new();
+            for (tool_name, tool) in &toolchain.tools {
+                let mut new_ext = Vec::new();
+                for ext in &tool.when.ext {
+                    new_ext.push(expand_string(ext, &ctx).unwrap());
+                }
+
+                let kind = expand_string(&tool.when.kind, &ctx).unwrap();
+                if kind != "source" && kind != "executable" && kind != "object" {
+                    panic!("Unknown type of output: {}", kind);
+                }
+                let new_toolwhen = ToolWhen {
+                    ext: new_ext,
+                    kind: kind,
+                };
+
+                let tool_kind = expand_string(&tool.kind, &ctx).unwrap();
+                if tool_kind != "compiler" && tool_kind != "linker" {
+                    panic!("Unknown type of output: {}", tool_kind);
+                }
+                let new_tool = Tool {
+                    kind: tool_kind,
+                    when: new_toolwhen,
+                    command: expand_string(&tool.command, &ctx).unwrap(),
+                    message: expand_string(&tool.message, &ctx).unwrap(),
+                };
+
+                toolchain_tools.insert(tool_name.clone(), new_tool);
+            }
+            
             let new_toolchain = Toolchain {
                 description: expand_string(&toolchain.description, &ctx).unwrap(),
+                tools: toolchain_tools,
             };
 
             self.toolchains.insert(name.clone(), new_toolchain);
@@ -214,7 +262,6 @@ impl Build {
                 }
             }
 
-            println!("Output generated in '{}'", output_path_str);
             outputs_of_this_target.push(output_path_str);
         }
 
@@ -235,31 +282,121 @@ impl Build {
         }
     }
 
-    pub fn run_with_toolchain(&self, input: Vec<&Path>, output: &Path, toolchain: &String, kind: &String) {
-        if kind == "object" {
-            let mut cmd = Command::new("gcc");
-            cmd.arg("-c");
-            for file in input {
-                cmd.arg(file);
-            }
-            cmd.arg("-o").arg(output);
-            let status = cmd.status().expect("Failed to run GCC");
+    pub fn execute_command(&self, command: &str) -> io::Result<ExitStatus> {
+        #[cfg(unix)]
+        let shell = "sh";
+        #[cfg(unix)]
+        let shell_arg = "-c";
 
-            if !status.success() {
-                panic!("GCC returned an error!");
-            }
-        } else if kind == "executable" {
-            let mut cmd = Command::new("gcc");
-            for file in input {
-                cmd.arg(file);
-            }
-            cmd.arg("-o").arg(output);
-            let status = cmd.status().expect("Failed to run GCC");
-            
-            if !status.success() {
-                panic!("GCC returned an error!");
-            }
+        #[cfg(windows)]
+        let shell = "cmd";
+        #[cfg(windows)]
+        let shell_arg = "/C";
 
+        let status = Command::new(shell)
+            .arg(shell_arg)
+            .arg(command)
+            .status()?;
+
+        Ok(status)
+    }
+
+    pub fn run_with_toolchain(&self, input: Vec<&Path>, output: &Path, toolchain_str: &String, output_kind: &String) {
+        let toolchain = self.toolchains.get(toolchain_str)
+            .expect("Couldn't find toolchain");
+
+        if input.is_empty() {
+            panic!("Haven't gotten any inputs");
+        }
+
+        if output_kind == "object" {
+            // TODO: not good, expecting every input is kind source when output_kind is object
+            let input_kind = "source".to_string();
+
+            let mut found_tool = false;
+            for input_path in &input {
+                let ext = input_path
+                    .extension()
+                    .and_then(|s| s.to_str())
+                    .unwrap_or("");
+
+                for (tool_name, tool) in &toolchain.tools {
+                    let type_match = tool.when.kind == input_kind;
+                    let ext_match = tool.when.ext.is_empty() || tool.when.ext.iter().any(|e| e == ext);
+
+                    if type_match && ext_match {
+                        let mut vars: HashMap<String, &String> = HashMap::new();
+                        let input_path_str = input_path.to_string_lossy().to_string();
+                        let output_path_str = output.to_string_lossy().to_string();
+                        vars.insert("INPUT".to_string(),&input_path_str);
+                        vars.insert("OUTPUT".to_string(),&output_path_str);
+
+                        let command_str = expand_string_with_vars(&tool.command, &vars).unwrap();
+                        let message = expand_string_with_vars(&tool.message, &vars).unwrap();
+
+                        // TODO: set variables like ${INPUT}, etc.
+                        let status = self.execute_command(&command_str)
+                            .expect("Failed to execute command");
+
+                        if !status.success() {
+                            panic!("Process returned an error");
+                        }
+
+                        println!("{}", message);
+
+                        found_tool = true;
+                        break;
+                    }
+                }
+            }
+            if !found_tool {
+                panic!("Haven't found fitting tool for input_kind");
+            }
+        } else if output_kind == "executable" {
+            // TODO: not good, expecting every input is kind object when output_kind is executable
+            let input_kind = "object".to_string();
+
+            let mut found_tool = false;
+            let ext = input[0]
+                .extension()
+                .and_then(|s| s.to_str())
+                .unwrap_or("");
+
+            for (tool_name, tool) in &toolchain.tools {
+                let type_match = tool.when.kind == input_kind;
+                let ext_match = tool.when.ext.is_empty() || tool.when.ext.iter().any(|e| e == ext);
+
+                if type_match && ext_match {
+                    let mut vars: HashMap<String, &String> = HashMap::new();
+                    let input_path_strings: Vec<String> = input
+                        .iter()
+                        .map(|p| p.to_string_lossy().to_string())
+                        .collect();
+                    let input_path_str = input_path_strings.join(" ");
+
+                    let output_path_str = output.to_string_lossy().to_string();
+                    vars.insert("INPUT".to_string(),&input_path_str);
+                    vars.insert("OUTPUT".to_string(),&output_path_str);
+
+                    let command_str = expand_string_with_vars(&tool.command, &vars).unwrap();
+                    let message = expand_string_with_vars(&tool.message, &vars).unwrap();
+
+                    let status = self.execute_command(&command_str)
+                        .expect("Failed to execute command");
+
+                    if !status.success() {
+                        panic!("Process returned an error");
+                    }
+
+                    println!("{}", message);
+
+                    found_tool = true;
+                    break;
+                }
+            }
+            if !found_tool {
+                panic!("Haven't found fitting tool for input_kind");
+            }
             // Unix: chmod +x
             #[cfg(unix)]
             {
@@ -292,6 +429,17 @@ impl Build {
         for (name, tc) in &self.toolchains {
             println!("Toolchain: {}", name);
             println!("  description: {}", tc.description);
+            for (tool_name, tool) in &tc.tools {
+                println!("  {}:", tool_name);
+                println!("    command: {}", tool.command);
+                println!("    type: {}", tool.kind);
+                println!("    when:");
+                println!("      type: {}", tool.when.kind);
+                println!("      ext:");
+                for ext in &tool.when.ext {
+                    println!("      - {}", ext);
+                }
+            }
         }
 
         println!("\n--- Environments ---");
@@ -311,8 +459,6 @@ impl Build {
         println!("\n--- Targets ---");
         for (name, target) in &self.targets {
             println!("Target: {}", name);
-            target.targetfile.print_full();
-            println!("  path: {}", target.path);
             println!("  config: {}", target.config);
             println!("  target: {}", target.target);
             println!("  env: {}", target.env);
@@ -325,6 +471,9 @@ impl Build {
                     println!("    {}: {}", name, out.kind);
                 }
             }
+
+            println!("  file:");
+            target.targetfile.print_full();
         }
     }
 }
