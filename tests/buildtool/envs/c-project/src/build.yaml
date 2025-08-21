@@ -13,10 +13,10 @@ targets:
     outputs:
       main:
         type: executable
-        path: ${ env.BUILD_DIR }/main
+        path: main
 
   C_SOURCE:
     outputs:
       object:
         type: object
-        path: ${ env.BUILD_DIR }/${ PATH }/${ NAME }.${ EXT }.o
+        path: ${ PATH }/${ NAME }.${ EXT }.o

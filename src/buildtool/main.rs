@@ -55,6 +55,7 @@ fn main() {
     let default_env = yaml::build::Environment {
         description: env.description.clone(),
         toolchain: env.toolchain.clone(),
+        build_dir: env.build_dir.clone(),
         vars: env.vars.clone(),
     };
 

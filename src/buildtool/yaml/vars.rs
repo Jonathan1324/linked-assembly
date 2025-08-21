@@ -22,6 +22,10 @@ fn push_var_from_env(
                 result.push_str(&env.toolchain);
                 return Ok(true);
             }
+            "build_dir" => {
+                result.push_str(&env.build_dir);
+                return Ok(true);
+            }
             "description" => {
                 result.push_str(&env.description);
                 return Ok(true);

@@ -1,5 +1,5 @@
 use crate::target::files::{self, TargetFile};
-use crate::yaml::config;
+use crate::yaml::{build, config};
 use crate::yaml::vars::{expand_string, ExpandContext, expand_string_with_vars};
 use crate::path::path::normalize_path;
 use crate::yaml::target_config;
@@ -17,6 +17,8 @@ pub struct Environment {
     pub description: String,
 
     pub toolchain: String,
+
+    pub build_dir: String,
 
     pub vars: HashMap<String, String>,
 }
@@ -95,9 +97,12 @@ impl Build {
                 new_vars.insert(k.clone(), expand_string(&v, &ctx).unwrap());
             }
 
+            let build_dir = normalize_path(expand_string(&env.build_dir, &ctx).unwrap().as_str(), &self.project_root);
+
             let new_env = Environment {
                 description: env.description.clone(),
                 toolchain: expand_string(&env.toolchain, &ctx).unwrap(),
+                build_dir: build_dir,
                 vars: new_vars,
             };
 
@@ -247,7 +252,12 @@ impl Build {
             }
 
             if let Some(parent) = path.parent().and_then(|p| p.to_str()) {
-                vars.insert("PATH".to_string(), parent.to_string());
+                let path = parent.to_string();
+                if path.is_empty() {
+                    vars.insert("PATH".to_string(), ".".to_string());
+                } else {
+                    vars.insert("PATH".to_string(), parent.to_string());
+                }
             }
         }
 
@@ -255,8 +265,9 @@ impl Build {
         for (_name, output) in &target.outputs {
             let output_path_str = normalize_path(
                 expand_string_with_vars(&output.path, &vars).unwrap().as_str(),
-                 Path::new(&main_target.path)
+                 Path::new(&main_target.targetfile.env.build_dir)
             );
+
             let output_path = Path::new(&output_path_str);
             if let Some(parent) = output_path.parent() {
                 fs::create_dir_all(parent).unwrap();
@@ -453,7 +464,9 @@ impl Build {
         println!("\n--- Environments ---");
         for (name, env) in &self.environments {
             println!("Environment: {}", name);
+            println!("  description: {}", env.description);
             println!("  toolchain: {}", env.toolchain);
+            println!("  build_dir: {}", env.build_dir);
             if env.vars.is_empty() {
                 println!("  vars: (none)");
             } else {

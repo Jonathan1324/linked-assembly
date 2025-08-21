@@ -55,6 +55,8 @@ pub struct Environment {
 
     pub toolchain: String,
 
+    pub build_dir: String,
+
     /// Key-Value
     #[serde(default)]
     pub vars: HashMap<String, String>,

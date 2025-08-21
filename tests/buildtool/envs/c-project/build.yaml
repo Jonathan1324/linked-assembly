@@ -27,6 +27,7 @@ environments:
   general:
     description: This is the general environment
     toolchain: myToolchain
+    build_dir: build
     vars:
       SRC_DIR: src
       BUILD_DIR: build

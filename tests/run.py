@@ -5,7 +5,7 @@ import logging
 import buildtool.test as buildtool
 
 # Logger
-logger = logging.getLogger("ci")
+logger = logging.getLogger("tests")
 logger.setLevel(logging.DEBUG)
 
 file_handler = logging.FileHandler("logs/tests.log", mode="w", encoding="utf-8")
