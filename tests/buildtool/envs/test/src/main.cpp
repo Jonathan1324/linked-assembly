@@ -71,7 +71,6 @@ int main() {
 
     try {
         string rpn = shuntingYard(expr);
-        cout << "RPN: " << rpn << endl;
         double result = evaluateRPN(rpn.c_str());
         cout << "Result: " << result << endl;
     } catch (exception& e) {

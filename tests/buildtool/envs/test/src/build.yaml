@@ -1,21 +1,22 @@
 files:
-  C_SOURCES:
+  SOURCES:
     filters:
       patterns:
       - "*.c"
-    target: C_SOURCE
+      - "*.cpp"
+    target: SOURCE
 
 targets:
   main:
-    toolchain: myToolchain
+    toolchain: main
     depends:
-    - C_SOURCES
+    - SOURCES
     outputs:
       main:
         type: executable
         path: main
-
-  C_SOURCE:
+  
+  SOURCE:
     outputs:
       object:
         type: object

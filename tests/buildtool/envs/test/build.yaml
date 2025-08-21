@@ -1,12 +1,10 @@
 config:
   default_env: general
   default_targets:
-  - test
+  - main
 
 toolchains:
-  myToolchain:
-    description: This is a test toolchain
-
+  main:
     tools:
       CC:
         type: compiler
@@ -15,29 +13,40 @@ toolchains:
           - c
           type: source
           out: object
-        command: gcc -c ${ INPUT } -o ${ OUTPUT }
+        command: gcc -c ${ INPUT } -MMD -MF ${ OUTPUT }.d -o ${ OUTPUT }
         message: Compiling ${ INPUT }
+      CXX:
+        type: compiler
+        when:
+          ext:
+          - cpp
+          - cxx
+          - c++
+          type: source
+          out: object
+        command: g++ -c ${ INPUT } -MMD -MF ${ OUTPUT }.d -o ${ OUTPUT }
+        message: Compiling ${ INPUT }
+      
       LD:
         type: linker
         when:
           type: object
           out: executable
-        command: gcc ${ INPUT } -o ${ OUTPUT }
+        combine_inputs: true
+        command: g++ ${ INPUT } -o ${ OUTPUT }
         message: Linking ${ OUTPUT }
 
 environments:
   general:
-    description: This is the general environment
-    toolchain: myToolchain
+    toolchain: main
     build_dir: build
     vars:
       SRC_DIR: src
 
 targets:
-  test:
+  main:
     path: ${ $env.SRC_DIR }
     config: build.yaml
-    # target gets defaulted to 'main'
     outputs:
       main:
         type: executable

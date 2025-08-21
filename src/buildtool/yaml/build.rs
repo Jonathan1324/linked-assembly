@@ -4,7 +4,7 @@ use crate::yaml::vars::{expand_string, ExpandContext, expand_string_with_vars};
 use crate::path::path::normalize_path;
 use crate::yaml::target_config;
 use crate::cache::cache;
-use std::collections::HashMap;
+use std::collections::{HashMap, HashSet};
 use std::path::{Path, PathBuf};
 use std::sync::Arc;
 use std::fs;
@@ -43,7 +43,7 @@ pub struct Target {
 
 #[derive(Debug, Clone)]
 pub struct ToolWhen {
-    pub ext: Vec<String>,
+    pub ext: Option<Vec<String>>,
     pub kind: String,
     pub out: String,
 }
@@ -52,6 +52,7 @@ pub struct ToolWhen {
 pub struct Tool {
     pub kind: String,
     pub when: ToolWhen,
+    pub combine_inputs: bool,
     pub command: String,
     pub message: String,
 }
@@ -169,9 +170,16 @@ impl Build {
         for (name, toolchain) in &self.buildfile.toolchains {
             let mut toolchain_tools = HashMap::new();
             for (tool_name, tool) in &toolchain.tools {
-                let mut new_ext = Vec::new();
-                for ext in &tool.when.ext {
-                    new_ext.push(expand_string(ext, &ctx).unwrap());
+                let mut new_ext = None;
+                if let Some(ext_vec) = &tool.when.ext {
+                    if tool.combine_inputs {
+                        panic!("Can't combine inputs and have when.ext");
+                    }
+                    let mut new_ext_vec: Vec<String> = Vec::new();
+                    for ext in ext_vec {
+                        new_ext_vec.push(expand_string(ext, &ctx).unwrap());
+                    }
+                    new_ext = Some(new_ext_vec);
                 }
 
                 let kind = expand_string(&tool.when.kind, &ctx).unwrap();
@@ -195,6 +203,7 @@ impl Build {
                 let new_tool = Tool {
                     kind: tool_kind,
                     when: new_toolwhen,
+                    combine_inputs: tool.combine_inputs,
                     command: expand_string(&tool.command, &ctx).unwrap(),
                     message: expand_string(&tool.message, &ctx).unwrap(),
                 };
@@ -226,8 +235,10 @@ impl Build {
         }
     }
 
-    pub fn parse_target(&self, target: &files::Target, main_target: &Target, input: Option<&String>, combine_outputs: bool) -> Vec<String> {
+    pub fn parse_target(&self, target: &files::Target, main_target: &Target, input: Option<&String>) -> (Vec<String>, bool) {
         let mut dep_outputs = Vec::new();
+        let mut any_rebuilt = false;
+
         for dep in &target.dependencies {
             let dep_files = main_target.targetfile.files.get(dep)
                 .expect("Couldn't find dependency of target in files");
@@ -236,8 +247,11 @@ impl Build {
                 .expect("Couldn't find target of files entry");
 
             for file_path in &dep_files.file_paths {
-                let outputs = self.parse_target(dep_target, main_target, Some(file_path), false);
+                let (outputs, rebuilt) = self.parse_target(dep_target, main_target, Some(file_path));
                 dep_outputs.extend(outputs);
+                if rebuilt {
+                    any_rebuilt = true;
+                }
             }
         }
 
@@ -271,7 +285,8 @@ impl Build {
         let mut outputs_of_this_target = Vec::new();
         for (_name, output) in &target.outputs {
             let mut build_path = PathBuf::from(&main_target.targetfile.env.build_dir);
-            build_path.push(&main_target.target);
+            // TODO: set better name
+            build_path.push("out");
 
             let output_path_str = normalize_path(
                 expand_string_with_vars(&output.path, &vars).unwrap().as_str(),
@@ -283,34 +298,27 @@ impl Build {
                 fs::create_dir_all(parent).unwrap();
             }
 
-            let mut cache_dir = PathBuf::from(&main_target.targetfile.env.build_dir);
-            cache_dir.push(".cache");
-            if !cache_dir.exists() {
-                fs::create_dir_all(&cache_dir).unwrap();
-            }
-
-            if combine_outputs {
-                let combined_paths: Vec<&Path> = dep_outputs.iter()
+            let combined_paths: Vec<&Path> = dep_outputs.iter()
                     .map(|p| Path::new(p))
                     .collect();
-                
-                if cache::check_built(&cache_dir, &output_path.to_string_lossy()) {
-                    self.run_with_toolchain(combined_paths, output_path, &target.toolchain, &output.kind);
-                }
-            } else {
-                for in_path in &dep_outputs {
-                    let in_path = Path::new(in_path);
-                    
-                    if cache::check_built(&cache_dir, &output_path.to_string_lossy()) {
-                        self.run_with_toolchain([in_path].to_vec(), output_path, &target.toolchain, &output.kind);
-                    }
-                }
+
+            let rebuilt = self.run_with_toolchain(
+                combined_paths,
+                output_path,
+                &target.toolchain,
+                &output.kind,
+                &main_target.targetfile.env.build_dir,
+                any_rebuilt
+            );
+
+            if rebuilt {
+                any_rebuilt = true;
             }
 
             outputs_of_this_target.push(output_path_str);
         }
 
-        outputs_of_this_target
+        (outputs_of_this_target, any_rebuilt)
     }
 
     pub fn build(&self) {
@@ -323,7 +331,7 @@ impl Build {
                 .expect("Couldn't find target in targetfile");
 
             // TODO: set input
-            let outs = self.parse_target(target, main_target, None, true);
+            let (outs, rebuilt) = self.parse_target(target, main_target, None);
         }
     }
 
@@ -346,70 +354,46 @@ impl Build {
         Ok(status)
     }
 
-    pub fn run_with_toolchain(&self, input: Vec<&Path>, output: &Path, toolchain_str: &String, output_kind: &String) {
+    pub fn run_with_toolchain(
+        &self, input: Vec<&Path>,
+        output: &Path,
+        toolchain_str: &String,
+        output_kind: &String,
+        build_dir: &String,
+        force_rebuild: bool
+    ) -> bool {
         let toolchain = self.toolchains.get(toolchain_str)
             .expect("Couldn't find toolchain");
 
-        if input.is_empty() {
-            panic!("Haven't gotten any inputs");
+        let mut cache_dir = PathBuf::from(&build_dir);
+        cache_dir.push(".cache");
+        if !cache_dir.exists() {
+            fs::create_dir_all(&cache_dir).unwrap();
         }
 
-        if output_kind == "object" {
-            // TODO: not good, expecting every input is kind source when output_kind is object
-            let input_kind = "source".to_string();
+        if cache::check_built(&cache_dir, &output.to_string_lossy()) && !force_rebuild {
+            return false;
+        }
 
-            let mut found_tool = false;
-            for input_path in &input {
-                let ext = input_path
-                    .extension()
-                    .and_then(|s| s.to_str())
-                    .unwrap_or("");
+        let tools: HashMap<&String, &Tool> = toolchain.tools
+            .iter()
+            .filter(|(_, tool) | (tool.when.out == *output_kind))
+            .collect();
 
-                for (tool_name, tool) in &toolchain.tools {
-                    let type_match = tool.when.kind == input_kind;
-                    let ext_match = tool.when.ext.is_empty() || tool.when.ext.iter().any(|e| e == ext);
+        let mut file_matches: HashMap<&Path, &Tool> = HashMap::new();
 
-                    if type_match && ext_match {
-                        let mut vars = HashMap::new();
-                        vars.insert("INPUT".to_string(),input_path.to_string_lossy().to_string());
-                        vars.insert("OUTPUT".to_string(),output.to_string_lossy().to_string());
+        for (_name, tool) in tools {
+            if tool.combine_inputs {
+                let file_kind = "object"; // TODO: not a nice way
 
-                        let command_str = expand_string_with_vars(&tool.command, &vars).unwrap();
-                        let message = expand_string_with_vars(&tool.message, &vars).unwrap();
+                let kind_ok = tool.when.kind == file_kind;
 
-                        // TODO: set variables like ${INPUT}, etc.
-                        let status = self.execute_command(&command_str)
-                            .expect("Failed to execute command");
-
-                        if !status.success() {
-                            panic!("Process returned an error");
-                        }
-
-                        println!("{}", message);
-
-                        found_tool = true;
-                        break;
+                if kind_ok {
+                    if let Some(prev_tool) = file_matches.get(output) {
+                        panic!("Multiple tools work for {}", output.display())
                     }
-                }
-            }
-            if !found_tool {
-                panic!("Haven't found fitting tool for input_kind");
-            }
-        } else if output_kind == "executable" {
-            // TODO: not good, expecting every input is kind object when output_kind is executable
-            let input_kind = "object".to_string();
+                    file_matches.insert(output, tool);
 
-            let mut found_tool = false;
-            let ext = input[0]
-                .extension()
-                .and_then(|s| s.to_str())
-                .unwrap_or("");
-
-            for (tool_name, tool) in &toolchain.tools {
-                let type_match = tool.when.kind == input_kind;
-                let ext_match = tool.when.ext.is_empty() || tool.when.ext.iter().any(|e| e == ext);
-
-                if type_match && ext_match {
                     let mut vars = HashMap::new();
                     let input_path_strings: Vec<String> = input
                         .iter()
@@ -429,15 +413,50 @@ impl Build {
                         panic!("Process returned an error");
                     }
 
-                    println!("{}", message);
+                    if !message.is_empty() {
+                        println!("{}", message);
+                    }
 
-                    found_tool = true;
                     break;
                 }
+            } else {
+                for file in &input {
+                    let ext = file.extension().and_then(|s| s.to_str()).unwrap_or("");
+                    let file_kind = "source"; // TODO: not a nice way
+
+                    let ext_ok = tool.when.ext.as_ref()
+                        .map_or(true, |exts| exts.iter().any(|e| e == ext));
+                    let kind_ok = tool.when.kind == file_kind;
+
+                    if ext_ok && kind_ok {
+                        if let Some(prev_tool) = file_matches.get(file) {
+                            panic!("Multiple tools work for {}", file.display())
+                        }
+                        file_matches.insert(file, tool);
+
+                        let mut vars = HashMap::new();
+                        vars.insert("INPUT".to_string(),file.to_string_lossy().to_string());
+                        vars.insert("OUTPUT".to_string(),output.to_string_lossy().to_string());
+
+                        let command_str = expand_string_with_vars(&tool.command, &vars).unwrap();
+                        let message = expand_string_with_vars(&tool.message, &vars).unwrap();
+
+                        let status = self.execute_command(&command_str)
+                            .expect("Failed to execute command");
+
+                        if !status.success() {
+                            panic!("Process returned an error");
+                        }
+
+                        if !message.is_empty() {
+                            println!("{}", message);
+                        }
+                    }
+                }
             }
-            if !found_tool {
-                panic!("Haven't found fitting tool for input_kind");
-            }
+        }
+
+        if output_kind == "executable" {
             // Unix: chmod +x
             #[cfg(unix)]
             {
@@ -445,9 +464,9 @@ impl Build {
                 perms.set_mode(0o755);
                 fs::set_permissions(output, perms).unwrap();
             }
-        } else {
-            panic!("Unknown type of target");
         }
+
+        return true;
     }
 
 
@@ -474,11 +493,14 @@ impl Build {
                 println!("  {}:", tool_name);
                 println!("    command: {}", tool.command);
                 println!("    type: {}", tool.kind);
+                println!("    combine_inputs: {}", tool.combine_inputs);
                 println!("    when:");
                 println!("      type: {}", tool.when.kind);
-                println!("      ext:");
-                for ext in &tool.when.ext {
-                    println!("      - {}", ext);
+                if let Some(ext_vec) = &tool.when.ext {
+                    println!("      ext:");
+                    for ext in ext_vec {
+                        println!("      - {}", ext);
+                    }
                 }
             }
         }

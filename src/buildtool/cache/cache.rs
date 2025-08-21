@@ -28,5 +28,5 @@ pub fn check_built(cache_dir: &Path, output: &str) -> bool {
 
     fs::write(cache_file, serde_json::to_string_pretty(&build_cache).unwrap()).unwrap();
 
-    !already_built
+    already_built
 }

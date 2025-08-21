@@ -2,6 +2,7 @@
 #include <stdlib.h>
 #include <string.h>
 #include <ctype.h>
+#include "rpn.h"
 
 #define MAX_STACK 100
 

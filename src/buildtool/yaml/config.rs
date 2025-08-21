@@ -21,12 +21,9 @@ pub struct Target {
 
 #[derive(Debug, Deserialize, Clone)]
 pub struct ToolWhen {
-    #[serde(default)]
-    pub ext: Vec<String>,
-    
+    pub ext: Option<Vec<String>>,
     #[serde(rename = "type")]
     pub kind: String,
-
     pub out: String,
 }
 
@@ -37,6 +34,8 @@ pub struct Tool {
 
     pub when: ToolWhen,
 
+    #[serde(default)]
+    pub combine_inputs: bool,
     pub command: String,
     #[serde(default)]
     pub message: String,
