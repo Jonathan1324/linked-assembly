@@ -52,6 +52,8 @@ pub struct ToolWhen {
 pub struct Tool {
     pub kind: String,
     pub when: ToolWhen,
+    pub dep_path: Option<String>,
+    pub dep_format: String,
     pub combine_inputs: bool,
     pub command: String,
     pub message: String,
@@ -196,6 +198,16 @@ impl Build {
                     out: out,
                 };
 
+                let mut dep_path = None;
+                if let Some(dep) = &tool.dep_path {
+                    dep_path = Some(expand_string(dep, &ctx).unwrap());
+                }
+
+                let mut dep_format = "$$".to_string();
+                if let Some(format) = &tool.dep_format {
+                    dep_format = expand_string(format, &ctx).unwrap();
+                }
+
                 let tool_kind = expand_string(&tool.kind, &ctx).unwrap();
                 if tool_kind != "compiler" && tool_kind != "linker" {
                     panic!("Unknown type of output: {}", tool_kind);
@@ -204,6 +216,8 @@ impl Build {
                     kind: tool_kind,
                     when: new_toolwhen,
                     combine_inputs: tool.combine_inputs,
+                    dep_path: dep_path,
+                    dep_format: dep_format,
                     command: expand_string(&tool.command, &ctx).unwrap(),
                     message: expand_string(&tool.message, &ctx).unwrap(),
                 };
@@ -371,8 +385,10 @@ impl Build {
             fs::create_dir_all(&cache_dir).unwrap();
         }
 
-        if cache::check_built(&cache_dir, &output.to_string_lossy()) && !force_rebuild {
-            return false;
+        let mut input_files: Vec<PathBuf> = Vec::new();
+        // TODO: better way of getting source files
+        if output_kind == "object" {
+            input_files = input.iter().map(|p| (*p).to_path_buf()).collect();
         }
 
         let tools: HashMap<&String, &Tool> = toolchain.tools
@@ -382,6 +398,11 @@ impl Build {
 
         let mut file_matches: HashMap<&Path, &Tool> = HashMap::new();
 
+        let mut any_rebuilt = false;
+
+        let mut combine_matched = false;
+        let mut per_file_matches: HashSet<&Path> = HashSet::new();
+
         for (_name, tool) in tools {
             if tool.combine_inputs {
                 let file_kind = "object"; // TODO: not a nice way
@@ -389,10 +410,20 @@ impl Build {
                 let kind_ok = tool.when.kind == file_kind;
 
                 if kind_ok {
+                    combine_matched = true;
                     if let Some(prev_tool) = file_matches.get(output) {
                         panic!("Multiple tools work for {}", output.display())
                     }
                     file_matches.insert(output, tool);
+
+                    if let Some(dep_path) = &tool.dep_path {
+                        panic!("Can't combine inputs and have deps");
+                    }
+
+                    if cache::check_built(&cache_dir, &input_files, &output.to_string_lossy()) && !force_rebuild {
+                        break;
+                    }
+                    any_rebuilt = true;
 
                     let mut vars = HashMap::new();
                     let input_path_strings: Vec<String> = input
@@ -429,6 +460,8 @@ impl Build {
                     let kind_ok = tool.when.kind == file_kind;
 
                     if ext_ok && kind_ok {
+                        per_file_matches.insert(file);
+
                         if let Some(prev_tool) = file_matches.get(file) {
                             panic!("Multiple tools work for {}", file.display())
                         }
@@ -437,6 +470,23 @@ impl Build {
                         let mut vars = HashMap::new();
                         vars.insert("INPUT".to_string(),file.to_string_lossy().to_string());
                         vars.insert("OUTPUT".to_string(),output.to_string_lossy().to_string());
+
+                        if let Some(dep_path) = &tool.dep_path {
+                            let path = expand_string_with_vars(&dep_path, &vars).unwrap();
+                            let file = fs::File::open(path)
+                                .expect("Couldn't open dependency file");
+                            let format = expand_string_with_vars(&tool.dep_format, &vars).unwrap();
+                            let deps = cache::parse_deps(&file, &format);
+                            for dep_str in &deps {
+                                let dep = PathBuf::from(dep_str);
+                                input_files.push(dep);
+                            }
+                        }
+
+                        if cache::check_built(&cache_dir, &input_files, &output.to_string_lossy()) && !force_rebuild {
+                            continue;
+                        }
+                        any_rebuilt = true;
 
                         let command_str = expand_string_with_vars(&tool.command, &vars).unwrap();
                         let message = expand_string_with_vars(&tool.message, &vars).unwrap();
@@ -456,6 +506,14 @@ impl Build {
             }
         }
 
+        if !combine_matched {
+            for file in &input {
+                if !per_file_matches.contains(file) {
+                    panic!("No tool found for output {}", output.display());
+                }
+            }
+        }
+
         if output_kind == "executable" {
             // Unix: chmod +x
             #[cfg(unix)]
@@ -466,7 +524,7 @@ impl Build {
             }
         }
 
-        return true;
+        return any_rebuilt;
     }
 
 
@@ -493,6 +551,10 @@ impl Build {
                 println!("  {}:", tool_name);
                 println!("    command: {}", tool.command);
                 println!("    type: {}", tool.kind);
+                if let Some(dep_path) = &tool.dep_path {
+                    println!("    dep_path: {}", dep_path);
+                }
+                println!("    dep_format: '{}'", tool.dep_format);
                 println!("    combine_inputs: {}", tool.combine_inputs);
                 println!("    when:");
                 println!("      type: {}", tool.when.kind);

@@ -13,6 +13,13 @@ toolchains:
           - c
           type: source
           out: object
+        dep_path: ${ OUTPUT }.d
+        dep_format: |
+          ${ OUTPUT }: \
+            $$ \
+            ...
+            $$
+
         command: gcc -c ${ INPUT } -MMD -MF ${ OUTPUT }.d -o ${ OUTPUT }
         message: Compiling ${ INPUT }
       CXX:
@@ -24,6 +31,7 @@ toolchains:
           - c++
           type: source
           out: object
+        dep_path: ${ OUTPUT }.d
         command: g++ -c ${ INPUT } -MMD -MF ${ OUTPUT }.d -o ${ OUTPUT }
         message: Compiling ${ INPUT }
       

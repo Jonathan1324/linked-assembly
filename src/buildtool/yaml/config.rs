@@ -34,9 +34,14 @@ pub struct Tool {
 
     pub when: ToolWhen,
 
+    pub dep_path: Option<String>,
+    pub dep_format: Option<String>,
+
     #[serde(default)]
     pub combine_inputs: bool,
+
     pub command: String,
+
     #[serde(default)]
     pub message: String,
 }

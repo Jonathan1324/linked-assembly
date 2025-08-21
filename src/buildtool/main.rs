@@ -78,6 +78,7 @@ fn main() {
 
     build.build();
 
-    // print debug info
-    // build.print_full();
+    if args.iter().any(|a| a == "-d" || a == "--debug") {
+        build.print_full();
+    }
 }
