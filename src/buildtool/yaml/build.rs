@@ -263,9 +263,12 @@ impl Build {
 
         let mut outputs_of_this_target = Vec::new();
         for (_name, output) in &target.outputs {
+            let mut build_path = PathBuf::from(&main_target.targetfile.env.build_dir);
+            build_path.push(&main_target.target);
+
             let output_path_str = normalize_path(
                 expand_string_with_vars(&output.path, &vars).unwrap().as_str(),
-                 Path::new(&main_target.targetfile.env.build_dir)
+                 &build_path
             );
 
             let output_path = Path::new(&output_path_str);
