@@ -26,6 +26,8 @@ pub struct ToolWhen {
     
     #[serde(rename = "type")]
     pub kind: String,
+
+    pub out: String,
 }
 
 #[derive(Debug, Deserialize, Clone)]

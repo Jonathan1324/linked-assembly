@@ -1,7 +1,9 @@
-python3 -m ci.ci
+python3 -m ci.ci --no-test
 
-cd tests/buildtool
+cd tests/buildtool/envs/test
 
-../../dist/bin/buildtool $@
+../../../../dist/bin/buildtool $@
 
-cd ../..
+build/main/main
+
+cd ../../../..

@@ -3,6 +3,7 @@ use crate::yaml::{build, config};
 use crate::yaml::vars::{expand_string, ExpandContext, expand_string_with_vars};
 use crate::path::path::normalize_path;
 use crate::yaml::target_config;
+use crate::cache::cache;
 use std::collections::HashMap;
 use std::path::{Path, PathBuf};
 use std::sync::Arc;
@@ -44,6 +45,7 @@ pub struct Target {
 pub struct ToolWhen {
     pub ext: Vec<String>,
     pub kind: String,
+    pub out: String,
 }
 
 #[derive(Debug, Clone)]
@@ -176,9 +178,14 @@ impl Build {
                 if kind != "source" && kind != "executable" && kind != "object" {
                     panic!("Unknown type of output: {}", kind);
                 }
+                let out = expand_string(&tool.when.out, &ctx).unwrap();
+                if out != "executable" && out != "object" {
+                    panic!("Unknown type of output: {}", out);
+                }
                 let new_toolwhen = ToolWhen {
                     ext: new_ext,
                     kind: kind,
+                    out: out,
                 };
 
                 let tool_kind = expand_string(&tool.kind, &ctx).unwrap();
@@ -276,15 +283,27 @@ impl Build {
                 fs::create_dir_all(parent).unwrap();
             }
 
+            let mut cache_dir = PathBuf::from(&main_target.targetfile.env.build_dir);
+            cache_dir.push(".cache");
+            if !cache_dir.exists() {
+                fs::create_dir_all(&cache_dir).unwrap();
+            }
+
             if combine_outputs {
                 let combined_paths: Vec<&Path> = dep_outputs.iter()
                     .map(|p| Path::new(p))
                     .collect();
-                self.run_with_toolchain(combined_paths, output_path, &target.toolchain, &output.kind);
+                
+                if cache::check_built(&cache_dir, &output_path.to_string_lossy()) {
+                    self.run_with_toolchain(combined_paths, output_path, &target.toolchain, &output.kind);
+                }
             } else {
                 for in_path in &dep_outputs {
                     let in_path = Path::new(in_path);
-                    self.run_with_toolchain([in_path].to_vec(), output_path, &target.toolchain, &output.kind);
+                    
+                    if cache::check_built(&cache_dir, &output_path.to_string_lossy()) {
+                        self.run_with_toolchain([in_path].to_vec(), output_path, &target.toolchain, &output.kind);
+                    }
                 }
             }
 

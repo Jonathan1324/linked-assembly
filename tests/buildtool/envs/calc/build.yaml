@@ -12,6 +12,7 @@ toolchains:
           ext:
           - c
           type: source
+          out: object
         command: gcc -c ${ INPUT } -o ${ OUTPUT }
         message: Compiling ${ INPUT }
       CXX:
@@ -22,12 +23,14 @@ toolchains:
           - cxx
           - c++
           type: source
+          out: object
         command: g++ -c ${ INPUT } -o ${ OUTPUT }
       
       LD:
         type: linker
         when:
           type: object
+          out: executable
         command: g++ ${ INPUT } -o ${ OUTPUT }
         message: Linking ${ OUTPUT }
 

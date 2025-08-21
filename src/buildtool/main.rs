@@ -8,6 +8,10 @@ mod args {
     pub mod args;
 }
 
+mod cache {
+    pub mod cache;
+}
+
 mod target {
     pub mod files;
 }
