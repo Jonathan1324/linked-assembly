@@ -183,15 +183,29 @@ CacheBuffer* readBuffer(FILE* f)
 void AddToCache(uint64_t buf_ptr, const char* name, const char* value)
 {
     CacheBuffer* buffer = (CacheBuffer*)(uintptr_t)buf_ptr;
-    if (!buffer || !name || !name) return;
+    if (!buffer || !name || !value) return;
 
     uint32_t count = buffer->headerBuffer->CacheHeaderEntryCount;
 
-    buffer->entries = (CacheTableEntryBuffer*)realloc(
+    // Check, if entry already exists
+    for (uint32_t i = 0; i < count; ++i)
+    {
+        if (strcmp(buffer->entries[i].name, name) == 0)
+        {
+            free(buffer->entries[i].value);
+            buffer->entries[i].value = strdup(value);
+            return;
+        }
+    }
+
+    // new entry
+    CacheTableEntryBuffer* new_entries = (CacheTableEntryBuffer*)realloc(
         buffer->entries,
         sizeof(CacheTableEntryBuffer) * (count + 1)
     );
+    if (!new_entries) return;
 
+    buffer->entries = new_entries;
     buffer->entries[count].name = strdup(name);
     buffer->entries[count].value = strdup(value);
 
