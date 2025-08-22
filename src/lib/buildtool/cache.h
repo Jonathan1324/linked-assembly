@@ -31,6 +31,7 @@ typedef struct
     uint64_t ValueLength;
 } __attribute__((packed)) CacheTableEntry;
 
+
 typedef struct
 {
     char* name;
@@ -39,11 +40,25 @@ typedef struct
     uint64_t value_length;
 } CacheTableEntryBuffer;
 
+typedef struct HashMapEntry
+{
+    char* key;
+    uint64_t key_len;
+    uint32_t index;
+    struct HashMapEntry* next;
+} HashMapEntry;
+
 typedef struct
 {
     CacheHeader* headerBuffer;
     CacheTableEntryBuffer* entries;
+
+    HashMapEntry** hash_table;
+    uint32_t hash_capacity;
+    uint64_t hash_count;
 } CacheBuffer;
+
+
 
 uint64_t ParseCacheFile(const char* path);
 void WriteCacheFile(uint64_t buf_ptr, const char* path);
