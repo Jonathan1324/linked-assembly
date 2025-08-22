@@ -1,12 +1,10 @@
-unsafe extern "C" {
-    fn printVersion();
-}
+use crate::c;
 
 pub fn print_version()
 {
     unsafe
     {
-        printVersion();
+        c::printVersion();
     }
 }
 
