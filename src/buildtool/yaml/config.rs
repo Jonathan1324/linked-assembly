@@ -20,6 +20,27 @@ pub struct Target {
 }
 
 #[derive(Debug, Deserialize, Clone)]
+pub struct Trim {
+    #[serde(rename = "if")]
+    pub condition: String,
+    pub remove: u32,
+}
+
+#[derive(Debug, Deserialize, Clone)]
+pub struct FormatRule {
+    #[serde(default)]
+    pub ignore_lines: u32,
+    #[serde(default)]
+    pub trim: Option<Trim>,
+}
+
+#[derive(Debug, Deserialize, Clone)]
+pub struct Format {
+    pub start: Option<FormatRule>,
+    pub end: Option<FormatRule>,
+}
+
+#[derive(Debug, Deserialize, Clone)]
 pub struct ToolWhen {
     pub ext: Option<Vec<String>>,
     #[serde(rename = "type")]
@@ -63,7 +84,6 @@ pub struct Environment {
 
     pub build_dir: String,
 
-    /// Key-Value
     #[serde(default)]
     pub vars: HashMap<String, String>,
 }
@@ -79,6 +99,9 @@ pub struct Config {
 #[derive(Debug, Deserialize, Clone)]
 pub struct BuildFile {
     pub config: Config,
+
+    #[serde(default)]
+    pub formats: HashMap<String, Format>,
 
     #[serde(default)]
     pub toolchains: HashMap<String, Toolchain>,

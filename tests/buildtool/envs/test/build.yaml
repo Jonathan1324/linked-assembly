@@ -1,7 +1,20 @@
 config:
   default_env: general
   default_targets:
-  - main
+  - project1
+
+formats:
+  gcc_deps:
+    start:
+      ignore_lines: 2
+      trim:
+        if: "  "
+        remove: 2
+    end:
+      ignore_lines: 0
+      trim:
+        if: "\\"
+        remove: 1
 
 toolchains:
   main:
@@ -14,12 +27,7 @@ toolchains:
           type: source
           out: object
         dep_path: ${ OUTPUT }.d
-        dep_format: |
-          ${ OUTPUT }: \
-            $$ \
-            ...
-            $$
-
+        dep_format: gcc_deps
         command: gcc -c ${ INPUT } -MMD -MF ${ OUTPUT }.d -o ${ OUTPUT }
         message: Compiling ${ INPUT }
       CXX:
@@ -32,6 +40,7 @@ toolchains:
           type: source
           out: object
         dep_path: ${ OUTPUT }.d
+        dep_format: gcc_deps
         command: g++ -c ${ INPUT } -MMD -MF ${ OUTPUT }.d -o ${ OUTPUT }
         message: Compiling ${ INPUT }
       
@@ -50,12 +59,17 @@ environments:
     build_dir: build
     vars:
       SRC_DIR: src
+  project1:
+    toolchain: main
+    build_dir: ${ env.build_dir }/project1
+    vars:
+      SRC_DIR: src/project1
 
 targets:
-  main:
+  project1:
     path: ${ $env.SRC_DIR }
     config: build.yaml
     outputs:
       main:
         type: executable
-    env: general
+    env: project1

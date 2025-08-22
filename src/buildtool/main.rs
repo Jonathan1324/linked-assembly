@@ -70,6 +70,7 @@ fn main() {
         environments: std::collections::HashMap::new(),
         targets: std::collections::HashMap::new(),
         toolchains: std::collections::HashMap::new(),
+        formats: std::collections::HashMap::new(),
         buildfile,
     };
 

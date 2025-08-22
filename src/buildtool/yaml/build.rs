@@ -8,7 +8,7 @@ use std::collections::{HashMap, HashSet};
 use std::path::{Path, PathBuf};
 use std::sync::Arc;
 use std::fs;
-use std::io;
+use std::io::{self, BufRead};
 use std::process::{Command, ExitStatus};
 #[cfg(unix)]
 use std::os::unix::fs::PermissionsExt;
@@ -39,6 +39,24 @@ pub struct Target {
 
     // Target struct
     pub targetfile: TargetFile,
+}
+
+#[derive(Debug, Clone)]
+pub struct Trim {
+    pub condition: String,
+    pub remove: u32,
+}
+
+#[derive(Debug, Clone)]
+pub struct FormatRule {
+    pub ignore_lines: u32,
+    pub trim: Option<Trim>
+}
+
+#[derive(Debug, Clone)]
+pub struct Format {
+    pub start: Option<FormatRule>,
+    pub end: Option<FormatRule>,
 }
 
 #[derive(Debug, Clone)]
@@ -75,6 +93,7 @@ pub struct Build {
     pub environments: HashMap<String, Arc<Environment>>,
     pub targets: HashMap<String, Target>,
     pub toolchains: HashMap<String, Toolchain>,
+    pub formats: HashMap<String, Format>,
 
     pub buildfile: config::BuildFile,
 }
@@ -232,6 +251,47 @@ impl Build {
 
             self.toolchains.insert(name.clone(), new_toolchain);
         }
+
+        for (name, format) in &self.buildfile.formats {
+            let mut new_start = None;
+            if let Some(start) = &format.start {
+                let mut new_trim = None;
+                if let Some(trim) = &start.trim {
+                    new_trim = Some(Trim {
+                        condition: expand_string(&trim.condition, &ctx).unwrap(),
+                        remove: trim.remove
+                    });
+                }
+
+                new_start = Some(FormatRule {
+                    ignore_lines: start.ignore_lines,
+                    trim: new_trim,
+                });
+            }
+
+            let mut new_end = None;
+            if let Some(end) = &format.end {
+                let mut new_trim = None;
+                if let Some(trim) = &end.trim {
+                    new_trim = Some(Trim {
+                        condition: expand_string(&trim.condition, &ctx).unwrap(),
+                        remove: trim.remove
+                    });
+                }
+
+                new_end = Some(FormatRule {
+                    ignore_lines: end.ignore_lines,
+                    trim: new_trim,
+                });
+            }
+
+            let new_format = Format {
+                start: new_start,
+                end: new_end,
+            };
+
+            self.formats.insert(name.clone(), new_format);
+        }
     }
 
     pub fn resolve_targets(&mut self) {
@@ -333,6 +393,59 @@ impl Build {
         }
 
         (outputs_of_this_target, any_rebuilt)
+    }
+
+    pub fn parse_deps(&self, file: &fs::File, format: &Format) -> io::Result<Vec<String>> {
+        let reader = io::BufReader::new(file);
+        let mut lines: Vec<String> = reader.lines().collect::<Result<_, _>>()?;
+
+        let start_skip = format.start.as_ref().map(|r| r.ignore_lines as usize).unwrap_or(0);
+        let end_skip   = format.end  .as_ref().map(|r| r.ignore_lines as usize).unwrap_or(0);
+
+        if lines.len() < start_skip + end_skip {
+            return Ok(Vec::new());
+        }
+
+        let range_end = lines.len() - end_skip;
+        let mut deps = Vec::new();
+
+        for mut line in lines.drain(start_skip..range_end) {
+            line = line.trim().to_string();
+
+            if let Some(start) = &format.start {
+                if let Some(trim) = &start.trim {
+                    if line.starts_with(&trim.condition) {
+                        let n = trim.remove as usize;
+                        if line.len() >= n {
+                            line.drain(0..n);
+                        } else {
+                            line.clear();
+                        }
+                    }
+                }
+            }
+
+            if let Some(end) = &format.end {
+                if let Some(trim) = &end.trim {
+                    if line.ends_with(&trim.condition) {
+                        let n = trim.remove as usize;
+                        if line.len() >= n {
+                            let new_len = line.len() - n;
+                            line.truncate(new_len);
+                        } else {
+                            line.clear();
+                        }
+                    }
+                }
+            }
+
+            let s = line.trim();
+            if !s.is_empty() {
+                deps.push(s.to_string());
+            }
+        }
+
+        Ok(deps)
     }
 
     pub fn build(&self) {
@@ -448,6 +561,8 @@ impl Build {
                         println!("{}", message);
                     }
 
+                    cache::write_built(&cache_dir, &input_files, &output.to_string_lossy());
+
                     break;
                 }
             } else {
@@ -471,15 +586,32 @@ impl Build {
                         vars.insert("INPUT".to_string(),file.to_string_lossy().to_string());
                         vars.insert("OUTPUT".to_string(),output.to_string_lossy().to_string());
 
+                        let mut set_deps = false;
                         if let Some(dep_path) = &tool.dep_path {
                             let path = expand_string_with_vars(&dep_path, &vars).unwrap();
-                            let file = fs::File::open(path)
-                                .expect("Couldn't open dependency file");
-                            let format = expand_string_with_vars(&tool.dep_format, &vars).unwrap();
-                            let deps = cache::parse_deps(&file, &format);
-                            for dep_str in &deps {
-                                let dep = PathBuf::from(dep_str);
-                                input_files.push(dep);
+                            if !Path::new(&path).exists() {
+                                eprintln!("Warning: Dependency file '{}' does not exist.", path);
+                            } else {
+                                let file = fs::File::open(&path)
+                                    .unwrap_or_else(|err| panic!("Couldn't open dependency file '{}': {}", path, err));
+
+                                let format_str = expand_string_with_vars(&tool.dep_format, &vars).unwrap();
+                                let format = self.formats.get(&format_str)
+                                    .unwrap_or_else(|| panic!("Couldn't find format '{}'", format_str));
+
+                                let deps = self.parse_deps(&file, &format)
+                                    .unwrap_or_else(|err| panic!("Failed to parse dependencies from '{}': {}", path, err));
+
+                                for dep_str in &deps {
+                                    let dep = PathBuf::from(dep_str);
+                                    if !dep.exists() {
+                                        eprintln!("Warning: Dependency '{}' does not exist.", dep.display());
+                                    } else {
+                                        input_files.push(dep);
+                                    }
+                                }
+
+                                set_deps = true;
                             }
                         }
 
@@ -501,6 +633,34 @@ impl Build {
                         if !message.is_empty() {
                             println!("{}", message);
                         }
+
+                        if !set_deps {
+                            if let Some(dep_path) = &tool.dep_path {
+                                let path = expand_string_with_vars(&dep_path, &vars).unwrap();
+                                if Path::new(&path).exists() {
+                                    let file = fs::File::open(&path)
+                                        .unwrap_or_else(|err| panic!("Couldn't open dependency file '{}': {}", path, err));
+
+                                    let format_str = expand_string_with_vars(&tool.dep_format, &vars).unwrap();
+                                    let format = self.formats.get(&format_str)
+                                        .unwrap_or_else(|| panic!("Couldn't find format '{}'", format_str));
+
+                                    let deps = self.parse_deps(&file, &format)
+                                        .unwrap_or_else(|err| panic!("Failed to parse dependencies from '{}': {}", path, err));
+
+                                    for dep_str in &deps {
+                                        let dep = PathBuf::from(dep_str);
+                                        if dep.exists() {
+                                            input_files.push(dep);
+                                        }
+                                    }
+
+                                    set_deps = true;
+                                }
+                            }
+                        }
+
+                        cache::write_built(&cache_dir, &input_files, &output.to_string_lossy());
                     }
                 }
             }
@@ -540,6 +700,29 @@ impl Build {
             println!("default_targets:");
             for t in &self.default_targets {
                 println!("  - {}", t);
+            }
+        }
+
+        println!("\n--- Formats ---");
+        for (name, format) in &self.formats {
+            println!("Format: {}", name);
+            if let Some(start) = &format.start {
+                println!("  start:");
+                println!("    ignore_lines: {}", start.ignore_lines);
+                if let Some(trim) = &start.trim {
+                    println!("    trim:");
+                    println!("      if: '{}'", trim.condition);
+                    println!("      remove: {}", trim.remove);
+                }
+            }
+            if let Some(end) = &format.end {
+                println!("  end:");
+                println!("    ignore_lines: {}", end.ignore_lines);
+                if let Some(trim) = &end.trim {
+                    println!("    trim:");
+                    println!("      if: '{}'", trim.condition);
+                    println!("      remove: {}", trim.remove);
+                }
             }
         }
 
