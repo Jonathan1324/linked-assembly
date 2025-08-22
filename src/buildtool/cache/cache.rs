@@ -5,7 +5,6 @@ use serde_json::json;
 use std::collections::HashMap;
 use sha2::{Sha256, Digest};
 use std::ffi::CString;
-use base64::{engine::general_purpose, Engine as _};
 use crate::c;
 
 #[repr(transparent)]
@@ -33,26 +32,35 @@ impl CacheBuffer {
         true
     }
 
-    pub fn add(&self, name: &str, value: &str) -> bool {
-        let c_name = match CString::new(name) {
-            Ok(s) => s,
-            Err(_) => return false,
-        };
-        let c_value = match CString::new(value) {
-            Ok(s) => s,
-            Err(_) => return false,
-        };
-        unsafe { c::AddToCache(self.ptr, c_name.as_ptr(), c_value.as_ptr()) };
+    pub fn add(&self, name: &[u8], value: &[u8]) -> bool {
+        unsafe {
+            c::AddToCache(
+                self.ptr,
+                name.as_ptr() as *const libc::c_char,
+                name.len() as u64,
+                value.as_ptr() as *const libc::c_char,
+                value.len() as u64,
+            );
+        }
         true
     }
 
-    pub fn read(&self, name: &str) -> Option<String> {
-        let c_name = CString::new(name).ok()?;
-        let value_ptr = unsafe { c::ReadFromCache(self.ptr, c_name.as_ptr()) };
-        if value_ptr.is_null() {
-            None
-        } else {
-            unsafe { Some(std::ffi::CStr::from_ptr(value_ptr).to_string_lossy().into_owned()) }
+    pub fn read(&self, name: &[u8]) -> Option<Vec<u8>> {
+        let mut value_len: u64 = 0;
+
+        unsafe {
+            let value_ptr = c::ReadFromCache(
+                self.ptr,
+                name.as_ptr() as *const libc::c_char,
+                name.len() as u64,
+                &mut value_len as *mut u64,
+            );
+
+            if value_ptr.is_null() || value_len == 0 {
+                None
+            } else {
+                Some(std::slice::from_raw_parts(value_ptr as *const u8, value_len as usize).to_vec())
+            }
         }
     }
 }
@@ -64,15 +72,14 @@ impl Drop for CacheBuffer {
 }
 
 
-// TODO: not as string but as raw bytes (also update c to have length)
-pub fn hash_path(path: &str) -> String {
+pub fn hash_path(path: &str) -> Vec<u8> {
     let mut hasher = Sha256::new();
     hasher.update(path.as_bytes());
     let result = hasher.finalize();
-    general_purpose::STANDARD.encode(result)
+    result.to_vec()
 }
 
-pub fn compute_fingerprint(inputs: &[PathBuf]) -> String {
+pub fn compute_fingerprint(inputs: &[PathBuf]) -> Vec<u8> {
     let mut hasher = Sha256::new();
 
     for path in inputs {
@@ -81,7 +88,7 @@ pub fn compute_fingerprint(inputs: &[PathBuf]) -> String {
     }
 
     let result = hasher.finalize();
-    general_purpose::STANDARD.encode(result)
+    result.to_vec()
 }
 
 pub fn check_built(cache_dir: &Path, inputs: &[PathBuf], output: &str, cache: &CacheBuffer) -> bool {
@@ -102,6 +109,8 @@ pub fn write_built(cache_dir: &Path, inputs: &[PathBuf], output: &str, map_names
 
     let names_file = cache_dir.join("names.json");
 
+    let output_hash_str: String = output_hash.iter().map(|b| format!("{:02x}", b)).collect();
+
     if map_names {
         let mut name_map: HashMap<String, String> = if names_file.exists() {
             serde_json::from_str(&fs::read_to_string(&names_file).unwrap()).unwrap()
@@ -109,7 +118,7 @@ pub fn write_built(cache_dir: &Path, inputs: &[PathBuf], output: &str, map_names
             HashMap::new()
         };
 
-        name_map.insert(output_hash, output.to_string());
+        name_map.insert(output_hash_str, output.to_string());
         fs::write(names_file, serde_json::to_string_pretty(&name_map).unwrap()).unwrap();
     }
 }
