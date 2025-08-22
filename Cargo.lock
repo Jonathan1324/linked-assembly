@@ -16,6 +16,7 @@ name = "buildtool"
 version = "0.0.0"
 dependencies = [
  "glob",
+ "libc",
  "serde",
  "serde_json",
  "serde_yaml",

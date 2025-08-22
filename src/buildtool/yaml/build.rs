@@ -309,7 +309,7 @@ impl Build {
         }
     }
 
-    pub fn parse_target(&self, target: &files::Target, main_target: &Target, input: Option<&String>) -> (Vec<String>, bool) {
+    pub fn parse_target(&self, target: &files::Target, main_target: &Target, input: Option<&String>, cache: &cache::CacheBuffer) -> (Vec<String>, bool) {
         let mut dep_outputs = Vec::new();
         let mut any_rebuilt = false;
 
@@ -321,7 +321,7 @@ impl Build {
                 .expect("Couldn't find target of files entry");
 
             for file_path in &dep_files.file_paths {
-                let (outputs, rebuilt) = self.parse_target(dep_target, main_target, Some(file_path));
+                let (outputs, rebuilt) = self.parse_target(dep_target, main_target, Some(file_path), cache);
                 dep_outputs.extend(outputs);
                 if rebuilt {
                     any_rebuilt = true;
@@ -377,6 +377,7 @@ impl Build {
                     .collect();
 
             let rebuilt = self.run_with_toolchain(
+                cache,
                 combined_paths,
                 output_path,
                 &target.toolchain,
@@ -449,6 +450,17 @@ impl Build {
     }
 
     pub fn build(&self) {
+        let mut cache_dir = PathBuf::from(&self.default_env.build_dir);
+        cache_dir.push(".cache");
+        if !cache_dir.exists() {
+            fs::create_dir_all(&cache_dir).unwrap();
+        }
+        let cache_file = cache_dir.join("cache.dat");
+
+        let cache = cache::CacheBuffer::parse_file(&cache_file).unwrap_or_else(|| {
+            panic!("Could not create cache buffer");
+        });
+
         for target_name in &self.default_targets {
             let main_target = self.targets.get(target_name.as_str())
                 .expect("Couldn't find target in default targets");
@@ -458,8 +470,10 @@ impl Build {
                 .expect("Couldn't find target in targetfile");
 
             // TODO: set input
-            let (outs, rebuilt) = self.parse_target(target, main_target, None);
+            let (outs, rebuilt) = self.parse_target(target, main_target, None, &cache);
         }
+
+        cache.write_file(&cache_file);
     }
 
     pub fn execute_command(&self, command: &str) -> io::Result<ExitStatus> {
@@ -482,7 +496,9 @@ impl Build {
     }
 
     pub fn run_with_toolchain(
-        &self, input: Vec<&Path>,
+        &self,
+        cache: &cache::CacheBuffer,
+        input: Vec<&Path>,
         output: &Path,
         toolchain_str: &String,
         output_kind: &String,
@@ -492,7 +508,7 @@ impl Build {
         let toolchain = self.toolchains.get(toolchain_str)
             .expect("Couldn't find toolchain");
 
-        let mut cache_dir = PathBuf::from(&build_dir);
+        let mut cache_dir = PathBuf::from(&self.default_env.build_dir);
         cache_dir.push(".cache");
         if !cache_dir.exists() {
             fs::create_dir_all(&cache_dir).unwrap();
@@ -508,6 +524,9 @@ impl Build {
             .iter()
             .filter(|(_, tool) | (tool.when.out == *output_kind))
             .collect();
+
+        // TODO: not always set true
+        let create_name_map = true;
 
         let mut file_matches: HashMap<&Path, &Tool> = HashMap::new();
 
@@ -533,7 +552,7 @@ impl Build {
                         panic!("Can't combine inputs and have deps");
                     }
 
-                    if cache::check_built(&cache_dir, &input_files, &output.to_string_lossy()) && !force_rebuild {
+                    if cache::check_built(&cache_dir, &input_files, &output.to_string_lossy(), cache) && !force_rebuild {
                         break;
                     }
                     any_rebuilt = true;
@@ -561,7 +580,7 @@ impl Build {
                         println!("{}", message);
                     }
 
-                    cache::write_built(&cache_dir, &input_files, &output.to_string_lossy());
+                    cache::write_built(&cache_dir, &input_files, &output.to_string_lossy(), create_name_map, cache);
 
                     break;
                 }
@@ -615,7 +634,7 @@ impl Build {
                             }
                         }
 
-                        if cache::check_built(&cache_dir, &input_files, &output.to_string_lossy()) && !force_rebuild {
+                        if cache::check_built(&cache_dir, &input_files, &output.to_string_lossy(), cache) && !force_rebuild {
                             continue;
                         }
                         any_rebuilt = true;
@@ -660,7 +679,7 @@ impl Build {
                             }
                         }
 
-                        cache::write_built(&cache_dir, &input_files, &output.to_string_lossy());
+                        cache::write_built(&cache_dir, &input_files, &output.to_string_lossy(), create_name_map, cache);
                     }
                 }
             }

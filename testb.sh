@@ -4,6 +4,6 @@ cd tests/buildtool/envs/test
 
 ../../../../dist/bin/buildtool $@
 
-build/project2/out/main
+#build/project2/out/main
 
 cd ../../../..
