@@ -5,6 +5,7 @@ use serde_json::json;
 use std::collections::HashMap;
 use sha2::{Sha256, Digest};
 use std::ffi::CString;
+use base64::{engine::general_purpose, Engine as _};
 use crate::c;
 
 #[repr(transparent)]
@@ -63,11 +64,12 @@ impl Drop for CacheBuffer {
 }
 
 
+// TODO: not as string but as raw bytes (also update c to have length)
 pub fn hash_path(path: &str) -> String {
     let mut hasher = Sha256::new();
     hasher.update(path.as_bytes());
     let result = hasher.finalize();
-    format!("{:x}", result)
+    general_purpose::STANDARD.encode(result)
 }
 
 pub fn compute_fingerprint(inputs: &[PathBuf]) -> String {
@@ -79,7 +81,7 @@ pub fn compute_fingerprint(inputs: &[PathBuf]) -> String {
     }
 
     let result = hasher.finalize();
-    format!("{:x}", result)
+    general_purpose::STANDARD.encode(result)
 }
 
 pub fn check_built(cache_dir: &Path, inputs: &[PathBuf], output: &str, cache: &CacheBuffer) -> bool {
