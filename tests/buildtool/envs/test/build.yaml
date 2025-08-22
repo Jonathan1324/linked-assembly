@@ -2,6 +2,7 @@ config:
   default_env: general
   default_targets:
   - project1
+  - project2
 
 formats:
   gcc_deps:
@@ -64,6 +65,11 @@ environments:
     build_dir: ${ env.build_dir }/project1
     vars:
       SRC_DIR: src/project1
+  project2:
+    toolchain: main
+    build_dir: ${ env.build_dir }/project2
+    vars:
+      SRC_DIR: src/project2
 
 targets:
   project1:
@@ -73,3 +79,10 @@ targets:
       main:
         type: executable
     env: project1
+  project2:
+    path: ${ $env.SRC_DIR }
+    config: build.yaml
+    outputs:
+      main:
+        type: executable
+    env: project2
