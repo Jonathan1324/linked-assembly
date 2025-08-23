@@ -338,6 +338,8 @@ impl Build {
         if let Some(input_file) = input {
             let path = Path::new(&input_file);
 
+            vars.insert("INPUT".to_string(), path.to_string_lossy().to_string());
+
             if let Some(stem) = path.file_stem().and_then(|s| s.to_str()) {
                 vars.insert("NAME".to_string(), stem.to_string());
             }
@@ -565,6 +567,20 @@ impl Build {
                     let input_path_str = input_path_strings.join(" ");
                     vars.insert("INPUT".to_string(),input_path_str.clone());
                     vars.insert("OUTPUT".to_string(),output.to_string_lossy().to_string());
+                    if let Some(stem) = output.file_stem().and_then(|s| s.to_str()) {
+                        vars.insert("ONAME".to_string(), stem.to_string());
+                    }
+                    if let Some(ext) = output.extension().and_then(|s| s.to_str()) {
+                        vars.insert("OEXT".to_string(), ext.to_string());
+                    }
+                    if let Some(parent) = output.parent().and_then(|p| p.to_str()) {
+                        let path = parent.to_string();
+                        if path.is_empty() {
+                            vars.insert("OPATH".to_string(), ".".to_string());
+                        } else {
+                            vars.insert("OPATH".to_string(), parent.to_string());
+                        }
+                    }
 
                     let command_str = expand_string_with_vars(&tool.command, &vars).unwrap();
                     let message = expand_string_with_vars(&tool.message, &vars).unwrap();
@@ -603,7 +619,35 @@ impl Build {
 
                         let mut vars = HashMap::new();
                         vars.insert("INPUT".to_string(),file.to_string_lossy().to_string());
+                        if let Some(stem) = file.file_stem().and_then(|s| s.to_str()) {
+                            vars.insert("NAME".to_string(), stem.to_string());
+                        }
+                        if let Some(ext) = file.extension().and_then(|s| s.to_str()) {
+                            vars.insert("EXT".to_string(), ext.to_string());
+                        }
+                        if let Some(parent) = file.parent().and_then(|p| p.to_str()) {
+                            let path = parent.to_string();
+                            if path.is_empty() {
+                                vars.insert("PATH".to_string(), ".".to_string());
+                            } else {
+                                vars.insert("PATH".to_string(), parent.to_string());
+                            }
+                        }
                         vars.insert("OUTPUT".to_string(),output.to_string_lossy().to_string());
+                        if let Some(stem) = output.file_stem().and_then(|s| s.to_str()) {
+                            vars.insert("ONAME".to_string(), stem.to_string());
+                        }
+                        if let Some(ext) = output.extension().and_then(|s| s.to_str()) {
+                            vars.insert("OEXT".to_string(), ext.to_string());
+                        }
+                        if let Some(parent) = output.parent().and_then(|p| p.to_str()) {
+                            let path = parent.to_string();
+                            if path.is_empty() {
+                                vars.insert("OPATH".to_string(), ".".to_string());
+                            } else {
+                                vars.insert("OPATH".to_string(), parent.to_string());
+                            }
+                        }
 
                         let mut set_deps = false;
                         if let Some(dep_path) = &tool.dep_path {

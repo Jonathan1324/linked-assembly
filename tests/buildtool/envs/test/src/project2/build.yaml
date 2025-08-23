@@ -20,4 +20,4 @@ targets:
     outputs:
       object:
         type: object
-        path: ${ PATH }/${ NAME }.${ EXT }.o
+        path: ${ INPUT }.o

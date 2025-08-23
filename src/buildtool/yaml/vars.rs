@@ -136,6 +136,15 @@ pub fn expand_string(
             else if key == "INPUT" {
                 result.push_str("${INPUT}");
             }
+            else if key == "ONAME" {
+                result.push_str("${ONAME}");
+            }
+            else if key == "OEXT" {
+                result.push_str("${OEXT}");
+            }
+            else if key == "OPATH" {
+                result.push_str("${OPATH}");
+            }
             else if key == "OUTPUT" {
                 result.push_str("${OUTPUT}");
             }
