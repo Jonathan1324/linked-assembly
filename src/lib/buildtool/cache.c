@@ -3,6 +3,7 @@
 #include <stdio.h>
 #include <string.h>
 
+// TODO: create better function for hashing
 static uint64_t hashFunc(const char* key, uint64_t len) {
     uint64_t h = 14695981039346656037ULL; // FNV offset
     for (uint64_t i = 0; i < len; i++) {
