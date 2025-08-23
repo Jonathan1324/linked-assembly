@@ -44,6 +44,9 @@ int handleError(const std::exception& e)
 
 int main(int argc, const char *argv[])
 {
+    // TODO: remove this once it's finished
+    std::cerr << "Warning: Assembler isn't stable yet and still has bugs" << std::endl;
+
     WarningManager warningManager;
     Context context;
     context.warningManager = &warningManager;

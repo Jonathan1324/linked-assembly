@@ -88,7 +88,7 @@ int main(int argc, const char *argv[])
     }
     catch(const std::exception& e) { handleError(e); }
 
-    std::cout << "Linker not implemented yet. ):" << std::endl;
+    std::cerr << "Linker not implemented yet. ):" << std::endl;
 
     if (output != "-")
         delete objectFile;
