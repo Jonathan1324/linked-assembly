@@ -5,6 +5,8 @@ HCB
 
 #include <stdint.h>
 
+#define MAGIC {0x7F, 'B', 'T', 'C', 'A', 'C', 'H', 'E'}
+
 typedef struct
 {
     uint8_t Magic[8];

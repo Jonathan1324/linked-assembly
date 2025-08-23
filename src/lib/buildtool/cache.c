@@ -54,8 +54,6 @@ uint64_t hashLookup(CacheBuffer* buffer, const char* key, uint64_t key_len) {
     return e ? e->index : UINT64_MAX;
 }
 
-#define MAGIC {0x7F, 'B', 'T', 'C', 'A', 'C', 'H', 'E'}
-
 CacheHeader* createHeader()
 {
     CacheHeader* header = (CacheHeader*)malloc(sizeof(CacheHeader));
