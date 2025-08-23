@@ -17,7 +17,7 @@ def change_dir(path: Path):
 
 def test(dir: Path, log_dir: Path):
     env_dir = dir / "envs"
-    buildtool_rel = Path("dist/bin/buildtool")
+    buildtool_rel = Path("dist/bin/lbt")
 
     buildtool = str(buildtool_rel.resolve())
     envs = [p for p in env_dir.iterdir() if p.is_dir() and p.name != ".ignore"]

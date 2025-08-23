@@ -110,7 +110,7 @@ int main(int argc, const char *argv[])
                 char* out_buf = nullptr;
                 char* err_buf = nullptr;
 
-                std::string cmd = getExecutableDir() + "/asmp";
+                std::string cmd = getExecutableDir() + "/lasmp";
                 cmd += " - -o -";
                 int32_t code = run_program(cmd.c_str(), in_buf.c_str(), &out_buf, &err_buf);
 

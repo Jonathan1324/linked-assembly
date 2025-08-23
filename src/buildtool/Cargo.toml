@@ -1,5 +1,5 @@
 [package]
-name = "buildtool"
+name = "linked-assembly-buildtool"
 version = "0.0.0"
 edition = "2024"
 build = "build.rs"
@@ -14,5 +14,5 @@ sha2 = "0.10.9"
 libc = "0.2.175"
 
 [[bin]]
-name = "buildtool"
+name = "lbt"
 path = "main.rs"

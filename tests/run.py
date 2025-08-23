@@ -57,7 +57,7 @@ format_map = {
 
 def runAssembler(src: str, dst: str, debug: bool, logs: Path,
                  arch: Arch, bits: Bits, format: Format) -> bool:
-    cmd = ["dist/bin/assembler", src]
+    cmd = ["dist/bin/lasm", src]
     if (debug): cmd.append("-d")
 
     arch_str: str
