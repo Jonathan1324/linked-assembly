@@ -27,7 +27,8 @@ SECURITY_FLAGS = -fstack-protector-strong -D_FORTIFY_SOURCE=2 -fPIC
 CFLAGS = $(INCLUDE_FLAGS) $(COMMON_WARNINGS)
 CXXFLAGS = $(INCLUDE_FLAGS) -std=c++17 $(COMMON_WARNINGS)
 LDFLAGS =
-RUSTFLAGS = --crate-type staticlib
+RUSTLIBFLAGS = --crate-type staticlib
+RUSTFLAGS =
 STRIPFLAGS =
 
 ifeq ($(OS_NAME),linux)

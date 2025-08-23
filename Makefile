@@ -25,17 +25,11 @@ BIN_DIR := $(BUILD_DIR)
 LIB_DIR=$(BUILD_DIR)/libs
 
 LDFLAGSSRC = -L$(LIB_DIR) -lcore -lrust
+RUSTLDFLAGS = -lstatic=core -lstatic=rust
 
-abc := $(shell \
-        if [ -n "$$PROCESSOR_ARCHITEW6432" ]; then \
-            echo $$PROCESSOR_ARCHITEW6432; \
-        else \
-            echo $$PROCESSOR_ARCHITECTURE; \
-        fi | tr '[:upper:]' '[:lower:]')
+.PHONY: all clean libcore librust buildtool asmp assembler linker
 
-.PHONY: all clean libcore librust asmp assembler linker
-
-all: libcore librust asmp assembler linker
+all: libcore librust buildtool asmp assembler linker
 
 libcore:
 	@$(MAKE) -C $(SRC_DIR)/lib 				\
@@ -59,6 +53,7 @@ librust:
 		DEBUG=$(DEBUG)						\
 											\
 		RUSTFLAGS="$(RUSTFLAGS)"			\
+		RUSTLIBFLAGS="$(RUSTLIBFLAGS)"		\
 		RUST_TARGET="$(RUST_TARGET)"		\
 		SRC_DIR=$(SRC_DIR)/rust 			\
 		LIB_DIR=$(LIB_DIR)					\
@@ -66,6 +61,19 @@ librust:
 		LIB=rust							\
 		BUILD_DIR=$(BUILD_DIR)/rust			\
 		BIN_DIR=$(BIN_DIR)
+
+buildtool: libcore librust
+	@$(MAKE) -C $(SRC_DIR)/buildtool		\
+		DEBUG=$(DEBUG)						\
+											\
+		RUSTFLAGS="$(RUSTFLAGS)"			\
+		RUSTLDFLAGS="$(RUSTLDFLAGS)"		\
+		RUST_TARGET="$(RUST_TARGET)"		\
+		SRC_DIR=$(SRC_DIR)/buildtool 		\
+		BUILD_DIR=$(BUILD_DIR)/buildtool	\
+		BIN_DIR=$(BIN_DIR)					\
+		LIB_DIR=$(LIB_DIR)					\
+		EXE_EXT=$(EXE_EXT)
 
 asmp: libcore librust
 	@$(MAKE) -C $(SRC_DIR)/asmp 			\
@@ -117,6 +125,16 @@ clean:
 	@$(MAKE) -C $(SRC_DIR)/assembler clean 	\
 		SRC_DIR=$(SRC_DIR)/assembler 		\
 		BUILD_DIR=$(BUILD_DIR)/assembler	\
+		EXE_EXT=$(EXE_EXT)
+
+	@$(MAKE) -C $(SRC_DIR)/rust clean 		\
+		SRC_DIR=$(SRC_DIR)/rust		 		\
+		BUILD_DIR=$(BUILD_DIR)/rust			\
+		EXE_EXT=$(EXE_EXT)
+
+	@$(MAKE) -C $(SRC_DIR)/buildtool clean 	\
+		SRC_DIR=$(SRC_DIR)/buildtool 		\
+		BUILD_DIR=$(BUILD_DIR)/buildtool	\
 		EXE_EXT=$(EXE_EXT)
 
 	@$(MAKE) -C $(SRC_DIR)/asmp clean   	\

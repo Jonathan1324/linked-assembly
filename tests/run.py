@@ -2,9 +2,10 @@ from pathlib import Path
 from enum import Enum
 import subprocess
 import logging
+import buildtool.test as buildtool
 
 # Logger
-logger = logging.getLogger("ci")
+logger = logging.getLogger("tests")
 logger.setLevel(logging.DEBUG)
 
 file_handler = logging.FileHandler("logs/tests.log", mode="w", encoding="utf-8")
@@ -118,11 +119,11 @@ def runAssembler(src: str, dst: str, debug: bool, logs: Path,
 
 def testAssembler(src_dir: Path, build_dir: Path, log_dir: Path):
     for asmfile in src_dir.rglob("*.asm"):
-        dst_parts = (Path(build_dir) / asmfile.parent).parts
-        dst_path = Path(*dst_parts[:2], *dst_parts[3:], asmfile.name)
+        dst_parts = (build_dir / asmfile.parent).parts
+        dst_path = Path(*dst_parts, asmfile.name)
         dst_path.parent.mkdir(parents=True, exist_ok=True)
 
-        log_parts = (Path(log_dir) / asmfile.parent).parts
+        log_parts = (log_dir / asmfile.parent).parts
         log_path = Path(*log_parts[:2], *log_parts[3:], asmfile.name)
         log_path.parent.mkdir(parents=True, exist_ok=True)
 
@@ -155,12 +156,18 @@ def testAssembler(src_dir: Path, build_dir: Path, log_dir: Path):
 
 
 if __name__ == "__main__":
-    build_dir = Path("tests/build")
-    build_dir.mkdir(parents=True, exist_ok=True)
-    log_dir = Path("logs/tests-verbose")
-    log_dir.mkdir(parents=True, exist_ok=True)
-    src_dir = Path("tests/srcs")
+    assembler_dir = Path("tests/assembler")
+    assembler_log_dir = Path("logs/assembler/tests-verbose")
+    assembler_build_dir = assembler_dir / "build"
+    assembler_src_dir = assembler_dir / "srcs"
+    assembler_build_dir.mkdir(parents=True, exist_ok=True)
+    assembler_log_dir.mkdir(parents=True, exist_ok=True)
 
-    testAssembler(src_dir, build_dir, log_dir)
+    testAssembler(assembler_src_dir, assembler_build_dir, assembler_log_dir)
+
+    buildtool_dir = Path("tests/buildtool")
+    buildtool_log_dir = Path("logs/buildtool")
+    buildtool_log_dir.mkdir(parents=True, exist_ok=True)
+    buildtool.test(buildtool_dir, buildtool_log_dir)
 
     exit(0)

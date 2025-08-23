@@ -28,6 +28,9 @@ def install_rust():
         else:
             run("curl --proto '=https' --tlsv1.2 -sSf https://sh.rustup.rs | sh -s -- -y")
 
+    run("cargo install cargo-download")
+    run("cargo install cargo-license")
+
 if __name__ == "__main__":
     import shutil
     system = platform.system().lower()

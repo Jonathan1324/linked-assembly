@@ -73,5 +73,7 @@
         "span": "cpp",
         "text_encoding": "cpp"
     },
-    "C_Cpp.errorSquiggles": "enabled"
+    "C_Cpp.errorSquiggles": "enabled",
+
+    "rust-analyzer.checkOnSave": false
 }
