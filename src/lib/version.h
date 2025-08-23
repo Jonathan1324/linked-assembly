@@ -4,13 +4,7 @@
 
 HCB
 
-#ifndef VERSION
-#define VERSION commit
-#endif
-
-#define STR_HELPER(x) #x
-#define STR(x) STR_HELPER(x)
-#define VERSION_STR STR(VERSION)
+#define VERSION "v0.1.0-alpha.2"
 
 void printVersion();
 

@@ -2,11 +2,14 @@ from pathlib import Path
 from enum import Enum
 import subprocess
 import logging
+import os
 import buildtool.test as buildtool
 
 # Logger
 logger = logging.getLogger("tests")
 logger.setLevel(logging.DEBUG)
+
+os.makedirs("logs", exist_ok=True)
 
 file_handler = logging.FileHandler("logs/tests.log", mode="w", encoding="utf-8")
 file_handler.setLevel(logging.DEBUG)
