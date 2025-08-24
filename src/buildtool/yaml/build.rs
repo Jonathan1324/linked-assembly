@@ -96,6 +96,8 @@ pub struct Build {
     pub formats: HashMap<String, Format>,
 
     pub buildfile: config::BuildFile,
+
+    pub os: String,
 }
 
 impl Build {
