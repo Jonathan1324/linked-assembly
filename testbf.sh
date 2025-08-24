@@ -1,7 +1,7 @@
 python3 -m ci.ci --no-test
 
-cd tests/lbf/env
+cd tests/lbf
 
-../../../dist/bin/lbf $@ main.bf
+../../dist/bin/lbf $@ main.bf
 
-cd ../../..
+cd ../..
