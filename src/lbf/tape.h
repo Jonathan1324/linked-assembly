@@ -1,7 +1,7 @@
 #pragma once
 #include <stdint.h>
 
-#define TAPE_SIZE 100
+#define TAPE_SIZE 256
 #define TAPE_WIDTH uint8_t
 
 typedef struct
