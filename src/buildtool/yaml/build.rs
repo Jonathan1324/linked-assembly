@@ -103,7 +103,7 @@ pub struct Build {
 impl Build {
 
     pub fn copy_from_file(&mut self) {
-        let  mut ctx = ExpandContext::new();
+        let  mut ctx = ExpandContext::new(&self.os);
         ctx.default_env(&self.default_env)
            .env(&self.default_env)
            .project_root(&self.project_root)
