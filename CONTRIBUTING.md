@@ -14,37 +14,22 @@ If you encounter a bug or have an idea for a new feature or instruction to suppo
 
 ### 2. Code Contributions (Pull Requests)
 
-We welcome pull requests for:
-
-- Adding support for new instructions
-- Improving parsing or code generation
-- Fixing bugs
-- Adding tests or examples
-- Improving documentation
-
 Before you submit a pull request:
 
-- Make sure the project builds with `make`
+- Make sure the project builds
 - Test your changes with existing examples or write a new one
-- Keep the code style consistent (no need for perfection, just clarity)
-
-### 3. Suggested Areas to Help With
-
-- Implement new instructions for x86.
-- Add support for Mach-O oder Coff
-- Add support for 64 bit or 16 bit on x86
-- Add support for ARM or RISC-V
+- Keep the code style consistent
 
 ## Contributor License Agreement (CLA)
 
-Before submitting a pull request, you must agree to our Contributor License Agreement (CLA).
-You will be automatically prompted to sign the CLA by our CLA Assistant when you open a PR.
+Before submitting a pull request, you must agree to the Contributor License Agreement (CLA).
+You will be automatically prompted to sign the CLA by the CLA Assistant when you open a PR.
 
 Please read the full CLA here: [Contributor-License-Agreement.md](https://gist.github.com/Jonathan1324/4d65f3cead742c9e4141c7961962b08e)  
 
 Please make sure to read and accept the CLA so your contribution can be reviewed and merged.
 
-*Note: Pull requests will not be merged unless the CLA has been signed.*
+> **Note:** Pull requests will not be merged unless the CLA has been signed.
 
 ## Questions?
 
