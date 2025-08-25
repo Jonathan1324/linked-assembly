@@ -4,8 +4,6 @@
 #include <stdlib.h>
 #include "tape.h"
 
-#define MAX(a,b) ((a) > (b) ? (a) : (b))
-
 void printHelp()
 {
     puts("This is a brainfuck interpreter.");
@@ -174,7 +172,7 @@ int main(int argc, const char *argv[])
             if (c == '>')
             {
                 estimate += count * (sp + 1);
-                maxEstimate = MAX(estimate, maxEstimate);
+                if (estimate > maxEstimate) maxEstimate = estimate;
             }
             else if (c == '<')
             {

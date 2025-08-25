@@ -1,7 +1,7 @@
 {
     "files.associations": {
-        "*.inc": "asm",
         "Runescript": "plaintext",
+        "*.inc": "asm",
         "__bit_reference": "cpp",
         "__config": "cpp",
         "__hash_table": "cpp",
@@ -71,7 +71,8 @@
         "charconv": "cpp",
         "ranges": "cpp",
         "span": "cpp",
-        "text_encoding": "cpp"
+        "text_encoding": "cpp",
+        "tape.h": "c"
     },
     "C_Cpp.errorSquiggles": "enabled",
 
