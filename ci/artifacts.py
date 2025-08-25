@@ -7,7 +7,7 @@ import stat
 
 logger = logging.getLogger("ci")
 
-def stage_artifacts(debug: bool) -> bool:
+def stage(debug: bool) -> bool:
     logger.debug("Staging the artifacts")
 
     dist_dir = Path("dist")

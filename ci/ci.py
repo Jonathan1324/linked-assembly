@@ -1,8 +1,8 @@
-from ci.build import build, clean
-from ci.artifacts import stage_artifacts
-from ci.archive import archive
-from ci.os import OS, ARCH, getOS, getArch
+import ci.build as build
+import ci.artifacts as artifacts
+import ci.archive as archive
 
+from ci.os import OS, ARCH, getOS, getArch
 from pathlib import Path
 import argparse
 import logging
@@ -12,6 +12,7 @@ import shutil
 import platform
 
 # Logger
+log_path = Path("logs/ci.log")
 logger = logging.getLogger("ci")
 logger.setLevel(logging.DEBUG)
 
@@ -79,30 +80,32 @@ parser.add_argument(
     help="windows, macos or linux"
 )
 
+trash = Path("build/trash")
+
 def main(args, os: OS, arch: ARCH) -> bool:
     if (os == OS.Windows and arch == ARCH.ARM64):
         print("Windows ARM isn't supported")
         exit(1)
 
     if (args.clean):
-        clean(debug=args.debug, os=os, arch=arch)
+        build.clean(debug=args.debug, os=os, arch=arch)
+        if trash.exists() and trash.is_dir:
+            shutil.rmtree(trash)
         shutil.rmtree("dist", ignore_errors=True)
         shutil.rmtree("archives", ignore_errors=True)
-        if (args.test):
-            shutil.rmtree("tests/build", ignore_errors=True) # TODO: call tests/run.py to clean
-        if (args.log):
-            shutil.rmtree("logs", ignore_errors=True)
+        subprocess.run([sys.executable, "tests/run.py", "-c"])
+        log_path.unlink(missing_ok=True)
 
     if (not args.build):
         logger.debug("Stopping before building")
         return False
 
-    result: bool = build(debug=args.debug, os=os, arch=arch)
+    result: bool = build.build(debug=args.debug, os=os, arch=arch)
     if (not result):
         logger.error("Building failed")
         return False
 
-    result = stage_artifacts(debug=args.debug)
+    result = artifacts.stage(debug=args.debug)
     if (not result):
         logger.error("Staging artifacts failed")
         return False
@@ -129,7 +132,7 @@ if __name__ == "__main__":
     if args.log:
         Path("logs").mkdir(exist_ok=True)
 
-        file_handler = logging.FileHandler("logs/ci.log", mode="w", encoding="utf-8")
+        file_handler = logging.FileHandler(str(log_path), mode="w", encoding="utf-8")
         file_handler.setLevel(logging.DEBUG)
         file_formatter = logging.Formatter("%(asctime)s [%(levelname)s] %(message)s")
         file_handler.setFormatter(file_formatter)
@@ -171,4 +174,4 @@ if __name__ == "__main__":
 
     if args.archive:
         Path("archives").mkdir(parents=True, exist_ok=True)
-        archive("dist", f"archives/{archive_name}")
+        archive.archive("dist", f"archives/{archive_name}")
