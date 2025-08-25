@@ -51,16 +51,19 @@ pub struct ExpandContext<'a> {
     pub local_env: Option<&'a build::Environment>,
     pub path: Option<&'a Path>,
     pub project_root: Option<&'a Path>,
+
+    pub os: String,
 }
 
 impl<'a> ExpandContext<'a> {
-    pub fn new() -> Self {
+    pub fn new(os: &String) -> Self {
         Self {
             default_env: None,
             env: None,
             local_env: None,
             path: None,
             project_root: None,
+            os: os.clone(),
         }
     }
 
@@ -116,6 +119,7 @@ pub fn expand_string(
             if push_var_from_env(key, "env.", ctx.env, &mut result)? {}
             else if push_var_from_env(key, "$env.", ctx.local_env, &mut result)? {}
             else if push_var_from_env(key, "!env.", ctx.default_env, &mut result)? {}
+
             else if let Some(stripped) = key.strip_prefix("path.") {
                 match stripped {
                     "current" => result.push_str(&ctx.path.unwrap().to_string_lossy()),
@@ -124,6 +128,16 @@ pub fn expand_string(
                     _ => return Err(ExpandError::UnknownVariable(key.to_string())),
                 }
             }
+
+            else if let Some(stripped) = key.strip_prefix("system.") {
+                match stripped {
+                    "os" => result.push_str(&ctx.os),
+
+                    _ => return Err(ExpandError::UnknownVariable(key.to_string())),
+                }
+            }
+
+            
             else if key == "NAME" {
                 result.push_str("${NAME}");
             }
@@ -135,6 +149,15 @@ pub fn expand_string(
             }
             else if key == "INPUT" {
                 result.push_str("${INPUT}");
+            }
+            else if key == "ONAME" {
+                result.push_str("${ONAME}");
+            }
+            else if key == "OEXT" {
+                result.push_str("${OEXT}");
+            }
+            else if key == "OPATH" {
+                result.push_str("${OPATH}");
             }
             else if key == "OUTPUT" {
                 result.push_str("${OUTPUT}");

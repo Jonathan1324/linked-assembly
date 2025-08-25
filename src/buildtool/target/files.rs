@@ -77,7 +77,7 @@ pub struct TargetFile {
 
 impl TargetFile {
     pub fn parse(&mut self, build: &build::Build) {
-        let  mut ctx = ExpandContext::new();
+        let  mut ctx = ExpandContext::new(&build.os);
         ctx.default_env(&build.default_env)
            .env(&self.env)
            .project_root(&build.project_root)

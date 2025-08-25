@@ -65,6 +65,23 @@ fn main() {
         vars: env.vars.clone(),
     };
 
+    let mut os = "unknown".to_string();
+    if cfg!(target_os = "windows") {
+        os = "windows".to_string();
+    } else if cfg!(target_os = "linux") {
+        os = "linux".to_string();
+    } else if cfg!(target_os = "macos") {
+        os = "macos".to_string();
+    } else if cfg!(target_os = "freebsd") {
+        os = "freebsd".to_string();
+    } else if cfg!(target_os = "netbsd") {
+        os = "netbsd".to_string();
+    } else if cfg!(target_os = "ios") {
+        os = "ios".to_string();
+    } else if cfg!(target_os = "android") {
+        os = "android".to_string();
+    }
+
     let mut build = Build {
         default_env: std::sync::Arc::new(default_env),
         default_targets: Vec::new(),
@@ -74,6 +91,7 @@ fn main() {
         toolchains: std::collections::HashMap::new(),
         formats: std::collections::HashMap::new(),
         buildfile,
+        os,
     };
 
     build.copy_from_file();
