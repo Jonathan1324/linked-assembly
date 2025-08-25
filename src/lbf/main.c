@@ -178,8 +178,8 @@ int main(int argc, const char *argv[])
             }
             else if (c == '<')
             {
-                estimate -= count * (sp + 1);
-                if (estimate < 0) estimate = 0;
+                if (estimate < count * (sp + 1)) estimate = 0;
+                else estimate -= count * (sp + 1);
             }
         }
         index++;
