@@ -60,16 +60,30 @@ environments:
     build_dir: build
     vars:
       SRC_DIR: src
+    specific:
+      TEST:
+      - when:
+          os: windows
+        then: win
+      - when:
+          os: linux
+        then: lin
+      - when:
+          os: macos
+        then: mac
+        
   project1:
     toolchain: main
     build_dir: ${ env.build_dir }/project1
     vars:
       SRC_DIR: src/project1
+      TEST: ${ env.TEST }
   project2:
     toolchain: main
     build_dir: ${ env.build_dir }/project2
     vars:
       SRC_DIR: src/project2
+      TEST: ${ env.TEST }
 
 targets:
   project1:

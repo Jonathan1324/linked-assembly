@@ -54,17 +54,6 @@ fn main() {
     let buildfile: BuildFile = serde_yaml::from_str(&yaml_str)
         .expect("Failed to parse YAML");
 
-    let env = buildfile.environments
-                       .get(&buildfile.config.default_env)
-                       .cloned().unwrap();
-    
-    let default_env = yaml::build::Environment {
-        description: env.description.clone(),
-        toolchain: env.toolchain.clone(),
-        build_dir: env.build_dir.clone(),
-        vars: env.vars.clone(),
-    };
-
     let mut os = "unknown".to_string();
     if cfg!(target_os = "windows") {
         os = "windows".to_string();
@@ -81,6 +70,40 @@ fn main() {
     } else if cfg!(target_os = "android") {
         os = "android".to_string();
     }
+
+    let env = buildfile.environments
+                       .get(&buildfile.config.default_env)
+                       .cloned().unwrap();
+
+    let mut vars = env.vars.clone();
+
+    for (k, values) in &env.specific {
+        if k == "toolchain" || k == "description" {
+            panic!("The variable name '{}' is not allowed in env.vars!", k);
+        }
+        for value in values {
+            let when = &value.when;
+
+            let mut broken = false;
+            if let Some(when_os) = &when.os {
+                if *when_os != os && !broken {
+                    broken = true;
+                }
+            }
+
+            if !broken {
+                vars.insert(k.clone(), value.then.clone());
+                break;
+            }
+        }
+    }
+    
+    let default_env = yaml::build::Environment {
+        description: env.description.clone(),
+        toolchain: env.toolchain.clone(),
+        build_dir: env.build_dir.clone(),
+        vars: vars,
+    };
 
     let mut build = Build {
         default_env: std::sync::Arc::new(default_env),

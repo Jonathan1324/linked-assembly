@@ -123,6 +123,27 @@ impl Build {
                 new_vars.insert(k.clone(), expand_string(&v, &ctx).unwrap());
             }
 
+            for (k, values) in &env.specific {
+                if k == "toolchain" || k == "description" {
+                    panic!("The variable name '{}' is not allowed in env.vars!", k);
+                }
+                for value in values {
+                    let when = &value.when;
+
+                    let mut broken = false;
+                    if let Some(os) = &when.os {
+                        if *os != self.os && !broken {
+                            broken = true;
+                        }
+                    }
+
+                    if !broken {
+                        new_vars.insert(k.clone(), expand_string(&value.then, &ctx).unwrap());
+                        break;
+                    }
+                }
+            }
+
             let build_dir = normalize_path(expand_string(&env.build_dir, &ctx).unwrap().as_str(), &self.project_root);
 
             let new_env = Environment {

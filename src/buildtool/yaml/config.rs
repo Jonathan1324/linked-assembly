@@ -76,6 +76,17 @@ pub struct Toolchain {
 }
 
 #[derive(Debug, Deserialize, Clone)]
+pub struct EnvWhen {
+    pub os: Option<String>,
+}
+
+#[derive(Debug, Deserialize, Clone)]
+pub struct EnvSpecific {
+    pub when: EnvWhen,
+    pub then: String,
+}
+
+#[derive(Debug, Deserialize, Clone)]
 pub struct Environment {
     #[serde(default)]
     pub description: String,
@@ -86,6 +97,9 @@ pub struct Environment {
 
     #[serde(default)]
     pub vars: HashMap<String, String>,
+
+    #[serde(default)]
+    pub specific: HashMap<String, Vec<EnvSpecific>>,
 }
 
 #[derive(Debug, Deserialize, Clone)]
