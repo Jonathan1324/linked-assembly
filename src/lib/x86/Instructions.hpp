@@ -26,5 +26,8 @@ namespace x86
         PUSHFD, POPFD,
         PUSHFQ, POPFQ,
 
+        // DATA
+        MOV,
+
     };
 }

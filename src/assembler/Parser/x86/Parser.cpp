@@ -620,6 +620,41 @@ void Parser::x86::Parser::Parse(const std::vector<Token::Token>& tokens)
             continue;
         }
 
+        // Data
+        static const std::unordered_map<std::string_view, uint64_t> dataInstructions = {
+            {"mov", ::x86::Instructions::MOV}
+        };
+
+        it = dataInstructions.find(lowerVal);
+        if (it != dataInstructions.end())
+        {
+            Instruction::Instruction instruction(it->second, currentBitMode, token.line, token.column);
+            i++;
+            switch (instruction.mnemonic)
+            {
+                case ::x86::Instructions::MOV:
+                {
+                    // TODO: immediate?
+                    Immediate imm;
+                    while (i < filteredTokens.size() && filteredTokens[i].type != Token::Type::EOL)
+                    {
+                        ImmediateOperand op = getOperand(filteredTokens[i]);
+                        imm.operands.push_back(op);
+                        i++;
+                    }
+                    instruction.operands.push_back(imm);
+                } break;
+
+                default:
+                    throw Exception::InternalError("Unknown data instruction", token.line, token.column);
+            }
+            if (i >= filteredTokens.size() || filteredTokens[i].type != Token::Type::EOL)
+                throw Exception::SyntaxError("Expected end of line after second argument for '" + lowerVal + "'", token.line, token.column);
+            
+            currentSection->entries.push_back(instruction);
+            continue;
+        }
+
         context.warningManager->add(Warning::GeneralWarning("Unhandled token: " + token.what()));
     }
 

@@ -6,10 +6,9 @@ section .text
     global _start
 
 _start:
-    int msg
-    dw msg
-    dd msg
-    dq msg
+    mov eax, 1
+    mov ebx, 0
+    int 0x80
     
 section .data
 
