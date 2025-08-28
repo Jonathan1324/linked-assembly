@@ -634,15 +634,62 @@ void Parser::x86::Parser::Parse(const std::vector<Token::Token>& tokens)
             {
                 case ::x86::Instructions::MOV:
                 {
-                    // TODO: immediate?
-                    Immediate imm;
-                    while (i < filteredTokens.size() && filteredTokens[i].type != Token::Type::EOL)
+                    const Token::Token& operand1 = filteredTokens[i];
+                    auto regIt = ::x86::registers.find(operand1.value);
+                    if (regIt != ::x86::registers.end()
+                     && filteredTokens[i + 1].type != Token::Type::Punctuation)
                     {
-                        ImmediateOperand op = getOperand(filteredTokens[i]);
-                        imm.operands.push_back(op);
+                        // reg
+                        Instruction::Register reg;
+                        reg.reg = regIt->second;
+                        instruction.operands.push_back(reg);
                         i++;
                     }
-                    instruction.operands.push_back(imm);
+                    else if ((operand1.type == Token::Type::Bracket && operand1.value == "[")
+                        || (regIt != ::x86::registers.end()
+                        && filteredTokens[i + 1].type != Token::Type::Punctuation))
+                    {
+                        // TODO: memory
+                    }
+                    else
+                    {
+                        // TODO: Error
+                    }
+
+                    if (filteredTokens[i].type != Token::Type::Comma)
+                        throw Exception::SyntaxError("Expected ',' after first argument for 'mov'", operand1.line, operand1.column);
+                    i++;
+
+                    const Token::Token& operand2 = filteredTokens[i];
+                    regIt = ::x86::registers.find(operand2.value);
+                    if (regIt != ::x86::registers.end()
+                    && filteredTokens[i + 1].type != Token::Type::Punctuation)
+                    {
+                        // reg
+                        Instruction::Register reg;
+                        reg.reg = regIt->second;
+                        instruction.operands.push_back(reg);
+                        i++;
+                    }
+                    else if ((operand1.type == Token::Type::Bracket && operand1.value == "[")
+                        || (regIt != ::x86::registers.end()
+                        && filteredTokens[i + 1].type == Token::Type::Punctuation))
+                    {
+                        // TODO: memory
+                    }
+                    else
+                    {
+                        // TODO: immediate?
+                        Immediate imm;
+
+                        while (i < filteredTokens.size() && filteredTokens[i].type != Token::Type::EOL)
+                        {
+                            ImmediateOperand op = getOperand(filteredTokens[i]);
+                            imm.operands.push_back(op);
+                            i++;
+                        }
+                        instruction.operands.push_back(imm);
+                    }
                 } break;
 
                 default:
