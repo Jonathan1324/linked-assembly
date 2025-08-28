@@ -46,6 +46,6 @@ std::vector<uint8_t> Encoder::x86::Encoder::EncodeInterruptInstruction(const Par
             return {opcode, interrupt};
         }
 
-        default: throw Exception::InternalError("Unknown control instruction", instruction.lineNumber, instruction.column);
+        default: throw Exception::InternalError("Unknown interrupt instruction", instruction.lineNumber, instruction.column);
     }
 }

@@ -23,6 +23,7 @@ namespace Encoder
             std::vector<uint8_t> EncodeInterruptInstruction(const Parser::Instruction::Instruction& instruction, bool ignoreUnresolved);
             std::vector<uint8_t> EncodeFlagInstruction(const Parser::Instruction::Instruction& instruction, bool ignoreUnresolved);
             std::vector<uint8_t> EncodeStackInstruction(const Parser::Instruction::Instruction& instruction, bool ignoreUnresolved);
+            std::vector<uint8_t> EncodeDataInstruction(const Parser::Instruction::Instruction& instruction, bool ignoreUnresolved);
         };
     }
 }

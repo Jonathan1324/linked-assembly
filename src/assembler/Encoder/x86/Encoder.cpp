@@ -34,6 +34,10 @@ std::vector<uint8_t> Encoder::x86::Encoder::EncodeInstruction(const Parser::Inst
         case ::x86::Instructions::PUSHFQ: case ::x86::Instructions::POPFQ:
             return EncodeStackInstruction(instruction, ignoreUnresolved);
 
+        // DATA
+        case ::x86::Instructions::MOV:
+            break;
+
         default: throw Exception::InternalError("Unknown instruction", instruction.lineNumber, instruction.column);
     }
 }
