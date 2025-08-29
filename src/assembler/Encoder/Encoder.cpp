@@ -81,18 +81,18 @@ void Encoder::Encoder::ResolveConstantsPrePass(const std::vector<Parser::Section
 void Encoder::Encoder::GetOffsets(std::vector<Parser::Section>& parsedSections)
 {
     bytesWritten = 0;
-    for (const auto& section : parsedSections)
+    for (Parser::Section& section : parsedSections)
     {
         sectionStarts[section.name] = bytesWritten;
         currentSection = &section.name;
         sectionOffset = 0;
         for (size_t i = 0; i < section.entries.size(); i++)
         {
-            const Parser::SectionEntry& entry = section.entries[i];
+            Parser::SectionEntry& entry = section.entries[i];
             
             if (std::holds_alternative<Parser::Instruction::Instruction>(entry))
             {
-                const Parser::Instruction::Instruction& instruction = std::get<Parser::Instruction::Instruction>(entry);
+                Parser::Instruction::Instruction& instruction = std::get<Parser::Instruction::Instruction>(entry);
                 const uint64_t size = GetSize(instruction);
                 
                 sectionOffset += size;
@@ -174,10 +174,10 @@ void Encoder::Encoder::GetOffsets(std::vector<Parser::Section>& parsedSections)
     }
 }
 
-void Encoder::Encoder::EncodeFinal(const std::vector<Parser::Section>& parsedSections)
+void Encoder::Encoder::EncodeFinal(std::vector<Parser::Section>& parsedSections)
 {
     bytesWritten = 0;
-    for (const auto& section : parsedSections)
+    for (Parser::Section& section : parsedSections)
     {
         Section sec;
         sec.name = section.name;
@@ -193,11 +193,11 @@ void Encoder::Encoder::EncodeFinal(const std::vector<Parser::Section>& parsedSec
 
         for (size_t i = 0; i < section.entries.size(); i++)
         {
-            const Parser::SectionEntry& entry = section.entries[i];
+            Parser::SectionEntry& entry = section.entries[i];
             
             if (std::holds_alternative<Parser::Instruction::Instruction>(entry))
             {
-                const Parser::Instruction::Instruction& instruction = std::get<Parser::Instruction::Instruction>(entry);
+                Parser::Instruction::Instruction& instruction = std::get<Parser::Instruction::Instruction>(entry);
                 const std::vector<uint8_t> encoded = EncodeInstruction(instruction);
                 const size_t size = encoded.size();
                 

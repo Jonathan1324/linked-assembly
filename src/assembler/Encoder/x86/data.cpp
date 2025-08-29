@@ -11,7 +11,7 @@ void appendImmediate(std::vector<uint8_t> &buf, uint64_t value, uint32_t sizeInB
     std::memcpy(buf.data() + oldSize, &value, sizeInBytes);
 }
 
-std::vector<uint8_t> Encoder::x86::Encoder::EncodeDataInstruction(const Parser::Instruction::Instruction& instruction, bool ignoreUnresolved)
+std::vector<uint8_t> Encoder::x86::Encoder::EncodeDataInstruction(Parser::Instruction::Instruction& instruction, bool ignoreUnresolved, bool optimize)
 {
     switch (instruction.mnemonic)
     {
@@ -271,6 +271,7 @@ std::vector<uint8_t> Encoder::x86::Encoder::EncodeDataInstruction(const Parser::
                         default: throw Exception::InternalError("Unknown register");
                     }
 
+                    // TODO: optimize (e.g. rax -> eax on 64 bit mode when imm ist smaller than 2^32)
                     if (use16Bit) instr.push_back(0x66);
                     if (useREX) instr.push_back(getRex(rexW, rexR, rexX, rexB));
                     instr.push_back(opcode);

@@ -6,25 +6,25 @@ Encoder::x86::Encoder::Encoder(const Context& _context, Architecture _arch, BitM
     
 }
 
-std::vector<uint8_t> Encoder::x86::Encoder::EncodeInstruction(const Parser::Instruction::Instruction& instruction, bool ignoreUnresolved)
+std::vector<uint8_t> Encoder::x86::Encoder::EncodeInstruction(Parser::Instruction::Instruction& instruction, bool ignoreUnresolved, bool optimize)
 {
     switch (instruction.mnemonic)
     {
         // CONTROL
         case ::x86::Instructions::NOP:
         case ::x86::Instructions::HLT:
-            return EncodeControlInstruction(instruction, ignoreUnresolved);
+            return EncodeControlInstruction(instruction, ignoreUnresolved, optimize);
 
         // INTERRUPT
         case ::x86::Instructions::INT:
-            return EncodeInterruptInstruction(instruction, ignoreUnresolved);
+            return EncodeInterruptInstruction(instruction, ignoreUnresolved, optimize);
 
         // FLAGS
         case ::x86::Instructions::CLC: case ::x86::Instructions::STC: case ::x86::Instructions::CMC:
         case ::x86::Instructions::CLD: case ::x86::Instructions::STD:
         case ::x86::Instructions::CLI: case ::x86::Instructions::STI:
         case ::x86::Instructions::LAHF: case ::x86::Instructions::SAHF:
-            return EncodeFlagInstruction(instruction, ignoreUnresolved);
+            return EncodeFlagInstruction(instruction, ignoreUnresolved, optimize);
 
         // STACK
         case ::x86::Instructions::PUSHA: case ::x86::Instructions::POPA:
@@ -32,11 +32,11 @@ std::vector<uint8_t> Encoder::x86::Encoder::EncodeInstruction(const Parser::Inst
         case ::x86::Instructions::PUSHF: case ::x86::Instructions::POPF:
         case ::x86::Instructions::PUSHFD: case ::x86::Instructions::POPFD:
         case ::x86::Instructions::PUSHFQ: case ::x86::Instructions::POPFQ:
-            return EncodeStackInstruction(instruction, ignoreUnresolved);
+            return EncodeStackInstruction(instruction, ignoreUnresolved, optimize);
 
         // DATA
         case ::x86::Instructions::MOV:
-            return EncodeDataInstruction(instruction, ignoreUnresolved);
+            return EncodeDataInstruction(instruction, ignoreUnresolved, optimize);
 
         default: throw Exception::InternalError("Unknown instruction", instruction.lineNumber, instruction.column);
     }
@@ -44,13 +44,14 @@ std::vector<uint8_t> Encoder::x86::Encoder::EncodeInstruction(const Parser::Inst
 
 bool Encoder::x86::Encoder::OptimizeOffsets(std::vector<Parser::Section>& parsedSections)
 {
+    bool changed = true;
     // TODO
     return true;
 }
 
-uint64_t Encoder::x86::Encoder::GetSize(const Parser::Instruction::Instruction& instruction)
+uint64_t Encoder::x86::Encoder::GetSize(Parser::Instruction::Instruction& instruction)
 {
-    const std::vector<uint8_t> instr = EncodeInstruction(instruction, true);
+    const std::vector<uint8_t> instr = EncodeInstruction(instruction, true, false);
     return static_cast<uint64_t>(instr.size());
 }
 

@@ -1,6 +1,6 @@
 #include "Encoder.hpp"
 
-std::vector<uint8_t> Encoder::x86::Encoder::EncodeStackInstruction(const Parser::Instruction::Instruction& instruction, bool ignoreUnresolved)
+std::vector<uint8_t> Encoder::x86::Encoder::EncodeStackInstruction(Parser::Instruction::Instruction& instruction, bool ignoreUnresolved, bool optimize)
 {
     switch (instruction.mnemonic)
     {

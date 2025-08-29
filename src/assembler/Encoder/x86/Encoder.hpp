@@ -16,8 +16,8 @@ namespace Encoder
         protected:
             bool OptimizeOffsets(std::vector<Parser::Section>& parsedSections) override;
 
-            std::vector<uint8_t> EncodeInstruction(const Parser::Instruction::Instruction& instruction, bool ignoreUnresolved = false) override;
-            uint64_t GetSize(const Parser::Instruction::Instruction& instruction) override;
+            std::vector<uint8_t> EncodeInstruction(Parser::Instruction::Instruction& instruction, bool ignoreUnresolved = false, bool optimize = false) override;
+            uint64_t GetSize(Parser::Instruction::Instruction& instruction) override;
             std::vector<uint8_t> EncodePadding(size_t length) override;
 
         private:
@@ -31,11 +31,11 @@ namespace Encoder
                 return rex;
             }
 
-            std::vector<uint8_t> EncodeControlInstruction(const Parser::Instruction::Instruction& instruction, bool ignoreUnresolved);
-            std::vector<uint8_t> EncodeInterruptInstruction(const Parser::Instruction::Instruction& instruction, bool ignoreUnresolved);
-            std::vector<uint8_t> EncodeFlagInstruction(const Parser::Instruction::Instruction& instruction, bool ignoreUnresolved);
-            std::vector<uint8_t> EncodeStackInstruction(const Parser::Instruction::Instruction& instruction, bool ignoreUnresolved);
-            std::vector<uint8_t> EncodeDataInstruction(const Parser::Instruction::Instruction& instruction, bool ignoreUnresolved);
+            std::vector<uint8_t> EncodeControlInstruction(Parser::Instruction::Instruction& instruction, bool ignoreUnresolved, bool optimize);
+            std::vector<uint8_t> EncodeInterruptInstruction(Parser::Instruction::Instruction& instruction, bool ignoreUnresolved, bool optimize);
+            std::vector<uint8_t> EncodeFlagInstruction(Parser::Instruction::Instruction& instruction, bool ignoreUnresolved, bool optimize);
+            std::vector<uint8_t> EncodeStackInstruction(Parser::Instruction::Instruction& instruction, bool ignoreUnresolved, bool optimize);
+            std::vector<uint8_t> EncodeDataInstruction(Parser::Instruction::Instruction& instruction, bool ignoreUnresolved, bool optimize);
         };
     }
 }
