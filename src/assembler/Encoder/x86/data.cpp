@@ -266,6 +266,8 @@ std::vector<uint8_t> Encoder::x86::Encoder::EncodeDataInstruction(const Parser::
                         case ::x86::RSI: opcode = 0xBE; break;
                         case ::x86::RDI: opcode = 0xBF; break;
 
+                        // TODO
+
                         default: throw Exception::InternalError("Unknown register");
                     }
 
