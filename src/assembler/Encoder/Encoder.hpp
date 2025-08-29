@@ -118,6 +118,12 @@ namespace Encoder
         const std::vector<Relocation>& getRelocations() const { return relocations; }
         
     protected:
+        void EncodeFinal(const std::vector<Parser::Section>& parsedSections);
+        void GetOffsets(std::vector<Parser::Section>& parsedSections);
+        void ResolveConstantsPrePass(const std::vector<Parser::Section>& parsedSections);
+
+        virtual bool OptimizeOffsets(std::vector<Parser::Section>& parsedSections) = 0;
+
         virtual std::vector<uint8_t> EncodeInstruction(const Parser::Instruction::Instruction& instruction, bool ignoreUnresolved = false) = 0;
         virtual uint64_t GetSize(const Parser::Instruction::Instruction& instruction) = 0;
         virtual std::vector<uint8_t> EncodePadding(size_t length) = 0;

@@ -15,8 +15,22 @@ Encoder::Encoder::Encoder(const Context& _context, Architecture _arch, BitMode _
 
 void Encoder::Encoder::Encode()
 {
-    const std::vector<Parser::Section>& parsedSections = parser->getSections();
+    std::vector<Parser::Section> parsedSections = parser->getSections();
 
+    ResolveConstantsPrePass(parsedSections);
+
+    if (OptimizeOffsets(parsedSections))
+        GetOffsets(parsedSections);
+
+    // resolve constant that haven't been resolved yet
+    resolveConstants(true);
+
+    relocations.clear();
+    EncodeFinal(parsedSections);
+}
+
+void Encoder::Encoder::ResolveConstantsPrePass(const std::vector<Parser::Section>& parsedSections)
+{
     for (const auto& section : parsedSections)
     {
         for (size_t i = 0; i < section.entries.size(); i++)
@@ -62,9 +76,10 @@ void Encoder::Encoder::Encode()
 
     // resolve constant that don't use labels, $ or $$
     resolveConstants(false);
+}
 
-    relocations.clear();
-
+void Encoder::Encoder::GetOffsets(std::vector<Parser::Section>& parsedSections)
+{
     bytesWritten = 0;
     for (const auto& section : parsedSections)
     {
@@ -157,12 +172,10 @@ void Encoder::Encoder::Encode()
             }  
         }
     }
+}
 
-    const size_t totalBytesWritten = bytesWritten;
-
-    // resolve constant that haven't been resolved yet
-    resolveConstants(true);
-
+void Encoder::Encoder::EncodeFinal(const std::vector<Parser::Section>& parsedSections)
+{
     bytesWritten = 0;
     for (const auto& section : parsedSections)
     {
@@ -258,9 +271,6 @@ void Encoder::Encoder::Encode()
 
         sections.push_back(sec);
     }
-
-    if (totalBytesWritten != bytesWritten)
-        throw Exception::InternalError("Length of pass 1 and pass 2 doesn't match");
 }
 
 void Encoder::Encoder::Print() const

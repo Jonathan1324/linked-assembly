@@ -14,6 +14,8 @@ namespace Encoder
             ~Encoder() = default;
 
         protected:
+            bool OptimizeOffsets(std::vector<Parser::Section>& parsedSections) override;
+
             std::vector<uint8_t> EncodeInstruction(const Parser::Instruction::Instruction& instruction, bool ignoreUnresolved = false) override;
             uint64_t GetSize(const Parser::Instruction::Instruction& instruction) override;
             std::vector<uint8_t> EncodePadding(size_t length) override;

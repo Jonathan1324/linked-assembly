@@ -6,7 +6,7 @@ section .text
     global _start
 
 _start:
-    mov rax, 0xfffffffff
+    mov eax, 0xffffffff
 
 end:
     mov eax, 1

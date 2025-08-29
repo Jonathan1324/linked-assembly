@@ -42,6 +42,12 @@ std::vector<uint8_t> Encoder::x86::Encoder::EncodeInstruction(const Parser::Inst
     }
 }
 
+bool Encoder::x86::Encoder::OptimizeOffsets(std::vector<Parser::Section>& parsedSections)
+{
+    // TODO
+    return true;
+}
+
 uint64_t Encoder::x86::Encoder::GetSize(const Parser::Instruction::Instruction& instruction)
 {
     const std::vector<uint8_t> instr = EncodeInstruction(instruction, true);
