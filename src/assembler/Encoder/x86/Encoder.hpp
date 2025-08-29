@@ -19,6 +19,16 @@ namespace Encoder
             std::vector<uint8_t> EncodePadding(size_t length) override;
 
         private:
+            inline uint8_t getRex(bool W, bool R, bool X, bool B)
+            {
+                uint8_t rex = 0b01000000;
+                if (W) rex |= 0b00001000;
+                if (R) rex |= 0b00000100;
+                if (X) rex |= 0b00000010;
+                if (B) rex |= 0b00000001;
+                return rex;
+            }
+
             std::vector<uint8_t> EncodeControlInstruction(const Parser::Instruction::Instruction& instruction, bool ignoreUnresolved);
             std::vector<uint8_t> EncodeInterruptInstruction(const Parser::Instruction::Instruction& instruction, bool ignoreUnresolved);
             std::vector<uint8_t> EncodeFlagInstruction(const Parser::Instruction::Instruction& instruction, bool ignoreUnresolved);

@@ -36,7 +36,7 @@ std::vector<uint8_t> Encoder::x86::Encoder::EncodeInstruction(const Parser::Inst
 
         // DATA
         case ::x86::Instructions::MOV:
-            break;
+            return EncodeDataInstruction(instruction, ignoreUnresolved);
 
         default: throw Exception::InternalError("Unknown instruction", instruction.lineNumber, instruction.column);
     }

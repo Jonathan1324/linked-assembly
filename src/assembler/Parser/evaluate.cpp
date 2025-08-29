@@ -106,7 +106,23 @@ uint64_t evalInteger(std::string str, size_t size, int lineNumber, int column)
     }
     catch (const std::out_of_range&)
     {
-        throw Exception::OverflowError(value + " number out of range", lineNumber, column);
+        // Failed signed parse, try unsigned
+        pos = 0;
+        try
+        {
+            uint64_t uval = std::stoull(value, &pos, base);
+            if (pos != value.size())
+                throw Exception::SemanticError(value + " contains invalid characters", lineNumber, column);
+            rawValue = uval;
+        }
+        catch (const std::invalid_argument&)
+        {
+            throw Exception::SemanticError(value + " not a number", lineNumber, column);
+        }
+        catch (const std::out_of_range&)
+        {
+            throw Exception::OverflowError(value + " number out of range", lineNumber, column);
+        }
     }
 
     if (size >= 8)
