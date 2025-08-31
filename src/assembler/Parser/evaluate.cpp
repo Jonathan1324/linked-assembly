@@ -21,7 +21,7 @@ uint64_t evalInteger(std::string str, size_t size, int lineNumber, int column)
 {
     std::string& value = str;
 
-    int base = 0;
+    int base = 10;
 
     if (value.find('b') == value.size() - 1
      || value.find('y') == value.size() - 1)

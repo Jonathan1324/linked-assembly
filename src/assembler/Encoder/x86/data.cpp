@@ -2,6 +2,7 @@
 
 #include <x86/Registers.hpp>
 #include <limits>
+#include <cstring>
 
 void appendImmediate(std::vector<uint8_t> &buf, uint64_t value, uint32_t sizeInBits)
 {
@@ -291,7 +292,14 @@ std::vector<uint8_t> Encoder::x86::Encoder::EncodeDataInstruction(Parser::Instru
                             reloc.section = *currentSection;
                             reloc.usedSection = eval.usedSection;
                             reloc.type = RelocationType::Absolute;
-                            reloc.size = RelocationSize::Bit8;
+                            switch (sizeInBits)
+                            {
+                                case 8: reloc.size = RelocationSize::Bit8; break;
+                                case 16: reloc.size = RelocationSize::Bit16; break;
+                                case 32: reloc.size = RelocationSize::Bit32; break;
+                                case 64: reloc.size = RelocationSize::Bit64; break;
+                                default: throw Exception::InternalError("Unknown size in bits " + std::to_string(sizeInBits));
+                            }
                             relocations.push_back(std::move(reloc));
                         }
                         else
