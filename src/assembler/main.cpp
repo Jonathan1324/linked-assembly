@@ -264,6 +264,4 @@ int main(int argc, const char *argv[])
 
     // cleanup
     CLEANUP;
-
-    return 0;
 }
