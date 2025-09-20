@@ -3,33 +3,59 @@
 #include <version.h>
 #include <stdlib.h>
 #include "tape.h"
+#include "interpreter.h"
+#include "compiler.h"
 
-void printHelp()
+void printHelp(const char* programName)
 {
     puts("This is a brainfuck interpreter.");
-    puts("Usage: lbf <file.bf>");
+    fprintf(stdout, "Usage: %s [-c] <input.bf> [-o output.bf]\n", programName);
 }
 
 int main(int argc, const char *argv[])
 {
-    if (argc < 2)
+    int transpile = 0;
+    const char* inputFile = NULL;
+    const char* outputFile = NULL;
+
+    for (int i = 1; i < argc; i++)
     {
-        fprintf(stderr, "Usage: %s <file.bf>\n", argv[0]);
+        if (strcmp(argv[i], "-h") == 0 || strcmp(argv[i], "--help") == 0)
+        {
+            printHelp(argv[0]);
+            return 0;
+        }
+        else if (strcmp(argv[i], "-v") == 0 || strcmp(argv[i], "--version") == 0)
+        {
+            printVersion();
+            return 0;
+        }
+        else if (strcmp(argv[i], "-c") == 0)
+        {
+            transpile = 1;
+        }
+        else if (strcmp(argv[i], "-o") == 0)
+        {
+            if (i + 1 >= argc)
+            {
+                fprintf(stderr, "Usage: %s [-c] <input.bf> [-o output.bf]\n", argv[0]);
+                return 1;
+            }
+            outputFile = argv[++i];
+        }
+        else
+        {
+            inputFile = argv[i];
+        }
+    }
+
+    if (!inputFile)
+    {
+        fprintf(stderr, "Usage: %s [-c] <input.bf> [-o output.bf]\n", argv[0]);
         return 1;
     }
 
-    if (strcmp(argv[1], "-h") == 0 || strcmp(argv[1], "--help") == 0)
-    {
-        printHelp();
-        return 0;
-    }
-    else if (strcmp(argv[1], "-v") == 0 || strcmp(argv[1], "--version") == 0)
-    {
-        printVersion();
-        return 0;
-    }
-
-    FILE *f = fopen(argv[1], "r");
+    FILE *f = fopen(inputFile, "r");
     if (!f)
     {
         perror("File open");
@@ -126,9 +152,6 @@ int main(int argc, const char *argv[])
     uint64_t* stack = malloc(programSize * sizeof(uint64_t));
     uint64_t sp = 0;
 
-    uint64_t maxEstimate = 0;
-    uint64_t estimate = 0;
-
     uint64_t index = 0;
     for (uint64_t i = 0; i < rawProgramSize; i++)
     {
@@ -168,17 +191,6 @@ int main(int argc, const char *argv[])
             }
             program[index] = c;
             meta[index] = count;
-
-            if (c == '>')
-            {
-                estimate += count * (sp + 1);
-                if (estimate > maxEstimate) maxEstimate = estimate;
-            }
-            else if (c == '<')
-            {
-                if (estimate < count * (sp + 1)) estimate = 0;
-                else estimate -= count * (sp + 1);
-            }
         }
         index++;
     }
@@ -192,30 +204,24 @@ int main(int argc, const char *argv[])
         return 1;
     }
 
-    if (estimate < INITIAL_SIZE_MIN) estimate = INITIAL_SIZE_MIN;
-    else if (estimate > INITIAL_SIZE_MAX) estimate = INITIAL_SIZE_MAX;
-    else estimate = maxEstimate;
-
-    Tape tape = Tape_Create(estimate);
-
-    // Interpret
-    for (uint64_t i = 0; i < programSize; i++)
+    if (transpile != 0)
     {
-        switch (program[i])
+        FILE* out = fopen(outputFile, "w");
+        if (!out)
         {
-            case '>': Tape_Right(&tape, meta[i]); break;
-            case '<': Tape_Left(&tape, meta[i]); break;
-            case '+': Tape_Increase(&tape, meta[i]); break;
-            case '-': Tape_Decrease(&tape, meta[i]); break;
-            case '.': fputc(Tape_Get(&tape), stdout); break;
-            case ',': Tape_Set(&tape, (TAPE_WIDTH)getchar()); break;
-
-            case '[': if (Tape_Get(&tape) == 0) i = meta[i]; break;
-            case ']': if (Tape_Get(&tape) != 0) i = meta[i]; break;
+            perror("Output file open");
+            free(meta);
+            free(program);
+            return 1;
         }
+        
+        compile(program, meta, programSize, out);
     }
-
-    Tape_Destroy(&tape);
+    else
+    {
+        interpret(program, meta, programSize);
+    }
+    
     free(program);
     free(meta);
     return 0;
