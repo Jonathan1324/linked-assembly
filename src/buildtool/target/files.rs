@@ -106,7 +106,7 @@ impl TargetFile {
                     path: expand_string(&output.path, &ctx).unwrap(),
                     kind: expand_string(&output.kind, &ctx).unwrap(),
                 };
-                if new_output.kind != "source" && new_output.kind != "executable" && new_output.kind != "object" {
+                if new_output.kind != "source" && new_output.kind != "executable" && new_output.kind != "static-library" && new_output.kind != "object" {
                     panic!("Unknown type of output: {}", new_output.kind);
                 }
                 outputs.insert(name.clone(), new_output);

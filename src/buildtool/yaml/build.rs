@@ -167,7 +167,7 @@ impl Build {
 
             for (o_name, output) in &target.outputs {
                 let kind = expand_string(&output.kind, &local_ctx).unwrap();
-                if kind != "source" && kind != "executable" && kind != "object" {
+                if kind != "source" && kind != "executable" && kind != "static-library" && kind != "object" {
                     panic!("Unknown type of output: {}", kind);
                 }
                 let new_output = Output {
@@ -227,11 +227,11 @@ impl Build {
                 }
 
                 let kind = expand_string(&tool.when.kind, &ctx).unwrap();
-                if kind != "source" && kind != "executable" && kind != "object" {
+                if kind != "source" && kind != "executable" && kind != "static-library" && kind != "object" {
                     panic!("Unknown type of output: {}", kind);
                 }
                 let out = expand_string(&tool.when.out, &ctx).unwrap();
-                if out != "executable" && out != "object" {
+                if out != "executable" && out != "static-library" && out != "object" {
                     panic!("Unknown type of output: {}", out);
                 }
                 let new_toolwhen = ToolWhen {

@@ -1,0 +1,23 @@
+files:
+  SOURCES:
+    filters:
+      patterns:
+      - "*.c"
+      - "*.cpp"
+    target: SOURCE
+
+targets:
+  main:
+    toolchain: main
+    depends:
+    - SOURCES
+    outputs:
+      main:
+        type: static-library
+        path: libcore.a
+  
+  SOURCE:
+    outputs:
+      object:
+        type: object
+        path: ${ PATH }/${ NAME }.${ EXT }.o
