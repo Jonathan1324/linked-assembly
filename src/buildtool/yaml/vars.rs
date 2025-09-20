@@ -162,6 +162,9 @@ pub fn expand_string(
             else if key == "OUTPUT" {
                 result.push_str("${OUTPUT}");
             }
+            else if key == "LIBRARIES" || key == "LIBS" {
+                result.push_str("${LIBRARIES}");
+            }
             else {
                 return Err(ExpandError::UnknownVariable(key.to_string()));
             }

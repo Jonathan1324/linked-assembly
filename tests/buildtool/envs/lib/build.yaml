@@ -51,7 +51,7 @@ toolchains:
           type: object
           out: executable
         combine_inputs: true
-        command: g++ ${ INPUT } -o ${ OUTPUT }
+        command: g++ ${ INPUT } ${ LIBRARIES } -o ${ OUTPUT }
         message: Linking ${ ONAME }
 
       AR:
@@ -86,12 +86,14 @@ targets:
     path: ${ $env.SRC_DIR }
     config: build.yaml
     outputs:
-      main:
+      lib:
         type: static-library
     env: lib
   exe:
     path: ${ $env.SRC_DIR }
     config: build.yaml
+    depends:
+    - lib
     outputs:
       main:
         type: executable

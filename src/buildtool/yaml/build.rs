@@ -35,6 +35,7 @@ pub struct Target {
     pub config: String,
     pub target: String,
     pub outputs: HashMap<String, Output>,
+    pub depends: Vec<String>,
     pub env: String,
 
     // Target struct
@@ -176,6 +177,12 @@ impl Build {
                 new_outputs.insert(o_name.clone(), new_output);
             }
 
+            let mut new_depends = Vec::new();
+            for dep in &target.depends {
+                let new_dep = expand_string(&dep, &local_ctx).unwrap();
+                new_depends.push(new_dep);
+            }
+
             let target_path = normalize_path(expand_string(&target.path, &local_ctx).unwrap().as_str(), &self.project_root);
             let target_config_file = normalize_path(expand_string(&target.config, &local_ctx).unwrap().as_str(), Path::new(""));
 
@@ -204,6 +211,7 @@ impl Build {
                 config: target_config_file,
                 target: expand_string(&target.target.clone().unwrap_or("main".to_string()), &ctx).unwrap(), // TODO: currently setting 'main' as default target
                 outputs: new_outputs,
+                depends: new_depends,
                 env: local_env_str,
                 targetfile: targetfile,
             };
@@ -494,8 +502,8 @@ impl Build {
             let target = targetfile.targets.get(&main_target.target)
                 .expect("Couldn't find target in targetfile");
 
-            // TODO: set input
-            let (outs, rebuilt) = self.parse_target(target, main_target, None, &cache);
+            // TODO: set input with target.depends
+            let (outs, rebuilt) = self.parse_target(target, main_target, Some(&libs), &cache);
         }
 
         cache.write_file(&cache_file);
@@ -559,6 +567,8 @@ impl Build {
 
         let mut combine_matched = false;
         let mut per_file_matches: HashSet<&Path> = HashSet::new();
+
+        // TODO: libs
 
         for (_name, tool) in tools {
             if tool.combine_inputs {

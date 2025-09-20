@@ -14,6 +14,9 @@ pub struct Target {
     pub target: Option<String>,
 
     #[serde(default)]
+    pub depends: Vec<String>,
+
+    #[serde(default)]
     pub outputs: HashMap<String, Output>,
 
     pub env: String,

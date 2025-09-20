@@ -12,7 +12,7 @@ targets:
     depends:
     - SOURCES
     outputs:
-      main:
+      lib:
         type: static-library
         path: libcore.a
   
