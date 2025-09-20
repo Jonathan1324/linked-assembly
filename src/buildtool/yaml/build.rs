@@ -503,7 +503,7 @@ impl Build {
                 .expect("Couldn't find target in targetfile");
 
             // TODO: set input with target.depends
-            let (outs, rebuilt) = self.parse_target(target, main_target, Some(&libs), &cache);
+            let (outs, rebuilt) = self.parse_target(target, main_target, None, &cache);
         }
 
         cache.write_file(&cache_file);
