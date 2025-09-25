@@ -1,12 +1,13 @@
 use crate::config;
 use crate::execute;
 use glob::glob;
+use std::collections::HashMap;
 use std::process::Command;
 use std::fs;
 use std::env;
 use std::path::{Path, PathBuf};
 
-pub fn execute_target(name: &str, config: &config::Config, executed: &mut std::collections::HashSet<String>, build_dir: &Path) {
+pub fn execute_target(name: &str, config: &config::Config, toolchains: &HashMap<String, crate::tools::tools::Toolchain>, executed: &mut std::collections::HashSet<String>, build_dir: &Path) {
     if executed.contains(name) {
         return
     }
@@ -17,7 +18,7 @@ pub fn execute_target(name: &str, config: &config::Config, executed: &mut std::c
         }
         
         for dep in &target.depends {
-            execute_target(dep, config, executed, build_dir);
+            execute_target(dep, config, toolchains, executed, build_dir);
         }
 
         if let Some(files) = &target.files {
@@ -47,7 +48,7 @@ pub fn execute_target(name: &str, config: &config::Config, executed: &mut std::c
                         fs::create_dir_all(parent).unwrap();
                     }
 
-                    let status = execute::execute(inputs, &output_path);
+                    let status = execute::execute(inputs, &output_path, config, toolchains);
                     println!("File: {} -> {}", full_path.display(), output_path.display());
                 }
             }

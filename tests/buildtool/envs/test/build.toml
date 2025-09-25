@@ -7,6 +7,10 @@ description = "A test project to test this buildtool"           # optional
 dir = "build"                                                   # defaults to "build"
 default_target = "build"                                        # optional
 
+[tools]
+default = "main"
+file = "toolchains.yaml"                                        # required
+
 [targets.build]
 description = "Build the project"                               # optional
 depends = ["compile_src"]                                       # optional
@@ -15,8 +19,11 @@ depends = ["compile_src"]                                       # optional
 description = "Compile files in src"                            # optional
 path = "src"                                                    # defaults to "."
 files = "*.c"                                                   # optional
-message = "Compiling .c files"                                  # optional
+#optional: message: String
+#optional: depends
 
 [targets.clean]
 description = "Clean the project"                               # optional
 run = "rm -rf build"                                            # optional, will only execute when files isn't set
+#optional: message: String
+#optional: depends

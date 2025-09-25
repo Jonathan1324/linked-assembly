@@ -1,0 +1,18 @@
+test:
+  cc:
+    when:
+      ext:
+      - c
+      out: object
+    message: Compiling file
+  otherTool:
+    when:
+      ext:
+      - cpp
+      out: object
+    message: Compiling other file
+
+  ld:
+    when:
+      out: executable
+    message: Linking

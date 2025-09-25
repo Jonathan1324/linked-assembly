@@ -5,6 +5,7 @@ use std::collections::HashMap;
 pub struct Config {
     pub project: Project,
 
+    pub tools: Tools,
 
     pub build: Build,
 
@@ -28,6 +29,12 @@ pub struct Build {
 }
 
 fn default_build_dir() -> String { "build".to_string() }
+
+#[derive(Debug, Deserialize)]
+pub struct Tools {
+    pub default: String,
+    pub file: String,
+}
 
 #[derive(Debug, Deserialize)]
 pub struct Target {
@@ -62,11 +69,24 @@ impl Config {
             println!("  Default target: {}", default_target);
         }
 
+        println!("[TOOLS]");
+        println!("  Default: {}", self.tools.default);
+        println!("  File: {}", self.tools.file);
+
         for (name, target) in &self.targets {
             println!("[TARGETS.{}]", name);
 
             if let Some(description) = &target.description {
                 println!("  Description: {}", description);
+            }
+            if let Some(message) = &target.message {
+                println!("  Message: {}", message);
+            }
+            if !target.depends.is_empty() {
+                println!("  Depends:");
+                for dep in &target.depends {
+                    println!("  - {}", dep);
+                }
             }
             if let Some(command) = &target.run {
                 println!("  Command: {}", command);
