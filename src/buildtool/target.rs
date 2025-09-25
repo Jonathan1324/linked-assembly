@@ -48,7 +48,7 @@ pub fn execute_target(name: &str, config: &config::Config, toolchains: &HashMap<
                         fs::create_dir_all(parent).unwrap();
                     }
 
-                    let status = execute::execute(inputs, &output_path, config, toolchains);
+                    let status = execute::execute(inputs, &output_path, &target.out, config, toolchains);
                     println!("File: {} -> {}", full_path.display(), output_path.display());
                 }
             }

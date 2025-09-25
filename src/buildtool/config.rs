@@ -36,12 +36,24 @@ pub struct Tools {
     pub file: String,
 }
 
+#[derive(Debug, PartialEq, Eq, Deserialize)]
+#[serde(rename_all = "lowercase")]
+pub enum OutputKind {
+    Executable,
+    Object,
+
+    Custom,
+}
+
 #[derive(Debug, Deserialize)]
 pub struct Target {
     pub description: Option<String>,
     pub message: Option<String>,
     #[serde(default)]
     pub depends: Vec<String>,
+
+    #[serde(default = "default_target_out")]
+    pub out: OutputKind,
     
     #[serde(default = "default_target_path")]
     pub path: String,
@@ -49,6 +61,8 @@ pub struct Target {
 
     pub run: Option<String>,
 }
+
+fn default_target_out() -> OutputKind { OutputKind::Custom }
 
 fn default_target_path() -> String { ".".to_string() }
 
@@ -76,6 +90,7 @@ impl Config {
         for (name, target) in &self.targets {
             println!("[TARGETS.{}]", name);
 
+            println!("  Out: {:?}", target.out);
             if let Some(description) = &target.description {
                 println!("  Description: {}", description);
             }

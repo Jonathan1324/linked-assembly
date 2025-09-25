@@ -10,7 +10,7 @@ pub struct Tool {
 #[derive(Debug, Deserialize)]
 pub struct When {
     pub ext: Option<Vec<String>>,
-    pub out: String,
+    pub out: crate::config::OutputKind,
 }
 
 pub type Toolchain = HashMap<String, Tool>;
@@ -24,7 +24,7 @@ pub fn print_toolchains(toolchains: &HashMap<String, Toolchain>) {
                 println!("    Message: {}", message);
             }
             println!("    when:");
-            println!("      out: {}", tool.when.out);
+            println!("      out: {:?}", tool.when.out);
             if let Some(exts) = &tool.when.ext {
                 if !exts.is_empty() {
                     println!("      ext:");
