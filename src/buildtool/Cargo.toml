@@ -9,6 +9,7 @@ glob = "0.3.3"
 serde = { version = "1.0", features = ["derive"] }
 serde_yaml = "0.9.34-deprecated"
 serde_json = "1.0.143"
+toml = "0.7"
 walkdir = "2.5.0"
 sha2 = "0.10.9"
 libc = "0.2.175"

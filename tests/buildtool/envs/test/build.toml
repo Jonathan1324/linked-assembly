@@ -1,0 +1,14 @@
+[project]
+name = "TestProject"                                            # required
+version = "0.1.0"                                               # optional
+description = "A test project to test this buildtool"           # optional
+
+[build]
+dir = "build"                                                   # defaults to "build"
+default_target = "build"                                        # optional
+
+[targets.build]
+description = "Build the project"                               # optional
+
+[targets.clean]
+description = "Clean the project"                               # optional
