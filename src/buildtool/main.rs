@@ -1,5 +1,7 @@
 use std::path::Path;
 use std::fs;
+use std::env;
+use std::process::Command;
 
 pub mod config;
 
@@ -21,27 +23,34 @@ fn main() {
         std::process::exit(1);
     });
 
-    println!("[PROJECT]");
-    println!("  Project Name: {}", config.project.name);
-    if let Some(version) = config.project.version {
-        println!("  Version: {}", version);
-    }
-    if let Some(description) = config.project.description {
-        println!("  Description: {}", description);
+    let mut targets = Vec::new();
+    for arg in env::args().skip(1) {
+        targets.push(arg);
     }
 
-    println!("[BUILD]");
-    println!("  Build directory: {}", config.build.dir);
-    if let Some(default_target) = config.build.default_target {
-        println!("  Default target: {}", default_target);
+    if targets.is_empty() && let Some(default_target) = &config.build.default_target {
+        targets.push(default_target.clone());
     }
 
-    for (name, target) in config.targets {
-        println!("[TARGETS.{}]", name);
+    for target_name in targets {
+        if let Some(target) = config.targets.get(&target_name) {
+            if let Some(command) = &target.run {
+                let mut parts = command.split_whitespace();
+                if let Some(program) = parts.next() {
+                    let args: Vec<&str> = parts.collect();
 
-        if let Some(description) = target.description {
-            println!("  description: {}", description);
+                    let status = Command::new(program)
+                        .args(&args)
+                        .status();
+
+                    // TODO: Check status
+                }
+            }
+        } else {
+            println!("Skipping unknown target: {}", target_name);
         }
     }
+
+    config.print();
 
 }

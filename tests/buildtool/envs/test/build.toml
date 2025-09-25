@@ -9,6 +9,8 @@ default_target = "build"                                        # optional
 
 [targets.build]
 description = "Build the project"                               # optional
+run = "echo \"Hello, World!\""                                  # optional
 
 [targets.clean]
 description = "Clean the project"                               # optional
+
