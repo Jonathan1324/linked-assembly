@@ -1,9 +1,12 @@
-use std::path::Path;
+use std::collections::HashSet;
+use std::path::{Path, PathBuf};
 use std::fs;
 use std::env;
-use std::process::Command;
 
 pub mod config;
+pub mod execute;
+pub mod target;
+pub mod c;
 
 fn main() {
 
@@ -32,23 +35,11 @@ fn main() {
         targets.push(default_target.clone());
     }
 
+    let build_dir = env::current_dir().unwrap().join(config.build.dir.clone());
+
+    let mut executed = HashSet::new();
     for target_name in targets {
-        if let Some(target) = config.targets.get(&target_name) {
-            if let Some(command) = &target.run {
-                let mut parts = command.split_whitespace();
-                if let Some(program) = parts.next() {
-                    let args: Vec<&str> = parts.collect();
-
-                    let status = Command::new(program)
-                        .args(&args)
-                        .status();
-
-                    // TODO: Check status
-                }
-            }
-        } else {
-            println!("Skipping unknown target: {}", target_name);
-        }
+        target::execute_target(&target_name, &config, &mut executed, &build_dir);
     }
 
     config.print();

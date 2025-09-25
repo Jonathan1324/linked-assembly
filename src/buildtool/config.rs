@@ -32,8 +32,18 @@ fn default_build_dir() -> String { "build".to_string() }
 #[derive(Debug, Deserialize)]
 pub struct Target {
     pub description: Option<String>,
+    pub message: Option<String>,
+    #[serde(default)]
+    pub depends: Vec<String>,
+    
+    #[serde(default = "default_target_path")]
+    pub path: String,
+    pub files: Option<String>,
+
     pub run: Option<String>,
 }
+
+fn default_target_path() -> String { ".".to_string() }
 
 impl Config {
     pub fn print(self) {
@@ -60,6 +70,10 @@ impl Config {
             }
             if let Some(command) = &target.run {
                 println!("  Command: {}", command);
+            }
+            if let Some(files) = &target.files {
+                println!("  Files: {}", files);
+                println!("  Path: {}", target.path);
             }
         }
     }

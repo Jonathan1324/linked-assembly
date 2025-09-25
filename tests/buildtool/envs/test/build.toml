@@ -9,8 +9,14 @@ default_target = "build"                                        # optional
 
 [targets.build]
 description = "Build the project"                               # optional
-run = "echo \"Hello, World!\""                                  # optional
+depends = ["compile_src"]                                       # optional
+
+[targets.compile_src]
+description = "Compile files in src"                            # optional
+path = "src"                                                    # defaults to "."
+files = "*.c"                                                   # optional
+message = "Compiling .c files"                                  # optional
 
 [targets.clean]
 description = "Clean the project"                               # optional
-
+run = "rm -rf build"                                            # optional, will only execute when files isn't set
