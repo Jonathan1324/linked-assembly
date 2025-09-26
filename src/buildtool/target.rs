@@ -32,14 +32,14 @@ pub fn execute_target(
             inputs.extend(dep_outputs);
         }
 
-        if let Some(files) = &target.files {
-            let target_path = if Path::new(&target.path).is_absolute() {
-                PathBuf::from(&target.path)
-            } else {
-                env::current_dir().unwrap().join(&target.path)
-            };
+        let target_path = if Path::new(&target.path).is_absolute() {
+            PathBuf::from(&target.path)
+        } else {
+            env::current_dir().unwrap().join(&target.path)
+        };
 
-            let glob_pattern = format!("{}/{}", target_path.display(), files);
+        if let Some(files) = &target.files {
+            let glob_pattern = format!("{}/**/{}", target_path.display(), files);
             for entry in glob(&glob_pattern).unwrap() {
                 if let Ok(full_path) = entry {
                     inputs.push(full_path);
@@ -55,7 +55,7 @@ pub fn execute_target(
         if !inputs.is_empty() {
             if for_each {
                 for input in &inputs {
-                    let mut output_path = build_dir.join(input.strip_prefix(&input.parent().unwrap()).unwrap());
+                    let mut output_path = build_dir.join(input.strip_prefix(env::current_dir().unwrap()).unwrap());
                     let file_name = if let Some(name) = &target.name {
                         name.clone().into()
                     } else {
@@ -83,8 +83,9 @@ pub fn execute_target(
                     outputs.push(output_path);
                 }
             } else {
-                let mut output_path = build_dir.join(inputs[0].strip_prefix(&inputs[0].parent().unwrap()).unwrap());
+                let mut output_path = build_dir.join(inputs[0].strip_prefix(env::current_dir().unwrap()).unwrap());
                 let file_name = if let Some(name) = &target.name {
+                    output_path = build_dir.to_path_buf().join("placeholder"); // TODO: FIXME: WHATEVER: REALLY ONLY TEMPORARY; VERY UGLY
                     name.clone().into()
                 } else {
                     match target.out {
