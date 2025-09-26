@@ -52,6 +52,8 @@ pub struct Target {
     #[serde(default)]
     pub depends: Vec<String>,
 
+    pub name: Option<String>,
+
     #[serde(default = "default_target_out")]
     pub out: OutputKind,
     

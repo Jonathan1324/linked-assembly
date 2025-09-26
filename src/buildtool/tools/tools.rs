@@ -4,6 +4,7 @@ use std::collections::HashMap;
 #[derive(Debug, Deserialize)]
 pub struct Tool {
     pub when: When,
+    pub command: String,
     pub message: Option<String>,
 }
 
@@ -20,6 +21,7 @@ pub fn print_toolchains(toolchains: &HashMap<String, Toolchain>) {
         println!("{}: ", toolchain_name);
         for (tool_name, tool) in toolchain {
             println!("  {}: ", tool_name);
+            println!("    Command: {}", tool.command);
             if let Some(message) = &tool.message {
                 println!("    Message: {}", message);
             }

@@ -5,17 +5,17 @@ test:
       - c
       out: object
     command: gcc -c ${ INPUT } -o ${ OUTPUT }
-    message: Compiling file
+    message: Compiling ${input}
   otherTool:
     when:
       ext:
       - cpp
       out: object
     command: g++ -c ${ INPUT } -o ${ OUTPUT }
-    message: Compiling other file
+    message: Compiling other file ${input}
 
   ld:
     when:
       out: executable
     command: g++ ${ INPUT } -o ${ OUTPUT }
-    message: Linking
+    message: Linking ${ OUTPUT }

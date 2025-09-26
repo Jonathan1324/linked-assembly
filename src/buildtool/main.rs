@@ -54,7 +54,7 @@ fn main() {
     });
 
     let build_dir = env::current_dir().unwrap().join(config.build.dir.clone());
-    let mut executed = HashSet::new();
+    let mut executed = HashMap::new();
     for target_name in targets {
         target::execute_target(&target_name, &config, &toolchains, &mut executed, &build_dir);
     }

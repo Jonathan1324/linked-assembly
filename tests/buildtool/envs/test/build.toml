@@ -13,6 +13,8 @@ file = "toolchains.yaml"                                        # required
 
 [targets.build]
 description = "Build the project"                               # optional
+out = "executable"                                              # defaults to "custom"
+name = "main"                                                   # optional
 depends = ["compile_src"]                                       # optional
 message = "Building the project"                                # optional
 
@@ -26,6 +28,6 @@ files = "*.c"                                                   # optional
 
 [targets.clean]
 description = "Clean the project"                               # optional
-run = "rm -rf build"                                            # optional, will only execute when files isn't set
+run = "rm -rf build"                                            # optional
 #optional: message: String
 #optional: depends
