@@ -2,6 +2,7 @@
 name = "TestProject"                                            # required
 version = "0.1.0"                                               # optional
 description = "A test project to test this buildtool"           # optional
+internal_dump = false                                           # defaults to false
 
 [build]
 dir = "build"                                                   # defaults to "build"
@@ -13,14 +14,15 @@ file = "toolchains.yaml"                                        # required
 
 [targets.build]
 description = "Build the project"                               # optional
-out = "executable"                                              # defaults to "custom"
+out = "executable"                                              # defaults to "Undefined"
+for_each = false                                                # defaults to true
 name = "main"                                                   # optional
 depends = ["compile_src"]                                       # optional
 message = "Building the project"                                # optional
 
 [targets.compile_src]
 description = "Compile files in src"                            # optional
-out = "object"                                                  # defaults to "custom"
+out = "object"                                                  # defaults to "Undefined"
 path = "src"                                                    # defaults to "."
 files = "*.c"                                                   # optional
 #optional: message: String

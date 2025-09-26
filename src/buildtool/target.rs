@@ -47,9 +47,43 @@ pub fn execute_target(
             }
         }
 
+        let mut for_each = true;
+        if let Some(for_each_explicit) = &target.for_each {
+            for_each = *for_each_explicit;
+        }
+
         if !inputs.is_empty() {
-            for input in &inputs {
-                let output_path = build_dir.join(input.strip_prefix(&input.parent().unwrap()).unwrap());
+            if for_each {
+                for input in &inputs {
+                    let mut output_path = build_dir.join(input.strip_prefix(&input.parent().unwrap()).unwrap());
+                    let file_name = if let Some(name) = &target.name {
+                        name.clone().into()
+                    } else {
+                        match target.out {
+                            config::OutputKind::Object => {
+                                let mut name = output_path.file_name().unwrap().to_os_string();
+                                name.push(".o");
+                                name
+                            }
+                            _ => {
+                                Path::new(output_path.file_name().unwrap()).file_stem().unwrap().to_os_string()
+                            }
+                        }
+                    };
+                    output_path.set_file_name(file_name);
+
+                    if let Some(parent) = output_path.parent() {
+                        fs::create_dir_all(parent).unwrap();
+                    }
+
+                    let temp_inputs: Vec<&Path> = vec![input];
+
+                    execute::execute(temp_inputs, &output_path, &target.out, config, toolchains);
+
+                    outputs.push(output_path);
+                }
+            } else {
+                let mut output_path = build_dir.join(inputs[0].strip_prefix(&inputs[0].parent().unwrap()).unwrap());
                 let file_name = if let Some(name) = &target.name {
                     name.clone().into()
                 } else {
@@ -64,16 +98,13 @@ pub fn execute_target(
                         }
                     }
                 };
-
-                let mut output_path = output_path.clone();
                 output_path.set_file_name(file_name);
 
                 if let Some(parent) = output_path.parent() {
                     fs::create_dir_all(parent).unwrap();
                 }
 
-                let temp_inputs: Vec<&Path> = vec![input];
-
+                let temp_inputs: Vec<&Path> = inputs.iter().map(|p| p.as_path()).collect();
                 execute::execute(temp_inputs, &output_path, &target.out, config, toolchains);
 
                 outputs.push(output_path);

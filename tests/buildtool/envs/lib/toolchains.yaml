@@ -19,3 +19,9 @@ test:
       out: executable
     command: g++ ${ INPUT } -o ${ OUTPUT }
     message: Linking ${ OUTPUT }
+
+  ar:
+    when:
+      out: custom #TODO
+    command: ar rcs ${OUTPUT} ${INPUT}
+    message: Archving ${ OUTPUT }

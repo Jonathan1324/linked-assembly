@@ -74,8 +74,6 @@ pub fn execute(inputs: Vec<&Path>, output: &Path, out: &crate::config::OutputKin
             println!("{}", message);
         }
 
-        println!("{command}");
-
         let mut parts = command.split_whitespace();
         if let Some(program) = parts.next() {
             let args: Vec<&str> = parts.collect();

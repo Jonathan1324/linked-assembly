@@ -36,7 +36,9 @@ fn main() {
 
     let mut targets = Vec::new();
     for arg in env::args().skip(1) {
-        targets.push(arg);
+        if !arg.starts_with("-") {
+            targets.push(arg);
+        }
     }
 
     if targets.is_empty() && let Some(default_target) = &config.build.default_target {
@@ -59,10 +61,12 @@ fn main() {
         target::execute_target(&target_name, &config, &toolchains, &mut executed, &build_dir);
     }
 
-    println!("----------TOOLS----------");
-    tools::tools::print_toolchains(&toolchains);
+    if config.project.internal_dump {
+        println!("----------TOOLS----------");
+        tools::tools::print_toolchains(&toolchains);
 
-    println!("----------CONFIG----------");
-    config.print();
+        println!("----------CONFIG----------");
+        config.print();
+    }
 
 }

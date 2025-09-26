@@ -18,6 +18,9 @@ pub struct Project {
     pub name: String,
     pub version: Option<String>,
     pub description: Option<String>,
+
+    #[serde(default)]
+    pub internal_dump: bool,
 }
 
 #[derive(Debug, Deserialize)]
@@ -41,8 +44,9 @@ pub struct Tools {
 pub enum OutputKind {
     Executable,
     Object,
-
     Custom,
+
+    Undefined,
 }
 
 #[derive(Debug, Deserialize)]
@@ -54,6 +58,8 @@ pub struct Target {
 
     pub name: Option<String>,
 
+    pub for_each: Option<bool>,
+
     #[serde(default = "default_target_out")]
     pub out: OutputKind,
     
@@ -64,7 +70,7 @@ pub struct Target {
     pub run: Option<String>,
 }
 
-fn default_target_out() -> OutputKind { OutputKind::Custom }
+fn default_target_out() -> OutputKind { OutputKind::Undefined }
 
 fn default_target_path() -> String { ".".to_string() }
 

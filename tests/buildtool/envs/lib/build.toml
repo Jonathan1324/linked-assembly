@@ -1,0 +1,50 @@
+[project]
+name = "TestProject"                                            # required
+version = "0.1.0"                                               # optional
+description = "A test project to test this buildtool"           # optional
+internal_dump = false                                           # defaults to false
+
+[build]
+dir = "build"                                                   # defaults to "build"
+default_target = "build"                                        # optional
+
+[tools]
+default = "test"                                                # required
+file = "toolchains.yaml"                                        # required
+
+[targets.run]
+description = "Run the project"
+depends = ["build"]
+run = "build/main"
+
+[targets.build]
+description = "Build the project"
+out = "executable"
+for_each = false
+name = "main"
+depends = ["compile_src", "lib"]
+message = "Building the project"
+
+[targets.compile_src]
+description = "Compile files in src"
+out = "object"
+path = "src/exe"
+files = "*.c"
+
+[targets.lib]
+description = "Link the static library"
+out = "custom" # TODO: implement static library
+for_each = false
+name = "libcore.a"
+depends = ["compile_lib_srcs"]
+message = "Building the library"
+
+[targets.compile_lib_srcs]
+description = "Compile sources in src/lib"
+out = "object"
+path = "src/lib"
+files = "*.c"
+
+[targets.clean]
+description = "Clean the project"
+run = "rm -rf build"
