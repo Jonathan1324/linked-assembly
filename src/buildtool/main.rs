@@ -10,6 +10,10 @@ mod tools {
     pub mod tools;
 }
 
+mod cache {
+    pub mod cache;
+}
+
 pub mod config;
 pub mod execute;
 pub mod target;
@@ -17,6 +21,16 @@ pub mod target;
 pub mod c;
 
 fn main() {
+    let args: Vec<String> = env::args().collect();
+
+    if args.iter().any(|a| a == "-v" || a == "--version") {
+        unsafe { c::printVersion(); }
+        std::process::exit(0);
+    }
+    if args.iter().any(|a| a == "-h" || a == "--help") {
+        //args::args::print_help();
+        std::process::exit(0);
+    }
 
     let config_path = Path::new("build.toml");
     if !config_path.exists() {
@@ -55,15 +69,38 @@ fn main() {
         std::process::exit(1);
     });
 
+    let formats_file = &config.tools.formats;
+    let formats_content = fs::read_to_string(&formats_file).unwrap_or_else(|err | {
+        eprintln!("Error: Failed to read {}: {}", formats_file, err);
+        std::process::exit(1);
+    });
+    let formats: HashMap<String, tools::tools::Format> = serde_yaml::from_str(&formats_content).unwrap_or_else(|err | {
+        eprintln!("Error: Failed to parse {}: {}", tools_file, err);
+        std::process::exit(1);
+    });
+
+    let cache_dir = PathBuf::from("__lbtcache__");
+    if !cache_dir.exists() {
+        fs::create_dir_all(&cache_dir).unwrap();
+    }
+    let cache_file = cache_dir.join("cache.dat");
+
+    let cache = cache::cache::CacheBuffer::parse_file(&cache_file).unwrap_or_else(|| {
+        eprintln!("Error: Couldn't create cache buffer");
+        std::process::exit(1);
+    });
+
     let build_dir = env::current_dir().unwrap().join(config.build.dir.clone());
     let mut executed = HashMap::new();
     for target_name in targets {
-        let result = target::execute_target(&target_name, &config, &toolchains, &mut executed, &build_dir);
+        let result = target::execute_target(&target_name, &config, &toolchains, &formats, &mut executed, &build_dir, &cache);
         if result.is_err() {
             eprintln!("Target {} failed", target_name);
             break;
         }
     }
+
+    cache.write_file(&cache_file);
 
     if config.project.internal_dump {
         println!("----------TOOLS----------");

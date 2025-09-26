@@ -4,14 +4,19 @@ test:
       ext:
       - c
       out: object
-    command: gcc -c ${ INPUT } -o ${ OUTPUT }
+    deps: ${ OUTPUT }.d
+    format: gcc_deps
+    command: gcc -c ${ INPUT } -MMD -MF ${ OUTPUT }.d -o ${ OUTPUT }
     message: Compiling ${input}
+
   cxx:
     when:
       ext:
       - cpp
       out: object
-    command: g++ -c ${ INPUT } -o ${ OUTPUT }
+    deps: ${ OUTPUT }.d
+    format: gcc_deps
+    command: g++ -c ${ INPUT } -MMD -MF ${ OUTPUT }.d -o ${ OUTPUT }
     message: Compiling ${input}
 
   ld:

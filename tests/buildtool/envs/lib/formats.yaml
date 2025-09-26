@@ -1,0 +1,11 @@
+gcc_deps:
+  start:
+    ignore_lines: 2
+    trim:
+      if: "  "
+      remove: 2
+  end:
+    ignore_lines: 0
+    trim:
+      if: "\\"
+      remove: 1

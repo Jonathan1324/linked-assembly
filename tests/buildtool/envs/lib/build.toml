@@ -11,6 +11,7 @@ default_target = "build"                                        # optional
 [tools]
 default = "test"                                                # required
 file = "toolchains.yaml"                                        # required
+formats = "formats.yaml"                                        # required
 
 [targets.run]
 description = "Run the project"

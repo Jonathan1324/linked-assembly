@@ -7,13 +7,16 @@ use std::process::Command;
 use std::fs;
 use std::env;
 use std::path::{Path, PathBuf};
+use crate::cache::cache;
 
 pub fn execute_target(
     name: &str,
     config: &config::Config,
     toolchains: &HashMap<String, crate::tools::tools::Toolchain>,
+    formats: &HashMap<String, crate::tools::tools::Format>,
     executed: &mut HashMap<String, Vec<PathBuf>>,
-    build_dir: &Path
+    build_dir: &Path,
+    cache: &cache::CacheBuffer,
 ) -> Result<Vec<PathBuf>, std::io::Error> {
     if let Some(existing_outputs) = executed.get(name) {
         return Ok(existing_outputs.clone());
@@ -29,7 +32,7 @@ pub fn execute_target(
         let mut inputs = Vec::new();
         
         for dep in &target.depends {
-            let dep_outputs = execute_target(dep, config, toolchains, executed, build_dir);
+            let dep_outputs = execute_target(dep, config, toolchains, formats, executed, build_dir, cache);
             if dep_outputs.is_err() {
                 return Err(io::Error::new(
                     io::ErrorKind::Other,
@@ -85,7 +88,7 @@ pub fn execute_target(
 
                     let temp_inputs: Vec<&Path> = vec![input];
 
-                    let result = execute::execute(temp_inputs, &output_path, &target.out, config, toolchains);
+                    let result = execute::execute(temp_inputs, &output_path, &target.out, config, toolchains, formats, cache, false); //TODO
                     if result.is_err() {
                         return Err(io::Error::new(
                             io::ErrorKind::Other,
@@ -119,7 +122,7 @@ pub fn execute_target(
                 }
 
                 let temp_inputs: Vec<&Path> = inputs.iter().map(|p| p.as_path()).collect();
-                let result = execute::execute(temp_inputs, &output_path, &target.out, config, toolchains);
+                let result = execute::execute(temp_inputs, &output_path, &target.out, config, toolchains, formats, cache, false); //TODO
                 if result.is_err() {
                     return Err(io::Error::new(
                         io::ErrorKind::Other,

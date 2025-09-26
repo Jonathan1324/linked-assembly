@@ -37,6 +37,7 @@ fn default_build_dir() -> String { "build".to_string() }
 pub struct Tools {
     pub default: String,
     pub file: String,
+    pub formats: String,
 }
 
 #[derive(Debug, PartialEq, Eq, Deserialize)]
