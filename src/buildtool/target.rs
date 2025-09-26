@@ -2,6 +2,7 @@ use crate::config;
 use crate::execute;
 use glob::glob;
 use std::collections::HashMap;
+use std::io;
 use std::process::Command;
 use std::fs;
 use std::env;
@@ -13,9 +14,9 @@ pub fn execute_target(
     toolchains: &HashMap<String, crate::tools::tools::Toolchain>,
     executed: &mut HashMap<String, Vec<PathBuf>>,
     build_dir: &Path
-) -> Vec<PathBuf> {
+) -> Result<Vec<PathBuf>, std::io::Error> {
     if let Some(existing_outputs) = executed.get(name) {
-        return existing_outputs.clone();
+        return Ok(existing_outputs.clone());
     }
 
     let mut outputs = Vec::new();
@@ -29,7 +30,13 @@ pub fn execute_target(
         
         for dep in &target.depends {
             let dep_outputs = execute_target(dep, config, toolchains, executed, build_dir);
-            inputs.extend(dep_outputs);
+            if dep_outputs.is_err() {
+                return Err(io::Error::new(
+                    io::ErrorKind::Other,
+                    format!("Target {} failed", dep),
+                ));
+            }
+            inputs.extend(dep_outputs.unwrap());
         }
 
         let target_path = if Path::new(&target.path).is_absolute() {
@@ -78,7 +85,13 @@ pub fn execute_target(
 
                     let temp_inputs: Vec<&Path> = vec![input];
 
-                    execute::execute(temp_inputs, &output_path, &target.out, config, toolchains);
+                    let result = execute::execute(temp_inputs, &output_path, &target.out, config, toolchains);
+                    if result.is_err() {
+                        return Err(io::Error::new(
+                            io::ErrorKind::Other,
+                            format!("Execution of {} failed", input.display()),
+                        ));
+                    }
 
                     outputs.push(output_path);
                 }
@@ -106,7 +119,13 @@ pub fn execute_target(
                 }
 
                 let temp_inputs: Vec<&Path> = inputs.iter().map(|p| p.as_path()).collect();
-                execute::execute(temp_inputs, &output_path, &target.out, config, toolchains);
+                let result = execute::execute(temp_inputs, &output_path, &target.out, config, toolchains);
+                if result.is_err() {
+                    return Err(io::Error::new(
+                        io::ErrorKind::Other,
+                        format!("Execution of {} failed", output_path.display()),
+                    ));
+                }
 
                 outputs.push(output_path);
             }
@@ -131,5 +150,5 @@ pub fn execute_target(
         println!("Skipping unknown target: {}", name);
     }
 
-    outputs
+    Ok(outputs)
 }

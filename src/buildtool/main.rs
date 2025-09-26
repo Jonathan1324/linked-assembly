@@ -58,7 +58,11 @@ fn main() {
     let build_dir = env::current_dir().unwrap().join(config.build.dir.clone());
     let mut executed = HashMap::new();
     for target_name in targets {
-        target::execute_target(&target_name, &config, &toolchains, &mut executed, &build_dir);
+        let result = target::execute_target(&target_name, &config, &toolchains, &mut executed, &build_dir);
+        if result.is_err() {
+            eprintln!("Target {} failed", target_name);
+            break;
+        }
     }
 
     if config.project.internal_dump {

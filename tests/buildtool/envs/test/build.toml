@@ -33,3 +33,7 @@ description = "Clean the project"                               # optional
 run = "rm -rf build"                                            # optional
 #optional: message: String
 #optional: depends
+
+[targets.run]
+description = "Run the project"                                 # optional
+run = "./build/main"                                            # optional
