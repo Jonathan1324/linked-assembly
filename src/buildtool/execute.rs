@@ -3,7 +3,6 @@ use std::io::BufRead;
 use std::path::{Path, PathBuf};
 use std::process::Command;
 use std::{fs, io};
-use libc::SO_DETACH_REUSEPORT_BPF;
 
 use crate::cache::cache;
 
