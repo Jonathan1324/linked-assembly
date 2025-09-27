@@ -113,7 +113,7 @@ pub fn execute_target(
                 }
             } else {
                 let mut output_path = build_dir.join(inputs[0].strip_prefix(env::current_dir().unwrap()).unwrap());
-                let file_name = if let Some(name) = &target.name {
+                let mut file_name = if let Some(name) = &target.name {
                     output_path = build_dir.to_path_buf().join("placeholder"); // TODO: FIXME: WHATEVER: REALLY ONLY TEMPORARY; VERY UGLY
                     name.clone().into()
                 } else {
