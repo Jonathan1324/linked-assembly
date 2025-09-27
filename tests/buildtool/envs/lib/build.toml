@@ -33,7 +33,7 @@ files = "*.c"
 
 [targets.lib]
 description = "Link the static library"
-out = "custom"
+out = "static-library"
 for_each = false
 name = "libcore.a"
 depends = ["compile_lib_srcs"]

@@ -22,6 +22,6 @@ test:
 
   ar:
     when:
-      out: custom
+      out: static-library
     command: ar rcs ${OUTPUT} ${INPUT}
     message: Archving ${ OUTPUT }

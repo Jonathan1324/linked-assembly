@@ -45,8 +45,10 @@ pub struct Tools {
 pub enum OutputKind {
     Executable,
     Object,
-    Custom,
+    #[serde(rename = "static-library")]
+    StaticLibrary,
 
+    Custom,
     Undefined,
 }
 
