@@ -196,14 +196,82 @@ pub fn execute(
 
             let status = Command::new(program).args(&args).status();
 
-            cache::write_built(&cache_inputs, &output.to_string_lossy(), cache);
-            if status?.success() {
-                return Ok(true);
-            } else {
+            if !status?.success() {
                 return Err(io::Error::new(
                     io::ErrorKind::Other,
                     format!("Compilation failed for output: {}", output.display()),
                 ));
+            }
+        }
+
+        cache_inputs = inputs.iter().map(|p| p.to_path_buf()).collect();
+        if let Some(dep_file_raw) = &tool.deps {
+            let dep_file = replace_placeholders(&dep_file_raw, &replacements).unwrap(); // TODO
+            if Path::new(&dep_file).exists() {
+                let file = fs::File::open(&dep_file).unwrap(); // TODO
+                let reader = io::BufReader::new(file);
+                let mut lines: Vec<String> = reader.lines().collect::<Result<_, _>>()?;
+
+                let format_name = tool.format.clone().unwrap(); // TODO
+                let format = formats.get(&format_name).ok_or_else(|| {
+                    io::Error::new(
+                        io::ErrorKind::NotFound,
+                        format!("Format '{}' not found", format_name)
+                    )
+                })?;
+
+                let start_skip = format.start.as_ref().map(|r| r.ignore_lines as usize).unwrap_or(0);
+                let end_skip   = format.end  .as_ref().map(|r| r.ignore_lines as usize).unwrap_or(0);
+
+                if lines.len() >= start_skip + end_skip {
+                    let range_end = lines.len() - end_skip;
+                    let mut deps = Vec::new();
+
+                    for mut line in lines.drain(start_skip..range_end) /* FIXME: check */ {
+                        line = line.trim().to_string();
+
+                        if let Some(start) = &format.start {
+                            if let Some(trim) = &start.trim {
+                                if line.starts_with(&trim.condition) {
+                                    let n = trim.remove as usize;
+                                    if line.len() >= n {
+                                        line.drain(0..n);
+                                    } else {
+                                        line.clear();
+                                    }
+                                }
+                            }
+                        }
+
+                        if let Some(end) = &format.end {
+                            if let Some(trim) = &end.trim {
+                                if line.ends_with(&trim.condition) {
+                                    let n = trim.remove as usize;
+                                    if line.len() >= n {
+                                        let new_len = line.len() - n;
+                                        line.truncate(new_len);
+                                    } else {
+                                        line.clear();
+                                    }
+                                }
+                            }
+                        }
+
+                        let s = line.trim();
+                        if !s.is_empty() {
+                            deps.push(s.to_string());
+                        }
+                    }
+
+                    for dep_str in &deps {
+                        let dep = PathBuf::from(dep_str);
+                        if !dep.exists() {
+                            eprintln!("Warning: Dependency '{}' does not exist.", dep.display());
+                        } else {
+                            cache_inputs.push(dep);
+                        }
+                    }
+                }
             }
         }
 
