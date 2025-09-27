@@ -128,6 +128,12 @@ pub fn execute_target(
                         }
                     }
                 };
+                if matches!(target.out, config::OutputKind::Executable) {
+                    #[cfg(windows)]
+                    {
+                        file_name.push(".exe");
+                    }
+                }
                 output_path.set_file_name(file_name);
 
                 if let Some(parent) = output_path.parent() {

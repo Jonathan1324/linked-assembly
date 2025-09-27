@@ -1,43 +1,32 @@
 [project]
-name = "TestProject"                                            # required
-version = "0.1.0"                                               # optional
-description = "A test project to test this buildtool"           # optional
-internal_dump = false                                           # defaults to false
+name = "Project"
+version = "1.0.0"
+description = "A project!"
 
 [build]
-dir = "build"                                                   # defaults to "build"
-default_target = "build"                                        # optional
+dir = "build"
+default_target = "build"
 
 [tools]
-default = "default"                                             # required
-toolchains = "toolchains.yaml"                                  # required
-formats = "formats.yaml"                                        # required
-
-[targets.build]
-description = "Build the project"                               # optional
-out = "executable"                                              # defaults to "Undefined"
-for_each = false                                                # defaults when out
-                                                                #   Executable, StaticLibrary => true
-                                                                #   Object, _ => false
-name = "main"                                                   # optional
-depends = ["compile_src"]                                       # optional
-message = "Building the project"                                # optional
-
-[targets.compile_src]
-description = "Compile files in src"                            # optional
-out = "object"                                                  # defaults to "Undefined"
-path = "src"                                                    # defaults to "."
-files = "*.c"                                                   # optional
-#optional: message: String
-#optional: depends
-
-[targets.clean]
-description = "Clean the project"                               # optional
-run = "rm -rf build"                                            # optional
-#optional: message: String
-#optional: depends
+default = "default"
+toolchains = "toolchains.yaml"
+formats = "formats.yaml"
 
 [targets.run]
-description = "Run the project"                                 # optional
-before = ["build"]                                              # optional
-run = "./build/main"                                            # optional
+before = ["build"]
+run = "./build/main"
+
+[targets.build]
+depends = ["build_c_srcs", "build_cpp_srcs"]
+out = "executable"
+name = "main"
+
+[targets.build_c_srcs]
+out = "object"
+path = "src"
+files = "*.c"
+
+[targets.build_cpp_srcs]
+out = "object"
+path = "src"
+files = "*.cpp"
