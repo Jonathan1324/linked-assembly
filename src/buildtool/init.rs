@@ -23,39 +23,74 @@ out = "executable"
 name = "main"
 "#;
 
-const DEFAULT_TOOLCHAIN: &str = r#"
-default:
-  cc:
-    when:
-      ext:
-      - c
-      out: object
-    deps: ${ OUTPUT }.d
-    format: default_gcc_deps
-    command: gcc -c ${ INPUT } -MMD -MF ${ OUTPUT }.d -o ${ OUTPUT }
-    message: Compiling ${ INPUT }
+const DEFAULT_TOOLCHAIN: &str =
+r#"default:
+  tools:
+    CC:
+      when:
+        ext:
+        - c
+        out: object
+      deps: ${ OUTPUT }.d
+      format: default_gcc_deps
 
-  cxx:
-    when:
-      ext:
-      - cpp
-      out: object
-    deps: ${ OUTPUT }.d
-    format: default_gcc_deps
-    command: g++ -c ${ INPUT } -MMD -MF ${ OUTPUT }.d -o ${ OUTPUT }
-    message: Compiling ${ INPUT }
+      flags: C_FLAGS
+      command: gcc ${ FLAGS } -c ${ INPUT } -MMD -MF ${ OUTPUT }.d -o ${ OUTPUT }
+      message: Compiling ${ INPUT }
 
-  ld:
-    when:
-      out: executable
-    command: g++ ${ INPUT } -o ${ OUTPUT }
-    message: Linking ${ OUTPUT }
+    CXX:
+      when:
+        ext:
+        - cpp
+        out: object
+      deps: ${ OUTPUT }.d
+      format: default_gcc_deps
 
-  ar:
-    when:
-      out: static-library
-    command: ar rcs ${ OUTPUT } ${ INPUT }
-    message: Creating static library ${ OUTPUT }
+      flags: CXX_FLAGS
+      command: g++ ${ FLAGS } -c ${ INPUT } -MMD -MF ${ OUTPUT }.d -o ${ OUTPUT }
+      message: Compiling ${ INPUT }
+
+    LD:
+      when:
+        out: executable
+
+      flags: LD_FLAGS
+      command: g++ ${ INPUT } ${ FLAGS } -o ${ OUTPUT }
+      message: Linking ${ OUTPUT }
+
+    AR:
+      when:
+        out: static-library
+
+      flags: AR_FLAGS
+      command: ar ${ FLAGS } ${ OUTPUT } ${ INPUT }
+      message: Creating static library ${ OUTPUT }
+
+  flags:
+    C_FLAGS:
+      default:
+      windows:
+      linux:
+      macos:
+
+    CXX_FLAGS:
+      default:
+      windows:
+      linux:
+      macos:
+
+    LD_FLAGS:
+      default:
+      windows:
+      linux:
+      macos:
+
+    AR_FLAGS:
+      default:
+      - rcs
+      windows:
+      linux:
+      macos:
 "#;
 
 const DEFAULT_FORMATS: &str = r#"

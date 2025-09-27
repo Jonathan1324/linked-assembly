@@ -60,7 +60,7 @@ pub fn execute(
         .collect();
 
 
-    'tools: for (tool_name, tool) in toolchain {
+    'tools: for (tool_name, tool) in &toolchain.tools {
         if tool.when.out != *out {
             continue;
         }
@@ -82,6 +82,26 @@ pub fn execute(
         let mut replacements = HashMap::new();
         replacements.insert("input".to_string(), input_strs.join(" "));
         replacements.insert("output".to_string(), output.to_string_lossy().to_string());
+
+        let mut flags = Vec::new();
+        if let Some(flags_name) = &tool.flags {
+            let flags_set = toolchain.flags.get(flags_name).ok_or_else(|| {
+                io::Error::new(
+                    io::ErrorKind::NotFound,
+                    format!("Flags '{}' not found", flags_name)
+                )
+            })?;
+
+            flags.extend(flags_set.default.clone());
+            let os_flags = match std::env::consts::OS {
+                "windows" => &flags_set.windows,
+                "linux" => &flags_set.linux,
+                "macos" => &flags_set.macos,
+                _ => &Vec::new(),
+            };
+            flags.extend(os_flags.clone());
+        }
+        replacements.insert("flags".to_string(), flags.join(" "));
 
         let mut cache_inputs: Vec<PathBuf> = inputs.iter().map(|p| p.to_path_buf()).collect();
         if let Some(dep_file_raw) = &tool.deps {

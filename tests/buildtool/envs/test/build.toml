@@ -9,7 +9,7 @@ dir = "build"                                                   # defaults to "b
 default_target = "build"                                        # optional
 
 [tools]
-default = "test"                                                # required
+default = "default"                                             # required
 toolchains = "toolchains.yaml"                                  # required
 formats = "formats.yaml"                                        # required
 

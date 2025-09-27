@@ -2,12 +2,34 @@ use serde::Deserialize;
 use std::collections::HashMap;
 
 #[derive(Debug, Deserialize)]
+pub struct Toolchain {
+    pub tools: HashMap<String, Tool>,
+    pub flags: HashMap<String, Flags>,
+}
+
+#[derive(Debug, Deserialize)]
+pub struct Flags {
+    #[serde(default)]
+    pub default: Vec<String>,
+    #[serde(default)]
+    pub windows: Vec<String>,
+    #[serde(default)]
+    pub macos: Vec<String>,
+    #[serde(default)]
+    pub linux: Vec<String>,
+}
+
+#[derive(Debug, Deserialize)]
 pub struct Tool {
     pub when: When,
-    pub command: String,
-    pub message: Option<String>,
+
     pub deps: Option<String>,
     pub format: Option<String>,
+
+    pub flags: Option<String>,
+
+    pub command: String,
+    pub message: Option<String>,
 }
 
 #[derive(Debug, Deserialize)]
@@ -15,8 +37,6 @@ pub struct When {
     pub ext: Option<Vec<String>>,
     pub out: crate::config::OutputKind,
 }
-
-pub type Toolchain = HashMap<String, Tool>;
 
 #[derive(Debug, Deserialize)]
 pub struct Format {
@@ -41,24 +61,52 @@ pub struct Trim {
 pub fn print_toolchains(toolchains: &HashMap<String, Toolchain>) {
 	for (toolchain_name, toolchain) in toolchains {
         println!("{}: ", toolchain_name);
-        for (tool_name, tool) in toolchain {
-            println!("  {}: ", tool_name);
-            println!("    Command: {}", tool.command);
+        println!(" Tools: ");
+        for (tool_name, tool) in &toolchain.tools {
+            println!("    {}: ", tool_name);
+            println!("      Command: {}", tool.command);
             if let Some(deps) = &tool.deps {
-                println!("    Deps: {}", deps);
+                println!("      Deps: {}", deps);
+            }
+            if let Some(format) = &tool.format {
+                println!("      Format: {}", format);
+            }
+            if let Some(flags) = &tool.flags {
+                println!("      Flags: {}", flags);
             }
             if let Some(message) = &tool.message {
-                println!("    Message: {}", message);
+                println!("      Message: {}", message);
             }
-            println!("    when:");
-            println!("      out: {:?}", tool.when.out);
+            println!("      when:");
+            println!("        out: {:?}", tool.when.out);
             if let Some(exts) = &tool.when.ext {
                 if !exts.is_empty() {
-                    println!("      ext:");
+                    println!("        ext:");
                     for ext in exts {
-                        println!("      - {}", ext);
+                        println!("        - {}", ext);
                     }
                 }
+            }
+        }
+
+        println!(" Flags: ");
+        for (flag_name, flag) in &toolchain.flags {
+            println!("    {}: ", flag_name);
+            println!("      Default:");
+            for default in &flag.default {
+                println!("      - {}", default);
+            }
+            println!("      Windows:");
+            for windows in &flag.windows {
+                println!("      - {}", windows);
+            }
+            println!("      Linux:");
+            for linux in &flag.linux {
+                println!("      - {}", linux);
+            }
+            println!("      macOS:");
+            for macos in &flag.macos {
+                println!("      - {}", macos);
             }
         }
     }
