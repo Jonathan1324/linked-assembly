@@ -14,6 +14,7 @@ mod cache {
     pub mod cache;
 }
 
+pub mod init;
 pub mod config;
 pub mod execute;
 pub mod target;
@@ -29,6 +30,10 @@ fn main() {
     }
     if args.iter().any(|a| a == "-h" || a == "--help") {
         //args::args::print_help();
+        std::process::exit(0);
+    }
+    if args.iter().any(|a | a == "--init") {
+        init::init();
         std::process::exit(0);
     }
 
@@ -59,7 +64,7 @@ fn main() {
         targets.push(default_target.clone());
     }
 
-    let tools_file = &config.tools.file;
+    let tools_file = &config.tools.toolchains;
     let tools_content = fs::read_to_string(&tools_file).unwrap_or_else(|err | {
         eprintln!("Error: Failed to read {}: {}", tools_file, err);
         std::process::exit(1);

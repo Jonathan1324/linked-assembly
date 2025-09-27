@@ -36,7 +36,7 @@ fn default_build_dir() -> String { "build".to_string() }
 #[derive(Debug, Deserialize)]
 pub struct Tools {
     pub default: String,
-    pub file: String,
+    pub toolchains: String,
     pub formats: String,
 }
 
@@ -98,7 +98,8 @@ impl Config {
 
         println!("[TOOLS]");
         println!("  Default: {}", self.tools.default);
-        println!("  File: {}", self.tools.file);
+        println!("  Toolchains: {}", self.tools.toolchains);
+        println!("  Formats: {}", self.tools.formats);
 
         for (name, target) in &self.targets {
             println!("[TARGETS.{}]", name);

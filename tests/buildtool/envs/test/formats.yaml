@@ -1,6 +1,6 @@
 gcc_deps:
   start:
-    ignore_lines: 2
+    ignore_lines: 1
     trim:
       if: "  "
       remove: 2
@@ -8,4 +8,4 @@ gcc_deps:
     ignore_lines: 0
     trim:
       if: "\\"
-      remove: 0 # TODO: IDK
+      remove: 1

@@ -124,12 +124,14 @@ pub fn execute(
 
                         if let Some(end) = &format.end {
                             if let Some(trim) = &end.trim {
-                                let n = trim.remove as usize;
-                                if line.len() >= n {
-                                    let new_len = line.len() - n;
-                                    line.truncate(new_len);
-                                } else {
-                                    line.clear();
+                                if line.ends_with(&trim.condition) {
+                                    let n = trim.remove as usize;
+                                    if line.len() >= n {
+                                        let new_len = line.len() - n;
+                                        line.truncate(new_len);
+                                    } else {
+                                        line.clear();
+                                    }
                                 }
                             }
                         }
