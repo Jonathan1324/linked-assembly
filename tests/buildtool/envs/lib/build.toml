@@ -20,7 +20,6 @@ run = "build/main"
 [targets.build]
 description = "Build the project"
 out = "executable"
-for_each = false
 name = "main"
 depends = ["compile_src", "lib"]
 message = "Building the project"
@@ -34,7 +33,6 @@ files = "*.c"
 [targets.lib]
 description = "Link the static library"
 out = "static-library"
-for_each = false
 name = "libcore.a"
 depends = ["compile_lib_srcs"]
 message = "Building the library"

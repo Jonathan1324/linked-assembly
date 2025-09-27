@@ -16,7 +16,9 @@ formats = "formats.yaml"                                        # required
 [targets.build]
 description = "Build the project"                               # optional
 out = "executable"                                              # defaults to "Undefined"
-for_each = false                                                # defaults to true
+for_each = false                                                # defaults when out
+                                                                #   Executable, StaticLibrary => true
+                                                                #   Object, _ => false
 name = "main"                                                   # optional
 depends = ["compile_src"]                                       # optional
 message = "Building the project"                                # optional

@@ -1,4 +1,5 @@
 use crate::config;
+use crate::config::OutputKind;
 use crate::execute;
 use glob::glob;
 use std::collections::HashMap;
@@ -67,7 +68,13 @@ pub fn execute_target(
             }
         }
 
-        let mut for_each = true;
+        let mut for_each = match target.out {
+            OutputKind::Object => { true }
+            OutputKind::Executable => { false }
+            OutputKind::StaticLibrary => { false }
+
+            _ => { true }
+        };
         if let Some(for_each_explicit) = &target.for_each {
             for_each = *for_each_explicit;
         }
