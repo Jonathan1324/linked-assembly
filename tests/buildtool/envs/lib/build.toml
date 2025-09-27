@@ -1,21 +1,20 @@
 [project]
-name = "TestProject"                                            # required
-version = "0.1.0"                                               # optional
-description = "A test project to test this buildtool"           # optional
-internal_dump = false                                           # defaults to false
+name = "TestProject"
+version = "0.1.0"
+description = "A test project to test this buildtool"
 
 [build]
-dir = "build"                                                   # defaults to "build"
-default_target = "build"                                        # optional
+dir = "build"
+default_target = "build"
 
 [tools]
-default = "test"                                                # required
-file = "toolchains.yaml"                                        # required
-formats = "formats.yaml"                                        # required
+default = "test"
+file = "toolchains.yaml"
+formats = "formats.yaml"
 
 [targets.run]
 description = "Run the project"
-depends = ["build"]
+before = ["build"]
 run = "build/main"
 
 [targets.build]
@@ -34,7 +33,7 @@ files = "*.c"
 
 [targets.lib]
 description = "Link the static library"
-out = "custom" # TODO: implement static library
+out = "custom"
 for_each = false
 name = "libcore.a"
 depends = ["compile_lib_srcs"]

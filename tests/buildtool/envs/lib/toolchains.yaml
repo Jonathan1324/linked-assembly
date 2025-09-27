@@ -22,6 +22,6 @@ test:
 
   ar:
     when:
-      out: custom #TODO
+      out: custom
     command: ar rcs ${OUTPUT} ${INPUT}
     message: Archving ${ OUTPUT }

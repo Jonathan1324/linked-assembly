@@ -37,5 +37,5 @@ run = "rm -rf build"                                            # optional
 
 [targets.run]
 description = "Run the project"                                 # optional
-depends = ["build"]                                             # optional
+before = ["build"]                                              # optional
 run = "./build/main"                                            # optional

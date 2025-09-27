@@ -56,6 +56,8 @@ pub struct Target {
     pub message: Option<String>,
     #[serde(default)]
     pub depends: Vec<String>,
+    #[serde(default)]
+    pub before: Vec<String>,
 
     pub name: Option<String>,
 

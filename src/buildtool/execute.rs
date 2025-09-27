@@ -42,10 +42,10 @@ pub fn execute(
     toolchains: &HashMap<String, crate::tools::tools::Toolchain>,
     formats: &HashMap<String, crate::tools::tools::Format>,
     cache: &cache::CacheBuffer,
-    force_rebuild: bool,
+    mut force_rebuild: bool,
 ) -> Result<bool, std::io::Error> {
-    if force_rebuild || !output.exists() {
-        return Ok(false);
+    if !output.exists() {
+        force_rebuild = true;
     }
 
     let toolchain = toolchains.get(&config.tools.default).ok_or_else(|| {
@@ -152,8 +152,12 @@ pub fn execute(
             }
         }
 
-        if cache::check_built(&cache_inputs, &output.to_string_lossy(), cache) {
+        if !force_rebuild && cache::check_built(&cache_inputs, &output.to_string_lossy(), cache) {
             return Ok(false);
+        }
+
+        if let Some(parent) = output.parent() {
+            fs::create_dir_all(parent).unwrap();
         }
 
         let command = replace_placeholders(&tool.command, &replacements)

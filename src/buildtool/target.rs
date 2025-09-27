@@ -25,11 +25,17 @@ pub fn execute_target(
     let mut outputs = Vec::new();
 
     if let Some(target) = config.targets.get(name) {
-        if let Some(message) = &target.message {
-            println!("{}", message);
-        }
-
         let mut inputs = Vec::new();
+
+        for dep in &target.before {
+            let result = execute_target(dep, config, toolchains, formats, executed, build_dir, cache);
+            if result.is_err() {
+                return Err(io::Error::new(
+                    io::ErrorKind::Other,
+                    format!("Target {} failed", dep),
+                ));
+            }
+        }
         
         for dep in &target.depends {
             let dep_outputs = execute_target(dep, config, toolchains, formats, executed, build_dir, cache);
@@ -40,6 +46,10 @@ pub fn execute_target(
                 ));
             }
             inputs.extend(dep_outputs.unwrap());
+        }
+
+        if let Some(message) = &target.message {
+            println!("{}", message);
         }
 
         let target_path = if Path::new(&target.path).is_absolute() {
@@ -81,10 +91,6 @@ pub fn execute_target(
                         }
                     };
                     output_path.set_file_name(file_name);
-
-                    if let Some(parent) = output_path.parent() {
-                        fs::create_dir_all(parent).unwrap();
-                    }
 
                     let temp_inputs: Vec<&Path> = vec![input];
 
