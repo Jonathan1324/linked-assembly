@@ -10,8 +10,8 @@ default_target = "build"                                        # optional
 
 [tools]
 default = "default"                                             # required
-toolchains = "toolchains.yaml"                                  # required
-formats = "formats.yaml"                                        # required
+toolchains = ["toolchains.yaml"]                                # optional
+formats = ["formats.yaml"]                                      # optional
 
 [targets.build]
 description = "Build the project"                               # optional
