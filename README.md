@@ -4,7 +4,7 @@ A toolchain.
 
 ## Documentation
 
-- planned
+[Docs](./docs/OVERVIEW.md)
 
 ## License
 
