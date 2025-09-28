@@ -1,10 +1,8 @@
-use std::collections::{HashMap, HashSet};
+use std::collections::HashMap;
 use std::path::{Path, PathBuf};
 use std::fs;
 use std::env;
 use serde_yaml;
-
-use crate::tools::tools::print_toolchains;
 
 mod tools {
     pub mod tools;
@@ -18,6 +16,8 @@ pub mod init;
 pub mod config;
 pub mod execute;
 pub mod target;
+
+pub mod util;
 
 pub mod c;
 
@@ -33,7 +33,10 @@ fn main() {
         std::process::exit(0);
     }
     if args.iter().any(|a | a == "--init") {
-        init::init();
+        init::init().unwrap_or_else(|err | {
+            eprintln!("Error: Failed to initialize project: {}", err);
+            std::process::exit(1);
+        });
         std::process::exit(0);
     }
 
@@ -64,29 +67,52 @@ fn main() {
         targets.push(default_target.clone());
     }
 
-    let tools_file = &config.tools.toolchains;
-    let tools_content = fs::read_to_string(&tools_file).unwrap_or_else(|err | {
-        eprintln!("Error: Failed to read {}: {}", tools_file, err);
-        std::process::exit(1);
-    });
-    let toolchains: HashMap<String, tools::tools::Toolchain> = serde_yaml::from_str(&tools_content).unwrap_or_else(|err | {
-        eprintln!("Error: Failed to parse {}: {}", tools_file, err);
-        std::process::exit(1);
+    let tools_files = &config.tools.toolchains;
+    let mut toolchains_vec = Vec::new();
+    for tools_file in tools_files {
+        let tools_content = fs::read_to_string(&tools_file).unwrap_or_else(|err | {
+            eprintln!("Error: Failed to read {}: {}", tools_file, err);
+            std::process::exit(1);
+        });
+        let file_toolchains: HashMap<String, tools::tools::Toolchain> = serde_yaml::from_str(&tools_content).unwrap_or_else(|err | {
+            eprintln!("Error: Failed to parse {}: {}", tools_file, err);
+            std::process::exit(1);
+        });
+        toolchains_vec.push(file_toolchains);
+    }
+    let toolchains = toolchains_vec.iter().fold(HashMap::new(), |mut acc, map| {
+        for (k, v) in map {
+            acc.entry(k.clone()).or_insert(v.clone());
+        }
+        acc
     });
 
-    let formats_file = &config.tools.formats;
-    let formats_content = fs::read_to_string(&formats_file).unwrap_or_else(|err | {
-        eprintln!("Error: Failed to read {}: {}", formats_file, err);
-        std::process::exit(1);
-    });
-    let formats: HashMap<String, tools::tools::Format> = serde_yaml::from_str(&formats_content).unwrap_or_else(|err | {
-        eprintln!("Error: Failed to parse {}: {}", tools_file, err);
-        std::process::exit(1);
+    let formats_files = &config.tools.formats;
+    let mut formats_vec = Vec::new();
+    for formats_file in formats_files {
+        let formats_content = fs::read_to_string(&formats_file).unwrap_or_else(|err | {
+            eprintln!("Error: Failed to read {}: {}", formats_file, err);
+            std::process::exit(1);
+        });
+        let file_formats: HashMap<String, tools::tools::Format> = serde_yaml::from_str(&formats_content).unwrap_or_else(|err | {
+            eprintln!("Error: Failed to parse {}: {}", formats_file, err);
+            std::process::exit(1);
+        });
+        formats_vec.push(file_formats);
+    }
+    let formats = formats_vec.iter().fold(HashMap::new(), |mut acc, map| {
+        for (k, v) in map {
+            acc.entry(k.clone()).or_insert(v.clone());
+        }
+        acc
     });
 
     let cache_dir = PathBuf::from("__lbtcache__");
     if !cache_dir.exists() {
-        fs::create_dir_all(&cache_dir).unwrap();
+        fs::create_dir_all(&cache_dir).unwrap_or_else(|err | {
+            eprintln!("Error: Failed to create __lbtcache__: {}", err);
+            std::process::exit(1);
+        });
     }
     let cache_file = cache_dir.join("cache.dat");
 
@@ -95,7 +121,11 @@ fn main() {
         std::process::exit(1);
     });
 
-    let build_dir = env::current_dir().unwrap().join(config.build.dir.clone());
+    let current_dir = env::current_dir().unwrap_or_else(|err | {
+        eprintln!("Error: Couldn't get current dir: {}", err);
+        std::process::exit(1);
+    });
+    let build_dir = current_dir.join(config.build.dir.clone());
     let mut executed = HashMap::new();
     for target_name in targets {
         let result = target::execute_target(&target_name, &config, &toolchains, &formats, &mut executed, &build_dir, &cache);

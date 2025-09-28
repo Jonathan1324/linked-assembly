@@ -5,6 +5,7 @@ use std::process::Command;
 use std::{fs, io};
 
 use crate::cache::cache;
+use crate::util::{get_format, get_toolchain};
 
 fn replace_placeholders(s: &str, replacements: &HashMap<String, String>) -> Result<String, std::io::Error> {
     let mut result = String::new();
@@ -48,19 +49,14 @@ pub fn execute(
         force_rebuild = true;
     }
 
-    let toolchain = toolchains.get(&config.tools.default).ok_or_else(|| {
-        io::Error::new(
-            io::ErrorKind::NotFound,
-            format!("Toolchain '{}' not found", config.tools.default)
-        )
-    })?;
+    let toolchain = get_toolchain(&config.tools.default, toolchains)?;
 
     let input_strs: Vec<String> = inputs.iter()
         .map(|p| p.display().to_string())
         .collect();
 
 
-    'tools: for (tool_name, tool) in &toolchain.tools {
+    'tools: for (_tool_name, tool) in &toolchain.tools {
         if tool.when.out != *out {
             continue;
         }
@@ -105,19 +101,16 @@ pub fn execute(
 
         let mut cache_inputs: Vec<PathBuf> = inputs.iter().map(|p| p.to_path_buf()).collect();
         if let Some(dep_file_raw) = &tool.deps {
-            let dep_file = replace_placeholders(&dep_file_raw, &replacements).unwrap(); // TODO
+            let dep_file = replace_placeholders(&dep_file_raw, &replacements)?;
             if Path::new(&dep_file).exists() {
-                let file = fs::File::open(&dep_file).unwrap(); // TODO
+                let file = fs::File::open(&dep_file)?;
                 let reader = io::BufReader::new(file);
                 let mut lines: Vec<String> = reader.lines().collect::<Result<_, _>>()?;
 
-                let format_name = tool.format.clone().unwrap(); // TODO
-                let format = formats.get(&format_name).ok_or_else(|| {
-                    io::Error::new(
-                        io::ErrorKind::NotFound,
-                        format!("Format '{}' not found", format_name)
-                    )
+                let format_name = tool.format.clone().ok_or_else(|| {
+                    io::Error::new(io::ErrorKind::Other,format!("No format defined"))
                 })?;
+                let format = get_format(&format_name, formats)?;
 
                 let start_skip = format.start.as_ref().map(|r| r.ignore_lines as usize).unwrap_or(0);
                 let end_skip   = format.end  .as_ref().map(|r| r.ignore_lines as usize).unwrap_or(0);
@@ -179,14 +172,13 @@ pub fn execute(
         }
 
         if let Some(parent) = output.parent() {
-            fs::create_dir_all(parent).unwrap();
+            fs::create_dir_all(parent)?;
         }
 
-        let command = replace_placeholders(&tool.command, &replacements)
-            .unwrap(); // TODO
+        let command = replace_placeholders(&tool.command, &replacements)?;
 
         if let Some(raw_message) = &tool.message {
-            let message = replace_placeholders(raw_message, &replacements).unwrap();
+            let message = replace_placeholders(raw_message, &replacements)?;
             println!("{}", message);
         }
 
@@ -206,19 +198,16 @@ pub fn execute(
 
         cache_inputs = inputs.iter().map(|p| p.to_path_buf()).collect();
         if let Some(dep_file_raw) = &tool.deps {
-            let dep_file = replace_placeholders(&dep_file_raw, &replacements).unwrap(); // TODO
+            let dep_file = replace_placeholders(&dep_file_raw, &replacements)?;
             if Path::new(&dep_file).exists() {
-                let file = fs::File::open(&dep_file).unwrap(); // TODO
+                let file = fs::File::open(&dep_file)?;
                 let reader = io::BufReader::new(file);
                 let mut lines: Vec<String> = reader.lines().collect::<Result<_, _>>()?;
 
-                let format_name = tool.format.clone().unwrap(); // TODO
-                let format = formats.get(&format_name).ok_or_else(|| {
-                    io::Error::new(
-                        io::ErrorKind::NotFound,
-                        format!("Format '{}' not found", format_name)
-                    )
+                let format_name = tool.format.clone().ok_or_else(|| {
+                    io::Error::new(io::ErrorKind::Other,format!("No format defined"))
                 })?;
+                let format = get_format(&format_name, formats)?;
 
                 let start_skip = format.start.as_ref().map(|r| r.ignore_lines as usize).unwrap_or(0);
                 let end_skip   = format.end  .as_ref().map(|r| r.ignore_lines as usize).unwrap_or(0);

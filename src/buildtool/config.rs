@@ -36,11 +36,13 @@ fn default_build_dir() -> String { "build".to_string() }
 #[derive(Debug, Deserialize)]
 pub struct Tools {
     pub default: String,
-    pub toolchains: String,
-    pub formats: String,
+    #[serde(default)]
+    pub toolchains: Vec<String>,
+    #[serde(default)]
+    pub formats: Vec<String>,
 }
 
-#[derive(Debug, PartialEq, Eq, Deserialize)]
+#[derive(Clone, Debug, PartialEq, Eq, Deserialize)]
 #[serde(rename_all = "lowercase")]
 pub enum OutputKind {
     Executable,
@@ -98,8 +100,14 @@ impl Config {
 
         println!("[TOOLS]");
         println!("  Default: {}", self.tools.default);
-        println!("  Toolchains: {}", self.tools.toolchains);
-        println!("  Formats: {}", self.tools.formats);
+        println!("  Toolchains:");
+        for toolchain in &self.tools.toolchains {
+            println!("  - {}", toolchain);
+        }
+        println!("  Formats:");
+        for format in &self.tools.formats {
+            println!("  - {}", format);
+        }
 
         for (name, target) in &self.targets {
             println!("[TARGETS.{}]", name);

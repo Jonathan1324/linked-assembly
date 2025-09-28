@@ -1,13 +1,13 @@
 use serde::Deserialize;
 use std::collections::HashMap;
 
-#[derive(Debug, Deserialize)]
+#[derive(Clone, Debug, Deserialize)]
 pub struct Toolchain {
     pub tools: HashMap<String, Tool>,
     pub flags: HashMap<String, Flags>,
 }
 
-#[derive(Debug, Deserialize)]
+#[derive(Clone, Debug, Deserialize)]
 pub struct Flags {
     #[serde(default)]
     pub default: Vec<String>,
@@ -19,7 +19,7 @@ pub struct Flags {
     pub linux: Vec<String>,
 }
 
-#[derive(Debug, Deserialize)]
+#[derive(Clone, Debug, Deserialize)]
 pub struct Tool {
     pub when: When,
 
@@ -32,26 +32,26 @@ pub struct Tool {
     pub message: Option<String>,
 }
 
-#[derive(Debug, Deserialize)]
+#[derive(Clone, Debug, Deserialize)]
 pub struct When {
     pub ext: Option<Vec<String>>,
     pub out: crate::config::OutputKind,
 }
 
-#[derive(Debug, Deserialize)]
+#[derive(Clone, Debug, Deserialize)]
 pub struct Format {
     pub start: Option<FormatRule>,
     pub end: Option<FormatRule>,
 }
 
-#[derive(Debug, Deserialize)]
+#[derive(Clone, Debug, Deserialize)]
 pub struct FormatRule {
     #[serde(default)]
     pub ignore_lines: u32,
     pub trim: Option<Trim>,
 }
 
-#[derive(Debug, Deserialize)]
+#[derive(Clone, Debug, Deserialize)]
 pub struct Trim {
     #[serde(rename = "if")]
     pub condition: String,

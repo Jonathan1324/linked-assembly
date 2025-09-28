@@ -1,8 +1,5 @@
-use std::fs::{self, canonicalize, OpenOptions};
-use std::io::Write;
+use std::fs;
 use std::path::{Path, PathBuf};
-use serde_json::json;
-use std::collections::HashMap;
 use sha2::{Sha256, Digest};
 use std::ffi::CString;
 use crate::c;
@@ -106,6 +103,4 @@ pub fn write_built(inputs: &[PathBuf], output: &str, cache: &CacheBuffer) {
     let output_hash = hash_path(output);
 
     cache.add(&output_hash, &combined_fingerprint);
-
-    let output_hash_str: String = output_hash.iter().map(|b| format!("{:02x}", b)).collect();
 }

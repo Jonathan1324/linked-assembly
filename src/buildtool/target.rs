@@ -46,7 +46,7 @@ pub fn execute_target(
                     format!("Target {} failed", dep),
                 ));
             }
-            inputs.extend(dep_outputs.unwrap());
+            inputs.extend(dep_outputs?);
         }
 
         if let Some(message) = &target.message {
@@ -56,12 +56,12 @@ pub fn execute_target(
         let target_path = if Path::new(&target.path).is_absolute() {
             PathBuf::from(&target.path)
         } else {
-            env::current_dir().unwrap().join(&target.path)
+            env::current_dir()?.join(&target.path)
         };
 
         if let Some(files) = &target.files {
             let glob_pattern = format!("{}/**/{}", target_path.display(), files);
-            for entry in glob(&glob_pattern).unwrap() {
+            for entry in glob(&glob_pattern).map_err(|e| io::Error::new(io::ErrorKind::Other, e))? {
                 if let Ok(full_path) = entry {
                     inputs.push(full_path);
                 }
@@ -82,18 +82,24 @@ pub fn execute_target(
         if !inputs.is_empty() {
             if for_each {
                 for input in &inputs {
-                    let mut output_path = build_dir.join(input.strip_prefix(env::current_dir().unwrap()).unwrap());
+                    let mut output_path = build_dir.join(input.strip_prefix(env::current_dir()?).map_err(|e| io::Error::new(io::ErrorKind::Other, e))?);
                     let file_name = if let Some(name) = &target.name {
                         name.clone().into()
                     } else {
                         match target.out {
                             config::OutputKind::Object => {
-                                let mut name = output_path.file_name().unwrap().to_os_string();
+                                let mut name = output_path.file_name().ok_or_else(|| {
+                                    io::Error::new(io::ErrorKind::Other,format!("Couldn't get filename of output"))
+                                })?.to_os_string();
                                 name.push(".o");
                                 name
                             }
                             _ => {
-                                Path::new(output_path.file_name().unwrap()).file_stem().unwrap().to_os_string()
+                                Path::new(output_path.file_name().ok_or_else(|| {
+                                    io::Error::new(io::ErrorKind::Other,format!("Couldn't get filename of output"))
+                                })?).file_stem().ok_or_else(|| {
+                                    io::Error::new(io::ErrorKind::Other,format!("Couldn't get filestem of output"))
+                                })?.to_os_string()
                             }
                         }
                     };
@@ -112,22 +118,29 @@ pub fn execute_target(
                     outputs.push(output_path);
                 }
             } else {
-                let mut output_path = build_dir.join(inputs[0].strip_prefix(env::current_dir().unwrap()).unwrap());
+                let mut output_path = build_dir.join(inputs[0].strip_prefix(env::current_dir()?).map_err(|e| io::Error::new(io::ErrorKind::Other, e))?);
                 let mut file_name = if let Some(name) = &target.name {
                     output_path = build_dir.to_path_buf().join("placeholder"); // TODO: FIXME: WHATEVER: REALLY ONLY TEMPORARY; VERY UGLY
                     name.clone().into()
                 } else {
                     match target.out {
                         config::OutputKind::Object => {
-                            let mut name = output_path.file_name().unwrap().to_os_string();
+                            let mut name = output_path.file_name().ok_or_else(|| {
+                                io::Error::new(io::ErrorKind::Other,format!("Couldn't get filename of output"))
+                            })?.to_os_string();
                             name.push(".o");
                             name
                         }
                         _ => {
-                            Path::new(output_path.file_name().unwrap()).file_stem().unwrap().to_os_string()
+                            Path::new(output_path.file_name().ok_or_else(|| {
+                                io::Error::new(io::ErrorKind::Other,format!("Couldn't get filename of output"))
+                            })?).file_stem().ok_or_else(|| {
+                                io::Error::new(io::ErrorKind::Other,format!("Couldn't get filestem of output"))
+                            })?.to_os_string()
                         }
                     }
                 };
+                // TODO: not always .exe
                 if matches!(target.out, config::OutputKind::Executable) {
                     #[cfg(windows)]
                     {
@@ -137,7 +150,7 @@ pub fn execute_target(
                 output_path.set_file_name(file_name);
 
                 if let Some(parent) = output_path.parent() {
-                    fs::create_dir_all(parent).unwrap();
+                    fs::create_dir_all(parent)?;
                 }
 
                 let temp_inputs: Vec<&Path> = inputs.iter().map(|p| p.as_path()).collect();

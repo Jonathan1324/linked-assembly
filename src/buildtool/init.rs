@@ -13,8 +13,8 @@ dir = "build"
 
 [tools]
 default = "default"
-toolchains = "build_toolchains.yaml"
-formats = "build_formats.yaml"
+toolchains = ["build_toolchains.yaml"]
+formats = ["build_formats.yaml"]
 
 [targets.build]
 description = "Build the project"
@@ -122,7 +122,7 @@ pub fn init() -> Result<(), std::io::Error> {
     toolchains.write_all(DEFAULT_TOOLCHAIN.as_bytes())?;
 
     let mut formats = File::create("build_formats.yaml")?;
-    formats.write_all(DEFAULT_FORMATS.as_bytes());
+    formats.write_all(DEFAULT_FORMATS.as_bytes())?;
     
     Ok(())
 }

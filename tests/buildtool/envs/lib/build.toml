@@ -9,8 +9,8 @@ default_target = "build"
 
 [tools]
 default = "test"
-toolchains = "toolchains.yaml"
-formats = "formats.yaml"
+toolchains = ["toolchains.yaml"]
+formats = ["formats.yaml"]
 
 [targets.run]
 description = "Run the project"
