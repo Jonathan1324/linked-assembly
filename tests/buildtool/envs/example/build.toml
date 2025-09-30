@@ -27,7 +27,7 @@ message = "Building the project"                                # optional
 description = "Compile files in src"                            # optional
 out = "object"                                                  # defaults to "Undefined"
 path = "src"                                                    # defaults to "."
-files = "*.c"                                                   # optional
+files = "*.c"                                                   # optional (allows both String and Vector<String>
 #optional: message: String
 #optional: depends
 

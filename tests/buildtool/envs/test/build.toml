@@ -24,7 +24,7 @@ name = "main"
 [targets.build_c_srcs]
 out = "object"
 path = "src"
-files = "*.c"
+files = ["*.c", "*.cc"]
 
 [targets.build_cpp_srcs]
 out = "object"

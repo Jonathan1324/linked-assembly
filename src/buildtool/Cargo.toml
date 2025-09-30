@@ -13,6 +13,7 @@ toml = "0.7"
 walkdir = "2.5.0"
 sha2 = "0.10.9"
 libc = "0.2.175"
+globset = "0.4"
 
 [[bin]]
 name = "lbt"

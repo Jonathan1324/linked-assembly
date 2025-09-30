@@ -2,6 +2,7 @@ use crate::config;
 use crate::config::OutputKind;
 use crate::execute;
 use glob::glob;
+use globset::{Glob, GlobSetBuilder};
 use std::collections::HashMap;
 use std::io;
 use std::process::Command;
@@ -59,11 +60,22 @@ pub fn execute_target(
             env::current_dir()?.join(&target.path)
         };
 
-        if let Some(files) = &target.files {
-            let glob_pattern = format!("{}/**/{}", target_path.display(), files);
-            for entry in glob(&glob_pattern).map_err(|e| io::Error::new(io::ErrorKind::Other, e))? {
+        if let Some(files_sov) = &target.files {
+            let files = files_sov.into_vec();
+
+            let mut builder = GlobSetBuilder::new();
+            for pat in files {
+                let pattern = format!("{}/**/{}", target_path.display(), pat);
+                builder.add(Glob::new(&pattern).map_err(|e| io::Error::new(io::ErrorKind::Other, e))?);
+            }
+            let glob_set = builder.build().map_err(|e| io::Error::new(io::ErrorKind::Other, e))?;
+
+            let search_pattern = format!("{}/**/*", target_path.display());
+            for entry in glob(&search_pattern).map_err(|e| io::Error::new(io::ErrorKind::Other, e))? {
                 if let Ok(full_path) = entry {
-                    inputs.push(full_path);
+                    if glob_set.is_match(&full_path) {
+                        inputs.push(full_path);
+                    }
                 }
             }
         }

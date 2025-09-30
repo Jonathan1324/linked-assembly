@@ -54,6 +54,22 @@ pub enum OutputKind {
     Undefined,
 }
 
+#[derive(Clone, Debug, Deserialize)]
+#[serde(untagged)]
+pub enum StringOrVec {
+    One(String),
+    Many(Vec<String>),
+}
+
+impl StringOrVec {
+    pub fn into_vec(&self) -> Vec<&String> {
+        match self {
+            StringOrVec::One(s) => vec![s],
+            StringOrVec::Many(v) => v.iter().collect(),
+        }
+    }
+}
+
 #[derive(Debug, Deserialize)]
 pub struct Target {
     pub description: Option<String>,
@@ -72,7 +88,7 @@ pub struct Target {
     
     #[serde(default = "default_target_path")]
     pub path: String,
-    pub files: Option<String>,
+    pub files: Option<StringOrVec>,
 
     pub run: Option<String>,
 }
@@ -128,8 +144,9 @@ impl Config {
             if let Some(command) = &target.run {
                 println!("  Command: {}", command);
             }
-            if let Some(files) = &target.files {
-                println!("  Files: {}", files);
+            if let Some(files_sov) = &target.files {
+                let files = files_sov.into_vec();
+                println!("  Files: {:?}", files);
                 println!("  Path: {}", target.path);
             }
         }
