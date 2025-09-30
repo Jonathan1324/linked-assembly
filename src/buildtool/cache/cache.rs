@@ -90,9 +90,7 @@ pub fn compute_fingerprint(inputs: &[PathBuf]) -> Vec<u8> {
 
 pub fn check_built(inputs: &[PathBuf], output: &str, cache: &CacheBuffer) -> bool {
     let combined_fingerprint = compute_fingerprint(inputs);
-    let output_hash = hash_path(output);
-
-    match cache.read(&output_hash) {
+    match cache.read(&output.as_bytes()) {
         Some(value) => value == combined_fingerprint,
         None => false,
     }
@@ -100,7 +98,5 @@ pub fn check_built(inputs: &[PathBuf], output: &str, cache: &CacheBuffer) -> boo
 
 pub fn write_built(inputs: &[PathBuf], output: &str, cache: &CacheBuffer) {
     let combined_fingerprint = compute_fingerprint(inputs);
-    let output_hash = hash_path(output);
-
-    cache.add(&output_hash, &combined_fingerprint);
+    cache.add(&output.as_bytes(), &combined_fingerprint);
 }

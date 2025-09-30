@@ -40,6 +40,8 @@ typedef struct
     uint64_t name_length;
     char* value;
     uint64_t value_length;
+
+    char used;
 } CacheTableEntryBuffer;
 
 typedef struct HashMapEntry

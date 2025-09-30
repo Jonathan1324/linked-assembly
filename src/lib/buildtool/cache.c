@@ -207,6 +207,8 @@ uint8_t readBuffer(CacheBuffer* buffer, FILE* f)
         buffer->entries[i].value_length = value_len;
         memcpy(buffer->entries[i].value, &value_table[raw_entries[i].ValueIndex], value_len);
 
+        buffer->entries[i].used = 0;
+
         hashInsert(buffer, buffer->entries[i].name, buffer->entries[i].name_length, i);
     }
 
@@ -254,6 +256,7 @@ void AddToCache(uint64_t buf_ptr, const char* name, uint64_t name_length, const 
         buffer->entries[index].value = (char*)malloc(value_length);
         memcpy(buffer->entries[index].value, value, value_length);
         buffer->entries[index].value_length = value_length;
+        buffer->entries[index].used = 1;
         return;
     }
 
@@ -274,6 +277,8 @@ void AddToCache(uint64_t buf_ptr, const char* name, uint64_t name_length, const 
     memcpy(buffer->entries[count].value, value, value_length);
     buffer->entries[count].value_length = value_length;
 
+    buffer->entries[count].used = 1;
+
     hashInsert(buffer, buffer->entries[count].name, name_length, count);
 
     buffer->headerBuffer->CacheHeaderEntryCount++;
@@ -287,6 +292,7 @@ const char* ReadFromCache(uint64_t buf_ptr, const char* name, uint64_t name_leng
     uint64_t index = hashLookup(buffer, name, name_length);
     if (index != UINT64_MAX) {
         if (value_length) *value_length = buffer->entries[index].value_length;
+        buffer->entries[index].used = 1;
         return buffer->entries[index].value;
     }
 
@@ -304,31 +310,38 @@ void WriteCacheFile(uint64_t buf_ptr, const char* path)
     FILE* f = fopen(path, "wb");
     if (!f) return;
 
-    CacheHeader* header = buffer->headerBuffer;
-    uint32_t entry_count = header->CacheHeaderEntryCount;
+    CacheHeader header = *buffer->headerBuffer;
+    uint32_t entry_count = header.CacheHeaderEntryCount;
 
+    uint32_t used_count = 0;
     uint32_t name_table_size = 0;
     uint32_t value_table_size = 0;
 
     for (uint32_t i = 0; i < entry_count; ++i)
     {
-        if (buffer->entries[i].name) name_table_size += buffer->entries[i].name_length;
-        if (buffer->entries[i].value) value_table_size += buffer->entries[i].value_length;
+        if (buffer->entries[i].used != 0) {
+            used_count++;
+            if (buffer->entries[i].name) name_table_size += buffer->entries[i].name_length;
+            if (buffer->entries[i].value) value_table_size += buffer->entries[i].value_length;
+        }
     }
 
-    header->NameStringTableSize = name_table_size;
-    header->ValueStringTableSize = value_table_size;
+    header.CacheHeaderEntryCount = used_count;
+    header.NameStringTableSize = name_table_size;
+    header.ValueStringTableSize = value_table_size;
 
-    header->CacheHeaderTableOffset = sizeof(CacheHeader);
-    header->NameStringTableOffset = header->CacheHeaderTableOffset + entry_count * sizeof(CacheTableEntry);
-    header->ValueStringTableOffset = header->NameStringTableOffset + name_table_size;
+    header.CacheHeaderTableOffset = sizeof(CacheHeader);
+    header.NameStringTableOffset = header.CacheHeaderTableOffset + used_count * sizeof(CacheTableEntry);
+    header.ValueStringTableOffset = header.NameStringTableOffset + name_table_size;
 
-    fwrite(buffer->headerBuffer, sizeof(CacheHeader), 1, f);
+    fwrite(&header, sizeof(CacheHeader), 1, f);
 
     uint64_t current_name_index = 0;
     uint64_t current_value_index = 0;
     for (uint32_t i = 0; i < entry_count; ++i)
     {
+        if (buffer->entries[i].used == 0) continue;
+
         CacheTableEntry entry;
         entry.NameIndex = current_name_index;
         entry.NameLength  = buffer->entries[i].name_length;
@@ -342,6 +355,7 @@ void WriteCacheFile(uint64_t buf_ptr, const char* path)
 
     for (uint32_t i = 0; i < entry_count; ++i)
     {
+        if (buffer->entries[i].used == 0) continue;
         if (buffer->entries[i].name)
         {
             fwrite(buffer->entries[i].name, buffer->entries[i].name_length, 1, f);
@@ -350,6 +364,7 @@ void WriteCacheFile(uint64_t buf_ptr, const char* path)
 
     for (uint32_t i = 0; i < entry_count; ++i)
     {
+        if (buffer->entries[i].used == 0) continue;
         if (buffer->entries[i].value)
         {
             fwrite(buffer->entries[i].value, buffer->entries[i].value_length, 1, f);
