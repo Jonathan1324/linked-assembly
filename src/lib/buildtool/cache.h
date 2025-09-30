@@ -42,6 +42,7 @@ typedef struct
     uint64_t value_length;
 
     char used;
+    char file;
 } CacheTableEntryBuffer;
 
 typedef struct HashMapEntry
@@ -69,5 +70,6 @@ void WriteCacheFile(uint64_t buf_ptr, const char* path);
 void FreeCacheBuffer(uint64_t buf_ptr);
 void AddToCache(uint64_t buf_ptr, const char* name, uint64_t name_length, const char* value, uint64_t value_length);
 const char* ReadFromCache(uint64_t buf_ptr, const char* name, uint64_t name_length, uint64_t* value_length);
+void CleanCache(uint64_t buf_ptr);
 
 HCE

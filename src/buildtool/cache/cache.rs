@@ -20,11 +20,14 @@ impl CacheBuffer {
         }
     }
 
-    pub fn write_file<P: AsRef<Path>>(&self, path: P) -> bool {
+    pub fn write_file<P: AsRef<Path>>(&self, path: P, clean: bool) -> bool {
         let c_path = match CString::new(path.as_ref().as_os_str().as_encoded_bytes()) {
             Ok(s) => s,
             Err(_) => return false,
         };
+        if clean {
+            unsafe  { c::CleanCache(self.ptr); };
+        }
         unsafe { c::WriteCacheFile(self.ptr, c_path.as_ptr()) };
         true
     }

@@ -127,15 +127,17 @@ fn main() {
     });
     let build_dir = current_dir.join(config.build.dir.clone());
     let mut executed = HashMap::new();
+    let mut error = false;
     for target_name in targets {
         let result = target::execute_target(&target_name, &config, &toolchains, &formats, &mut executed, &build_dir, &cache);
         if result.is_err() {
             eprintln!("Target {} failed", target_name);
+            error = true;
             break;
         }
     }
 
-    cache.write_file(&cache_file);
+    cache.write_file(&cache_file, !error);
 
     if config.project.internal_dump {
         println!("----------TOOLS----------");
