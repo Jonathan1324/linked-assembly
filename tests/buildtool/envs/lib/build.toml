@@ -15,7 +15,7 @@ formats = ["formats.yaml"]
 [targets.run]
 description = "Run the project"
 before = ["build"]
-run = "build/main"
+run = "execute build/main"
 
 [targets.build]
 description = "Build the project"
@@ -45,4 +45,4 @@ files = "*.c"
 
 [targets.clean]
 description = "Clean the project"
-run = "rm -rf build"
+run = "delete build"

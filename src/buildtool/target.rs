@@ -5,11 +5,55 @@ use glob::glob;
 use globset::{Glob, GlobSetBuilder};
 use std::collections::HashMap;
 use std::io;
-use std::process::Command;
 use std::fs;
 use std::env;
 use std::path::{Path, PathBuf};
+use std::process::Command;
 use crate::cache::cache;
+
+fn copy_dir_all(src: &Path, dst: &Path) -> io::Result<()> {
+    if !dst.exists() {
+        fs::create_dir_all(dst)?;
+    }
+
+    for entry in fs::read_dir(src)? {
+        let entry = entry?;
+        let ty = entry.file_type()?;
+        let dest_path = dst.join(entry.file_name());
+
+        if ty.is_dir() {
+            copy_dir_all(&entry.path(), &dest_path)?;
+        } else if ty.is_file() {
+            fs::copy(entry.path(), dest_path)?;
+        } else if ty.is_symlink() {
+            handle_symlink(&entry.path(), &dest_path)?;
+        }
+    }
+    Ok(())
+}
+
+fn handle_symlink(src: &Path, dst: &Path) -> io::Result<()> {
+    #[cfg(unix)]
+    {
+        let target = fs::read_link(src)?;
+        std::os::unix::fs::symlink(target, dst)
+    }
+
+    #[cfg(windows)]
+    {
+        let target = fs::read_link(src)?;
+        if target.is_dir() {
+            std::os::windows::fs::symlink_dir(target, dst)
+        } else {
+            std::os::windows::fs::symlink_file(target, dst)
+        }
+    }
+
+    #[cfg(not(any(unix, windows)))]
+    {
+        Err(io::Error::new(io::ErrorKind::Other, "Symlinks not supported"))
+    }
+}
 
 pub fn execute_target(
     name: &str,
@@ -180,15 +224,68 @@ pub fn execute_target(
 
         if let Some(command) = &target.run {
             // run
-            let mut parts = command.split_whitespace();
-            if let Some(program) = parts.next() {
-                let args: Vec<&str> = parts.collect();
+            if let Some(parts) = shlex::split(command) {
+                if let Some(command) = parts.first() {
+                    let result = match command.as_str() {
+                        "execute" => {
+                            if let Some(program) = parts.get(1) {
+                                let args = &parts[2..];
+                                Command::new(program).args(args).status().map(|status| status.success()).unwrap_or(false)
+                            } else {
+                                false
+                            }
+                        }
+                        "delete" => {
+                            if let Some(target) = parts.get(1) {
+                                let path = Path::new(target);
 
-                let status = Command::new(program)
-                    .args(&args)
-                    .status();
+                                if !path.exists() {
+                                    true
+                                } else if path.is_file() {
+                                    fs::remove_file(target).is_ok()
+                                } else if path.is_dir() {
+                                    fs::remove_dir_all(target).is_ok()
+                                } else {
+                                    false
+                                }
+                            } else {
+                                false
+                            }
+                        }
+                        "copy" => {
+                            if let (Some(src), Some(dst)) = (parts.get(1), parts.get(2)) {
+                                let src_path = Path::new(src);
+                                let dst_path = Path::new(dst);
 
-                // TODO: Check status
+                                if src_path.is_file() {
+                                    fs::copy(src_path, dst_path).is_ok()
+                                } else if src_path.is_dir() {
+                                    copy_dir_all(src_path, dst_path).is_ok()
+                                } else {
+                                    false
+                                }
+                            } else {
+                                false
+                            }
+                        }
+                        "move" => {
+                            if let (Some(src), Some(dst)) = (parts.get(1), parts.get(2)) {
+                                fs::rename(src, dst).is_ok()
+                            } else {
+                                false
+                            }
+                        }
+
+                        _ => false
+                    };
+
+                    if !result {
+                        return Err(io::Error::new(
+                            io::ErrorKind::Other,
+                            format!("Execution of command '{}' failed", command),
+                        ));
+                    }
+                }
             }
         }
 

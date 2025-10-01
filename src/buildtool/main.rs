@@ -131,7 +131,7 @@ fn main() {
     for target_name in targets {
         let result = target::execute_target(&target_name, &config, &toolchains, &formats, &mut executed, &build_dir, &cache);
         if result.is_err() {
-            eprintln!("Target {} failed", target_name);
+            eprintln!("Target {} failed: {}", target_name, result.err().unwrap());
             error = true;
             break;
         }

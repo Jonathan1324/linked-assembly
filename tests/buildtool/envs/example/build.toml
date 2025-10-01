@@ -33,11 +33,11 @@ files = "*.c"                                                   # optional (allo
 
 [targets.clean]
 description = "Clean the project"                               # optional
-run = "rm -rf build"                                            # optional
+run = "delete build"                                            # optional
 #optional: message: String
 #optional: depends
 
 [targets.run]
 description = "Run the project"                                 # optional
 before = ["build"]                                              # optional
-run = "./build/main"                                            # optional
+run = "execute ./build/main"                                    # optional

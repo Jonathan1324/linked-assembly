@@ -9,18 +9,31 @@ description = "A project!"
 
 [build]
 dir = "build"
-#default_target = "build"
+default_target = "build"
 
 [tools]
 default = "default"
 toolchains = ["build_toolchains.yaml"]
 formats = ["build_formats.yaml"]
 
+[targets.run]
+before = ["build"]
+run = "execute build/main"
+
+[targets.clean]
+run = "delete build"
+
 [targets.build]
 description = "Build the project"
-#depends = []
+depends = ["compile_c_cpp_srcs"]
 out = "executable"
 name = "main"
+
+[targets.compile_c_cpp_srcs] #example
+out = "object"
+path = "src" # change it
+files = ["*.c", "*.cpp"]
+
 "#;
 
 const DEFAULT_TOOLCHAIN: &str =

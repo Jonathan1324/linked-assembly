@@ -14,19 +14,18 @@ formats = ["formats.yaml"]
 
 [targets.run]
 before = ["build"]
-run = "./build/main"
+run = "execute build/main"
+
+[targets.clean]
+run = "delete build"
 
 [targets.build]
-depends = ["build_c_srcs", "build_cpp_srcs"]
+description = "Build the project"
+depends = ["compile_c_cpp_srcs"]
 out = "executable"
 name = "main"
 
-[targets.build_c_srcs]
+[targets.compile_c_cpp_srcs]
 out = "object"
 path = "src"
-files = ["*.c", "*.cc"]
-
-[targets.build_cpp_srcs]
-out = "object"
-path = "src"
-files = "*.cpp"
+files = ["*.c", "*.cpp"]
