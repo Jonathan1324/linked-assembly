@@ -248,7 +248,13 @@ pub fn execute(
 
                         let s = line.trim();
                         if !s.is_empty() {
-                            deps.push(s.to_string());
+                            if let Some(split) = &format.split {
+                                for part in s.split(split) {
+                                    deps.push(part.to_string());
+                                }
+                            } else {
+                                deps.push(s.to_string());
+                            }
                         }
                     }
 

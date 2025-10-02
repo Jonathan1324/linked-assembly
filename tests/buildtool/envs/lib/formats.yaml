@@ -1,4 +1,6 @@
 gcc_deps:
+  split: " "
+
   start:
     ignore_lines: 1
     trim:

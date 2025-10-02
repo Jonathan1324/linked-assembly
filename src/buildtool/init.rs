@@ -2,7 +2,8 @@ use std::fs::File;
 use std::path::Path;
 use std::io::Write;
 
-const DEFAULT_CONFIG: &str = r#"[project]
+const DEFAULT_CONFIG: &str =
+r#"[project]
 name = "Project"
 version = "1.0.0"
 description = "A project!"
@@ -106,8 +107,10 @@ r#"default:
       macos:
 "#;
 
-const DEFAULT_FORMATS: &str = r#"
-default_gcc_deps:
+const DEFAULT_FORMATS: &str =
+r#"default_gcc_deps:
+  split: " "
+
   start:
     ignore_lines: 1
   

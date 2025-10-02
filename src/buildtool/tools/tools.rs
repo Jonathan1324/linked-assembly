@@ -40,6 +40,7 @@ pub struct When {
 
 #[derive(Clone, Debug, Deserialize)]
 pub struct Format {
+    pub split: Option<String>,
     pub start: Option<FormatRule>,
     pub end: Option<FormatRule>,
 }

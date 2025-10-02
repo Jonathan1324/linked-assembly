@@ -1,5 +1,7 @@
 
 default_gcc_deps:
+  split: " "
+
   start:
     ignore_lines: 1
   
