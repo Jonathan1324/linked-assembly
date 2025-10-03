@@ -192,7 +192,11 @@ pub fn execute(
         if let Some(program) = parts.next() {
             let args: Vec<&str> = parts.collect();
 
+            println!("{} {:?}", program, args);
+
             let status = Command::new(program).args(&args).status();
+
+            println!("STATUS : {:?}", status);
 
             if !status?.success() {
                 return Err(io::Error::new(

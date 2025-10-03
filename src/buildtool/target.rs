@@ -75,20 +75,20 @@ pub fn execute_target(
 
         for dep in &target.before {
             let result = execute_target(dep, config, toolchains, formats, executed, build_dir, cache);
-            if result.is_err() {
+            if let Err(e) = result {
                 return Err(io::Error::new(
                     io::ErrorKind::Other,
-                    format!("Target {} failed", dep),
+                    format!("Target {} failed: {:?}", dep, e),
                 ));
             }
         }
         
         for dep in &target.depends {
             let dep_outputs = execute_target(dep, config, toolchains, formats, executed, build_dir, cache);
-            if dep_outputs.is_err() {
+            if let Err(e) = dep_outputs {
                 return Err(io::Error::new(
                     io::ErrorKind::Other,
-                    format!("Target {} failed", dep),
+                    format!("Target {} failed: {:?}", dep, e),
                 ));
             }
             inputs.extend(dep_outputs?);
