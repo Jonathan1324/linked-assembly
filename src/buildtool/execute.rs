@@ -192,13 +192,39 @@ pub fn execute(
         if let Some(program) = parts.next() {
             let args: Vec<&str> = parts.collect();
 
-            println!("{} {:?}", program, args);
+            #[cfg(target_os = "windows")]
+            let status = {
+                let mut cmdline = vec![program.to_string()];
+                cmdline.extend(args.iter().map(|s| s.to_string()));
 
-            let status = Command::new(program).args(&args).status();
+                let cmdline = cmdline
+                    .into_iter()
+                    .map(|s| {
+                        if s.contains(' ') { format!("\"{}\"", s) } else { s }
+                    })
+                    .collect::<Vec<_>>()
+                    .join(" ");
 
-            println!("STATUS : {:?}", status);
+                Command::new("cmd").args(&["/C", &cmdline]).status()?
+            };
 
-            if !status?.success() {
+            #[cfg(not(target_os = "windows"))]
+            let status = {
+                let mut cmdline = vec![program.to_string()];
+                cmdline.extend(args.iter().map(|s| s.to_string()));
+
+                let cmdline = cmdline
+                    .into_iter()
+                    .map(|s| {
+                        if s.contains(' ') { format!("'{}'", s) } else { s }
+                    })
+                    .collect::<Vec<_>>()
+                    .join(" ");
+
+                Command::new("sh").args(&["-c", &cmdline]).status()?
+            };
+
+            if !status.success() {
                 return Err(io::Error::new(
                     io::ErrorKind::Other,
                     format!("Compilation failed for output: {}", output.display()),
