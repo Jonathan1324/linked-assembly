@@ -134,8 +134,8 @@ std::vector<uint8_t> Encoder::x86::Encoder::EncodeDataInstruction(Parser::Instru
                         case ::x86::DR2: case ::x86::DR3:
                         case ::x86::DR6: case ::x86::DR7:
                         case ::x86::EFLAGS:
-                        case ::x86::CR8:
-                        case ::x86::RFLAGS:
+                        //case ::x86::CR8:
+                        //case ::x86::RFLAGS:
                         // TODO: add other registers
                             throw Exception::SemanticError("instruction doesn't support this register");
 
