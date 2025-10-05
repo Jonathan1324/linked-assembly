@@ -134,6 +134,9 @@ std::vector<uint8_t> Encoder::x86::Encoder::EncodeDataInstruction(Parser::Instru
                         case ::x86::DR2: case ::x86::DR3:
                         case ::x86::DR6: case ::x86::DR7:
                         case ::x86::EFLAGS:
+                        case ::x86::CR8:
+                        case ::x86::RFLAGS:
+                        // TODO: add other registers
                             throw Exception::SemanticError("instruction doesn't support this register");
 
                         default: throw Exception::InternalError("Unknown register");
@@ -272,7 +275,7 @@ std::vector<uint8_t> Encoder::x86::Encoder::EncodeDataInstruction(Parser::Instru
                         default: throw Exception::InternalError("Unknown register");
                     }
 
-                    // TODO: optimize (e.g. rax -> eax on 64 bit mode when imm ist smaller than 2^32)
+                    // TODO: optimize (e.g. rax -> eax on 64 bit mode when imm is smaller than 2^32)
                     if (use16Bit) instr.push_back(0x66);
                     if (useREX) instr.push_back(getRex(rexW, rexR, rexX, rexB));
                     instr.push_back(opcode);
