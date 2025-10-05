@@ -179,7 +179,9 @@ std::vector<uint8_t> Encoder::x86::Encoder::EncodeDataInstruction(Parser::Instru
                         case ::x86::YMM10: case ::x86::YMM11:
                         case ::x86::YMM12: case ::x86::YMM13:
                         case ::x86::YMM14: case ::x86::YMM15:
-                        case ::x86::MXCSR: case ::x86::XCR0: // TODO: check if existing
+                        // TODO: add more
+                        case ::x86::MXCSR:
+                        case ::x86::XCR0: case ::x86::PKRU:
                             throw Exception::SemanticError("instruction doesn't support this register");
 
                         default: throw Exception::InternalError("Unknown register");
