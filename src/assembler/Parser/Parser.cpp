@@ -40,7 +40,7 @@ void Parser::Parser::Print() const
                     case BitMode::Bits64: std::cout << "64-bit "; break;
                     default: std::cout << "Unknown bits "; break;
                 }
-                std::cout << "instruction 0x" << std::hex << instruction.mnemonic << std::dec;
+                std::cout << "instruction " << instruction.mnemonic;
                 std::cout << " on line " << instruction.lineNumber << " in column " << instruction.column;
                 std::cout << ": " << std::endl;
                 for (const auto& operand : instruction.operands)

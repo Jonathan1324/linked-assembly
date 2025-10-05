@@ -1,7 +1,7 @@
 {
     "files.associations": {
-        "Runescript": "plaintext",
         "*.inc": "asm",
+        "Runescript": "plaintext",
         "__bit_reference": "cpp",
         "__config": "cpp",
         "__hash_table": "cpp",
@@ -72,7 +72,8 @@
         "ranges": "cpp",
         "span": "cpp",
         "text_encoding": "cpp",
-        "tape.h": "c"
+        "tape.h": "c",
+        "unordered_set": "cpp"
     },
     "C_Cpp.errorSquiggles": "enabled",
 

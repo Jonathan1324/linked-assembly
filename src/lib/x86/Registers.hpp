@@ -1,7 +1,8 @@
 #pragma once
 
-#include <unordered_set>
+#include <unordered_map>
 #include <string_view>
+#include <cstdint>
 
 namespace x86
 {
@@ -20,20 +21,27 @@ namespace x86
         R8W, R9W, R10W, R11W,
         R12W, R13W, R14W, R15W,
 
+        IP,
+
         EAX, EBX, ECX, EDX,
         ESP, EBP, ESI, EDI,
         R8D, R9D, R10D, R11D,
         R12D, R13D, R14D, R15D,
-        CR0, /*CR1,*/ CR2, CR3, CR4,
+        CR0, /*CR1,*/ CR2, CR3, CR4, CR5, CR6, CR7,
         DR0, DR1, DR2, DR3, /*DR4, DR5,*/ DR6, DR7,
+        DR8, DR9, DR10, DR11, DR12, DR13, DR14, DR15,
         EFLAGS,
+
+        EIP,
 
         RAX, RBX, RCX, RDX,
         RSP, RBP, RSI, RDI,
         R8, R9, R10, R11,
         R12, R13, R14, R15,
-        CR8,
+        CR8, CR9, CR10, CR11, CR12, CR13, CR14, CR15,
         RFLAGS,
+
+        RIP,
 
         TR0, TR1, TR2, TR3, TR4, TR5, TR6, TR7,
         ST0, ST1, ST2, ST3, ST4, ST5, ST6, ST7,
@@ -51,7 +59,14 @@ namespace x86
         ZMM16, ZMM17, ZMM18, ZMM19, ZMM20, ZMM21, ZMM22, ZMM23,
         ZMM24, ZMM25, ZMM26, ZMM27, ZMM28, ZMM29, ZMM30, ZMM31,
 
-        MXCSR, XCR0
+        K0, K1, K2, K3, K4, K5, K6, K7,
+
+        MXCSR,
+
+        BND0, BND1, BND2, BND3,
+        BNDCFGU, BNDCFGS,
+
+        XCR0, PKRU
     };
 
     static const std::unordered_map<std::string_view, Registers> registers = {
@@ -79,6 +94,9 @@ namespace x86
         {"cr2", CR2}, 
         {"cr3", CR3},
         {"cr4", CR4},
+        {"cr5", CR5},
+        {"cr6", CR6},
+        {"cr7", CR7},
 
         // Debug registers
         {"dr0", DR0},
@@ -88,6 +106,14 @@ namespace x86
         /*{"dr4": DR4, "dr5": DR5,}*/  // DR4 and DR5 are not used in x86-64
         {"dr6", DR6},
         {"dr7", DR7},
+        {"dr8", DR8},
+        {"dr9", DR9},
+        {"dr10", DR10},
+        {"dr11", DR11},
+        {"dr12", DR12},
+        {"dr13", DR13},
+        {"dr14", DR14},
+        {"dr15", DR15},
 
         // Flags register
         { "eflags" , EFLAGS },
@@ -98,7 +124,8 @@ namespace x86
         {"r8", R8}, {"r9", R9}, {"r10", R10}, {"r11", R11},
         {"r12", R12}, {"r13", R13}, {"r14", R14}, {"r15", R15},
 
-        {"cr8", CR8},
+        {"cr8", CR8}, {"cr9", CR9}, {"cr10", CR10}, {"cr11", CR11},
+        {"cr12", CR12}, {"cr13", CR13}, {"cr14", CR14}, {"cr15", CR15},
 
         {"rflags", RFLAGS},
 
@@ -136,7 +163,18 @@ namespace x86
         {"zmm24", ZMM24}, {"zmm25", ZMM25}, {"zmm26", ZMM26}, {"zmm27", ZMM27},
         {"zmm28", ZMM28}, {"zmm29", ZMM29}, {"zmm30", ZMM30}, {"zmm31", ZMM31},
 
+        // OpMask
+        {"k0", K0}, {"k1", K1}, {"k2", K2}, {"k3", K3},
+        {"k4", K4}, {"k5", K5}, {"k6", K6}, {"k7", K7},
+
+        // SSE control and status
+        {"mxcsr", MXCSR},
+
+        // Bound registers
+        {"bnd0", BND0}, {"bnd1", BND1}, {"bnd2", BND2}, {"bnd3", BND3},
+        {"bndcfgu", BNDCFGU}, {"bndcfgs", BNDCFGS},
+
         // other
-        {"mxcsr", MXCSR}, {"xcr0", XCR0}
+        {"xcr0", XCR0}, {"pkru", PKRU}
     };
 }

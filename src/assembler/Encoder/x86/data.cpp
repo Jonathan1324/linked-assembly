@@ -52,8 +52,8 @@ std::vector<uint8_t> Encoder::x86::Encoder::EncodeDataInstruction(Parser::Instru
                     bool use16Bit = false;
 
                     uint8_t opcode;
-                    uint32_t max = std::numeric_limits<uint64_t>::max();
-                    uint32_t sizeInBits = 64;
+                    uint64_t max = std::numeric_limits<uint64_t>::max();
+                    uint16_t sizeInBits = 64;
 
                     switch (destReg.reg)
                     {
@@ -123,7 +123,18 @@ std::vector<uint8_t> Encoder::x86::Encoder::EncodeDataInstruction(Parser::Instru
                             sizeInBits = 64;
                             break;
 
+                        case ::x86::R8: case ::x86::R9:
+                        case ::x86::R10: case ::x86::R11:
+                        case ::x86::R12: case ::x86::R13:
+                        case ::x86::R14: case ::x86::R15:
+                            if (instruction.bits != BitMode::Bits64)
+                                throw Exception::SyntaxError("instruction only supported in 64-bit mode", instruction.lineNumber, instruction.column);
+                            max = std::numeric_limits<uint64_t>::max();
+                            sizeInBits = 64;
+                            break;
 
+                        case ::x86::IP: case ::x86::EIP:
+                        case ::x86::RIP:
                         case ::x86::ES: case ::x86::CS:
                         case ::x86::SS: case ::x86::DS:
                         case ::x86::FS: case ::x86::GS:
@@ -133,10 +144,42 @@ std::vector<uint8_t> Encoder::x86::Encoder::EncodeDataInstruction(Parser::Instru
                         case ::x86::DR0: case ::x86::DR1:
                         case ::x86::DR2: case ::x86::DR3:
                         case ::x86::DR6: case ::x86::DR7:
+                        case ::x86::DR8: case ::x86::DR9:
+                        case ::x86::DR10: case ::x86::DR11:
+                        case ::x86::DR12: case ::x86::DR13:
+                        case ::x86::DR14: case ::x86::DR15:
                         case ::x86::EFLAGS:
-                        //case ::x86::CR8:
-                        //case ::x86::RFLAGS:
-                        // TODO: add other registers
+                        case ::x86::CR8:
+                        case ::x86::RFLAGS:
+                        case ::x86::TR0: case ::x86::TR1:
+                        case ::x86::TR2: case ::x86::TR3:
+                        case ::x86::TR4: case ::x86::TR5:
+                        case ::x86::TR6: case ::x86::TR7:
+                        case ::x86::ST0: case ::x86::ST1:
+                        case ::x86::ST2: case ::x86::ST3:
+                        case ::x86::ST4: case ::x86::ST5:
+                        case ::x86::ST6: case ::x86::ST7:
+                        case ::x86::MM0: case ::x86::MM1:
+                        case ::x86::MM2: case ::x86::MM3:
+                        case ::x86::MM4: case ::x86::MM5:
+                        case ::x86::MM6: case ::x86::MM7:
+                        case ::x86::XMM0: case ::x86::XMM1:
+                        case ::x86::XMM2: case ::x86::XMM3:
+                        case ::x86::XMM4: case ::x86::XMM5:
+                        case ::x86::XMM6: case ::x86::XMM7:
+                        case ::x86::XMM8: case ::x86::XMM9:
+                        case ::x86::XMM10: case ::x86::XMM11:
+                        case ::x86::XMM12: case ::x86::XMM13:
+                        case ::x86::XMM14: case ::x86::XMM15:
+                        case ::x86::YMM0: case ::x86::YMM1:
+                        case ::x86::YMM2: case ::x86::YMM3:
+                        case ::x86::YMM4: case ::x86::YMM5:
+                        case ::x86::YMM6: case ::x86::YMM7:
+                        case ::x86::YMM8: case ::x86::YMM9:
+                        case ::x86::YMM10: case ::x86::YMM11:
+                        case ::x86::YMM12: case ::x86::YMM13:
+                        case ::x86::YMM14: case ::x86::YMM15:
+                        case ::x86::MXCSR: case ::x86::XCR0: // TODO: check if existing
                             throw Exception::SemanticError("instruction doesn't support this register");
 
                         default: throw Exception::InternalError("Unknown register");
@@ -191,6 +234,15 @@ std::vector<uint8_t> Encoder::x86::Encoder::EncodeDataInstruction(Parser::Instru
                             use16Bit = true;
                             useREX = true;
                             rexB = true;
+                            break;
+
+                        case ::x86::R8: case ::x86::R9:
+                        case ::x86::R10: case ::x86::R11:
+                        case ::x86::R12: case ::x86::R13:
+                        case ::x86::R14: case ::x86::R15:
+                            useREX = true;
+                            rexB = true;
+                            rexW = true;
                             break;
 
                         case ::x86::RAX: case ::x86::RCX:
@@ -269,6 +321,14 @@ std::vector<uint8_t> Encoder::x86::Encoder::EncodeDataInstruction(Parser::Instru
                         case ::x86::RBP: opcode = 0xBD; break;
                         case ::x86::RSI: opcode = 0xBE; break;
                         case ::x86::RDI: opcode = 0xBF; break;
+                        case ::x86::R8: opcode = 0xB8; break;
+                        case ::x86::R9: opcode = 0xB9; break;
+                        case ::x86::R10: opcode = 0xBA; break;
+                        case ::x86::R11: opcode = 0xBB; break;
+                        case ::x86::R12: opcode = 0xBC; break;
+                        case ::x86::R13: opcode = 0xBD; break;
+                        case ::x86::R14: opcode = 0xBE; break;
+                        case ::x86::R15: opcode = 0xBF; break;
 
                         // TODO
 
