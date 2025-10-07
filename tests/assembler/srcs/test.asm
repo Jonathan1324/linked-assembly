@@ -1,7 +1,7 @@
-[bits 32]
+[bits 64]
 
 section .text
     global _start
 
 _start:
-    mov eax, 1
+    mov eax, eax

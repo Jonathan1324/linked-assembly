@@ -33,6 +33,161 @@ std::vector<uint8_t> Encoder::x86::Encoder::EncodeDataInstruction(Parser::Instru
                 if (std::holds_alternative<Parser::Instruction::Register>(sourceOperand))
                 {
                     Parser::Instruction::Register srcReg = std::get<Parser::Instruction::Register>(sourceOperand);
+
+                    switch (destReg.reg)
+                    {
+                        case ::x86::SPL: case ::x86::BPL:
+                        case ::x86::SIL: case ::x86::DIL:
+                        case ::x86::R8B: case ::x86::R9B:
+                        case ::x86::R10B: case ::x86::R11B:
+                        case ::x86::R12B: case ::x86::R13B:
+                        case ::x86::R14B: case ::x86::R15B:
+                        case ::x86::R8W: case ::x86::R9W:
+                        case ::x86::R10W: case ::x86::R11W:
+                        case ::x86::R12W: case ::x86::R13W:
+                        case ::x86::R14W: case ::x86::R15W:
+                        case ::x86::R8D: case ::x86::R9D:
+                        case ::x86::R10D: case ::x86::R11D:
+                        case ::x86::R12D: case ::x86::R13D:
+                        case ::x86::R14D: case ::x86::R15D:
+                            if (instruction.bits != BitMode::Bits64)
+                                throw Exception::SyntaxError("register only supported in 64-bit mode", instruction.lineNumber, instruction.column);
+                    }
+
+                    switch (srcReg.reg)
+                    {
+                        case ::x86::SPL: case ::x86::BPL:
+                        case ::x86::SIL: case ::x86::DIL:
+                        case ::x86::R8B: case ::x86::R9B:
+                        case ::x86::R10B: case ::x86::R11B:
+                        case ::x86::R12B: case ::x86::R13B:
+                        case ::x86::R14B: case ::x86::R15B:
+                        case ::x86::R8W: case ::x86::R9W:
+                        case ::x86::R10W: case ::x86::R11W:
+                        case ::x86::R12W: case ::x86::R13W:
+                        case ::x86::R14W: case ::x86::R15W:
+                        case ::x86::R8D: case ::x86::R9D:
+                        case ::x86::R10D: case ::x86::R11D:
+                        case ::x86::R12D: case ::x86::R13D:
+                        case ::x86::R14D: case ::x86::R15D:
+                            if (instruction.bits != BitMode::Bits64)
+                                throw Exception::SyntaxError("register only supported in 64-bit mode", instruction.lineNumber, instruction.column);
+                    }
+
+                    uint8_t opcode;
+                    Mod mod = Mod::REGISTER;
+
+                    bool rexW = false;
+                    bool rexR = false;
+                    bool rexX = false;
+                    bool rexB = false;
+                    bool useREX = false;
+
+                    bool use16Bit = false;
+
+                    uint8_t modrm;
+
+                    auto [dest, dstRex, dstSetRex] = getReg(destReg.reg);
+                    auto [src, srcRex, srcSetRex] = getReg(srcReg.reg);
+
+                    if (dstRex || srcRex) useREX = true;
+                    if (dstSetRex) rexB = true;
+                    if (srcSetRex) rexR = true;
+
+                    uint8_t destRegSize = getRegSize(destReg.reg, instruction.bits);
+                    uint8_t srcRegSize = getRegSize(srcReg.reg, instruction.bits);
+
+                    if (destRegSize != srcRegSize) throw Exception::SemanticError("Can't use 'mov' with registers of different size");
+
+                    bool usingSegmentReg = false;
+
+                    switch (destReg.reg)
+                    {
+                        case ::x86::ES: case ::x86::CS:
+                        case ::x86::SS: case ::x86::DS:
+                        case ::x86::FS: case ::x86::GS:
+                            opcode = 0x8E;
+                            modrm = getModRM(mod, dest, src);
+                            usingSegmentReg = true;
+                            break;
+                    }
+
+                    switch (srcReg.reg)
+                    {
+                        case ::x86::ES: case ::x86::CS:
+                        case ::x86::SS: case ::x86::DS:
+                        case ::x86::FS: case ::x86::GS:
+                            if (usingSegmentReg) throw Exception::SemanticError("Can't set segment register using segment register");
+                            if (instruction.bits != BitMode::Bits16)
+                                use16Bit = true;
+                            opcode = 0x8C;
+                            modrm = getModRM(mod, src, dest);
+                            usingSegmentReg = true;
+                            break;
+                    }
+                    
+                    if (!usingSegmentReg)
+                    {
+                        switch (destReg.reg)
+                        {
+                            case ::x86::AL: case ::x86::CL:
+                            case ::x86::DL: case ::x86::BL:
+                            case ::x86::AH: case ::x86::CH:
+                            case ::x86::DH: case ::x86::BH:
+                            case ::x86::SPL: case ::x86::BPL:
+                            case ::x86::SIL: case ::x86::DIL:
+                            case ::x86::R8B: case ::x86::R9B:
+                            case ::x86::R10B: case ::x86::R11B:
+                            case ::x86::R12B: case ::x86::R13B:
+                            case ::x86::R14B: case ::x86::R15B:
+                                opcode = 0x88; // mov r/m8, r8
+                                modrm = getModRM(mod, src, dest);
+                                break;
+
+                            case ::x86::AX: case ::x86::CX:
+                            case ::x86::DX: case ::x86::BX:
+                            case ::x86::SP: case ::x86::BP:
+                            case ::x86::SI: case ::x86::DI:
+                            case ::x86::R8W: case ::x86::R9W:
+                            case ::x86::R10W: case ::x86::R11W:
+                            case ::x86::R12W: case ::x86::R13W:
+                            case ::x86::R14W: case ::x86::R15W:
+                                if (instruction.bits != BitMode::Bits16)
+                                    use16Bit = true;
+                                opcode = 0x89; // mov r/m16, r16
+                                modrm = getModRM(mod, src, dest);
+                                break;
+
+                            case ::x86::EAX: case ::x86::ECX:
+                            case ::x86::EDX: case ::x86::EBX:
+                            case ::x86::ESP: case ::x86::EBP:
+                            case ::x86::ESI: case ::x86::EDI:
+                            case ::x86::R8D: case ::x86::R9D:
+                            case ::x86::R10D: case ::x86::R11D:
+                            case ::x86::R12D: case ::x86::R13D:
+                            case ::x86::R14D: case ::x86::R15D:
+                                if (instruction.bits == BitMode::Bits16)
+                                    use16Bit = true;
+                                opcode = 0x89; // mov r/m32, r32
+                                modrm = getModRM(mod, src, dest);
+                                break;
+                            
+                            default:
+                                throw Exception::SemanticError("instruction doesn't support this register");
+                        }
+                    }
+
+                    if (useREX && (
+                        destReg.reg == ::x86::AH || destReg.reg == ::x86::CH ||
+                        destReg.reg == ::x86::DH || destReg.reg == ::x86::BH ||
+                        srcReg.reg == ::x86::AH || srcReg.reg == ::x86::CH ||
+                        srcReg.reg == ::x86::DH || srcReg.reg == ::x86::BH
+                    )) throw Exception::SemanticError("Can't use high 8-bit regs using new registers");
+
+                    if (use16Bit) instr.push_back(0x66);
+                    if (useREX) instr.push_back(getRex(rexW, rexR, rexX, rexB));
+                    instr.push_back(opcode);
+                    instr.push_back(modrm);
                 }
                 else if (std::holds_alternative<Parser::Instruction::Memory>(sourceOperand))
                 {
