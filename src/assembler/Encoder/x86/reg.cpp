@@ -68,6 +68,23 @@ std::tuple<uint8_t, bool, bool> Encoder::x86::Encoder::getReg(uint64_t reg)
         case ::x86::R14D:   return std::make_tuple(6, true,  true);
         case ::x86::R15D:   return std::make_tuple(7, true,  true);
 
+        case ::x86::RAX:    return std::make_tuple(0, false, false);
+        case ::x86::RCX:    return std::make_tuple(1, false, false);
+        case ::x86::RDX:    return std::make_tuple(2, false, false);
+        case ::x86::RBX:    return std::make_tuple(3, false, false);
+        case ::x86::RSP:    return std::make_tuple(4, false, false);
+        case ::x86::RBP:    return std::make_tuple(5, false, false);
+        case ::x86::RSI:    return std::make_tuple(6, false, false);
+        case ::x86::RDI:    return std::make_tuple(7, false, false);
+        case ::x86::R8:     return std::make_tuple(0, true,  true);
+        case ::x86::R9:     return std::make_tuple(1, true,  true);
+        case ::x86::R10:    return std::make_tuple(2, true,  true);
+        case ::x86::R11:    return std::make_tuple(3, true,  true);
+        case ::x86::R12:    return std::make_tuple(4, true,  true);
+        case ::x86::R13:    return std::make_tuple(5, true,  true);
+        case ::x86::R14:    return std::make_tuple(6, true,  true);
+        case ::x86::R15:    return std::make_tuple(7, true,  true);
+
         case ::x86::CR0:    return std::make_tuple(0, false, false);
         case ::x86::CR2:    return std::make_tuple(2, false, false);
         case ::x86::CR3:    return std::make_tuple(3, false, false);
@@ -75,6 +92,14 @@ std::tuple<uint8_t, bool, bool> Encoder::x86::Encoder::getReg(uint64_t reg)
         case ::x86::CR5:    return std::make_tuple(5, false, false);
         case ::x86::CR6:    return std::make_tuple(6, false, false);
         case ::x86::CR7:    return std::make_tuple(7, false, false);
+        case ::x86::CR8:    return std::make_tuple(0, false, false);
+        case ::x86::CR9:    return std::make_tuple(1, false, false);
+        case ::x86::CR10:   return std::make_tuple(2, false, false);
+        case ::x86::CR11:   return std::make_tuple(3, false, false);
+        case ::x86::CR12:   return std::make_tuple(4, false, false);
+        case ::x86::CR13:   return std::make_tuple(5, false, false);
+        case ::x86::CR14:   return std::make_tuple(6, false, false);
+        case ::x86::CR15:   return std::make_tuple(7, false, false);
 
         case ::x86::DR0:    return std::make_tuple(0, false, false);
         case ::x86::DR1:    return std::make_tuple(1, false, false);
@@ -82,6 +107,14 @@ std::tuple<uint8_t, bool, bool> Encoder::x86::Encoder::getReg(uint64_t reg)
         case ::x86::DR3:    return std::make_tuple(3, false, false);
         case ::x86::DR6:    return std::make_tuple(6, false, false);
         case ::x86::DR7:    return std::make_tuple(7, false, false);
+        case ::x86::DR8:    return std::make_tuple(0, false, false);
+        case ::x86::DR9:    return std::make_tuple(1, false, false);
+        case ::x86::DR10:   return std::make_tuple(2, false, false);
+        case ::x86::DR11:   return std::make_tuple(3, false, false);
+        case ::x86::DR12:   return std::make_tuple(4, false, false);
+        case ::x86::DR13:   return std::make_tuple(5, false, false);
+        case ::x86::DR14:   return std::make_tuple(6, false, false);
+        case ::x86::DR15:   return std::make_tuple(7, false, false);
 
         case ::x86::TR0:    return std::make_tuple(0, false, false);
         case ::x86::TR1:    return std::make_tuple(1, false, false);
@@ -136,14 +169,32 @@ uint8_t Encoder::x86::Encoder::getRegSize(uint64_t reg, BitMode mode)
         case ::x86::R14D: case ::x86::R15D:
             return 32;
 
+        case ::x86::RAX: case ::x86::RBX:
+        case ::x86::RCX: case ::x86::RDX:
+        case ::x86::RSP: case ::x86::RBP:
+        case ::x86::RSI: case ::x86::RDI:
+        case ::x86::R8: case ::x86::R9:
+        case ::x86::R10: case ::x86::R11:
+        case ::x86::R12: case ::x86::R13:
+        case ::x86::R14: case ::x86::R15:
+            return 64;
+
 
         case ::x86::CR0: case ::x86::CR2:
         case ::x86::CR3: case ::x86::CR4:
         case ::x86::CR5: case ::x86::CR6:
-        case ::x86::CR7:
+        case ::x86::CR7: case ::x86::CR8:
+        case ::x86::CR9: case ::x86::CR10:
+        case ::x86::CR11: case ::x86::CR12:
+        case ::x86::CR13: case ::x86::CR14:
+        case ::x86::CR15:
         case ::x86::DR0: case ::x86::DR1:
         case ::x86::DR2: case ::x86::DR3:
         case ::x86::DR6: case ::x86::DR7:
+        case ::x86::DR8: case ::x86::DR9:
+        case ::x86::DR10: case ::x86::DR11:
+        case ::x86::DR12: case ::x86::DR13:
+        case ::x86::DR14: case ::x86::DR15:
         case ::x86::TR0: case ::x86::TR1:
         case ::x86::TR2: case ::x86::TR3:
         case ::x86::TR4: case ::x86::TR5:

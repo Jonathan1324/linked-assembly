@@ -50,6 +50,14 @@ std::vector<uint8_t> Encoder::x86::Encoder::EncodeDataInstruction(Parser::Instru
                         case ::x86::R10D: case ::x86::R11D:
                         case ::x86::R12D: case ::x86::R13D:
                         case ::x86::R14D: case ::x86::R15D:
+                        case ::x86::RAX: case ::x86::RCX:
+                        case ::x86::RDX: case ::x86::RBX:
+                        case ::x86::RSP: case ::x86::RBP:
+                        case ::x86::RSI: case ::x86::RDI:
+                        case ::x86::R8: case ::x86::R9:
+                        case ::x86::R10: case ::x86::R11:
+                        case ::x86::R12: case ::x86::R13:
+                        case ::x86::R14: case ::x86::R15:
                             if (instruction.bits != BitMode::Bits64)
                                 throw Exception::SyntaxError("register only supported in 64-bit mode", instruction.lineNumber, instruction.column);
                     }
@@ -121,10 +129,36 @@ std::vector<uint8_t> Encoder::x86::Encoder::EncodeDataInstruction(Parser::Instru
                             modrm = getModRM(mod, dest, src);
                             usingSpecialReg = true;
                             break;
+                        case ::x86::CR8: case ::x86::CR9:
+                        case ::x86::CR10: case ::x86::CR11:
+                        case ::x86::CR12: case ::x86::CR13:
+                        case ::x86::CR14: case ::x86::CR15:
+                            if (instruction.bits != BitMode::Bits64)
+                                throw Exception::SyntaxError("register only supported in 64-bit mode", instruction.lineNumber, instruction.column);
+                            useREX = true;
+                            rexR = true;
+                            useOpcodeEscape = true;
+                            opcode = 0x22;
+                            modrm = getModRM(mod, dest, src);
+                            usingSpecialReg = true;
+                            break;
 
                         case ::x86::DR0: case ::x86::DR1:
                         case ::x86::DR2: case ::x86::DR3:
                         case ::x86::DR6: case ::x86::DR7:
+                            useOpcodeEscape = true;
+                            opcode = 0x23;
+                            modrm = getModRM(mod, dest, src);
+                            usingSpecialReg = true;
+                            break;
+                        case ::x86::DR8: case ::x86::DR9:
+                        case ::x86::DR10: case ::x86::DR11:
+                        case ::x86::DR12: case ::x86::DR13:
+                        case ::x86::DR14: case ::x86::DR15:
+                            if (instruction.bits != BitMode::Bits64)
+                                throw Exception::SyntaxError("register only supported in 64-bit mode", instruction.lineNumber, instruction.column);
+                            useREX = true;
+                            rexR = true;
                             useOpcodeEscape = true;
                             opcode = 0x23;
                             modrm = getModRM(mod, dest, src);
@@ -165,11 +199,39 @@ std::vector<uint8_t> Encoder::x86::Encoder::EncodeDataInstruction(Parser::Instru
                             modrm = getModRM(mod, src, dest);
                             usingSpecialReg = true;
                             break;
+                        case ::x86::CR8: case ::x86::CR9:
+                        case ::x86::CR10: case ::x86::CR11:
+                        case ::x86::CR12: case ::x86::CR13:
+                        case ::x86::CR14: case ::x86::CR15:
+                            if (instruction.bits != BitMode::Bits64)
+                                throw Exception::SyntaxError("register only supported in 64-bit mode", instruction.lineNumber, instruction.column);
+                            if (usingSpecialReg) throw Exception::SemanticError("Can't set special register using special register");
+                            useREX = true;
+                            rexR = true;
+                            useOpcodeEscape = true;
+                            opcode = 0x20;
+                            modrm = getModRM(mod, src, dest);
+                            usingSpecialReg = true;
+                            break;
 
                         case ::x86::DR0: case ::x86::DR1:
                         case ::x86::DR2: case ::x86::DR3:
                         case ::x86::DR6: case ::x86::DR7:
                             if (usingSpecialReg) throw Exception::SemanticError("Can't set special register using special register");
+                            useOpcodeEscape = true;
+                            opcode = 0x21;
+                            modrm = getModRM(mod, src, dest);
+                            usingSpecialReg = true;
+                            break;
+                        case ::x86::DR8: case ::x86::DR9:
+                        case ::x86::DR10: case ::x86::DR11:
+                        case ::x86::DR12: case ::x86::DR13:
+                        case ::x86::DR14: case ::x86::DR15:
+                            if (instruction.bits != BitMode::Bits64)
+                                throw Exception::SyntaxError("register only supported in 64-bit mode", instruction.lineNumber, instruction.column);
+                            if (usingSpecialReg) throw Exception::SemanticError("Can't set special register using special register");
+                            useREX = true;
+                            rexR = true;
                             useOpcodeEscape = true;
                             opcode = 0x21;
                             modrm = getModRM(mod, src, dest);
@@ -232,6 +294,20 @@ std::vector<uint8_t> Encoder::x86::Encoder::EncodeDataInstruction(Parser::Instru
                                     use16Bit = true;
                                 opcode = 0x89; // mov r/m32, r32
                                 modrm = getModRM(mod, src, dest);
+                                break;
+
+                            case ::x86::RAX: case ::x86::RCX:
+                            case ::x86::RDX: case ::x86::RBX:
+                            case ::x86::RSP: case ::x86::RBP:
+                            case ::x86::RSI: case ::x86::RDI:
+                            case ::x86::R8: case ::x86::R9:
+                            case ::x86::R10: case ::x86::R11:
+                            case ::x86::R12: case ::x86::R13:
+                            case ::x86::R14: case ::x86::R15:
+                                opcode = 0x89; // mov r/m64, r64
+                                modrm = getModRM(mod, src, dest);
+                                useREX = true;
+                                rexW = true;
                                 break;
                             
                             default:
