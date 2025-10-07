@@ -29,7 +29,6 @@ namespace x86
         R12D, R13D, R14D, R15D,
         CR0, /*CR1,*/ CR2, CR3, CR4, CR5, CR6, CR7,
         DR0, DR1, DR2, DR3, /*DR4, DR5,*/ DR6, DR7,
-        DR8, DR9, DR10, DR11, DR12, DR13, DR14, DR15,
         TR0, TR1, TR2, TR3, TR4, TR5, TR6, TR7,
         ST0, ST1, ST2, ST3, ST4, ST5, ST6, ST7,
         EFLAGS,
@@ -43,6 +42,7 @@ namespace x86
         R8, R9, R10, R11,
         R12, R13, R14, R15,
         CR8, CR9, CR10, CR11, CR12, CR13, CR14, CR15,
+        DR8, DR9, DR10, DR11, DR12, DR13, DR14, DR15,
         RFLAGS,
 
         RIP,

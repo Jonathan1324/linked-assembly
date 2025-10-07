@@ -22,6 +22,8 @@ namespace Encoder
             std::vector<uint8_t> EncodePadding(size_t length) override;
 
         private:
+            static constexpr const uint8_t opcodeEscape = 0x0F;
+
             inline uint8_t getRex(bool W, bool R, bool X, bool B)
             {
                 uint8_t rex = 0b01000000;

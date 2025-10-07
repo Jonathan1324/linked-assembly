@@ -74,6 +74,7 @@ std::vector<uint8_t> Encoder::x86::Encoder::EncodeDataInstruction(Parser::Instru
                                 throw Exception::SyntaxError("register only supported in 64-bit mode", instruction.lineNumber, instruction.column);
                     }
 
+                    bool useOpcodeEscape = false;
                     uint8_t opcode;
                     Mod mod = Mod::REGISTER;
 
@@ -99,7 +100,7 @@ std::vector<uint8_t> Encoder::x86::Encoder::EncodeDataInstruction(Parser::Instru
 
                     if (destRegSize != srcRegSize) throw Exception::SemanticError("Can't use 'mov' with registers of different size");
 
-                    bool usingSegmentReg = false;
+                    bool usingSpecialReg = false;
 
                     switch (destReg.reg)
                     {
@@ -108,7 +109,36 @@ std::vector<uint8_t> Encoder::x86::Encoder::EncodeDataInstruction(Parser::Instru
                         case ::x86::FS: case ::x86::GS:
                             opcode = 0x8E;
                             modrm = getModRM(mod, dest, src);
-                            usingSegmentReg = true;
+                            usingSpecialReg = true;
+                            break;
+
+                        case ::x86::CR0: case ::x86::CR2:
+                        case ::x86::CR3: case ::x86::CR4:
+                        case ::x86::CR5: case ::x86::CR6:
+                        case ::x86::CR7:
+                            useOpcodeEscape = true;
+                            opcode = 0x22;
+                            modrm = getModRM(mod, dest, src);
+                            usingSpecialReg = true;
+                            break;
+
+                        case ::x86::DR0: case ::x86::DR1:
+                        case ::x86::DR2: case ::x86::DR3:
+                        case ::x86::DR6: case ::x86::DR7:
+                            useOpcodeEscape = true;
+                            opcode = 0x23;
+                            modrm = getModRM(mod, dest, src);
+                            usingSpecialReg = true;
+                            break;
+
+                        case ::x86::TR0: case ::x86::TR1:
+                        case ::x86::TR2: case ::x86::TR3:
+                        case ::x86::TR4: case ::x86::TR5:
+                        case ::x86::TR6: case ::x86::TR7:
+                            useOpcodeEscape = true;
+                            opcode = 0x26;
+                            modrm = getModRM(mod, dest, src);
+                            usingSpecialReg = true;
                             break;
                     }
 
@@ -117,16 +147,48 @@ std::vector<uint8_t> Encoder::x86::Encoder::EncodeDataInstruction(Parser::Instru
                         case ::x86::ES: case ::x86::CS:
                         case ::x86::SS: case ::x86::DS:
                         case ::x86::FS: case ::x86::GS:
-                            if (usingSegmentReg) throw Exception::SemanticError("Can't set segment register using segment register");
+                            if (usingSpecialReg) throw Exception::SemanticError("Can't set special register using special register");
                             if (instruction.bits != BitMode::Bits16)
                                 use16Bit = true;
                             opcode = 0x8C;
                             modrm = getModRM(mod, src, dest);
-                            usingSegmentReg = true;
+                            usingSpecialReg = true;
+                            break;
+
+                        case ::x86::CR0: case ::x86::CR2:
+                        case ::x86::CR3: case ::x86::CR4:
+                        case ::x86::CR5: case ::x86::CR6:
+                        case ::x86::CR7:
+                            if (usingSpecialReg) throw Exception::SemanticError("Can't set special register using special register");
+                            useOpcodeEscape = true;
+                            opcode = 0x20;
+                            modrm = getModRM(mod, src, dest);
+                            usingSpecialReg = true;
+                            break;
+
+                        case ::x86::DR0: case ::x86::DR1:
+                        case ::x86::DR2: case ::x86::DR3:
+                        case ::x86::DR6: case ::x86::DR7:
+                            if (usingSpecialReg) throw Exception::SemanticError("Can't set special register using special register");
+                            useOpcodeEscape = true;
+                            opcode = 0x21;
+                            modrm = getModRM(mod, src, dest);
+                            usingSpecialReg = true;
+                            break;
+
+                        case ::x86::TR0: case ::x86::TR1:
+                        case ::x86::TR2: case ::x86::TR3:
+                        case ::x86::TR4: case ::x86::TR5:
+                        case ::x86::TR6: case ::x86::TR7:
+                            if (usingSpecialReg) throw Exception::SemanticError("Can't set special register using special register");
+                            useOpcodeEscape = true;
+                            opcode = 0x24;
+                            modrm = getModRM(mod, src, dest);
+                            usingSpecialReg = true;
                             break;
                     }
                     
-                    if (!usingSegmentReg)
+                    if (!usingSpecialReg)
                     {
                         switch (destReg.reg)
                         {
@@ -186,6 +248,7 @@ std::vector<uint8_t> Encoder::x86::Encoder::EncodeDataInstruction(Parser::Instru
 
                     if (use16Bit) instr.push_back(0x66);
                     if (useREX) instr.push_back(getRex(rexW, rexR, rexX, rexB));
+                    if (useOpcodeEscape) instr.push_back(opcodeEscape);
                     instr.push_back(opcode);
                     instr.push_back(modrm);
                 }
@@ -206,6 +269,7 @@ std::vector<uint8_t> Encoder::x86::Encoder::EncodeDataInstruction(Parser::Instru
 
                     bool use16Bit = false;
 
+                    bool useOpcodeEscape = false;
                     uint8_t opcode;
                     uint64_t max = std::numeric_limits<uint64_t>::max();
                     uint16_t sizeInBits = 64;
@@ -445,6 +509,7 @@ std::vector<uint8_t> Encoder::x86::Encoder::EncodeDataInstruction(Parser::Instru
                     // TODO: optimize (e.g. rax -> eax on 64 bit mode when imm is smaller than 2^32)
                     if (use16Bit) instr.push_back(0x66);
                     if (useREX) instr.push_back(getRex(rexW, rexR, rexX, rexB));
+                    if (useOpcodeEscape) instr.push_back(opcodeEscape);
                     instr.push_back(opcode);
                     
                     uint64_t value = 0;
