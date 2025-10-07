@@ -577,8 +577,6 @@ std::vector<uint8_t> Encoder::x86::Encoder::EncodeDataInstruction(Parser::Instru
                         case ::x86::R14: opcode = 0xBE; break;
                         case ::x86::R15: opcode = 0xBF; break;
 
-                        // TODO
-
                         default: throw Exception::InternalError("Unknown register");
                     }
 
