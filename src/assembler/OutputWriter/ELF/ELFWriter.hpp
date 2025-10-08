@@ -15,7 +15,7 @@ namespace ELF
 
     struct Section
     {
-        const std::vector<uint8_t>* buffer;
+        std::vector<uint8_t>* buffer;
         std::string name;
 
         bool writeBuffer = true;

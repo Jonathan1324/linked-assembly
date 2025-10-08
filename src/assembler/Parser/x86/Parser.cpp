@@ -8,7 +8,7 @@
 #include <x86/Instructions.hpp>
 #include "../evaluate.hpp"
 
-Parser::x86::Parser::Parser(const Context& _context, Architecture _arch, BitMode _bits)
+x86::Parser::Parser(const Context& _context, Architecture _arch, BitMode _bits)
     : ::Parser::Parser(_context, _arch, _bits)
 {
 
@@ -49,7 +49,7 @@ Parser::ImmediateOperand getOperand(const Token::Token& token)
     }
 }
 
-void Parser::x86::Parser::Parse(const std::vector<Token::Token>& tokens)
+void x86::Parser::Parse(const std::vector<Token::Token>& tokens)
 {
     std::vector<Token::Token> filteredTokens;
     Token::Type before = Token::Type::_EOF;
@@ -155,11 +155,11 @@ void Parser::x86::Parser::Parse(const std::vector<Token::Token>& tokens)
         "section", "segment", "bits", "org", "align"
     };
 
-    Section text;
+    ::Parser::Section text;
     text.name = ".text";
     sections.push_back(text);
 
-    Section* currentSection = &sections.at(0);
+    ::Parser::Section* currentSection = &sections.at(0);
     BitMode currentBitMode = bits;
 
     for (size_t i = 0; i < filteredTokens.size(); i++)
@@ -173,7 +173,7 @@ void Parser::x86::Parser::Parse(const std::vector<Token::Token>& tokens)
         // Constants
         if (filteredTokens[i + 1].type == Token::Type::Token && filteredTokens[i + 1].value.compare("equ") == 0)
         {
-            Constant constant;
+            ::Parser::Constant constant;
             constant.lineNumber = token.line;
             constant.column = token.column;
             // TODO: case sensitive
@@ -196,8 +196,8 @@ void Parser::x86::Parser::Parse(const std::vector<Token::Token>& tokens)
                     while (i < filteredTokens.size() &&
                            !(filteredTokens[i].type == Token::Type::Comma || filteredTokens[i].type == Token::Type::EOL))
                     {
-                        ImmediateOperand op = getOperand(filteredTokens[i]);
-                        if (std::holds_alternative<CurrentPosition>(op) && !constant.hasPos)
+                        ::Parser::ImmediateOperand op = getOperand(filteredTokens[i]);
+                        if (std::holds_alternative<::Parser::CurrentPosition>(op) && !constant.hasPos)
                             constant.hasPos = true;
                         constant.value.operands.push_back(op);
                         i++;
@@ -222,7 +222,7 @@ void Parser::x86::Parser::Parse(const std::vector<Token::Token>& tokens)
         // times
         if (token.type == Token::Type::Token && lowerVal.compare("times") == 0)
         {
-            Repetition repetition;
+            ::Parser::Repetition repetition;
             repetition.lineNumber = token.line;
             repetition.column = token.column;
 
@@ -236,7 +236,7 @@ void Parser::x86::Parser::Parse(const std::vector<Token::Token>& tokens)
                  || filteredTokens[i].type == Token::Type::Character
                  || filteredTokens[i].type == Token::Type::Bracket)
                 {
-                    ImmediateOperand op = getOperand(filteredTokens[i]);
+                    ::Parser::ImmediateOperand op = getOperand(filteredTokens[i]);
                     repetition.count.operands.push_back(op);
                 }
                 else
@@ -266,12 +266,12 @@ void Parser::x86::Parser::Parse(const std::vector<Token::Token>& tokens)
                 // TODO: currently case insensitive
                 std::string name = toLower(filteredTokens[++i].value);
 
-                auto it = std::find_if(sections.begin(), sections.end(), [&](const Section& s) {return s.name == name; });
+                auto it = std::find_if(sections.begin(), sections.end(), [&](const ::Parser::Section& s) {return s.name == name; });
 
                 if (it == sections.end())
                 {
                     // Create new section
-                    Section section;
+                    ::Parser::Section section;
                     section.name = name;
                     sections.emplace_back(section);
                     currentSection = &sections.back();
@@ -311,7 +311,7 @@ void Parser::x86::Parser::Parse(const std::vector<Token::Token>& tokens)
             }
             else if (lowerDir.compare("align") == 0)
             {
-                Alignment align;
+                ::Parser::Alignment align;
                 align.lineNumber = directive.line;
                 align.column = directive.column;
                 i++;
@@ -323,7 +323,7 @@ void Parser::x86::Parser::Parse(const std::vector<Token::Token>& tokens)
                     || filteredTokens[i].type == Token::Type::Character
                     || filteredTokens[i].type == Token::Type::Bracket)
                     {
-                        ImmediateOperand op = getOperand(filteredTokens[i]);
+                        ::Parser::ImmediateOperand op = getOperand(filteredTokens[i]);
                         align.align.operands.push_back(op);
                     }
                     else
@@ -348,7 +348,7 @@ void Parser::x86::Parser::Parse(const std::vector<Token::Token>& tokens)
            ((filteredTokens[i + 1].type == Token::Type::Punctuation && filteredTokens[i + 1].value == ":" && /*TODO: not segment:offset*/ ::x86::registers.find(token.value) == ::x86::registers.end())
          || (filteredTokens[i + 1].type == Token::Type::Token && std::find(dataDefinitions.begin(), dataDefinitions.end(), toLower(filteredTokens[i + 1].value)) != dataDefinitions.end())))
         {
-            Label label;
+            ::Parser::Label label;
             label.name = token.value;
             label.lineNumber = token.line;
             label.column = token.column;
@@ -368,7 +368,7 @@ void Parser::x86::Parser::Parse(const std::vector<Token::Token>& tokens)
         // Data
         if (token.type == Token::Type::Token && std::find(dataDefinitions.begin(), dataDefinitions.end(), lowerVal) != dataDefinitions.end())
         {
-            DataDefinition data;
+            ::Parser::DataDefinition data;
             char cSize = '\0';
             if (lowerVal.compare(0, 3, "res") == 0)
             {
@@ -405,12 +405,12 @@ void Parser::x86::Parser::Parse(const std::vector<Token::Token>& tokens)
                  || filteredTokens[i].type == Token::Type::Character
                  || filteredTokens[i].type == Token::Type::Bracket)
                 {
-                    Immediate val;
+                    ::Parser::Immediate val;
                     
                     while (i < filteredTokens.size() &&
                            !(filteredTokens[i].type == Token::Type::Comma || filteredTokens[i].type == Token::Type::EOL))
                     {
-                        ImmediateOperand op = getOperand(filteredTokens[i]);
+                        ::Parser::ImmediateOperand op = getOperand(filteredTokens[i]);
                         val.operands.push_back(op);
                         i++;
                     }
@@ -440,9 +440,9 @@ void Parser::x86::Parser::Parse(const std::vector<Token::Token>& tokens)
                             }
                         }
 
-                        Immediate value;
+                        ::Parser::Immediate value;
 
-                        Integer integer;
+                        ::Parser::Integer integer;
                         integer.value = combined;
                         value.operands.push_back(integer);
 
@@ -483,7 +483,7 @@ void Parser::x86::Parser::Parse(const std::vector<Token::Token>& tokens)
         auto it = controlInstructions.find(lowerVal);
         if (it != controlInstructions.end())
         {
-            Instruction::Instruction instruction(it->second, currentBitMode, token.line, token.column);
+            ::Parser::Instruction::Instruction instruction(it->second, currentBitMode, token.line, token.column);
             i++;
             switch (instruction.mnemonic)
             {
@@ -509,17 +509,17 @@ void Parser::x86::Parser::Parse(const std::vector<Token::Token>& tokens)
         it = interruptInstructions.find(lowerVal);
         if (it != interruptInstructions.end())
         {
-            Instruction::Instruction instruction(it->second, currentBitMode, token.line, token.column);
+            ::Parser::Instruction::Instruction instruction(it->second, currentBitMode, token.line, token.column);
             i++;
             switch (instruction.mnemonic)
             {
                 case ::x86::Instructions::INT:
                 {
                     // TODO: immediate?
-                    Immediate imm;
+                    ::Parser::Immediate imm;
                     while (i < filteredTokens.size() && filteredTokens[i].type != Token::Type::EOL)
                     {
-                        ImmediateOperand op = getOperand(filteredTokens[i]);
+                        ::Parser::ImmediateOperand op = getOperand(filteredTokens[i]);
                         imm.operands.push_back(op);
                         i++;
                     }
@@ -552,7 +552,7 @@ void Parser::x86::Parser::Parse(const std::vector<Token::Token>& tokens)
         it = flagInstructions.find(lowerVal);
         if (it != flagInstructions.end())
         {
-            Instruction::Instruction instruction(it->second, currentBitMode, token.line, token.column);
+            ::Parser::Instruction::Instruction instruction(it->second, currentBitMode, token.line, token.column);
             i++;
             switch (instruction.mnemonic)
             {
@@ -594,7 +594,7 @@ void Parser::x86::Parser::Parse(const std::vector<Token::Token>& tokens)
         it = stackInstructions.find(lowerVal);
         if (it != stackInstructions.end())
         {
-            Instruction::Instruction instruction(it->second, currentBitMode, token.line, token.column);
+            ::Parser::Instruction::Instruction instruction(it->second, currentBitMode, token.line, token.column);
             i++;
             switch (instruction.mnemonic)
             {
@@ -628,7 +628,7 @@ void Parser::x86::Parser::Parse(const std::vector<Token::Token>& tokens)
         it = dataInstructions.find(lowerVal);
         if (it != dataInstructions.end())
         {
-            Instruction::Instruction instruction(it->second, currentBitMode, token.line, token.column);
+            ::Parser::Instruction::Instruction instruction(it->second, currentBitMode, token.line, token.column);
             i++;
             switch (instruction.mnemonic)
             {
@@ -640,7 +640,7 @@ void Parser::x86::Parser::Parse(const std::vector<Token::Token>& tokens)
                      && filteredTokens[i + 1].type != Token::Type::Punctuation)
                     {
                         // reg
-                        Instruction::Register reg;
+                        ::Parser::Instruction::Register reg;
                         reg.reg = regIt->second;
                         instruction.operands.push_back(reg);
                         i++;
@@ -666,7 +666,7 @@ void Parser::x86::Parser::Parse(const std::vector<Token::Token>& tokens)
                     && filteredTokens[i + 1].type != Token::Type::Punctuation)
                     {
                         // reg
-                        Instruction::Register reg;
+                        ::Parser::Instruction::Register reg;
                         reg.reg = regIt->second;
                         instruction.operands.push_back(reg);
                         i++;
@@ -680,11 +680,11 @@ void Parser::x86::Parser::Parse(const std::vector<Token::Token>& tokens)
                     else
                     {
                         // TODO: immediate?
-                        Immediate imm;
+                        ::Parser::Immediate imm;
 
                         while (i < filteredTokens.size() && filteredTokens[i].type != Token::Type::EOL)
                         {
-                            ImmediateOperand op = getOperand(filteredTokens[i]);
+                            ::Parser::ImmediateOperand op = getOperand(filteredTokens[i]);
                             imm.operands.push_back(op);
                             i++;
                         }

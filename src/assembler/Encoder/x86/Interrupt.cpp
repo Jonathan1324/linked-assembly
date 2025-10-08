@@ -1,10 +1,10 @@
 #include "Encoder.hpp"
 
-std::vector<uint8_t> Encoder::x86::Encoder::EncodeInterruptInstruction(Parser::Instruction::Instruction& instruction, bool ignoreUnresolved, bool optimize)
+std::vector<uint8_t> x86::Encoder::EncodeInterruptInstruction(Parser::Instruction::Instruction& instruction, bool ignoreUnresolved, bool optimize)
 {
     switch (instruction.mnemonic)
     {
-        case ::x86::Instructions::INT:
+        case Instructions::INT:
         {
             uint8_t opcode = 0xCD;
 
@@ -20,18 +20,18 @@ std::vector<uint8_t> Encoder::x86::Encoder::EncodeInterruptInstruction(Parser::I
 
             uint8_t interrupt;
 
-            Evaluation interruptEval = Evaluate(immediate, bytesWritten, sectionOffset, currentSection);
+            ::Encoder::Evaluation interruptEval = Evaluate(immediate, bytesWritten, sectionOffset, currentSection);
             if (interruptEval.useOffset)
             {
                 interrupt = interruptEval.offset;
-                Relocation reloc;
+                ::Encoder::Relocation reloc;
                 reloc.offsetInSection = sectionOffset + 1; // opcode
                 reloc.addend = interruptEval.offset;
                 reloc.addendInCode = true;
                 reloc.section = *currentSection;
                 reloc.usedSection = interruptEval.usedSection;
-                reloc.type = RelocationType::Absolute;
-                reloc.size = RelocationSize::Bit8;
+                reloc.type = ::Encoder::RelocationType::Absolute;
+                reloc.size = ::Encoder::RelocationSize::Bit8;
                 relocations.push_back(std::move(reloc));
             }
             else

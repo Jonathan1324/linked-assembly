@@ -12,7 +12,7 @@ void ELF::Writer::Write()
     constexpr std::streamoff alignTo = 0x10;
     constexpr uint64_t alignment = static_cast<uint64_t>(alignTo);
 
-    const std::vector<Encoder::Section>& eSections = encoder->getSections();
+    std::vector<Encoder::Section> eSections = encoder->getSections();
     const std::vector<Encoder::Encoder::Symbol>& symbols = encoder->getSymbols();
     const std::vector<Encoder::Relocation>& relocations = encoder->getRelocations();
 
@@ -125,7 +125,7 @@ void ELF::Writer::Write()
 
     for (size_t i = 0; i < eSections.size(); i++)
     {
-        const Encoder::Section& section = eSections[i];
+        Encoder::Section& section = eSections[i];
         Section s;
         s.buffer = &section.buffer;
         s.name = section.name;
@@ -409,10 +409,11 @@ void ELF::Writer::Write()
 
         if (!section.hasRelocations) section.hasRelocations = true;
         if (!section.hasAddend && (bits == BitMode::Bits64 || !relocation.addendInCode)) section.hasAddend = true;
+
         section.relocations.push_back(relocation);
     }
 
-    for (const Section& section : sections)
+    for (Section& section : sections)
     {
         if (!section.hasRelocations || section.nullSection) continue;
         RelocationSection relocSection;
@@ -461,6 +462,37 @@ void ELF::Writer::Write()
                 auto it = sectionSymbolIndex.find(relocation.usedSection);
                 if (it == sectionSymbolIndex.end()) throw Exception::InternalError("Couldn't find index in .symtab");
                 const uint64_t symbolIndex = it->second;
+
+                // TODO: check if actual useful
+                // If the relocation has an addend, this code removes it from the code itself
+                switch (relocation.size)
+                {
+                    case Encoder::RelocationSize::Bit8:
+                    {
+                        std::memset(section.buffer->data() + relocation.offsetInSection, 0, sizeof(uint8_t));
+                        break;
+                    }
+                    case Encoder::RelocationSize::Bit16:
+                    {
+                        std::memset(section.buffer->data() + relocation.offsetInSection, 0, sizeof(uint16_t));
+                        break;
+                    }
+                    case Encoder::RelocationSize::Bit24:
+                    {
+                        std::memset(section.buffer->data() + relocation.offsetInSection, 0, 3);
+                        break;
+                    }
+                    case Encoder::RelocationSize::Bit32:
+                    {
+                        std::memset(section.buffer->data() + relocation.offsetInSection, 0, sizeof(uint32_t));
+                        break;
+                    }
+                    case Encoder::RelocationSize::Bit64:
+                    {
+                        std::memset(section.buffer->data() + relocation.offsetInSection, 0, sizeof(uint64_t));
+                        break;
+                    }
+                }
                 
                 if (bits == BitMode::Bits16 || bits == BitMode::Bits32)
                 {
@@ -676,7 +708,7 @@ void ELF::Writer::Write()
     sections.push_back(std::move(strtab));
 
     // Relocations
-    for (const RelocationSection& relocationSection : relocationSections)
+    for (RelocationSection& relocationSection : relocationSections)
     {
         // TODO: ugly way to do this
         Section s;

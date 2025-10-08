@@ -12,11 +12,11 @@ void appendImmediate(std::vector<uint8_t> &buf, uint64_t value, uint32_t sizeInB
     std::memcpy(buf.data() + oldSize, &value, sizeInBytes);
 }
 
-std::vector<uint8_t> Encoder::x86::Encoder::EncodeDataInstruction(Parser::Instruction::Instruction& instruction, bool ignoreUnresolved, bool optimize)
+std::vector<uint8_t> x86::Encoder::EncodeDataInstruction(Parser::Instruction::Instruction& instruction, bool ignoreUnresolved, bool optimize)
 {
     switch (instruction.mnemonic)
     {
-        case ::x86::Instructions::MOV:
+        case Instructions::MOV:
         {
             if (instruction.operands.size() != 2)
                 throw Exception::InternalError("Wrong argument count for 'mov'");
@@ -36,48 +36,48 @@ std::vector<uint8_t> Encoder::x86::Encoder::EncodeDataInstruction(Parser::Instru
 
                     switch (destReg.reg)
                     {
-                        case ::x86::SPL: case ::x86::BPL:
-                        case ::x86::SIL: case ::x86::DIL:
-                        case ::x86::R8B: case ::x86::R9B:
-                        case ::x86::R10B: case ::x86::R11B:
-                        case ::x86::R12B: case ::x86::R13B:
-                        case ::x86::R14B: case ::x86::R15B:
-                        case ::x86::R8W: case ::x86::R9W:
-                        case ::x86::R10W: case ::x86::R11W:
-                        case ::x86::R12W: case ::x86::R13W:
-                        case ::x86::R14W: case ::x86::R15W:
-                        case ::x86::R8D: case ::x86::R9D:
-                        case ::x86::R10D: case ::x86::R11D:
-                        case ::x86::R12D: case ::x86::R13D:
-                        case ::x86::R14D: case ::x86::R15D:
-                        case ::x86::RAX: case ::x86::RCX:
-                        case ::x86::RDX: case ::x86::RBX:
-                        case ::x86::RSP: case ::x86::RBP:
-                        case ::x86::RSI: case ::x86::RDI:
-                        case ::x86::R8: case ::x86::R9:
-                        case ::x86::R10: case ::x86::R11:
-                        case ::x86::R12: case ::x86::R13:
-                        case ::x86::R14: case ::x86::R15:
+                        case SPL: case BPL:
+                        case SIL: case DIL:
+                        case R8B: case R9B:
+                        case R10B: case R11B:
+                        case R12B: case R13B:
+                        case R14B: case R15B:
+                        case R8W: case R9W:
+                        case R10W: case R11W:
+                        case R12W: case R13W:
+                        case R14W: case R15W:
+                        case R8D: case R9D:
+                        case R10D: case R11D:
+                        case R12D: case R13D:
+                        case R14D: case R15D:
+                        case RAX: case RCX:
+                        case RDX: case RBX:
+                        case RSP: case RBP:
+                        case RSI: case RDI:
+                        case R8: case R9:
+                        case R10: case R11:
+                        case R12: case R13:
+                        case R14: case R15:
                             if (instruction.bits != BitMode::Bits64)
                                 throw Exception::SyntaxError("register only supported in 64-bit mode", instruction.lineNumber, instruction.column);
                     }
 
                     switch (srcReg.reg)
                     {
-                        case ::x86::SPL: case ::x86::BPL:
-                        case ::x86::SIL: case ::x86::DIL:
-                        case ::x86::R8B: case ::x86::R9B:
-                        case ::x86::R10B: case ::x86::R11B:
-                        case ::x86::R12B: case ::x86::R13B:
-                        case ::x86::R14B: case ::x86::R15B:
-                        case ::x86::R8W: case ::x86::R9W:
-                        case ::x86::R10W: case ::x86::R11W:
-                        case ::x86::R12W: case ::x86::R13W:
-                        case ::x86::R14W: case ::x86::R15W:
-                        case ::x86::R8D: case ::x86::R9D:
-                        case ::x86::R10D: case ::x86::R11D:
-                        case ::x86::R12D: case ::x86::R13D:
-                        case ::x86::R14D: case ::x86::R15D:
+                        case SPL: case BPL:
+                        case SIL: case DIL:
+                        case R8B: case R9B:
+                        case R10B: case R11B:
+                        case R12B: case R13B:
+                        case R14B: case R15B:
+                        case R8W: case R9W:
+                        case R10W: case R11W:
+                        case R12W: case R13W:
+                        case R14W: case R15W:
+                        case R8D: case R9D:
+                        case R10D: case R11D:
+                        case R12D: case R13D:
+                        case R14D: case R15D:
                             if (instruction.bits != BitMode::Bits64)
                                 throw Exception::SyntaxError("register only supported in 64-bit mode", instruction.lineNumber, instruction.column);
                     }
@@ -112,27 +112,27 @@ std::vector<uint8_t> Encoder::x86::Encoder::EncodeDataInstruction(Parser::Instru
 
                     switch (destReg.reg)
                     {
-                        case ::x86::ES: case ::x86::CS:
-                        case ::x86::SS: case ::x86::DS:
-                        case ::x86::FS: case ::x86::GS:
+                        case ES: case CS:
+                        case SS: case DS:
+                        case FS: case GS:
                             opcode = 0x8E;
                             modrm = getModRM(mod, dest, src);
                             usingSpecialReg = true;
                             break;
 
-                        case ::x86::CR0: case ::x86::CR2:
-                        case ::x86::CR3: case ::x86::CR4:
-                        case ::x86::CR5: case ::x86::CR6:
-                        case ::x86::CR7:
+                        case CR0: case CR2:
+                        case CR3: case CR4:
+                        case CR5: case CR6:
+                        case CR7:
                             useOpcodeEscape = true;
                             opcode = 0x22;
                             modrm = getModRM(mod, dest, src);
                             usingSpecialReg = true;
                             break;
-                        case ::x86::CR8: case ::x86::CR9:
-                        case ::x86::CR10: case ::x86::CR11:
-                        case ::x86::CR12: case ::x86::CR13:
-                        case ::x86::CR14: case ::x86::CR15:
+                        case CR8: case CR9:
+                        case CR10: case CR11:
+                        case CR12: case CR13:
+                        case CR14: case CR15:
                             if (instruction.bits != BitMode::Bits64)
                                 throw Exception::SyntaxError("register only supported in 64-bit mode", instruction.lineNumber, instruction.column);
                             useREX = true;
@@ -143,18 +143,18 @@ std::vector<uint8_t> Encoder::x86::Encoder::EncodeDataInstruction(Parser::Instru
                             usingSpecialReg = true;
                             break;
 
-                        case ::x86::DR0: case ::x86::DR1:
-                        case ::x86::DR2: case ::x86::DR3:
-                        case ::x86::DR6: case ::x86::DR7:
+                        case DR0: case DR1:
+                        case DR2: case DR3:
+                        case DR6: case DR7:
                             useOpcodeEscape = true;
                             opcode = 0x23;
                             modrm = getModRM(mod, dest, src);
                             usingSpecialReg = true;
                             break;
-                        case ::x86::DR8: case ::x86::DR9:
-                        case ::x86::DR10: case ::x86::DR11:
-                        case ::x86::DR12: case ::x86::DR13:
-                        case ::x86::DR14: case ::x86::DR15:
+                        case DR8: case DR9:
+                        case DR10: case DR11:
+                        case DR12: case DR13:
+                        case DR14: case DR15:
                             if (instruction.bits != BitMode::Bits64)
                                 throw Exception::SyntaxError("register only supported in 64-bit mode", instruction.lineNumber, instruction.column);
                             useREX = true;
@@ -165,10 +165,10 @@ std::vector<uint8_t> Encoder::x86::Encoder::EncodeDataInstruction(Parser::Instru
                             usingSpecialReg = true;
                             break;
 
-                        case ::x86::TR0: case ::x86::TR1:
-                        case ::x86::TR2: case ::x86::TR3:
-                        case ::x86::TR4: case ::x86::TR5:
-                        case ::x86::TR6: case ::x86::TR7:
+                        case TR0: case TR1:
+                        case TR2: case TR3:
+                        case TR4: case TR5:
+                        case TR6: case TR7:
                             useOpcodeEscape = true;
                             opcode = 0x26;
                             modrm = getModRM(mod, dest, src);
@@ -178,9 +178,9 @@ std::vector<uint8_t> Encoder::x86::Encoder::EncodeDataInstruction(Parser::Instru
 
                     switch (srcReg.reg)
                     {
-                        case ::x86::ES: case ::x86::CS:
-                        case ::x86::SS: case ::x86::DS:
-                        case ::x86::FS: case ::x86::GS:
+                        case ES: case CS:
+                        case SS: case DS:
+                        case FS: case GS:
                             if (usingSpecialReg) throw Exception::SemanticError("Can't set special register using special register");
                             if (instruction.bits != BitMode::Bits16)
                                 use16Bit = true;
@@ -189,20 +189,20 @@ std::vector<uint8_t> Encoder::x86::Encoder::EncodeDataInstruction(Parser::Instru
                             usingSpecialReg = true;
                             break;
 
-                        case ::x86::CR0: case ::x86::CR2:
-                        case ::x86::CR3: case ::x86::CR4:
-                        case ::x86::CR5: case ::x86::CR6:
-                        case ::x86::CR7:
+                        case CR0: case CR2:
+                        case CR3: case CR4:
+                        case CR5: case CR6:
+                        case CR7:
                             if (usingSpecialReg) throw Exception::SemanticError("Can't set special register using special register");
                             useOpcodeEscape = true;
                             opcode = 0x20;
                             modrm = getModRM(mod, src, dest);
                             usingSpecialReg = true;
                             break;
-                        case ::x86::CR8: case ::x86::CR9:
-                        case ::x86::CR10: case ::x86::CR11:
-                        case ::x86::CR12: case ::x86::CR13:
-                        case ::x86::CR14: case ::x86::CR15:
+                        case CR8: case CR9:
+                        case CR10: case CR11:
+                        case CR12: case CR13:
+                        case CR14: case CR15:
                             if (instruction.bits != BitMode::Bits64)
                                 throw Exception::SyntaxError("register only supported in 64-bit mode", instruction.lineNumber, instruction.column);
                             if (usingSpecialReg) throw Exception::SemanticError("Can't set special register using special register");
@@ -214,19 +214,19 @@ std::vector<uint8_t> Encoder::x86::Encoder::EncodeDataInstruction(Parser::Instru
                             usingSpecialReg = true;
                             break;
 
-                        case ::x86::DR0: case ::x86::DR1:
-                        case ::x86::DR2: case ::x86::DR3:
-                        case ::x86::DR6: case ::x86::DR7:
+                        case DR0: case DR1:
+                        case DR2: case DR3:
+                        case DR6: case DR7:
                             if (usingSpecialReg) throw Exception::SemanticError("Can't set special register using special register");
                             useOpcodeEscape = true;
                             opcode = 0x21;
                             modrm = getModRM(mod, src, dest);
                             usingSpecialReg = true;
                             break;
-                        case ::x86::DR8: case ::x86::DR9:
-                        case ::x86::DR10: case ::x86::DR11:
-                        case ::x86::DR12: case ::x86::DR13:
-                        case ::x86::DR14: case ::x86::DR15:
+                        case DR8: case DR9:
+                        case DR10: case DR11:
+                        case DR12: case DR13:
+                        case DR14: case DR15:
                             if (instruction.bits != BitMode::Bits64)
                                 throw Exception::SyntaxError("register only supported in 64-bit mode", instruction.lineNumber, instruction.column);
                             if (usingSpecialReg) throw Exception::SemanticError("Can't set special register using special register");
@@ -238,10 +238,10 @@ std::vector<uint8_t> Encoder::x86::Encoder::EncodeDataInstruction(Parser::Instru
                             usingSpecialReg = true;
                             break;
 
-                        case ::x86::TR0: case ::x86::TR1:
-                        case ::x86::TR2: case ::x86::TR3:
-                        case ::x86::TR4: case ::x86::TR5:
-                        case ::x86::TR6: case ::x86::TR7:
+                        case TR0: case TR1:
+                        case TR2: case TR3:
+                        case TR4: case TR5:
+                        case TR6: case TR7:
                             if (usingSpecialReg) throw Exception::SemanticError("Can't set special register using special register");
                             useOpcodeEscape = true;
                             opcode = 0x24;
@@ -254,56 +254,56 @@ std::vector<uint8_t> Encoder::x86::Encoder::EncodeDataInstruction(Parser::Instru
                     {
                         switch (destReg.reg)
                         {
-                            case ::x86::AL: case ::x86::CL:
-                            case ::x86::DL: case ::x86::BL:
-                            case ::x86::AH: case ::x86::CH:
-                            case ::x86::DH: case ::x86::BH:
-                            case ::x86::SPL: case ::x86::BPL:
-                            case ::x86::SIL: case ::x86::DIL:
-                            case ::x86::R8B: case ::x86::R9B:
-                            case ::x86::R10B: case ::x86::R11B:
-                            case ::x86::R12B: case ::x86::R13B:
-                            case ::x86::R14B: case ::x86::R15B:
+                            case AL: case CL:
+                            case DL: case BL:
+                            case AH: case CH:
+                            case DH: case BH:
+                            case SPL: case BPL:
+                            case SIL: case DIL:
+                            case R8B: case R9B:
+                            case R10B: case R11B:
+                            case R12B: case R13B:
+                            case R14B: case R15B:
                                 opcode = 0x88; // mov r/m8, r8
                                 modrm = getModRM(mod, src, dest);
                                 break;
 
-                            case ::x86::AX: case ::x86::CX:
-                            case ::x86::DX: case ::x86::BX:
-                            case ::x86::SP: case ::x86::BP:
-                            case ::x86::SI: case ::x86::DI:
-                            case ::x86::R8W: case ::x86::R9W:
-                            case ::x86::R10W: case ::x86::R11W:
-                            case ::x86::R12W: case ::x86::R13W:
-                            case ::x86::R14W: case ::x86::R15W:
+                            case AX: case CX:
+                            case DX: case BX:
+                            case SP: case BP:
+                            case SI: case DI:
+                            case R8W: case R9W:
+                            case R10W: case R11W:
+                            case R12W: case R13W:
+                            case R14W: case R15W:
                                 if (instruction.bits != BitMode::Bits16)
                                     use16Bit = true;
                                 opcode = 0x89; // mov r/m16, r16
                                 modrm = getModRM(mod, src, dest);
                                 break;
 
-                            case ::x86::EAX: case ::x86::ECX:
-                            case ::x86::EDX: case ::x86::EBX:
-                            case ::x86::ESP: case ::x86::EBP:
-                            case ::x86::ESI: case ::x86::EDI:
-                            case ::x86::R8D: case ::x86::R9D:
-                            case ::x86::R10D: case ::x86::R11D:
-                            case ::x86::R12D: case ::x86::R13D:
-                            case ::x86::R14D: case ::x86::R15D:
+                            case EAX: case ECX:
+                            case EDX: case EBX:
+                            case ESP: case EBP:
+                            case ESI: case EDI:
+                            case R8D: case R9D:
+                            case R10D: case R11D:
+                            case R12D: case R13D:
+                            case R14D: case R15D:
                                 if (instruction.bits == BitMode::Bits16)
                                     use16Bit = true;
                                 opcode = 0x89; // mov r/m32, r32
                                 modrm = getModRM(mod, src, dest);
                                 break;
 
-                            case ::x86::RAX: case ::x86::RCX:
-                            case ::x86::RDX: case ::x86::RBX:
-                            case ::x86::RSP: case ::x86::RBP:
-                            case ::x86::RSI: case ::x86::RDI:
-                            case ::x86::R8: case ::x86::R9:
-                            case ::x86::R10: case ::x86::R11:
-                            case ::x86::R12: case ::x86::R13:
-                            case ::x86::R14: case ::x86::R15:
+                            case RAX: case RCX:
+                            case RDX: case RBX:
+                            case RSP: case RBP:
+                            case RSI: case RDI:
+                            case R8: case R9:
+                            case R10: case R11:
+                            case R12: case R13:
+                            case R14: case R15:
                                 opcode = 0x89; // mov r/m64, r64
                                 modrm = getModRM(mod, src, dest);
                                 useREX = true;
@@ -316,10 +316,10 @@ std::vector<uint8_t> Encoder::x86::Encoder::EncodeDataInstruction(Parser::Instru
                     }
 
                     if (useREX && (
-                        destReg.reg == ::x86::AH || destReg.reg == ::x86::CH ||
-                        destReg.reg == ::x86::DH || destReg.reg == ::x86::BH ||
-                        srcReg.reg == ::x86::AH || srcReg.reg == ::x86::CH ||
-                        srcReg.reg == ::x86::DH || srcReg.reg == ::x86::BH
+                        destReg.reg == AH || destReg.reg == CH ||
+                        destReg.reg == DH || destReg.reg == BH ||
+                        srcReg.reg == AH || srcReg.reg == CH ||
+                        srcReg.reg == DH || srcReg.reg == BH
                     )) throw Exception::SemanticError("Can't use high 8-bit regs using new registers");
 
                     if (use16Bit) instr.push_back(0x66);
@@ -352,76 +352,76 @@ std::vector<uint8_t> Encoder::x86::Encoder::EncodeDataInstruction(Parser::Instru
 
                     switch (destReg.reg)
                     {
-                        case ::x86::AL: case ::x86::CL:
-                        case ::x86::DL: case ::x86::BL:
-                        case ::x86::AH: case ::x86::CH:
-                        case ::x86::DH: case ::x86::BH:
+                        case AL: case CL:
+                        case DL: case BL:
+                        case AH: case CH:
+                        case DH: case BH:
                             max = std::numeric_limits<uint8_t>::max();
                             sizeInBits = 8;
                             break;
 
-                        case ::x86::SPL: case ::x86::BPL:
-                        case ::x86::SIL: case ::x86::DIL:
-                        case ::x86::R8B: case ::x86::R9B:
-                        case ::x86::R10B: case ::x86::R11B:
-                        case ::x86::R12B: case ::x86::R13B:
-                        case ::x86::R14B: case ::x86::R15B:
+                        case SPL: case BPL:
+                        case SIL: case DIL:
+                        case R8B: case R9B:
+                        case R10B: case R11B:
+                        case R12B: case R13B:
+                        case R14B: case R15B:
                             if (instruction.bits != BitMode::Bits64)
                                 throw Exception::SyntaxError("instruction only supported in 64-bit mode", instruction.lineNumber, instruction.column);
                             max = std::numeric_limits<uint8_t>::max();
                             sizeInBits = 8;
                             break;
 
-                        case ::x86::AX: case ::x86::CX:
-                        case ::x86::DX: case ::x86::BX:
-                        case ::x86::SP: case ::x86::BP:
-                        case ::x86::SI: case ::x86::DI:
+                        case AX: case CX:
+                        case DX: case BX:
+                        case SP: case BP:
+                        case SI: case DI:
                             max = std::numeric_limits<uint16_t>::max();
                             sizeInBits = 16;
                             break;
 
-                        case ::x86::R8W: case ::x86::R9W:
-                        case ::x86::R10W: case ::x86::R11W:
-                        case ::x86::R12W: case ::x86::R13W:
-                        case ::x86::R14W: case ::x86::R15W:
+                        case R8W: case R9W:
+                        case R10W: case R11W:
+                        case R12W: case R13W:
+                        case R14W: case R15W:
                             if (instruction.bits != BitMode::Bits64)
                                 throw Exception::SyntaxError("instruction only supported in 64-bit mode", instruction.lineNumber, instruction.column);
                             max = std::numeric_limits<uint16_t>::max();
                             sizeInBits = 16;
                             break;
 
-                        case ::x86::EAX: case ::x86::ECX:
-                        case ::x86::EDX: case ::x86::EBX:
-                        case ::x86::ESP: case ::x86::EBP:
-                        case ::x86::ESI: case ::x86::EDI:
+                        case EAX: case ECX:
+                        case EDX: case EBX:
+                        case ESP: case EBP:
+                        case ESI: case EDI:
                             max = std::numeric_limits<uint32_t>::max();
                             sizeInBits = 32;
                             break;
 
-                        case ::x86::R8D: case ::x86::R9D:
-                        case ::x86::R10D: case ::x86::R11D:
-                        case ::x86::R12D: case ::x86::R13D:
-                        case ::x86::R14D: case ::x86::R15D:
+                        case R8D: case R9D:
+                        case R10D: case R11D:
+                        case R12D: case R13D:
+                        case R14D: case R15D:
                             if (instruction.bits != BitMode::Bits64)
                                 throw Exception::SyntaxError("instruction only supported in 64-bit mode", instruction.lineNumber, instruction.column);
                             max = std::numeric_limits<uint32_t>::max();
                             sizeInBits = 32;
                             break;
 
-                        case ::x86::RAX: case ::x86::RCX:
-                        case ::x86::RDX: case ::x86::RBX:
-                        case ::x86::RSP: case ::x86::RBP:
-                        case ::x86::RSI: case ::x86::RDI:
+                        case RAX: case RCX:
+                        case RDX: case RBX:
+                        case RSP: case RBP:
+                        case RSI: case RDI:
                             if (instruction.bits != BitMode::Bits64)
                                 throw Exception::SyntaxError("instruction only supported in 64-bit mode", instruction.lineNumber, instruction.column);
                             max = std::numeric_limits<uint64_t>::max();
                             sizeInBits = 64;
                             break;
 
-                        case ::x86::R8: case ::x86::R9:
-                        case ::x86::R10: case ::x86::R11:
-                        case ::x86::R12: case ::x86::R13:
-                        case ::x86::R14: case ::x86::R15:
+                        case R8: case R9:
+                        case R10: case R11:
+                        case R12: case R13:
+                        case R14: case R15:
                             if (instruction.bits != BitMode::Bits64)
                                 throw Exception::SyntaxError("instruction only supported in 64-bit mode", instruction.lineNumber, instruction.column);
                             max = std::numeric_limits<uint64_t>::max();
@@ -435,67 +435,67 @@ std::vector<uint8_t> Encoder::x86::Encoder::EncodeDataInstruction(Parser::Instru
                     // TODO: set rex dynamically
                     switch (destReg.reg)
                     {
-                        case ::x86::AL: case ::x86::CL:
-                        case ::x86::DL: case ::x86::BL:
-                        case ::x86::AH: case ::x86::CH:
-                        case ::x86::DH: case ::x86::BH:
+                        case AL: case CL:
+                        case DL: case BL:
+                        case AH: case CH:
+                        case DH: case BH:
                             break;
 
-                        case ::x86::AX: case ::x86::CX:
-                        case ::x86::DX: case ::x86::BX:
-                        case ::x86::SP: case ::x86::BP:
-                        case ::x86::SI: case ::x86::DI:
+                        case AX: case CX:
+                        case DX: case BX:
+                        case SP: case BP:
+                        case SI: case DI:
                             if (instruction.bits != BitMode::Bits16)
                                 use16Bit = true;
                             break;
 
-                        case ::x86::EAX: case ::x86::ECX:
-                        case ::x86::EDX: case ::x86::EBX:
-                        case ::x86::ESP: case ::x86::EBP:
-                        case ::x86::ESI: case ::x86::EDI:
+                        case EAX: case ECX:
+                        case EDX: case EBX:
+                        case ESP: case EBP:
+                        case ESI: case EDI:
                             if (instruction.bits == BitMode::Bits16)
                                 use16Bit = true;
                             break;
 
-                        case ::x86::SPL: case ::x86::BPL:
-                        case ::x86::SIL: case ::x86::DIL:
+                        case SPL: case BPL:
+                        case SIL: case DIL:
                             useREX = true;
                             break;
 
-                        case ::x86::R8B: case ::x86::R9B:
-                        case ::x86::R10B: case ::x86::R11B:
-                        case ::x86::R12B: case ::x86::R13B:
-                        case ::x86::R14B: case ::x86::R15B:
-                        case ::x86::R8D: case ::x86::R9D:
-                        case ::x86::R10D: case ::x86::R11D:
-                        case ::x86::R12D: case ::x86::R13D:
-                        case ::x86::R14D: case ::x86::R15D:
+                        case R8B: case R9B:
+                        case R10B: case R11B:
+                        case R12B: case R13B:
+                        case R14B: case R15B:
+                        case R8D: case R9D:
+                        case R10D: case R11D:
+                        case R12D: case R13D:
+                        case R14D: case R15D:
                             useREX = true;
                             rexB = true;
                             break;
 
-                        case ::x86::R8W: case ::x86::R9W:
-                        case ::x86::R10W: case ::x86::R11W:
-                        case ::x86::R12W: case ::x86::R13W:
-                        case ::x86::R14W: case ::x86::R15W:
+                        case R8W: case R9W:
+                        case R10W: case R11W:
+                        case R12W: case R13W:
+                        case R14W: case R15W:
                             use16Bit = true;
                             useREX = true;
                             rexB = true;
                             break;
 
-                        case ::x86::R8: case ::x86::R9:
-                        case ::x86::R10: case ::x86::R11:
-                        case ::x86::R12: case ::x86::R13:
-                        case ::x86::R14: case ::x86::R15:
+                        case R8: case R9:
+                        case R10: case R11:
+                        case R12: case R13:
+                        case R14: case R15:
                             useREX = true;
                             rexB = true;
                             rexW = true;
                             break;
 
-                        case ::x86::RAX: case ::x86::RCX:
-                        case ::x86::RDX: case ::x86::RBX:
-                        case ::x86::RSP: case ::x86::RBP:
-                        case ::x86::RSI: case ::x86::RDI:
+                        case RAX: case RCX:
+                        case RDX: case RBX:
+                        case RSP: case RBP:
+                        case RSI: case RDI:
                             useREX = true;
                             rexW = true;
                             break;
@@ -505,77 +505,77 @@ std::vector<uint8_t> Encoder::x86::Encoder::EncodeDataInstruction(Parser::Instru
 
                     switch (destReg.reg)
                     {
-                        case ::x86::AL: opcode = 0xB0; break;
-                        case ::x86::CL: opcode = 0xB1; break;
-                        case ::x86::DL: opcode = 0xB2; break;
-                        case ::x86::BL: opcode = 0xB3; break;
-                        case ::x86::AH: opcode = 0xB4; break;
-                        case ::x86::CH: opcode = 0xB5; break;
-                        case ::x86::DH: opcode = 0xB6; break;
-                        case ::x86::BH: opcode = 0xB7; break;
-                        case ::x86::SPL: opcode = 0xB4; break;
-                        case ::x86::BPL: opcode = 0xB5; break;
-                        case ::x86::SIL: opcode = 0xB6; break;
-                        case ::x86::DIL: opcode = 0xB7; break;
-                        case ::x86::R8B: opcode = 0xB0; break;
-                        case ::x86::R9B: opcode = 0xB1; break;
-                        case ::x86::R10B: opcode = 0xB2; break;
-                        case ::x86::R11B: opcode = 0xB3; break;
-                        case ::x86::R12B: opcode = 0xB4; break;
-                        case ::x86::R13B: opcode = 0xB5; break;
-                        case ::x86::R14B: opcode = 0xB6; break;
-                        case ::x86::R15B: opcode = 0xB7; break;
+                        case AL: opcode = 0xB0; break;
+                        case CL: opcode = 0xB1; break;
+                        case DL: opcode = 0xB2; break;
+                        case BL: opcode = 0xB3; break;
+                        case AH: opcode = 0xB4; break;
+                        case CH: opcode = 0xB5; break;
+                        case DH: opcode = 0xB6; break;
+                        case BH: opcode = 0xB7; break;
+                        case SPL: opcode = 0xB4; break;
+                        case BPL: opcode = 0xB5; break;
+                        case SIL: opcode = 0xB6; break;
+                        case DIL: opcode = 0xB7; break;
+                        case R8B: opcode = 0xB0; break;
+                        case R9B: opcode = 0xB1; break;
+                        case R10B: opcode = 0xB2; break;
+                        case R11B: opcode = 0xB3; break;
+                        case R12B: opcode = 0xB4; break;
+                        case R13B: opcode = 0xB5; break;
+                        case R14B: opcode = 0xB6; break;
+                        case R15B: opcode = 0xB7; break;
 
-                        case ::x86::AX: opcode = 0xB8; break;
-                        case ::x86::CX: opcode = 0xB9; break;
-                        case ::x86::DX: opcode = 0xBA; break;
-                        case ::x86::BX: opcode = 0xBB; break;
-                        case ::x86::SP: opcode = 0xBC; break;
-                        case ::x86::BP: opcode = 0xBD; break;
-                        case ::x86::SI: opcode = 0xBE; break;
-                        case ::x86::DI: opcode = 0xBF; break;
-                        case ::x86::R8W: opcode = 0xB8; break;
-                        case ::x86::R9W: opcode = 0xB9; break;
-                        case ::x86::R10W: opcode = 0xBA; break;
-                        case ::x86::R11W: opcode = 0xBB; break;
-                        case ::x86::R12W: opcode = 0xBC; break;
-                        case ::x86::R13W: opcode = 0xBD; break;
-                        case ::x86::R14W: opcode = 0xBE; break;
-                        case ::x86::R15W: opcode = 0xBF; break;
+                        case AX: opcode = 0xB8; break;
+                        case CX: opcode = 0xB9; break;
+                        case DX: opcode = 0xBA; break;
+                        case BX: opcode = 0xBB; break;
+                        case SP: opcode = 0xBC; break;
+                        case BP: opcode = 0xBD; break;
+                        case SI: opcode = 0xBE; break;
+                        case DI: opcode = 0xBF; break;
+                        case R8W: opcode = 0xB8; break;
+                        case R9W: opcode = 0xB9; break;
+                        case R10W: opcode = 0xBA; break;
+                        case R11W: opcode = 0xBB; break;
+                        case R12W: opcode = 0xBC; break;
+                        case R13W: opcode = 0xBD; break;
+                        case R14W: opcode = 0xBE; break;
+                        case R15W: opcode = 0xBF; break;
 
-                        case ::x86::EAX: opcode = 0xB8; break;
-                        case ::x86::ECX: opcode = 0xB9; break;
-                        case ::x86::EDX: opcode = 0xBA; break;
-                        case ::x86::EBX: opcode = 0xBB; break;
-                        case ::x86::ESP: opcode = 0xBC; break;
-                        case ::x86::EBP: opcode = 0xBD; break;
-                        case ::x86::ESI: opcode = 0xBE; break;
-                        case ::x86::EDI: opcode = 0xBF; break;
-                        case ::x86::R8D: opcode = 0xB8; break;
-                        case ::x86::R9D: opcode = 0xB9; break;
-                        case ::x86::R10D: opcode = 0xBA; break;
-                        case ::x86::R11D: opcode = 0xBB; break;
-                        case ::x86::R12D: opcode = 0xBC; break;
-                        case ::x86::R13D: opcode = 0xBD; break;
-                        case ::x86::R14D: opcode = 0xBE; break;
-                        case ::x86::R15D: opcode = 0xBF; break;
+                        case EAX: opcode = 0xB8; break;
+                        case ECX: opcode = 0xB9; break;
+                        case EDX: opcode = 0xBA; break;
+                        case EBX: opcode = 0xBB; break;
+                        case ESP: opcode = 0xBC; break;
+                        case EBP: opcode = 0xBD; break;
+                        case ESI: opcode = 0xBE; break;
+                        case EDI: opcode = 0xBF; break;
+                        case R8D: opcode = 0xB8; break;
+                        case R9D: opcode = 0xB9; break;
+                        case R10D: opcode = 0xBA; break;
+                        case R11D: opcode = 0xBB; break;
+                        case R12D: opcode = 0xBC; break;
+                        case R13D: opcode = 0xBD; break;
+                        case R14D: opcode = 0xBE; break;
+                        case R15D: opcode = 0xBF; break;
 
-                        case ::x86::RAX: opcode = 0xB8; break;
-                        case ::x86::RCX: opcode = 0xB9; break;
-                        case ::x86::RDX: opcode = 0xBA; break;
-                        case ::x86::RBX: opcode = 0xBB; break;
-                        case ::x86::RSP: opcode = 0xBC; break;
-                        case ::x86::RBP: opcode = 0xBD; break;
-                        case ::x86::RSI: opcode = 0xBE; break;
-                        case ::x86::RDI: opcode = 0xBF; break;
-                        case ::x86::R8: opcode = 0xB8; break;
-                        case ::x86::R9: opcode = 0xB9; break;
-                        case ::x86::R10: opcode = 0xBA; break;
-                        case ::x86::R11: opcode = 0xBB; break;
-                        case ::x86::R12: opcode = 0xBC; break;
-                        case ::x86::R13: opcode = 0xBD; break;
-                        case ::x86::R14: opcode = 0xBE; break;
-                        case ::x86::R15: opcode = 0xBF; break;
+                        case RAX: opcode = 0xB8; break;
+                        case RCX: opcode = 0xB9; break;
+                        case RDX: opcode = 0xBA; break;
+                        case RBX: opcode = 0xBB; break;
+                        case RSP: opcode = 0xBC; break;
+                        case RBP: opcode = 0xBD; break;
+                        case RSI: opcode = 0xBE; break;
+                        case RDI: opcode = 0xBF; break;
+                        case R8: opcode = 0xB8; break;
+                        case R9: opcode = 0xB9; break;
+                        case R10: opcode = 0xBA; break;
+                        case R11: opcode = 0xBB; break;
+                        case R12: opcode = 0xBC; break;
+                        case R13: opcode = 0xBD; break;
+                        case R14: opcode = 0xBE; break;
+                        case R15: opcode = 0xBF; break;
 
                         default: throw Exception::InternalError("Unknown register");
                     }
@@ -590,23 +590,23 @@ std::vector<uint8_t> Encoder::x86::Encoder::EncodeDataInstruction(Parser::Instru
                     
                     if (!ignoreUnresolved)
                     {
-                        Evaluation eval = Evaluate(srcImm, bytesWritten, sectionOffset, currentSection);
+                        ::Encoder::Evaluation eval = Evaluate(srcImm, bytesWritten, sectionOffset, currentSection);
                         if (eval.useOffset)
                         {
                             value = eval.offset; // TODO overflow
-                            Relocation reloc;
+                            ::Encoder::Relocation reloc;
                             reloc.offsetInSection = sectionOffset + instr.size();
                             reloc.addend = eval.offset;
                             reloc.addendInCode = true;
                             reloc.section = *currentSection;
                             reloc.usedSection = eval.usedSection;
-                            reloc.type = RelocationType::Absolute;
+                            reloc.type = ::Encoder::RelocationType::Absolute;
                             switch (sizeInBits)
                             {
-                                case 8: reloc.size = RelocationSize::Bit8; break;
-                                case 16: reloc.size = RelocationSize::Bit16; break;
-                                case 32: reloc.size = RelocationSize::Bit32; break;
-                                case 64: reloc.size = RelocationSize::Bit64; break;
+                                case 8: reloc.size = ::Encoder::RelocationSize::Bit8; break;
+                                case 16: reloc.size = ::Encoder::RelocationSize::Bit16; break;
+                                case 32: reloc.size = ::Encoder::RelocationSize::Bit32; break;
+                                case 64: reloc.size = ::Encoder::RelocationSize::Bit64; break;
                                 default: throw Exception::InternalError("Unknown size in bits " + std::to_string(sizeInBits));
                             }
                             relocations.push_back(std::move(reloc));

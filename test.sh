@@ -30,23 +30,23 @@ objdump --all-headers tests/assembler/build/test.asm-x86-64bit-elf.o >> logs/ass
 
 rm -f logs/assembler/cmp.log
 
-if cmp tests/assembler/build/test.asm-x86-32bit-bin.bin tests/assembler/build/nasm/test-32bit-bin.bin >> logs/assembler/cmp.log 2>&1; then
+if cmp -l tests/assembler/build/test.asm-x86-32bit-bin.bin tests/assembler/build/nasm/test-32bit-bin.bin >> logs/assembler/cmp.log 2>&1; then
     echo "[INFO] 32bit-bin: equal" >> logs/assembler/cmp.log 2>&1
 else
     echo "[INFO] 32bit-bin: different" >> logs/assembler/cmp.log 2>&1
 fi
-if cmp tests/assembler/build/test.asm-x86-64bit-bin.bin tests/assembler/build/nasm/test-64bit-bin.bin >> logs/assembler/cmp.log 2>&1; then
+if cmp -l tests/assembler/build/test.asm-x86-64bit-bin.bin tests/assembler/build/nasm/test-64bit-bin.bin >> logs/assembler/cmp.log 2>&1; then
     echo "[INFO] 64bit-bin: equal" >> logs/assembler/cmp.log 2>&1
 else
     echo "[INFO] 64bit-bin: different" >> logs/assembler/cmp.log 2>&1
 fi
 
-if cmp tests/assembler/build/test.asm-x86-32bit-elf.o tests/assembler/build/nasm/test-32bit-elf.o >> logs/assembler/cmp.log 2>&1; then
+if cmp -l tests/assembler/build/test.asm-x86-32bit-elf.o tests/assembler/build/nasm/test-32bit-elf.o >> logs/assembler/cmp.log 2>&1; then
     echo "[INFO] 32bit-elf: equal" >> logs/assembler/cmp.log 2>&1
 else
     echo "[INFO] 32bit-elf: different" >> logs/assembler/cmp.log 2>&1
 fi
-if cmp tests/assembler/build/test.asm-x86-64bit-elf.o tests/assembler/build/nasm/test-64bit-elf.o >> logs/assembler/cmp.log 2>&1; then
+if cmp -l tests/assembler/build/test.asm-x86-64bit-elf.o tests/assembler/build/nasm/test-64bit-elf.o >> logs/assembler/cmp.log 2>&1; then
     echo "[INFO] 64bit-elf: equal" >> logs/assembler/cmp.log 2>&1
 else
     echo "[INFO] 64bit-elf: different" >> logs/assembler/cmp.log 2>&1
