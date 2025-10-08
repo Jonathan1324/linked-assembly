@@ -92,8 +92,6 @@ std::vector<uint8_t> x86::Encoder::EncodeDataInstruction(Parser::Instruction::In
                     bool rexB = false;
                     bool useREX = false;
 
-                    bool use16Bit = false;
-
                     uint8_t modrm;
 
                     auto [dest, dstRex, dstSetRex] = getReg(destReg.reg);
@@ -183,7 +181,7 @@ std::vector<uint8_t> x86::Encoder::EncodeDataInstruction(Parser::Instruction::In
                         case FS: case GS:
                             if (usingSpecialReg) throw Exception::SemanticError("Can't set special register using special register");
                             if (instruction.bits != BitMode::Bits16)
-                                use16Bit = true;
+                                instrUse16BitPrefix = true;
                             opcode = 0x8C;
                             modrm = getModRM(mod, src, dest);
                             usingSpecialReg = true;
@@ -277,7 +275,7 @@ std::vector<uint8_t> x86::Encoder::EncodeDataInstruction(Parser::Instruction::In
                             case R12W: case R13W:
                             case R14W: case R15W:
                                 if (instruction.bits != BitMode::Bits16)
-                                    use16Bit = true;
+                                    instrUse16BitPrefix = true;
                                 opcode = 0x89; // mov r/m16, r16
                                 modrm = getModRM(mod, src, dest);
                                 break;
@@ -291,7 +289,7 @@ std::vector<uint8_t> x86::Encoder::EncodeDataInstruction(Parser::Instruction::In
                             case R12D: case R13D:
                             case R14D: case R15D:
                                 if (instruction.bits == BitMode::Bits16)
-                                    use16Bit = true;
+                                    instrUse16BitPrefix = true;
                                 opcode = 0x89; // mov r/m32, r32
                                 modrm = getModRM(mod, src, dest);
                                 break;
@@ -322,7 +320,6 @@ std::vector<uint8_t> x86::Encoder::EncodeDataInstruction(Parser::Instruction::In
                         srcReg.reg == DH || srcReg.reg == BH
                     )) throw Exception::SemanticError("Can't use high 8-bit regs using new registers");
 
-                    if (use16Bit) instr.push_back(0x66);
                     if (useREX) instr.push_back(getRex(rexW, rexR, rexX, rexB));
                     if (useOpcodeEscape) instr.push_back(opcodeEscape);
                     instr.push_back(opcode);
@@ -342,8 +339,6 @@ std::vector<uint8_t> x86::Encoder::EncodeDataInstruction(Parser::Instruction::In
                     bool rexX = false;
                     bool rexB = false;
                     bool useREX = false;
-
-                    bool use16Bit = false;
 
                     bool useOpcodeEscape = false;
                     uint8_t opcode;
@@ -446,7 +441,7 @@ std::vector<uint8_t> x86::Encoder::EncodeDataInstruction(Parser::Instruction::In
                         case SP: case BP:
                         case SI: case DI:
                             if (instruction.bits != BitMode::Bits16)
-                                use16Bit = true;
+                                instrUse16BitPrefix = true;
                             break;
 
                         case EAX: case ECX:
@@ -454,7 +449,7 @@ std::vector<uint8_t> x86::Encoder::EncodeDataInstruction(Parser::Instruction::In
                         case ESP: case EBP:
                         case ESI: case EDI:
                             if (instruction.bits == BitMode::Bits16)
-                                use16Bit = true;
+                                instrUse16BitPrefix = true;
                             break;
 
                         case SPL: case BPL:
@@ -478,7 +473,7 @@ std::vector<uint8_t> x86::Encoder::EncodeDataInstruction(Parser::Instruction::In
                         case R10W: case R11W:
                         case R12W: case R13W:
                         case R14W: case R15W:
-                            use16Bit = true;
+                            instrUse16BitPrefix = true;
                             useREX = true;
                             rexB = true;
                             break;
@@ -580,8 +575,6 @@ std::vector<uint8_t> x86::Encoder::EncodeDataInstruction(Parser::Instruction::In
                         default: throw Exception::InternalError("Unknown register");
                     }
 
-                    // TODO: optimize (e.g. rax -> eax on 64 bit mode when imm is smaller than 2^32)
-                    if (use16Bit) instr.push_back(0x66);
                     if (useREX) instr.push_back(getRex(rexW, rexR, rexX, rexB));
                     if (useOpcodeEscape) instr.push_back(opcodeEscape);
                     instr.push_back(opcode);

@@ -457,7 +457,7 @@ void ELF::Writer::Write()
         if (section.hasAddend)
         {
             relocSection.name = ".rela" + section.name;
-            for (const Encoder::Relocation relocation : section.relocations)
+            for (const Encoder::Relocation& relocation : section.relocations)
             {
                 auto it = sectionSymbolIndex.find(relocation.usedSection);
                 if (it == sectionSymbolIndex.end()) throw Exception::InternalError("Couldn't find index in .symtab");
@@ -528,7 +528,7 @@ void ELF::Writer::Write()
         else
         {
             relocSection.name = ".rel" + section.name;
-            for (const Encoder::Relocation relocation : section.relocations)
+            for (const Encoder::Relocation& relocation : section.relocations)
             {
                 auto it = sectionSymbolIndex.find(relocation.usedSection);
                 if (it == sectionSymbolIndex.end()) throw Exception::InternalError("Couldn't find index in .symtab");
@@ -894,3 +894,5 @@ void ELF::Writer::Write()
         }
     }
 }
+
+// TODO: check why .bss doesn't get written, it's right that way, but it wasn't implemented yet

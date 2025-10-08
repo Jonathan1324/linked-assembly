@@ -7,7 +7,10 @@ uint64_t ELF::Writer::getSectionFlags(const std::string& name)
         return SectionFlags::S_ALLOC | SectionFlags::S_EXECINSTR;
     else if (name.compare(".data") == 0)
         return SectionFlags::S_ALLOC | SectionFlags::S_WRITE;
-    // TODO: BSS
+
+    else if (name.compare(".bss") == 0)
+        return SectionFlags::S_ALLOC | SectionFlags::S_WRITE;
+
     else if (name.compare(".rodata") == 0)
         return SectionFlags::S_ALLOC;
 
@@ -22,7 +25,8 @@ uint64_t ELF::Writer::getSectionFlags(const std::string& name)
 
 uint32_t ELF::Writer::getSectionType(const std::string& name)
 {
-
-
-    return SectionType::ProgBits; // TODO
+    if (name.compare(".bss") == 0)
+        return SectionType::NoBits;
+    else
+        return SectionType::ProgBits; // TODO
 }

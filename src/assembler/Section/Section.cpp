@@ -14,6 +14,7 @@ void Section::setAlignments(std::vector<Encoder::Section>& sections, Architectur
                 else if (section.name == ".data") section.align = 4;
                 else if (section.name == ".rodata") section.align = 4;
                 else if (section.name == ".tdata") section.align = 4;
+                else if (section.name == ".bss") section.align = 4;
                 else section.align = 1;
                 /*
                 switch(bits)

@@ -20,6 +20,8 @@ namespace x86
         std::vector<uint8_t> EncodePadding(size_t length) override;
 
     private:
+        bool instrUse16BitPrefix = false;
+
         static constexpr const uint8_t opcodeEscape = 0x0F;
 
         inline uint8_t getRex(bool W, bool R, bool X, bool B)

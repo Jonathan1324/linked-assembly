@@ -42,12 +42,12 @@ void Binary::Writer::Write()
     }
     for (const Encoder::Section& section : uninitialized)
     {
-        sectionOffsets[section.name] = off;
-
         uint64_t align = section.align;
         if (align < 4) align = 4; // TODO: minimal alignment of 4, check if useful
 
         off = (off + align - 1) / align * align;
+
+        sectionOffsets[section.name] = off;
 
         off += static_cast<uint64_t>(section.size());
     }
