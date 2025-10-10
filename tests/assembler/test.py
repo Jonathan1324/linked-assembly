@@ -9,7 +9,7 @@ from typing import List
 logger = logging.getLogger("tests")
 
 def run_lasm(src: Path, dst: Path, logs: Path, debug: bool,
-        arch: Arch, bits: Bits, format: Format) -> bool:
+        arch: Arch, bits: Bits, format: Format) -> tuple[bool, Path]:
     assembler = Path("dist/bin/lasm")
     cmd = [str(assembler), str(src)]
     if debug: cmd.append("-d")
@@ -63,15 +63,17 @@ def run_lasm(src: Path, dst: Path, logs: Path, debug: bool,
     else:
         ext = "o"
 
-    cmd.extend(["-o", f"{dst}-{arch_str}-{bits_str}-{format_str}.{ext}"])
+    out = Path(f"{dst}-{arch_str}-{bits_str}-{format_str}.{ext}")
+    cmd.extend(["-o", str(out)])
     log_path = Path(f"{logs}/{Path(src).name}-{arch_str}-{bits_str}-{format_str}.txt")
 
     with open(log_path.resolve(), "w") as f:
         result = subprocess.run(cmd, stdout=f, stderr=f)
 
-    return result.returncode == 0
+    return (result.returncode == 0, out)
 
-def test_lasm(log_dir: Path, src_dir: Path, build_dir: Path, archs: List[Arch], bitss: List[Bits], formats: List[Format]):
+def test_lasm(log_dir: Path, src_dir: Path, build_dir: Path, archs: List[Arch], bitss: List[Bits], formats: List[Format]) -> List[Path]:
+    outputs = []
     for asmfile in src_dir.rglob("*.asm"):
         asmfile_parent = asmfile.parent.parts
 
@@ -82,8 +84,8 @@ def test_lasm(log_dir: Path, src_dir: Path, build_dir: Path, archs: List[Arch], 
         log_path.mkdir(parents=True, exist_ok=True)
 
         for arch in archs:
-            for bits in bitss:
-                for format in formats:
+            for format in formats:
+                for bits in bitss:
                     arch_str: str
                     bits_str: str
                     format_str: str
@@ -93,7 +95,7 @@ def test_lasm(log_dir: Path, src_dir: Path, build_dir: Path, archs: List[Arch], 
                         format_str = format_map[format]
                     except KeyError as e:
                         raise ValueError(f"Unsupported value: {e}")
-                    result = run_lasm(
+                    result, output = run_lasm(
                         src=asmfile,
                         dst=dst_path,
                         debug=True,
@@ -106,6 +108,40 @@ def test_lasm(log_dir: Path, src_dir: Path, build_dir: Path, archs: List[Arch], 
                         logger.debug(f"Arch: {arch_str}, Bits: {bits_str}, Format: {format_str}; {asmfile} successful")
                     else:
                         logger.warning(f"Arch: {arch_str}, Bits: {bits_str}, Format: {format_str}; {asmfile} failed")
+                    outputs.append(output)
+    return outputs
+
+def check_if_files_equal(p1: Path, p2: Path, blocksize: int = 8192) -> bool:
+    if not (p1.exists() and p2.exists):
+        return p1.exists() == p2.exists()
+    if p1.stat().st_size != p2.stat().st_size:
+        return False
+    
+    with p1.open('rb') as f1, p2.open('rb') as f2:
+        while True:
+            b1 = f1.read(blocksize)
+            b2 = f2.read(blocksize)
+            if b1 != b2:
+                return False
+            if not b1:
+                return True
+
+def write_cmp_file(cmp_file: Path, content: List[List[Path]]):
+    cmp_file.write_text("")
+
+    num_cols = max(len(content) for cmp in content)
+    col_widths = [0] * num_cols
+    for cmp in content:
+        for i, cell, in enumerate(cmp):
+            col_widths[i] = max(col_widths[i], len(cell))
+    
+    with cmp_file.open('a', encoding="utf-8") as f:
+        for cmp in content:
+            for i, cell in enumerate(cmp):
+                f.write(cell.ljust(col_widths[i]))
+                if i < len(cmp) - 1:
+                    f.write("  ")
+            f.write("\n")
 
 def test(dir: Path, log_dir: Path):
     build_dir = dir / "build"
@@ -113,11 +149,26 @@ def test(dir: Path, log_dir: Path):
     test_lasm(log_dir / "srcs", dir / "srcs", build_dir / "srcs",
               [Arch.X86], [Bits.B16, Bits.B32, Bits.B64], [Format.BIN, Format.ELF])
     
-    test_lasm(log_dir / "nasm", dir / "nasm", build_dir / "nasm",
-              [Arch.X86], [Bits.B16, Bits.B32, Bits.B64], [Format.BIN, Format.ELF])
-    test_nasm(log_dir / "nasm", dir / "nasm", build_dir / "nasm",
-              [Arch.X86], [Bits.B16, Bits.B32, Bits.B64], [Format.BIN, Format.ELF])
-    
+    nasm_log_dir = log_dir / "nasm"
+    nasm_source_dir = dir / "nasm"
+    nasm_build_dir = build_dir / "nasm"
+    nasm_cmp_file = nasm_log_dir / "cmp.log"
+    nasm_lasm_outs: List[Path] = test_lasm(nasm_log_dir, nasm_source_dir, nasm_build_dir,
+                                           [Arch.X86], [Bits.B16, Bits.B32, Bits.B64], [Format.BIN, Format.ELF])
+    nasm_nasm_outs: List[Path] = test_nasm(nasm_log_dir, nasm_source_dir, nasm_build_dir,
+                                           [Arch.X86], [Bits.B16, Bits.B32, Bits.B64], [Format.BIN, Format.ELF])
+    nasm_cmp_file_content: List[List[str]] = []
+    for nasm_lasm_out, nasm_nasm_out in zip(nasm_lasm_outs, nasm_nasm_outs):
+        equal = check_if_files_equal(nasm_lasm_out, nasm_nasm_out)
+        nasm_cmp_file_content.append([
+            str(nasm_lasm_out).removeprefix("tests/assembler/build/nasm/"),
+            "-",
+            str(nasm_nasm_out).removeprefix("tests/assembler/build/nasm/"),
+            ":",
+            'equal' if equal else 'different'
+        ])
+    write_cmp_file(nasm_cmp_file, nasm_cmp_file_content)
+
 
 def clean(dir: Path, log_dir: Path):
     if log_dir.exists() and log_dir.is_dir():

@@ -7,7 +7,7 @@ from typing import List
 logger = logging.getLogger("tests")
 
 def run_nasm(src: Path, dst: Path, logs: Path, debug: bool,
-        arch: Arch, bits: Bits, format: Format) -> bool:
+        arch: Arch, bits: Bits, format: Format) -> tuple[bool, Path]:
     cmd = ["nasm", str(src)]
     # TODO: debug
 
@@ -56,15 +56,17 @@ def run_nasm(src: Path, dst: Path, logs: Path, debug: bool,
     else:
         ext = "o"
 
-    cmd.extend(["-o", f"{dst}-x86-{bits_str}-{format_str}.{ext}"])
+    out = Path(f"{dst}-x86-{bits_str}-{format_str}.{ext}")
+    cmd.extend(["-o", str(out)])
     log_path = Path(f"{logs}/{Path(src).name}-x86-{bits_str}-{format_str}.txt")
 
     with open(log_path.resolve(), "w") as f:
         result = subprocess.run(cmd, stdout=f, stderr=f)
 
-    return result.returncode == 0
+    return (result.returncode == 0, out)
 
-def test_nasm(log_dir: Path, src_dir: Path, build_dir: Path, archs: List[Arch], bitss: List[Bits], formats: List[Format]):
+def test_nasm(log_dir: Path, src_dir: Path, build_dir: Path, archs: List[Arch], bitss: List[Bits], formats: List[Format]) -> List[Path]:
+    outputs = []
     for asmfile in src_dir.rglob("*.asm"):
         asmfile_parent = asmfile.parent.parts
 
@@ -75,8 +77,8 @@ def test_nasm(log_dir: Path, src_dir: Path, build_dir: Path, archs: List[Arch], 
         log_path.mkdir(parents=True, exist_ok=True)
 
         for arch in archs:
-            for bits in bitss:
-                for format in formats:
+            for format in formats:
+                for bits in bitss:
                     arch_str: str
                     bits_str: str
                     format_str: str
@@ -86,7 +88,7 @@ def test_nasm(log_dir: Path, src_dir: Path, build_dir: Path, archs: List[Arch], 
                         format_str = format_map[format]
                     except KeyError as e:
                         raise ValueError(f"Unsupported value: {e}")
-                    result = run_nasm(
+                    result, output = run_nasm(
                         src=asmfile,
                         dst=dst_path,
                         debug=True,
@@ -99,3 +101,5 @@ def test_nasm(log_dir: Path, src_dir: Path, build_dir: Path, archs: List[Arch], 
                         logger.debug(f"Arch: {arch_str}, Bits: {bits_str}, Format: {format_str}; {asmfile} successful")
                     else:
                         logger.warning(f"Arch: {arch_str}, Bits: {bits_str}, Format: {format_str}; {asmfile} failed")
+                    outputs.append(output)
+    return outputs
