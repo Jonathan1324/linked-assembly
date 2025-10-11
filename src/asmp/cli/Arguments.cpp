@@ -63,11 +63,7 @@ bool parseArguments(int argc, const char *argv[], std::string& input, std::strin
 
     if (output.empty())
     {
-        size_t pos = input.rfind('.');
-        if (pos == std::string::npos)
-            output = input + ".i";
-        else
-            output = input.substr(0, pos) + ".i" + input.substr(pos);
+        output = "-";
     }
 
     return false;

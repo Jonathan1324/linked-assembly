@@ -216,6 +216,8 @@ int main(int argc, const char *argv[])
         }
         
         compile(program, meta, programSize, out);
+
+        fclose(out);
     }
     else
     {
