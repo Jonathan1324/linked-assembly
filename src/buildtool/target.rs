@@ -186,11 +186,10 @@ pub fn execute_target(
                 }
             } else {
                 let mut output_path = build_dir.join(inputs[0].strip_prefix(env::current_dir()?).map_err(|e| io::Error::new(io::ErrorKind::Other, e))?);
-                let mut file_name = if let Some(name) = &target.name {
-                    output_path = build_dir.to_path_buf().join("placeholder"); // TODO: FIXME: WHATEVER: REALLY ONLY TEMPORARY; VERY UGLY
-                    name.clone().into()
+                if let Some(name) = &target.name {
+                    output_path = build_dir.to_path_buf().join(name);
                 } else {
-                    match &target.out {
+                    let filename = match &target.out {
                         OutputKind::Known(kind) => match kind {
                             KnownOutputKind::Object => {
                                 let mut name = output_path.file_name().ok_or_else(|| {
@@ -214,16 +213,21 @@ pub fn execute_target(
                                 io::Error::new(io::ErrorKind::Other, "Couldn't get filestem of output")
                             })?.to_os_string()
                         }
-                    }
-                };
+                    };
+                    output_path.set_file_name(filename);
+                }
+
                 // TODO: not always .exe
                 if matches!(target.out, OutputKind::Known(KnownOutputKind::Executable)) {
                     #[cfg(windows)]
                     {
+                        let mut file_name = output_path.file_name().ok_or_else(|| {
+                            io::Error::new(io::ErrorKind::Other, "Couldn't get filename of output")
+                        })?.to_os_string();
                         file_name.push(".exe");
+                        output_path.set_file_name(file_name);
                     }
                 }
-                output_path.set_file_name(file_name);
 
                 if let Some(parent) = output_path.parent() {
                     fs::create_dir_all(parent)?;
