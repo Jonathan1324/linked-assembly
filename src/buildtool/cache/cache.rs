@@ -71,14 +71,6 @@ impl Drop for CacheBuffer {
     }
 }
 
-
-pub fn hash_path(path: &str) -> Vec<u8> {
-    let mut hasher = Sha256::new();
-    hasher.update(path.as_bytes());
-    let result = hasher.finalize();
-    result.to_vec()
-}
-
 pub fn compute_fingerprint(inputs: &[PathBuf]) -> Vec<u8> {
     let mut hasher = Sha256::new();
 
