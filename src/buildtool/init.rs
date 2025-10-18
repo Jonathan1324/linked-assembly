@@ -49,7 +49,8 @@ r#"default:
       format: default_gcc_deps
 
       flags: C_FLAGS
-      command: gcc ${ FLAGS } -c ${ INPUT } -MMD -MF ${ OUTPUT }.d -o ${ OUTPUT }
+      command:
+      - gcc ${ FLAGS } -c ${ INPUT } -MMD -MF ${ OUTPUT }.d -o ${ OUTPUT }
       message: Compiling ${ INPUT }
 
     CXX:
@@ -61,7 +62,8 @@ r#"default:
       format: default_gcc_deps
 
       flags: CXX_FLAGS
-      command: g++ ${ FLAGS } -c ${ INPUT } -MMD -MF ${ OUTPUT }.d -o ${ OUTPUT }
+      command:
+      - g++ ${ FLAGS } -c ${ INPUT } -MMD -MF ${ OUTPUT }.d -o ${ OUTPUT }
       message: Compiling ${ INPUT }
 
     LD:
@@ -69,7 +71,8 @@ r#"default:
         out: executable
 
       flags: LD_FLAGS
-      command: g++ ${ INPUT } ${ FLAGS } -o ${ OUTPUT }
+      command:
+      - g++ ${ INPUT } ${ FLAGS } -o ${ OUTPUT }
       message: Linking ${ OUTPUT }
 
     AR:
@@ -77,7 +80,8 @@ r#"default:
         out: static-library
 
       flags: AR_FLAGS
-      command: ar ${ FLAGS } ${ OUTPUT } ${ INPUT }
+      command:
+      - ar ${ FLAGS } ${ OUTPUT } ${ INPUT }
       message: Creating static library ${ OUTPUT }
 
   flags:

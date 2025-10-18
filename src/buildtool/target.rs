@@ -1,5 +1,5 @@
 use crate::config;
-use crate::config::OutputKind;
+use crate::config::{OutputKind, KnownOutputKind};
 use crate::execute;
 use glob::glob;
 use globset::{Glob, GlobSetBuilder};
@@ -124,12 +124,14 @@ pub fn execute_target(
             }
         }
 
-        let mut for_each = match target.out {
-            OutputKind::Object => { true }
-            OutputKind::Executable => { false }
-            OutputKind::StaticLibrary => { false }
-
-            _ => { true }
+        let mut for_each = match &target.out {
+            OutputKind::Known(kind) => match kind {
+                KnownOutputKind::Object => true,
+                KnownOutputKind::Executable => false,
+                KnownOutputKind::StaticLibrary => false,
+                _ => true,
+            },
+            OutputKind::Custom(_) => true,
         };
         if let Some(for_each_explicit) = &target.for_each {
             for_each = *for_each_explicit;
@@ -142,19 +144,28 @@ pub fn execute_target(
                     let file_name = if let Some(name) = &target.name {
                         name.clone().into()
                     } else {
-                        match target.out {
-                            config::OutputKind::Object => {
-                                let mut name = output_path.file_name().ok_or_else(|| {
-                                    io::Error::new(io::ErrorKind::Other,format!("Couldn't get filename of output"))
-                                })?.to_os_string();
-                                name.push(".o");
-                                name
-                            }
-                            _ => {
+                        match &target.out {
+                            OutputKind::Known(kind) => match kind {
+                                KnownOutputKind::Object => {
+                                    let mut name = output_path.file_name().ok_or_else(|| {
+                                        io::Error::new(io::ErrorKind::Other, "Couldn't get filename of output")
+                                    })?.to_os_string();
+                                    name.push(".o");
+                                    name
+                                }
+                                _ => {
+                                    Path::new(output_path.file_name().ok_or_else(|| {
+                                        io::Error::new(io::ErrorKind::Other, "Couldn't get filename of output")
+                                    })?).file_stem().ok_or_else(|| {
+                                        io::Error::new(io::ErrorKind::Other, "Couldn't get filestem of output")
+                                    })?.to_os_string()
+                                }
+                            },
+                            OutputKind::Custom(_) => {
                                 Path::new(output_path.file_name().ok_or_else(|| {
-                                    io::Error::new(io::ErrorKind::Other,format!("Couldn't get filename of output"))
+                                    io::Error::new(io::ErrorKind::Other, "Couldn't get filename of output")
                                 })?).file_stem().ok_or_else(|| {
-                                    io::Error::new(io::ErrorKind::Other,format!("Couldn't get filestem of output"))
+                                    io::Error::new(io::ErrorKind::Other, "Couldn't get filestem of output")
                                 })?.to_os_string()
                             }
                         }
@@ -179,25 +190,34 @@ pub fn execute_target(
                     output_path = build_dir.to_path_buf().join("placeholder"); // TODO: FIXME: WHATEVER: REALLY ONLY TEMPORARY; VERY UGLY
                     name.clone().into()
                 } else {
-                    match target.out {
-                        config::OutputKind::Object => {
-                            let mut name = output_path.file_name().ok_or_else(|| {
-                                io::Error::new(io::ErrorKind::Other,format!("Couldn't get filename of output"))
-                            })?.to_os_string();
-                            name.push(".o");
-                            name
-                        }
-                        _ => {
+                    match &target.out {
+                        OutputKind::Known(kind) => match kind {
+                            KnownOutputKind::Object => {
+                                let mut name = output_path.file_name().ok_or_else(|| {
+                                    io::Error::new(io::ErrorKind::Other, "Couldn't get filename of output")
+                                })?.to_os_string();
+                                name.push(".o");
+                                name
+                            }
+                            _ => {
+                                Path::new(output_path.file_name().ok_or_else(|| {
+                                    io::Error::new(io::ErrorKind::Other, "Couldn't get filename of output")
+                                })?).file_stem().ok_or_else(|| {
+                                    io::Error::new(io::ErrorKind::Other, "Couldn't get filestem of output")
+                                })?.to_os_string()
+                            }
+                        },
+                        OutputKind::Custom(_) => {
                             Path::new(output_path.file_name().ok_or_else(|| {
-                                io::Error::new(io::ErrorKind::Other,format!("Couldn't get filename of output"))
+                                io::Error::new(io::ErrorKind::Other, "Couldn't get filename of output")
                             })?).file_stem().ok_or_else(|| {
-                                io::Error::new(io::ErrorKind::Other,format!("Couldn't get filestem of output"))
+                                io::Error::new(io::ErrorKind::Other, "Couldn't get filestem of output")
                             })?.to_os_string()
                         }
                     }
                 };
                 // TODO: not always .exe
-                if matches!(target.out, config::OutputKind::Executable) {
+                if matches!(target.out, OutputKind::Known(KnownOutputKind::Executable)) {
                     #[cfg(windows)]
                     {
                         file_name.push(".exe");

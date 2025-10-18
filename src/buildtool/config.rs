@@ -43,14 +43,20 @@ pub struct Tools {
 }
 
 #[derive(Clone, Debug, PartialEq, Eq, Deserialize)]
-#[serde(rename_all = "lowercase")]
+#[serde(untagged)]
 pub enum OutputKind {
+    Known(KnownOutputKind),
+    Custom(String),
+}
+
+#[derive(Clone, Debug, PartialEq, Eq, Deserialize)]
+#[serde(rename_all = "lowercase")]
+pub enum KnownOutputKind {
     Executable,
     Object,
     #[serde(rename = "static-library")]
     StaticLibrary,
 
-    Custom,
     Undefined,
 }
 
@@ -93,7 +99,7 @@ pub struct Target {
     pub run: Option<String>,
 }
 
-fn default_target_out() -> OutputKind { OutputKind::Undefined }
+fn default_target_out() -> OutputKind { OutputKind::Known(KnownOutputKind::Undefined) }
 
 fn default_target_path() -> String { ".".to_string() }
 

@@ -181,54 +181,58 @@ pub fn execute(
             fs::create_dir_all(parent)?;
         }
 
-        let command = replace_placeholders(&tool.command, &replacements)?;
+        let commands: Vec<String> = tool.command.iter()
+            .map(|cmd| replace_placeholders(cmd, &replacements))
+            .collect::<Result<Vec<String>, std::io::Error>>()?;
 
         if let Some(raw_message) = &tool.message {
             let message = replace_placeholders(raw_message, &replacements)?;
             println!("{}", message);
         }
 
-        let mut parts = command.split_whitespace();
-        if let Some(program) = parts.next() {
-            let args: Vec<&str> = parts.collect();
+        for command in &commands {
+            let mut parts = command.split_whitespace();
+            if let Some(program) = parts.next() {
+                let args: Vec<&str> = parts.collect();
 
-            #[cfg(target_os = "windows")]
-            let status = {
-                let mut cmdline = vec![program.to_string()];
-                cmdline.extend(args.iter().map(|s| s.to_string()));
+                #[cfg(target_os = "windows")]
+                let status = {
+                    let mut cmdline = vec![program.to_string()];
+                    cmdline.extend(args.iter().map(|s| s.to_string()));
 
-                let cmdline = cmdline
-                    .into_iter()
-                    .map(|s| {
-                        if s.contains(' ') { format!("\"{}\"", s) } else { s }
-                    })
-                    .collect::<Vec<_>>()
-                    .join(" ");
+                    let cmdline = cmdline
+                        .into_iter()
+                        .map(|s| {
+                            if s.contains(' ') { format!("\"{}\"", s) } else { s }
+                        })
+                        .collect::<Vec<_>>()
+                        .join(" ");
 
-                Command::new("cmd").args(&["/C", &cmdline]).status()?
-            };
+                    Command::new("cmd").args(&["/C", &cmdline]).status()?
+                };
 
-            #[cfg(not(target_os = "windows"))]
-            let status = {
-                let mut cmdline = vec![program.to_string()];
-                cmdline.extend(args.iter().map(|s| s.to_string()));
+                #[cfg(not(target_os = "windows"))]
+                let status = {
+                    let mut cmdline = vec![program.to_string()];
+                    cmdline.extend(args.iter().map(|s| s.to_string()));
 
-                let cmdline = cmdline
-                    .into_iter()
-                    .map(|s| {
-                        if s.contains(' ') { format!("'{}'", s) } else { s }
-                    })
-                    .collect::<Vec<_>>()
-                    .join(" ");
+                    let cmdline = cmdline
+                        .into_iter()
+                        .map(|s| {
+                            if s.contains(' ') { format!("'{}'", s) } else { s }
+                        })
+                        .collect::<Vec<_>>()
+                        .join(" ");
 
-                Command::new("sh").args(&["-c", &cmdline]).status()?
-            };
+                    Command::new("sh").args(&["-c", &cmdline]).status()?
+                };
 
-            if !status.success() {
-                return Err(io::Error::new(
-                    io::ErrorKind::Other,
-                    format!("Compilation failed for output: {}", output.display()),
-                ));
+                if !status.success() {
+                    return Err(io::Error::new(
+                        io::ErrorKind::Other,
+                        format!("Compilation failed for output: {}", output.display()),
+                    ));
+                }
             }
         }
 

@@ -28,7 +28,7 @@ pub struct Tool {
 
     pub flags: Option<String>,
 
-    pub command: String,
+    pub command: Vec<String>,
     pub message: Option<String>,
 }
 
@@ -65,7 +65,10 @@ pub fn print_toolchains(toolchains: &HashMap<String, Toolchain>) {
         println!(" Tools: ");
         for (tool_name, tool) in &toolchain.tools {
             println!("    {}: ", tool_name);
-            println!("      Command: {}", tool.command);
+            println!("      Command:");
+            for cmd in &tool.command {
+                println!("      - {}", cmd);
+            }
             if let Some(deps) = &tool.deps {
                 println!("      Deps: {}", deps);
             }
