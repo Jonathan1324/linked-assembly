@@ -63,7 +63,7 @@ int main(int argc, const char *argv[])
     Encoder::Encoder* encoder = nullptr;
     Output::Writer* outputWriter = nullptr;
 
-    StringPool filenamePool;
+    StringPool stringPool;
 
     // Parse arguments
     try

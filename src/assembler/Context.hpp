@@ -7,5 +7,5 @@ struct Context
 {
     WarningManager* warningManager;
     std::string filename;
-    StringPool* filenamePool;
+    StringPool* stringPool;
 };

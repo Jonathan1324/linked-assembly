@@ -19,15 +19,34 @@ void Token::Tokenizer::tokenize(std::istream* input)
     uint64_t file;
     std::string line;
     size_t lineNumber = 0;
+    size_t lineIncrease = 1;
 
     while (std::getline(*input, line))
     {
-        lineNumber++;
+        lineNumber += lineIncrease;
         size_t pos = 0;
         size_t length = line.size();
+        std::string trimmed = trim(line);
 
-        if (trim(line).find("%line") == 0)
+        if (trimmed.find("%line") == 0)
         {
+            std::istringstream iss(trimmed.substr(5));
+            std::string token;
+            
+            if (std::getline(iss, token, '+')) {
+                lineNumber = std::stoul(trim(token)) - 1;
+            }
+            if (std::getline(iss, token, ' ')) {
+                lineIncrease = std::stoul(trim(token));
+            }
+            std::string filename;
+            if (iss >> filename) {
+                if (filename == "-") {
+                    // TODO: mainfile
+                    filename = "";
+                }
+            }
+            // TODO: stringPool
 
             // TODO: parse (including when seeing '-' as filename to put the main file there)
             continue;
