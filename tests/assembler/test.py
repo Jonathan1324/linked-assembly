@@ -72,9 +72,9 @@ def run_lasm(src: Path, dst: Path, logs: Path, debug: bool,
 
     return (result.returncode == 0, out)
 
-def test_lasm(log_dir: Path, src_dir: Path, build_dir: Path, archs: List[Arch], bitss: List[Bits], formats: List[Format]) -> List[Path]:
+def test_lasm(log_dir: Path, src_dir: Path, build_dir: Path, archs: List[Arch], bitss: List[Bits], formats: List[Format], glob: str) -> List[Path]:
     outputs = []
-    for asmfile in src_dir.rglob("*.asm"):
+    for asmfile in src_dir.rglob(glob):
         asmfile_parent = asmfile.parent.parts
 
         dst_path = Path(build_dir, "lasm", *asmfile_parent[3:], asmfile.name)
@@ -146,17 +146,20 @@ def write_cmp_file(cmp_file: Path, content: List[List[Path]]):
 def test(dir: Path, log_dir: Path):
     build_dir = dir / "build"
 
-    test_lasm(log_dir / "srcs", dir / "srcs", build_dir / "srcs",
-              [Arch.X86], [Bits.B16, Bits.B32, Bits.B64], [Format.BIN, Format.ELF])
+    test_lasm(log_dir / "x86", dir / "x86", build_dir / "x86",
+              [Arch.X86], [Bits.B16, Bits.B32, Bits.B64], [Format.BIN, Format.ELF],
+              "*.asm")
     
     nasm_log_dir = log_dir / "nasm"
     nasm_source_dir = dir / "nasm"
     nasm_build_dir = build_dir / "nasm"
     nasm_cmp_file = nasm_log_dir / "cmp.log"
     nasm_lasm_outs: List[Path] = test_lasm(nasm_log_dir, nasm_source_dir, nasm_build_dir,
-                                           [Arch.X86], [Bits.B16, Bits.B32, Bits.B64], [Format.BIN, Format.ELF])
+                                           [Arch.X86], [Bits.B16, Bits.B32, Bits.B64], [Format.BIN, Format.ELF],
+                                           "*.asm")
     nasm_nasm_outs: List[Path] = test_nasm(nasm_log_dir, nasm_source_dir, nasm_build_dir,
-                                           [Arch.X86], [Bits.B16, Bits.B32, Bits.B64], [Format.BIN, Format.ELF])
+                                           [Arch.X86], [Bits.B16, Bits.B32, Bits.B64], [Format.BIN, Format.ELF],
+                                           "*.asm")
     nasm_cmp_file_content: List[List[str]] = []
     for nasm_lasm_out, nasm_nasm_out in zip(nasm_lasm_outs, nasm_nasm_outs):
         equal = check_if_files_equal(nasm_lasm_out, nasm_nasm_out)

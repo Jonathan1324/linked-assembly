@@ -65,9 +65,9 @@ def run_nasm(src: Path, dst: Path, logs: Path, debug: bool,
 
     return (result.returncode == 0, out)
 
-def test_nasm(log_dir: Path, src_dir: Path, build_dir: Path, archs: List[Arch], bitss: List[Bits], formats: List[Format]) -> List[Path]:
+def test_nasm(log_dir: Path, src_dir: Path, build_dir: Path, archs: List[Arch], bitss: List[Bits], formats: List[Format], glob: str) -> List[Path]:
     outputs = []
-    for asmfile in src_dir.rglob("*.asm"):
+    for asmfile in src_dir.rglob(glob):
         asmfile_parent = asmfile.parent.parts
 
         dst_path = Path(build_dir, "nasm", *asmfile_parent[3:], asmfile.name)
