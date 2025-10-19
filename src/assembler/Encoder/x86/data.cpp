@@ -19,7 +19,7 @@ std::vector<uint8_t> x86::Encoder::EncodeDataInstruction(Parser::Instruction::In
         case Instructions::MOV:
         {
             if (instruction.operands.size() != 2)
-                throw Exception::InternalError("Wrong argument count for 'mov'");
+                throw Exception::InternalError("Wrong argument count for 'mov'", instruction.lineNumber, instruction.column);
 
             Parser::Instruction::Operand destinationOperand = instruction.operands[0];
             Parser::Instruction::Operand sourceOperand = instruction.operands[1];
@@ -104,7 +104,7 @@ std::vector<uint8_t> x86::Encoder::EncodeDataInstruction(Parser::Instruction::In
                     uint8_t destRegSize = getRegSize(destReg.reg, instruction.bits);
                     uint8_t srcRegSize = getRegSize(srcReg.reg, instruction.bits);
 
-                    if (destRegSize != srcRegSize) throw Exception::SemanticError("Can't use 'mov' with registers of different size");
+                    if (destRegSize != srcRegSize) throw Exception::SemanticError("Can't use 'mov' with registers of different size", instruction.lineNumber, instruction.column);
 
                     bool usingSpecialReg = false;
 
@@ -179,7 +179,7 @@ std::vector<uint8_t> x86::Encoder::EncodeDataInstruction(Parser::Instruction::In
                         case ES: case CS:
                         case SS: case DS:
                         case FS: case GS:
-                            if (usingSpecialReg) throw Exception::SemanticError("Can't set special register using special register");
+                            if (usingSpecialReg) throw Exception::SemanticError("Can't set special register using special register", instruction.lineNumber, instruction.column);
                             if (instruction.bits != BitMode::Bits16)
                                 instrUse16BitPrefix = true;
                             opcode = 0x8C;
@@ -191,7 +191,7 @@ std::vector<uint8_t> x86::Encoder::EncodeDataInstruction(Parser::Instruction::In
                         case CR3: case CR4:
                         case CR5: case CR6:
                         case CR7:
-                            if (usingSpecialReg) throw Exception::SemanticError("Can't set special register using special register");
+                            if (usingSpecialReg) throw Exception::SemanticError("Can't set special register using special register", instruction.lineNumber, instruction.column);
                             useOpcodeEscape = true;
                             opcode = 0x20;
                             modrm = getModRM(mod, src, dest);
@@ -203,7 +203,7 @@ std::vector<uint8_t> x86::Encoder::EncodeDataInstruction(Parser::Instruction::In
                         case CR14: case CR15:
                             if (instruction.bits != BitMode::Bits64)
                                 throw Exception::SyntaxError("register only supported in 64-bit mode", instruction.lineNumber, instruction.column);
-                            if (usingSpecialReg) throw Exception::SemanticError("Can't set special register using special register");
+                            if (usingSpecialReg) throw Exception::SemanticError("Can't set special register using special register", instruction.lineNumber, instruction.column);
                             useREX = true;
                             rexR = true;
                             useOpcodeEscape = true;
@@ -215,7 +215,7 @@ std::vector<uint8_t> x86::Encoder::EncodeDataInstruction(Parser::Instruction::In
                         case DR0: case DR1:
                         case DR2: case DR3:
                         case DR6: case DR7:
-                            if (usingSpecialReg) throw Exception::SemanticError("Can't set special register using special register");
+                            if (usingSpecialReg) throw Exception::SemanticError("Can't set special register using special register", instruction.lineNumber, instruction.column);
                             useOpcodeEscape = true;
                             opcode = 0x21;
                             modrm = getModRM(mod, src, dest);
@@ -227,7 +227,7 @@ std::vector<uint8_t> x86::Encoder::EncodeDataInstruction(Parser::Instruction::In
                         case DR14: case DR15:
                             if (instruction.bits != BitMode::Bits64)
                                 throw Exception::SyntaxError("register only supported in 64-bit mode", instruction.lineNumber, instruction.column);
-                            if (usingSpecialReg) throw Exception::SemanticError("Can't set special register using special register");
+                            if (usingSpecialReg) throw Exception::SemanticError("Can't set special register using special register", instruction.lineNumber, instruction.column);
                             useREX = true;
                             rexR = true;
                             useOpcodeEscape = true;
@@ -240,7 +240,7 @@ std::vector<uint8_t> x86::Encoder::EncodeDataInstruction(Parser::Instruction::In
                         case TR2: case TR3:
                         case TR4: case TR5:
                         case TR6: case TR7:
-                            if (usingSpecialReg) throw Exception::SemanticError("Can't set special register using special register");
+                            if (usingSpecialReg) throw Exception::SemanticError("Can't set special register using special register", instruction.lineNumber, instruction.column);
                             useOpcodeEscape = true;
                             opcode = 0x24;
                             modrm = getModRM(mod, src, dest);
@@ -309,7 +309,7 @@ std::vector<uint8_t> x86::Encoder::EncodeDataInstruction(Parser::Instruction::In
                                 break;
                             
                             default:
-                                throw Exception::SemanticError("instruction doesn't support this register");
+                                throw Exception::SemanticError("instruction doesn't support this register", instruction.lineNumber, instruction.column);
                         }
                     }
 
@@ -318,7 +318,7 @@ std::vector<uint8_t> x86::Encoder::EncodeDataInstruction(Parser::Instruction::In
                         destReg.reg == DH || destReg.reg == BH ||
                         srcReg.reg == AH || srcReg.reg == CH ||
                         srcReg.reg == DH || srcReg.reg == BH
-                    )) throw Exception::SemanticError("Can't use high 8-bit regs using new registers");
+                    )) throw Exception::SemanticError("Can't use high 8-bit regs using new registers", instruction.lineNumber, instruction.column);
 
                     if (useREX) instr.push_back(getRex(rexW, rexR, rexX, rexB));
                     if (useOpcodeEscape) instr.push_back(opcodeEscape);
@@ -424,7 +424,7 @@ std::vector<uint8_t> x86::Encoder::EncodeDataInstruction(Parser::Instruction::In
                             break;
 
                         default:
-                            throw Exception::SemanticError("instruction doesn't support this register");
+                            throw Exception::SemanticError("instruction doesn't support this register", instruction.lineNumber, instruction.column);
                     }
 
                     // TODO: set rex dynamically
@@ -495,7 +495,7 @@ std::vector<uint8_t> x86::Encoder::EncodeDataInstruction(Parser::Instruction::In
                             rexW = true;
                             break;
 
-                        default: throw Exception::InternalError("Unknown register");
+                        default: throw Exception::InternalError("Unknown register", instruction.lineNumber, instruction.column);
                     }
 
                     switch (destReg.reg)
@@ -572,7 +572,7 @@ std::vector<uint8_t> x86::Encoder::EncodeDataInstruction(Parser::Instruction::In
                         case R14: opcode = 0xBE; break;
                         case R15: opcode = 0xBF; break;
 
-                        default: throw Exception::InternalError("Unknown register");
+                        default: throw Exception::InternalError("Unknown register", instruction.lineNumber, instruction.column);
                     }
 
                     if (useREX) instr.push_back(getRex(rexW, rexR, rexX, rexB));
@@ -600,7 +600,7 @@ std::vector<uint8_t> x86::Encoder::EncodeDataInstruction(Parser::Instruction::In
                                 case 16: reloc.size = ::Encoder::RelocationSize::Bit16; break;
                                 case 32: reloc.size = ::Encoder::RelocationSize::Bit32; break;
                                 case 64: reloc.size = ::Encoder::RelocationSize::Bit64; break;
-                                default: throw Exception::InternalError("Unknown size in bits " + std::to_string(sizeInBits));
+                                default: throw Exception::InternalError("Unknown size in bits " + std::to_string(sizeInBits), instruction.lineNumber, instruction.column);
                             }
                             relocations.push_back(std::move(reloc));
                         }
@@ -639,7 +639,7 @@ std::vector<uint8_t> x86::Encoder::EncodeDataInstruction(Parser::Instruction::In
                 }
             }
             else
-                throw Exception::InternalError("Wrong argument type for 'mov'");
+                throw Exception::InternalError("Wrong argument type for 'mov'", instruction.lineNumber, instruction.column);
 
             return instr;
         }

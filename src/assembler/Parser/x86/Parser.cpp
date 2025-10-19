@@ -702,7 +702,7 @@ void x86::Parser::Parse(const std::vector<Token::Token>& tokens)
             continue;
         }
 
-        context.warningManager->add(Warning::GeneralWarning("Unhandled token: " + token.what()));
+        context.warningManager->add(Warning::GeneralWarning("Unhandled token: " + token.what(&context)));
     }
 
     // TODO: probably better way to handle this

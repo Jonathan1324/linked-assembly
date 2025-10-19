@@ -13,7 +13,7 @@ Encoder::Evaluation Encoder::Encoder::Evaluate(const Parser::Immediate& immediat
     if (tokens.relocationPossible)
     {
         auto it = sectionStarts.find(tokens.usedSection);
-        if (it == sectionStarts.end()) throw Exception::InternalError("Couldn't find start of used section");
+        if (it == sectionStarts.end()) throw Exception::InternalError("Couldn't find start of used section", -1, -1);
         uint64_t off1 = it->second;
         uint64_t off2 = off1 + 0x12345678;
 

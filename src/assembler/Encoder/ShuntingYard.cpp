@@ -62,7 +62,7 @@ ShuntingYard::PreparedTokens ShuntingYard::prepareTokens(
                     operatorStack.pop();
                 }
                 if (operatorStack.empty())
-                    throw Exception::SyntaxError("Mismatched parentheses"); // FIXME: add line and column
+                    throw Exception::SyntaxError("Mismatched parentheses", -1, -1); // FIXME: add line and column
                 operatorStack.pop();
             }
             else
@@ -130,7 +130,7 @@ ShuntingYard::PreparedTokens ShuntingYard::prepareTokens(
                     output.relocationPossible = false;
                 }
                 if (!c.resolved)
-                    throw Exception::InternalError("Unresolved constants '" + name + "' used in expression");
+                    throw Exception::InternalError("Unresolved constants '" + name + "' used in expression", -1, -1);
 
                 if (c.useOffset)
                 {
@@ -157,7 +157,7 @@ ShuntingYard::PreparedTokens ShuntingYard::prepareTokens(
                     outputQueue.emplace_back(val);
                 }
             }
-            else throw Exception::InternalError("Unknown string '" + name + "'");
+            else throw Exception::InternalError("Unknown string '" + name + "'", -1, -1);
         }
         else if (std::holds_alternative<Parser::CurrentPosition>(op))
         {
@@ -180,7 +180,7 @@ ShuntingYard::PreparedTokens ShuntingYard::prepareTokens(
         }
         else
         {
-            throw Exception::InternalError("Expected value operand");
+            throw Exception::InternalError("Expected value operand", -1, -1);
         }
     }
 
@@ -188,7 +188,7 @@ ShuntingYard::PreparedTokens ShuntingYard::prepareTokens(
     while (!operatorStack.empty())
     {
         if (operatorStack.top() == "(" || operatorStack.top() == ")")
-            throw Exception::SyntaxError("Mismatched parentheses"); // FIXME: add line and column
+            throw Exception::SyntaxError("Mismatched parentheses", -1, -1); // FIXME: add line and column
         outputQueue.emplace_back(operatorStack.top());
         operatorStack.pop();
     }
@@ -215,7 +215,7 @@ Int128 ShuntingYard::evaluate(const std::vector<ShuntingYard::Token>& tokens, ui
         else if (token.type == Token::Type::Operator)
         {
             if (stack.size() < 2)
-                throw Exception::InternalError("Invalid expression: not enough operands");
+                throw Exception::InternalError("Invalid expression: not enough operands", -1, -1);
 
             Int128 rhs = stack.top(); stack.pop();
             Int128 lhs = stack.top(); stack.pop();
@@ -225,23 +225,23 @@ Int128 ShuntingYard::evaluate(const std::vector<ShuntingYard::Token>& tokens, ui
             else if (token.op == "*") stack.push(lhs * rhs);
             else if (token.op == "/") {
                 if (rhs == 0)
-                    throw Exception::SemanticError("Division by zero");
+                    throw Exception::SemanticError("Division by zero", -1, -1);
                 stack.push(lhs / rhs);
             }
             else if (token.op == "%") {
                 if (rhs == 0)
-                    throw Exception::SemanticError("Modulo by zero");
+                    throw Exception::SemanticError("Modulo by zero", -1, -1);
                 stack.push(lhs % rhs);
             }
             else
-                throw Exception::InternalError("Unknown operator: " + token.op);
+                throw Exception::InternalError("Unknown operator: " + token.op, -1, -1);
         }
         else
-            throw Exception::InternalError("Unknown token type");
+            throw Exception::InternalError("Unknown token type", -1, -1);
     }
 
     if (stack.size() != 1)
-        throw Exception::SyntaxError("Invalid expression");
+        throw Exception::SyntaxError("Invalid expression", -1, -1);
 
     return stack.top();
 }

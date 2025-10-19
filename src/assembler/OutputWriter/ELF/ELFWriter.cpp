@@ -51,7 +51,7 @@ void ELF::Writer::Write()
 
         nullSection.header = header;
     }
-    else throw Exception::InternalError("Unknown bit mode");
+    else throw Exception::InternalError("Unknown bit mode", -1, -1);
 
     sections.push_back(std::move(nullSection));
 
@@ -83,7 +83,7 @@ void ELF::Writer::Write()
         
         localSymbols.push_back(std::move(entry));
     }
-    else throw Exception::InternalError("Unknown bit mode");
+    else throw Exception::InternalError("Unknown bit mode", -1, -1);
 
     std::vector<uint8_t> strtabBuffer;
     strtabBuffer.push_back(0);
@@ -117,7 +117,7 @@ void ELF::Writer::Write()
         
         localSymbols.push_back(std::move(entry));
     }
-    else throw Exception::InternalError("Unknown bit mode");
+    else throw Exception::InternalError("Unknown bit mode", -1, -1);
 
 
     std::unordered_map<std::string, uint16_t> sectionIndexes;
@@ -194,7 +194,7 @@ void ELF::Writer::Write()
             sectionSymbolIndex[section.name] = static_cast<uint64_t>(localSymbols.size());
             localSymbols.push_back(std::move(entry));
         }
-        else throw Exception::InternalError("Unknown bit mode");
+        else throw Exception::InternalError("Unknown bit mode", -1, -1);
 
         sectionIndexes[section.name] = static_cast<uint16_t>(sections.size());
         sections.push_back(std::move(s));
@@ -230,7 +230,7 @@ void ELF::Writer::Write()
             const Encoder::Label* label = std::get<Encoder::Label*>(symbol);
 
             auto it = labelNameOffsets.find(label->name);
-            if (it == labelNameOffsets.end()) throw Exception::InternalError("Couldn't find offset for label in .strtab");
+            if (it == labelNameOffsets.end()) throw Exception::InternalError("Couldn't find offset for label in .strtab", -1, -1);
             uint32_t nameOffset = it->second;
 
             if (bits == BitMode::Bits16 || bits == BitMode::Bits32)
@@ -242,7 +242,7 @@ void ELF::Writer::Write()
                 entry.Info = Symbol::SetInfo(label->isGlobal ? Symbol::Bind::GLOBAL : Symbol::Bind::LOCAL, Symbol::Type::NONE);
                 entry.Other = 0;
                 auto it = sectionIndexes.find(label->section);
-                if (it == sectionIndexes.end()) throw Exception::InternalError("Unknown section for label");
+                if (it == sectionIndexes.end()) throw Exception::InternalError("Unknown section for label", -1, -1);
                 entry.IndexInSectionHeaderTable = it->second;
                 
                 if (label->isGlobal) globalSymbols.push_back(std::move(entry));
@@ -255,7 +255,7 @@ void ELF::Writer::Write()
                 entry.Info = Symbol::SetInfo(label->isGlobal ? Symbol::Bind::GLOBAL : Symbol::Bind::LOCAL, Symbol::Type::NONE);
                 entry.Other = 0;
                 auto it = sectionIndexes.find(label->section);
-                if (it == sectionIndexes.end()) throw Exception::InternalError("Unknown section for label");
+                if (it == sectionIndexes.end()) throw Exception::InternalError("Unknown section for label", -1, -1);
                 entry.IndexInSectionHeaderTable = it->second;
                 entry.Value = label->offset;
                 entry.Size = 0;
@@ -263,14 +263,14 @@ void ELF::Writer::Write()
                 if (label->isGlobal) globalSymbols.push_back(std::move(entry));
                 else localSymbols.push_back(std::move(entry));
             }
-            else throw Exception::InternalError("Unknown bit mode");
+            else throw Exception::InternalError("Unknown bit mode", -1, -1);
         }
         else if (std::holds_alternative<Encoder::Constant*>(symbol))
         {
             const Encoder::Constant* constant = std::get<Encoder::Constant*>(symbol);
             
             auto it = labelNameOffsets.find(constant->name);
-            if (it == labelNameOffsets.end()) throw Exception::InternalError("Couldn't find offset for constant in .strtab");
+            if (it == labelNameOffsets.end()) throw Exception::InternalError("Couldn't find offset for constant in .strtab", -1, -1);
             uint32_t nameOffset = it->second;
 
             if (bits == BitMode::Bits16 || bits == BitMode::Bits32)
@@ -284,7 +284,7 @@ void ELF::Writer::Write()
                 if (constant->useOffset)
                 {
                     auto it = sectionIndexes.find(constant->usedSection);
-                    if (it == sectionIndexes.end()) throw Exception::InternalError("Unknown section for label");
+                    if (it == sectionIndexes.end()) throw Exception::InternalError("Unknown section for label", -1, -1);
                     entry.IndexInSectionHeaderTable = it->second;
                 }
                 else entry.IndexInSectionHeaderTable = Symbol::XINDEX;
@@ -301,7 +301,7 @@ void ELF::Writer::Write()
                 if (constant->useOffset)
                 {
                     auto it = sectionIndexes.find(constant->usedSection);
-                    if (it == sectionIndexes.end()) throw Exception::InternalError("Unknown section for label");
+                    if (it == sectionIndexes.end()) throw Exception::InternalError("Unknown section for label", -1, -1);
                     entry.IndexInSectionHeaderTable = it->second;
                 }
                 else entry.IndexInSectionHeaderTable = Symbol::XINDEX;
@@ -311,7 +311,7 @@ void ELF::Writer::Write()
                 if (constant->isGlobal) globalSymbols.push_back(std::move(entry));
                 else localSymbols.push_back(std::move(entry));
             }
-            else throw Exception::InternalError("Unknown bit mode");
+            else throw Exception::InternalError("Unknown bit mode", -1, -1);
         }
     }
 
@@ -352,7 +352,7 @@ void ELF::Writer::Write()
             symtabBuffer.resize(symtabBuffer.size() + sizeof(Symbol::Entry64));
             std::memcpy(symtabBuffer.data() + symtabBuffer.size() - sizeof(Symbol::Entry64), &entry, sizeof(Symbol::Entry64));
         }
-        else throw Exception::InternalError("Unknown symbol entry");
+        else throw Exception::InternalError("Unknown symbol entry", -1, -1);
     }
 
     for (const SymbolEntry& symbol : globalSymbols)
@@ -369,7 +369,7 @@ void ELF::Writer::Write()
             symtabBuffer.resize(symtabBuffer.size() + sizeof(Symbol::Entry64));
             std::memcpy(symtabBuffer.data() + symtabBuffer.size() - sizeof(Symbol::Entry64), &entry, sizeof(Symbol::Entry64));
         }
-        else throw Exception::InternalError("Unknown symbol entry");
+        else throw Exception::InternalError("Unknown symbol entry", -1, -1);
     }
 
     for (const SymbolEntry& symbol : weakSymbols)
@@ -386,7 +386,7 @@ void ELF::Writer::Write()
             symtabBuffer.resize(symtabBuffer.size() + sizeof(Symbol::Entry64));
             std::memcpy(symtabBuffer.data() + symtabBuffer.size() - sizeof(Symbol::Entry64), &entry, sizeof(Symbol::Entry64));
         }
-        else throw Exception::InternalError("Unknown symbol entry");
+        else throw Exception::InternalError("Unknown symbol entry", -1, -1);
     }
 
     // STRTAB
@@ -403,7 +403,7 @@ void ELF::Writer::Write()
     for (const Encoder::Relocation& relocation : relocations)
     {
         auto it = sectionIndexes.find(relocation.section);
-        if (it == sectionIndexes.end()) throw Exception::InternalError("Section not found");
+        if (it == sectionIndexes.end()) throw Exception::InternalError("Section not found", -1, -1);
         const uint16_t sectionIndex = it->second;
         Section& section = sections[sectionIndex];
 
@@ -429,9 +429,9 @@ void ELF::Writer::Write()
                         case Encoder::RelocationSize::Bit16: return RelocationType32::R386_ABS16;
                         case Encoder::RelocationSize::Bit32: return RelocationType32::R386_ABS32;
                         case Encoder::RelocationSize::Bit64: return RelocationType32::R386_ABS32; // FIXME: not very nice way of doing it
-                        default: throw Exception::InternalError("Unknown relocation size");
+                        default: throw Exception::InternalError("Unknown relocation size", -1, -1);
                     }
-                default: throw Exception::InternalError("Unknown relocation type");
+                default: throw Exception::InternalError("Unknown relocation type", -1, -1);
             }
             return RelocationType32::R386_None;
         };
@@ -447,9 +447,9 @@ void ELF::Writer::Write()
                         case Encoder::RelocationSize::Bit16: return RelocationType64::RX64_ABS16;
                         case Encoder::RelocationSize::Bit32: return RelocationType64::RX64_ABS32;
                         case Encoder::RelocationSize::Bit64: return RelocationType64::RX64_ABS64;
-                        default: throw Exception::InternalError("Unknown relocation size");
+                        default: throw Exception::InternalError("Unknown relocation size", -1, -1);
                     }
-                default: throw Exception::InternalError("Unknown relocation type");
+                default: throw Exception::InternalError("Unknown relocation type", -1, -1);
             }
             return RelocationType64::RX64_None;
         };
@@ -460,7 +460,7 @@ void ELF::Writer::Write()
             for (const Encoder::Relocation& relocation : section.relocations)
             {
                 auto it = sectionSymbolIndex.find(relocation.usedSection);
-                if (it == sectionSymbolIndex.end()) throw Exception::InternalError("Couldn't find index in .symtab");
+                if (it == sectionSymbolIndex.end()) throw Exception::InternalError("Couldn't find index in .symtab", -1, -1);
                 const uint64_t symbolIndex = it->second;
 
                 // TODO: check if actual useful
@@ -522,7 +522,7 @@ void ELF::Writer::Write()
                     relocSection.buffer.resize(relocSection.buffer.size() + sizeof(RelaEntry64));
                     std::memcpy(relocSection.buffer.data() + relocSection.buffer.size() - sizeof(RelaEntry64), &entry, sizeof(RelaEntry64));
                 }
-                else throw Exception::InternalError("Unknown bit mode");
+                else throw Exception::InternalError("Unknown bit mode", -1, -1);
             }
         }
         else
@@ -531,7 +531,7 @@ void ELF::Writer::Write()
             for (const Encoder::Relocation& relocation : section.relocations)
             {
                 auto it = sectionSymbolIndex.find(relocation.usedSection);
-                if (it == sectionSymbolIndex.end()) throw Exception::InternalError("Couldn't find index in .symtab");
+                if (it == sectionSymbolIndex.end()) throw Exception::InternalError("Couldn't find index in .symtab", -1, -1);
                 const uint64_t symbolIndex = it->second;
                 
                 if (bits == BitMode::Bits16 || bits == BitMode::Bits32)
@@ -558,7 +558,7 @@ void ELF::Writer::Write()
                     relocSection.buffer.resize(relocSection.buffer.size() + sizeof(RelEntry64));
                     std::memcpy(relocSection.buffer.data() + relocSection.buffer.size() - sizeof(RelEntry64), &entry, sizeof(RelEntry64));
                 }
-                else throw Exception::InternalError("Unknown bit mode");
+                else throw Exception::InternalError("Unknown bit mode", -1, -1);
             }
         }
 
@@ -567,7 +567,7 @@ void ELF::Writer::Write()
         shstrtabBuffer.push_back(0);
 
         auto it = sectionIndexes.find(section.name);
-        if (it == sectionIndexes.end()) throw Exception::InternalError("Couldn't find section index");
+        if (it == sectionIndexes.end()) throw Exception::InternalError("Couldn't find section index", -1, -1);
         const uint32_t sectionIndex = it->second;
 
         if (bits == BitMode::Bits16 || bits == BitMode::Bits32)
@@ -600,7 +600,7 @@ void ELF::Writer::Write()
 
             relocSection.header = header;
         }
-        else throw Exception::InternalError("Unknown bit mode");
+        else throw Exception::InternalError("Unknown bit mode", -1, -1);
 
         relocationSections.push_back(std::move(relocSection));
     }
@@ -636,7 +636,7 @@ void ELF::Writer::Write()
 
         shstrtab.header = header;
     }
-    else throw Exception::InternalError("Unknown bit mode");
+    else throw Exception::InternalError("Unknown bit mode", -1, -1);
     sections.push_back(std::move(shstrtab));
 
     const uint32_t strtabIndex = static_cast<uint32_t>(sections.size()) + 1; // TODO: ugly
@@ -671,7 +671,7 @@ void ELF::Writer::Write()
 
         symtab.header = header;
     }
-    else throw Exception::InternalError("Unknown bit mode");
+    else throw Exception::InternalError("Unknown bit mode", -1, -1);
     sections.push_back(std::move(symtab));
 
     if (bits == BitMode::Bits16 || bits == BitMode::Bits32)
@@ -704,7 +704,7 @@ void ELF::Writer::Write()
 
         strtab.header = header;
     }
-    else throw Exception::InternalError("Unknown bit mode");
+    else throw Exception::InternalError("Unknown bit mode", -1, -1);
     sections.push_back(std::move(strtab));
 
     // Relocations
@@ -742,7 +742,7 @@ void ELF::Writer::Write()
                 header.InstructionSet = InstructionSet::RISCV;
                 break;
 
-            default: throw Exception::InternalError("Unknown architecture");
+            default: throw Exception::InternalError("Unknown architecture", -1, -1);
         }
         header.Version = 1;
 
@@ -764,7 +764,7 @@ void ELF::Writer::Write()
                 header.Flags = 0; // FIXME
                 break;
 
-            default: throw Exception::InternalError("Unknown architecture");
+            default: throw Exception::InternalError("Unknown architecture", -1, -1);
         }
 
         header.HeaderSize = sizeof(Header32);
@@ -802,7 +802,7 @@ void ELF::Writer::Write()
                 header.InstructionSet = InstructionSet::RISCV;
                 break;
 
-            default: throw Exception::InternalError("Unknown architecture");
+            default: throw Exception::InternalError("Unknown architecture", -1, -1);
         }
         header.Version = 1;
 
@@ -824,7 +824,7 @@ void ELF::Writer::Write()
                 header.Flags = 0; // FIXME
                 break;
 
-            default: throw Exception::InternalError("Unknown architecture");
+            default: throw Exception::InternalError("Unknown architecture", -1, -1);
         }
 
         header.HeaderSize = sizeof(Header64);
@@ -839,7 +839,7 @@ void ELF::Writer::Write()
 
         file->write(reinterpret_cast<const char*>(&header), sizeof(header));
     }
-    else throw Exception::InternalError("Unknown bit mode");
+    else throw Exception::InternalError("Unknown bit mode", -1, -1);
     std::streampos pos = file->tellp();
     std::streamoff padSize = (alignTo - (pos % alignTo)) % alignTo;
     if (padSize)
@@ -853,7 +853,7 @@ void ELF::Writer::Write()
         offset += static_cast<uint64_t>(sections.size()) * sizeof(SectionHeader32);
     else if (bits == BitMode::Bits64)
         offset += static_cast<uint64_t>(sections.size()) * sizeof(SectionHeader64);
-    else throw Exception::InternalError("Unknown bit mode");
+    else throw Exception::InternalError("Unknown bit mode", -1, -1);
 
     offset = (offset + alignment - 1) / alignment * alignment;
 
@@ -873,7 +873,7 @@ void ELF::Writer::Write()
 
             file->write(reinterpret_cast<const char*>(&header), sizeof(header));
         }
-        else throw Exception::InternalError("Unknown section header");
+        else throw Exception::InternalError("Unknown section header", -1, -1);
 
         if (section.writeBuffer) offset += section.buffer->size();
 

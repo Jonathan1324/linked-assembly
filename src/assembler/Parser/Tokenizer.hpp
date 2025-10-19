@@ -51,7 +51,7 @@ namespace Token
         Token(Type t, std::string v, size_t l, size_t c, uint64_t f)
             : type(t), value(std::move(v)), line(l), column(c), file(f) {}
 
-        std::string what() const;
+        std::string what(const Context* context) const;
     };
 
     class Tokenizer
