@@ -1,5 +1,5 @@
 from assembler.assembler import Format, Bits, Arch, arch_map, bits_map, format_map
-from assembler.nasm import test_nasm
+from assembler.nasm import run_nasm
 from pathlib import Path
 import logging
 import shutil
@@ -72,15 +72,15 @@ def run_lasm(src: Path, dst: Path, logs: Path, debug: bool,
 
     return (result.returncode == 0, out)
 
-def test_lasm(log_dir: Path, src_dir: Path, build_dir: Path, archs: List[Arch], bitss: List[Bits], formats: List[Format], glob: str) -> List[Path]:
+def test_assembler(log_dir: Path, src_dir: Path, build_dir: Path, archs: List[Arch], bitss: List[Bits], formats: List[Format], glob: str, name: str, run_function) -> List[Path]:
     outputs = []
     for asmfile in src_dir.rglob(glob):
         asmfile_parent = asmfile.parent.parts
 
-        dst_path = Path(build_dir, "lasm", *asmfile_parent[3:], asmfile.name)
+        dst_path = Path(build_dir, name, *asmfile_parent[3:], asmfile.name)
         dst_path.parent.mkdir(parents=True, exist_ok=True)
         
-        log_path = Path(log_dir, "lasm", *asmfile_parent[3:])
+        log_path = Path(log_dir, name, *asmfile_parent[3:])
         log_path.mkdir(parents=True, exist_ok=True)
 
         wantError = asmfile.name.startswith("e")
@@ -97,7 +97,7 @@ def test_lasm(log_dir: Path, src_dir: Path, build_dir: Path, archs: List[Arch], 
                         format_str = format_map[format]
                     except KeyError as e:
                         raise ValueError(f"Unsupported value: {e}")
-                    result, output = run_lasm(
+                    result, output = run_function(
                         src=asmfile,
                         dst=dst_path,
                         debug=True,
@@ -108,14 +108,14 @@ def test_lasm(log_dir: Path, src_dir: Path, build_dir: Path, archs: List[Arch], 
                     )
                     if result:
                         if wantError:
-                            logger.warning(f"Arch: {arch_str}, Bits: {bits_str}, Format: {format_str}; {asmfile} successful")
+                            logger.warning(f"({name}) Arch: {arch_str}, Bits: {bits_str}, Format: {format_str}; {asmfile} successful")
                         else:
-                            logger.debug(f"Arch: {arch_str}, Bits: {bits_str}, Format: {format_str}; {asmfile} successful")
+                            logger.debug(f"({name}) Arch: {arch_str}, Bits: {bits_str}, Format: {format_str}; {asmfile} successful")
                     else:
                         if wantError:
-                            logger.debug(f"Arch: {arch_str}, Bits: {bits_str}, Format: {format_str}; {asmfile} failed")
+                            logger.debug(f"({name}) Arch: {arch_str}, Bits: {bits_str}, Format: {format_str}; {asmfile} failed")
                         else:
-                            logger.warning(f"Arch: {arch_str}, Bits: {bits_str}, Format: {format_str}; {asmfile} failed")
+                            logger.warning(f"({name}) Arch: {arch_str}, Bits: {bits_str}, Format: {format_str}; {asmfile} failed")
                     outputs.append(output)
     return outputs
 
@@ -154,20 +154,20 @@ def write_cmp_file(cmp_file: Path, content: List[List[Path]]):
 def test(dir: Path, log_dir: Path):
     build_dir = dir / "build"
 
-    test_lasm(log_dir / "x86", dir / "x86", build_dir / "x86",
-              [Arch.X86], [Bits.B16, Bits.B32, Bits.B64], [Format.BIN, Format.ELF],
-              "*.asm")
+    test_assembler(log_dir / "x86", dir / "x86", build_dir / "x86",
+                  [Arch.X86], [Bits.B16, Bits.B32, Bits.B64], [Format.BIN, Format.ELF],
+                  "*.asm", "lasm", run_lasm)
     
     nasm_log_dir = log_dir / "nasm"
     nasm_source_dir = dir / "nasm"
     nasm_build_dir = build_dir / "nasm"
     nasm_cmp_file = nasm_log_dir / "cmp.log"
-    nasm_lasm_outs: List[Path] = test_lasm(nasm_log_dir, nasm_source_dir, nasm_build_dir,
-                                           [Arch.X86], [Bits.B16, Bits.B32, Bits.B64], [Format.BIN, Format.ELF],
-                                           "*.asm")
-    nasm_nasm_outs: List[Path] = test_nasm(nasm_log_dir, nasm_source_dir, nasm_build_dir,
-                                           [Arch.X86], [Bits.B16, Bits.B32, Bits.B64], [Format.BIN, Format.ELF],
-                                           "*.asm")
+    nasm_lasm_outs: List[Path] = test_assembler(nasm_log_dir, nasm_source_dir, nasm_build_dir,
+                                                [Arch.X86], [Bits.B16, Bits.B32, Bits.B64], [Format.BIN, Format.ELF],
+                                                "*.asm", "lasm", run_lasm)
+    nasm_nasm_outs: List[Path] = test_assembler(nasm_log_dir, nasm_source_dir, nasm_build_dir,
+                                                [Arch.X86], [Bits.B16, Bits.B32, Bits.B64], [Format.BIN, Format.ELF],
+                                                "*.asm", "nasm", run_nasm)
     nasm_cmp_file_content: List[List[str]] = []
     for nasm_lasm_out, nasm_nasm_out in zip(nasm_lasm_outs, nasm_nasm_outs):
         equal = check_if_files_equal(nasm_lasm_out, nasm_nasm_out)
