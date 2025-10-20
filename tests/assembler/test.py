@@ -83,6 +83,8 @@ def test_lasm(log_dir: Path, src_dir: Path, build_dir: Path, archs: List[Arch], 
         log_path = Path(log_dir, "lasm", *asmfile_parent[3:])
         log_path.mkdir(parents=True, exist_ok=True)
 
+        wantError = asmfile.name.startswith("e")
+
         for arch in archs:
             for format in formats:
                 for bits in bitss:
@@ -105,9 +107,15 @@ def test_lasm(log_dir: Path, src_dir: Path, build_dir: Path, archs: List[Arch], 
                         format=format
                     )
                     if result:
-                        logger.debug(f"Arch: {arch_str}, Bits: {bits_str}, Format: {format_str}; {asmfile} successful")
+                        if wantError:
+                            logger.warning(f"Arch: {arch_str}, Bits: {bits_str}, Format: {format_str}; {asmfile} successful")
+                        else:
+                            logger.debug(f"Arch: {arch_str}, Bits: {bits_str}, Format: {format_str}; {asmfile} successful")
                     else:
-                        logger.warning(f"Arch: {arch_str}, Bits: {bits_str}, Format: {format_str}; {asmfile} failed")
+                        if wantError:
+                            logger.debug(f"Arch: {arch_str}, Bits: {bits_str}, Format: {format_str}; {asmfile} failed")
+                        else:
+                            logger.warning(f"Arch: {arch_str}, Bits: {bits_str}, Format: {format_str}; {asmfile} failed")
                     outputs.append(output)
     return outputs
 
