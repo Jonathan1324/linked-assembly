@@ -32,13 +32,13 @@ def run_lasm(src: Path, dst: Path, logs: Path, debug: bool,
 
     if bits == Bits.B16:
         bits_str = "16bit"
-        cmd.append("-m16")
+        cmd.extend(["--bits", "16"])
     elif bits == Bits.B32:
         bits_str = "32bit"
-        cmd.append("-m32")
+        cmd.extend(["--bits", "32"])
     elif bits == Bits.B64:
         bits_str = "64bit"
-        cmd.append("-m64")
+        cmd.extend(["--bits", "64"])
     else:
         raise ValueError(f"Unsupported bit size: {bits}")
 
