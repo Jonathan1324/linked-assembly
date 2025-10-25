@@ -1,4 +1,5 @@
 section .data
-    global test
+    global _start
 
-test:   dd 0x12345678
+_start:
+    mov eax, 0
