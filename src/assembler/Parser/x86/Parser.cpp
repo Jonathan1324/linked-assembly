@@ -105,7 +105,11 @@ void x86::Parser::Parse(const std::vector<Token::Token>& tokens)
                 if (lowerVal == "global")
                     globals.push_back(next->value);
                 else
-                    externs.push_back(next->value);
+                {
+                    Token::Token externToken(Token::Type::ExternLabel, next->value, next->line, next->column, next->file);
+                    it = filteredTokens.insert(it, externToken);
+                    it++;
+                }
             }
 
             // remove "global"/"extern"
@@ -343,6 +347,19 @@ void x86::Parser::Parse(const std::vector<Token::Token>& tokens)
             continue;
         }
 
+        if (token.type == Token::Type::ExternLabel)
+        {
+            ::Parser::Label label;
+            label.name = token.value;
+            label.lineNumber = token.line;
+            label.column = token.column;
+            label.isExtern = true;
+
+            currentSection->entries.push_back(label);
+
+            continue;
+        }
+
         // Labels
         if (token.type == Token::Type::Token &&
            ((filteredTokens[i + 1].type == Token::Type::Punctuation && filteredTokens[i + 1].value == ":" && /*TODO: not segment:offset*/ ::x86::registers.find(token.value) == ::x86::registers.end())
@@ -352,6 +369,7 @@ void x86::Parser::Parse(const std::vector<Token::Token>& tokens)
             label.name = token.value;
             label.lineNumber = token.line;
             label.column = token.column;
+            label.isExtern = false;
 
             if (std::find(globals.begin(), globals.end(), token.value) != globals.end())
                 label.isGlobal = true;

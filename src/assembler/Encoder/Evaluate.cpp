@@ -2,13 +2,13 @@
 
 #include "ShuntingYard.hpp"
 
-Encoder::Evaluation Encoder::Encoder::Evaluate(const Parser::Immediate& immediate, uint64_t bytesWritten, uint64_t sectionOffset, const std::string* curSection) const
+Encoder::Evaluation Encoder::Encoder::Evaluate(const Parser::Immediate& immediate, uint64_t bytesWritten, uint64_t sectionOffset, const std::string* curSection)
 {
     // substitute position with two different values:
     // if both are equal:                               position doesn't matter
     // if both are equal when subtracting position:     can be written using offset + position (relocation)
     // else:                                            not even relocation is possible
-    ShuntingYard::PreparedTokens tokens = ShuntingYard::prepareTokens(immediate.operands, labels, constants, externs, bytesWritten, sectionOffset, curSection);
+    ShuntingYard::PreparedTokens tokens = ShuntingYard::prepareTokens(immediate.operands, labels, constants, bytesWritten, sectionOffset, curSection);
 
     if (tokens.relocationPossible)
     {
@@ -47,6 +47,15 @@ Encoder::Evaluation Encoder::Encoder::Evaluate(const Parser::Immediate& immediat
             evaluation.relocationPossible = false;
             evaluation.offset = 0;
         }
+
+        if (evaluation.relocationPossible && evaluation.isExtern)
+        {
+            if (auto it = labels.find(evaluation.usedSection); it != labels.end())
+            {
+                it->second.externUsed = true;
+            }
+        }
+
         return evaluation;
     }
     else

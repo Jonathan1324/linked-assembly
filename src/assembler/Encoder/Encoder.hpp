@@ -31,6 +31,8 @@ namespace Encoder
 
         bool isGlobal;
         bool resolved;
+        bool isExtern = false;
+        bool externUsed = false;
     };
 
     enum class HasPos
@@ -132,7 +134,7 @@ namespace Encoder
         std::vector<uint8_t> EncodeData(const Parser::DataDefinition& dataDefinition);
         uint64_t GetSize(const Parser::DataDefinition& dataDefinition);
 
-        Evaluation Evaluate(const Parser::Immediate& immediate, uint64_t bytesWritten, uint64_t sectionOffset, const std::string* curSection) const;
+        Evaluation Evaluate(const Parser::Immediate& immediate, uint64_t bytesWritten, uint64_t sectionOffset, const std::string* curSection);
 
         void resolveConstants(bool withPos);
         bool Resolvable(const Parser::Immediate& immediate);
@@ -152,7 +154,6 @@ namespace Encoder
         std::unordered_map<std::string, uint64_t> sectionStarts;
         std::unordered_map<std::string, Label> labels;
         std::unordered_map<std::string, Constant> constants;
-        std::unordered_set<std::string> externs;
 
         std::vector<Symbol> symbols;
 

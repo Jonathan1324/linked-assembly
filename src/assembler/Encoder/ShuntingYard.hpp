@@ -30,9 +30,8 @@ namespace ShuntingYard
 
     PreparedTokens prepareTokens(
         const std::vector<Parser::ImmediateOperand>& operands,
-        const std::unordered_map<std::string, Encoder::Label>& labels,
+        std::unordered_map<std::string, Encoder::Label>& labels,
         const std::unordered_map<std::string, Encoder::Constant>& constants,
-        const std::unordered_set<std::string>& externs,
         uint64_t bytesWritten,
         uint64_t sectionOffset,
         const std::string* currentSection

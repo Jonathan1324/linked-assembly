@@ -14,16 +14,6 @@ void Parser::Parser::Print() const
     if (!org.empty())
         std::cout << "org: " << org << std::endl;
 
-    if (!externs.empty())
-    {
-        std::cout << "externs: " << std::endl;
-        for (const auto& label : externs)
-        {
-            // '  '
-            std::cout << "  " << label << std::endl;
-        }
-    }
-
     for (const auto& section : sections)
     {
         std::cout << section.name << ": " << std::endl;
@@ -140,8 +130,10 @@ void Parser::Parser::Print() const
                 std::cout << "  ";  // '  '
                 if (label.isGlobal)
                     std::cout << "Global label '";
+                else if (label.isExtern)
+                    std::cout << "Extern label '";
                 else
-                    std::cout << "Label '";
+                    std::cout << "Local label '";
                 std::cout << label.name << "' on line " << label.lineNumber << " in column " << label.column << std::endl;
             }
             else if (std::holds_alternative<Constant>(entry))

@@ -20,7 +20,8 @@ namespace Token
         Punctuation,
         Bracket,
         EOL,
-        _EOF
+        _EOF,
+        ExternLabel
     };
 
     inline const char* to_string(Type type)
@@ -36,6 +37,7 @@ namespace Token
             case Type::Bracket:     return "__Bracket_____";
             case Type::EOL:         return "_EOL__________";
             case Type::_EOF:        return "EOF___________";
+            case Type::ExternLabel: return "__Extern_Label";
             default:                return "_______Unknown";
         }
     }

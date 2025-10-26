@@ -17,9 +17,8 @@ static bool isLeftAssociative(const std::string& op)
 
 ShuntingYard::PreparedTokens ShuntingYard::prepareTokens(
         const std::vector<Parser::ImmediateOperand>& operands,
-        const std::unordered_map<std::string, Encoder::Label>& labels,
+        std::unordered_map<std::string, Encoder::Label>& labels,
         const std::unordered_map<std::string, Encoder::Constant>& constants,
-        const std::unordered_set<std::string>& externs,
         uint64_t bytesWritten,
         uint64_t sectionOffset,
         const std::string* currentSection
@@ -107,40 +106,44 @@ ShuntingYard::PreparedTokens ShuntingYard::prepareTokens(
             const std::string& name = std::get<Parser::String>(op).value;
             if (auto it = labels.find(name); it != labels.end())
             {
-                if (useSection && it->second.section.compare(*usedSection) != 0)
+                if (it->second.isExtern)
                 {
-                    output.relocationPossible = false;
+                    if (useSection && it->second.name.compare(*usedSection) != 0)
+                    {
+                        output.relocationPossible = false;
+                    }
+                    Token token;
+                    token.type = Token::Type::Position;
+                    token.offset = 0;
+                    if (expectUnaryMinus)
+                    {
+                        token.negative = true;
+                        expectUnaryMinus = false;
+                    }
+                    outputQueue.push_back(std::move(token));
+                    usedSection = &it->second.name;
+                    useSection = true;
+                    output.isExtern = true;
                 }
-                Token token;
-                token.type = Token::Type::Position;
-                token.offset = it->second.offset;
-                if (expectUnaryMinus)
+                else
                 {
-                    token.negative = true;
-                    expectUnaryMinus = false;
+                    if (useSection && it->second.section.compare(*usedSection) != 0)
+                    {
+                        output.relocationPossible = false;
+                    }
+                    Token token;
+                    token.type = Token::Type::Position;
+                    token.offset = it->second.offset;
+                    if (expectUnaryMinus)
+                    {
+                        token.negative = true;
+                        expectUnaryMinus = false;
+                    }
+                    outputQueue.push_back(std::move(token));
+                    usedSection = &it->second.section;
+                    useSection = true;
+                    output.isExtern = false;
                 }
-                outputQueue.push_back(std::move(token));
-                usedSection = &it->second.section;
-                useSection = true;
-            }
-            else if (auto it = externs.find(name); it != externs.end())
-            {
-                if (useSection && (*it).compare(*usedSection) != 0)
-                {
-                    output.relocationPossible = false;
-                }
-                Token token;
-                token.type = Token::Type::Position;
-                token.offset = 0;
-                if (expectUnaryMinus)
-                {
-                    token.negative = true;
-                    expectUnaryMinus = false;
-                }
-                outputQueue.push_back(std::move(token));
-                usedSection = &(*it);
-                useSection = true;
-                output.isExtern = true;
             }
             else if (auto it = constants.find(name); it != constants.end())
             {

@@ -17,10 +17,6 @@ void Encoder::Encoder::Encode()
 {
     std::vector<Parser::Section> parsedSections = parser->getSections();
 
-    const std::vector<std::string>& externs_vector = parser->getExterns();
-    externs.clear();
-    externs.insert(externs_vector.begin(), externs_vector.end());
-
     ResolveConstantsPrePass(parsedSections);
 
     if (OptimizeOffsets(parsedSections))
@@ -49,6 +45,7 @@ void Encoder::Encoder::ResolveConstantsPrePass(const std::vector<Parser::Section
                 lbl.section = section.name;
                 lbl.resolved = false;
                 lbl.isGlobal = label.isGlobal;
+                lbl.isExtern = label.isExtern;
                 if (labels.find(lbl.name) == labels.end())
                 {
                     labels[lbl.name] = lbl;

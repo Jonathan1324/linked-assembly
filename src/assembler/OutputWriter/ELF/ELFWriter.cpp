@@ -9,7 +9,6 @@ ELF::Writer::Writer(const Context &_context, Architecture _arch, BitMode _bits, 
 
 void ELF::Writer::Write()
 {
-    //TODO: extern labels
     constexpr std::streamoff alignTo = 0x10;
     constexpr uint64_t alignment = static_cast<uint64_t>(alignTo);
 
@@ -211,6 +210,7 @@ void ELF::Writer::Write()
         if (std::holds_alternative<Encoder::Label*>(symbol))
         {
             const Encoder::Label* label = std::get<Encoder::Label*>(symbol);
+            if (label->isExtern && !label->externUsed) continue;
             strtabBuffer.insert(strtabBuffer.end(), label->name.begin(), label->name.end());
             strtabBuffer.push_back(0);
             labelNameOffsets[label->name] = offset;
@@ -224,12 +224,14 @@ void ELF::Writer::Write()
         }
     }
 
+    std::unordered_map<std::string, uint64_t> externLabelIndex;
+
     for (const auto& symbol : symbols)
     {
         if (std::holds_alternative<Encoder::Label*>(symbol))
         {
             const Encoder::Label* label = std::get<Encoder::Label*>(symbol);
-
+            if (label->isExtern && !label->externUsed) continue;
             auto it = labelNameOffsets.find(label->name);
             if (it == labelNameOffsets.end()) throw Exception::InternalError("Couldn't find offset for label in .strtab", -1, -1);
             uint32_t nameOffset = it->second;
@@ -240,20 +242,27 @@ void ELF::Writer::Write()
                 entry.OffsetInNameStringTable = nameOffset;
                 entry.Value = static_cast<uint32_t>(label->offset);
                 entry.Size = 0;
-                entry.Info = Symbol::SetInfo(label->isGlobal ? Symbol::Bind::GLOBAL : Symbol::Bind::LOCAL, Symbol::Type::NONE);
+                entry.Info = Symbol::SetInfo((label->isGlobal || label->isExtern) ? Symbol::Bind::GLOBAL : Symbol::Bind::LOCAL, Symbol::Type::NONE);
                 entry.Other = 0;
                 auto it = sectionIndexes.find(label->section);
                 if (it == sectionIndexes.end()) throw Exception::InternalError("Unknown section for label", -1, -1);
                 entry.IndexInSectionHeaderTable = it->second;
                 
-                if (label->isGlobal) globalSymbols.push_back(std::move(entry));
+                if (label->isExtern)
+                {
+                    entry.Value = 0;
+                    entry.IndexInSectionHeaderTable = Symbol::UNDEFINDEX;
+                    externLabelIndex[label->name] = globalSymbols.size();
+                    globalSymbols.push_back(std::move(entry));
+                }
+                else if (label->isGlobal) globalSymbols.push_back(std::move(entry));
                 else localSymbols.push_back(std::move(entry));
             }
             else if (bits == BitMode::Bits64)
             {
                 Symbol::Entry64 entry;
                 entry.OffsetInNameStringTable = nameOffset;
-                entry.Info = Symbol::SetInfo(label->isGlobal ? Symbol::Bind::GLOBAL : Symbol::Bind::LOCAL, Symbol::Type::NONE);
+                entry.Info = Symbol::SetInfo((label->isGlobal || label->isExtern) ? Symbol::Bind::GLOBAL : Symbol::Bind::LOCAL, Symbol::Type::NONE);
                 entry.Other = 0;
                 auto it = sectionIndexes.find(label->section);
                 if (it == sectionIndexes.end()) throw Exception::InternalError("Unknown section for label", -1, -1);
@@ -261,7 +270,14 @@ void ELF::Writer::Write()
                 entry.Value = label->offset;
                 entry.Size = 0;
                 
-                if (label->isGlobal) globalSymbols.push_back(std::move(entry));
+                if (label->isExtern)
+                {
+                    entry.Value = 0;
+                    entry.IndexInSectionHeaderTable = Symbol::UNDEFINDEX;
+                    externLabelIndex[label->name] = globalSymbols.size();
+                    globalSymbols.push_back(std::move(entry));
+                }
+                else if (label->isGlobal) globalSymbols.push_back(std::move(entry));
                 else localSymbols.push_back(std::move(entry));
             }
             else throw Exception::InternalError("Unknown bit mode", -1, -1);
@@ -460,9 +476,19 @@ void ELF::Writer::Write()
             relocSection.name = ".rela" + section.name;
             for (const Encoder::Relocation& relocation : section.relocations)
             {
-                auto it = sectionSymbolIndex.find(relocation.usedSection);
-                if (it == sectionSymbolIndex.end()) throw Exception::InternalError("Couldn't find index in .symtab", -1, -1);
-                const uint64_t symbolIndex = it->second;
+                uint64_t symbolIndex;
+                if (relocation.isExtern)
+                {
+                    auto it = externLabelIndex.find(relocation.usedSection);
+                    if (it == externLabelIndex.end()) throw Exception::InternalError("Couldn't find index in .symtab", -1, -1);
+                    symbolIndex = it->second + localSymbols.size();
+                }
+                else
+                {
+                    auto it = sectionSymbolIndex.find(relocation.usedSection);
+                    if (it == sectionSymbolIndex.end()) throw Exception::InternalError("Couldn't find index in .symtab", -1, -1);
+                    symbolIndex = it->second;
+                }
 
                 // TODO: check if actual useful
                 // If the relocation has an addend, this code removes it from the code itself
@@ -531,9 +557,19 @@ void ELF::Writer::Write()
             relocSection.name = ".rel" + section.name;
             for (const Encoder::Relocation& relocation : section.relocations)
             {
-                auto it = sectionSymbolIndex.find(relocation.usedSection);
-                if (it == sectionSymbolIndex.end()) throw Exception::InternalError("Couldn't find index in .symtab", -1, -1);
-                const uint64_t symbolIndex = it->second;
+                uint64_t symbolIndex;
+                if (relocation.isExtern)
+                {
+                    auto it = externLabelIndex.find(relocation.usedSection);
+                    if (it == externLabelIndex.end()) throw Exception::InternalError("Couldn't find index in .symtab", -1, -1);
+                    symbolIndex = it->second + localSymbols.size();
+                }
+                else
+                {
+                    auto it = sectionSymbolIndex.find(relocation.usedSection);
+                    if (it == sectionSymbolIndex.end()) throw Exception::InternalError("Couldn't find index in .symtab", -1, -1);
+                    symbolIndex = it->second;
+                }
                 
                 if (bits == BitMode::Bits16 || bits == BitMode::Bits32)
                 {

@@ -80,6 +80,7 @@ namespace Parser
     {
         std::string name;
         bool isGlobal;
+        bool isExtern;
 
         size_t lineNumber;
         size_t column;
@@ -134,7 +135,6 @@ namespace Parser
 
         const std::string& getOrg() const noexcept { return org; }
         const std::vector<Section>& getSections() const noexcept { return sections; }
-        const std::vector<std::string>& getExterns() const noexcept { return externs;}
 
     protected:
         Context context;
@@ -143,7 +143,6 @@ namespace Parser
 
         std::string org;
         std::vector<Section> sections;
-        std::vector<std::string> externs;
     };
 
     Parser* getParser(const Context& context, Architecture arch, BitMode bits);
