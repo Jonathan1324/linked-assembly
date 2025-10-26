@@ -32,6 +32,7 @@ std::vector<uint8_t> x86::Encoder::EncodeInterruptInstruction(Parser::Instructio
                 reloc.usedSection = interruptEval.usedSection;
                 reloc.type = ::Encoder::RelocationType::Absolute;
                 reloc.size = ::Encoder::RelocationSize::Bit8;
+                reloc.isExtern = interruptEval.isExtern;
                 relocations.push_back(std::move(reloc));
             }
             else

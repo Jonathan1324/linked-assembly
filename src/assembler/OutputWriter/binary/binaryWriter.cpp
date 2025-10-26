@@ -54,6 +54,8 @@ void Binary::Writer::Write()
 
     for (const Encoder::Relocation& relocation : encoder->getRelocations())
     {
+        if (relocation.isExtern) throw Exception::SemanticError("Can't use external labels with binary output", -1, -1);
+
         auto itBuf = sectionBuffers.find(relocation.section);
         if (itBuf == sectionBuffers.end()) throw Exception::InternalError("Section wasn't found", -1, -1);
         std::vector<uint8_t>* sectionBuffer = itBuf->second;

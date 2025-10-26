@@ -87,6 +87,7 @@ namespace Encoder
         RelocationSize size;
 
         bool addendInCode = false;
+        bool isExtern = false;
     };
 
 
@@ -96,6 +97,7 @@ namespace Encoder
         int64_t offset;
         bool useOffset;
         bool relocationPossible;
+        bool isExtern;
 
         std::string usedSection;
     };
@@ -150,6 +152,7 @@ namespace Encoder
         std::unordered_map<std::string, uint64_t> sectionStarts;
         std::unordered_map<std::string, Label> labels;
         std::unordered_map<std::string, Constant> constants;
+        std::unordered_set<std::string> externs;
 
         std::vector<Symbol> symbols;
 

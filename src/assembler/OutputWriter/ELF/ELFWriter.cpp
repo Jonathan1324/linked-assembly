@@ -9,6 +9,7 @@ ELF::Writer::Writer(const Context &_context, Architecture _arch, BitMode _bits, 
 
 void ELF::Writer::Write()
 {
+    //TODO: extern labels
     constexpr std::streamoff alignTo = 0x10;
     constexpr uint64_t alignment = static_cast<uint64_t>(alignTo);
 

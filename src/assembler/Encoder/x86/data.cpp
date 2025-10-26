@@ -594,6 +594,7 @@ std::vector<uint8_t> x86::Encoder::EncodeDataInstruction(Parser::Instruction::In
                             reloc.section = *currentSection;
                             reloc.usedSection = eval.usedSection;
                             reloc.type = ::Encoder::RelocationType::Absolute;
+                            reloc.isExtern = eval.isExtern;
                             switch (sizeInBits)
                             {
                                 case 8: reloc.size = ::Encoder::RelocationSize::Bit8; break;

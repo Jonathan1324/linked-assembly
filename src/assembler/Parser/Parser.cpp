@@ -258,21 +258,6 @@ void Parser::Parser::Print() const
     }
 }
 
-const std::string& Parser::Parser::getOrg() const
-{
-    return org;
-}
-
-const std::vector<Parser::Section>& Parser::Parser::getSections() const
-{
-    return sections;
-}
-
-const std::vector<std::string>& Parser::Parser::getExterns() const
-{
-    return externs;
-}
-
 #include "x86/Parser.hpp"
 
 // FIXME: add multiple parser support

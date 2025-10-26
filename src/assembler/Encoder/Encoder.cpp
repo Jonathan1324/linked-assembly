@@ -17,6 +17,10 @@ void Encoder::Encoder::Encode()
 {
     std::vector<Parser::Section> parsedSections = parser->getSections();
 
+    const std::vector<std::string>& externs_vector = parser->getExterns();
+    externs.clear();
+    externs.insert(externs_vector.begin(), externs_vector.end());
+
     ResolveConstantsPrePass(parsedSections);
 
     if (OptimizeOffsets(parsedSections))
@@ -330,7 +334,7 @@ void Encoder::Encoder::Print() const
 
     for (const auto& reloc : relocations)
     {
-        std::cout << "Relocation in '" << reloc.section << "' at " << reloc.offsetInSection << " using '" << reloc.usedSection << "':" << std::endl;
+        std::cout << "Relocation in '" << reloc.section << "' at " << reloc.offsetInSection << " using " << (reloc.isExtern ? "extern '" : "'") << reloc.usedSection << "':" << std::endl;
         std::cout << "  Bits: ";
         switch (reloc.size)
         {
