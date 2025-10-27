@@ -8,5 +8,6 @@ global _start
 _start:
     mov eax, testExtern
     mov ecx, label2
+    mov ax, _start
 
 extern testExtern

@@ -588,7 +588,7 @@ std::vector<uint8_t> x86::Encoder::EncodeDataInstruction(Parser::Instruction::In
                         {
                             value = eval.offset; // TODO overflow
                             ::Encoder::Relocation reloc;
-                            reloc.offsetInSection = sectionOffset + instr.size();
+                            reloc.offsetInSection = sectionOffset + instr.size() + (instrUse16BitPrefix ? 1 : 0);
                             reloc.addend = eval.offset;
                             reloc.addendInCode = true;
                             reloc.section = *currentSection;
