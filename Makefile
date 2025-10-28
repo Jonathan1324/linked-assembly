@@ -29,7 +29,7 @@ RUSTLDFLAGS = -lstatic=core -lstatic=rust
 
 .PHONY: all clean libcore librust buildtool asmp assembler linker
 
-all: libcore librust lbf buildtool asmp assembler linker
+all: libcore librust lbf buildtool asmp assembler linker lfs
 
 libcore:
 	@$(MAKE) -C $(SRC_DIR)/lib 				\
