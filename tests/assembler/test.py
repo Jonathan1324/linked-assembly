@@ -1,78 +1,14 @@
 from assembler.assembler import Format, Bits, Arch, arch_map, bits_map, format_map
+from assembler.lasm import run_lasm
 from assembler.nasm import run_nasm
 from pathlib import Path
 import logging
 import shutil
-import subprocess
 from typing import List
 
 logger = logging.getLogger("tests")
 
-def run_lasm(src: Path, dst: Path, logs: Path, debug: bool,
-        arch: Arch, bits: Bits, format: Format) -> tuple[bool, Path]:
-    assembler = Path("dist/bin/lasm")
-    cmd = [str(assembler), str(src)]
-    if debug: cmd.append("-d")
-
-    arch_str: str
-    bits_str: str
-    format_str: str
-
-    if arch == Arch.X86:
-        arch_str = "x86"
-        cmd.extend(["--arch", "x86"])
-    elif arch == Arch.ARM:
-        arch_str = "arm"
-        cmd.extend(["--arch", "arm"])
-    elif arch == Arch.RISCV:
-        arch_str = "riscv"
-        cmd.extend(["--arch", "riscv"])
-    else:
-        raise ValueError(f"Unsupported architecture: {arch}")
-
-    if bits == Bits.B16:
-        bits_str = "16bit"
-        cmd.extend(["--bits", "16"])
-    elif bits == Bits.B32:
-        bits_str = "32bit"
-        cmd.extend(["--bits", "32"])
-    elif bits == Bits.B64:
-        bits_str = "64bit"
-        cmd.extend(["--bits", "64"])
-    else:
-        raise ValueError(f"Unsupported bit size: {bits}")
-
-    if format == Format.BIN:
-        format_str = "bin"
-        cmd.extend(["--format", "bin"])
-    elif format == Format.ELF:
-        format_str = "elf"
-        cmd.extend(["--format", "elf"])
-    elif format == Format.COFF:
-        format_str = "coff"
-        cmd.extend(["--format", "coff"])
-    elif format == Format.MACHO:
-        format_str = "macho"
-        cmd.extend(["--format", "macho"])
-    else:
-        raise ValueError(f"Unsupported format: {format}")
-    
-    ext: str
-    if format == Format.BIN:
-        ext = "bin"
-    else:
-        ext = "o"
-
-    out = Path(f"{dst}-{arch_str}-{bits_str}-{format_str}.{ext}")
-    cmd.extend(["-o", str(out)])
-    log_path = Path(f"{logs}/{Path(src).name}-{arch_str}-{bits_str}-{format_str}.txt")
-
-    with open(log_path.resolve(), "w") as f:
-        result = subprocess.run(cmd, stdout=f, stderr=f)
-
-    return (result.returncode == 0, out)
-
-def test_assembler(log_dir: Path, src_dir: Path, build_dir: Path, archs: List[Arch], bitss: List[Bits], formats: List[Format], glob: str, name: str, run_function) -> List[Path]:
+def test_assembler(log_dir: Path, src_dir: Path, build_dir: Path, arch: Arch, glob: str, name: str, run_function) -> List[Path]:
     outputs = []
     for asmfile in src_dir.rglob(glob):
         asmfile_parent = asmfile.parent.parts
@@ -83,40 +19,92 @@ def test_assembler(log_dir: Path, src_dir: Path, build_dir: Path, archs: List[Ar
         log_path = Path(log_dir, name, *asmfile_parent[3:])
         log_path.mkdir(parents=True, exist_ok=True)
 
-        wantError = asmfile.name.startswith("e")
+        formats = []
+        bitss = []
+        expects = None
 
-        for arch in archs:
-            for format in formats:
-                for bits in bitss:
-                    arch_str: str
-                    bits_str: str
-                    format_str: str
-                    try:
-                        arch_str = arch_map[arch]
-                        bits_str = bits_map[bits]
-                        format_str = format_map[format]
-                    except KeyError as e:
-                        raise ValueError(f"Unsupported value: {e}")
-                    result, output = run_function(
-                        src=asmfile,
-                        dst=dst_path,
-                        debug=True,
-                        logs=log_path,
-                        arch=arch,
-                        bits=bits,
-                        format=format
-                    )
-                    if result:
-                        if wantError:
-                            logger.warning(f"({name}) Arch: {arch_str}, Bits: {bits_str}, Format: {format_str}; {asmfile} successful")
+        with open(asmfile) as f:
+            for line in [f.readline() for _ in range(3)]:
+                line = line.strip().lower()
+
+                if "formats:" in line:
+                    content = line.split("formats:", 1)[1].strip()
+                    for x in content.split(","):
+                        x = x.strip()
+                        if x == "bin":
+                            formats.append(Format.BIN)
+                        elif x == "elf":
+                            formats.append(Format.ELF)
+                        elif x == "coff":
+                            formats.append(Format.COFF)
+                        elif x == "macho":
+                            formats.append(Format.MACHO)
                         else:
-                            logger.debug(f"({name}) Arch: {arch_str}, Bits: {bits_str}, Format: {format_str}; {asmfile} successful")
+                            logger.error(f"{asmfile} has unknown format: '{x}'")
+                
+                elif "bits:" in line:
+                    content = line.split("bits:", 1)[1].strip()
+                    for x in content.split(","):
+                        x = x.strip()
+                        if x == "16":
+                            bitss.append(Bits.B16)
+                        elif x == "32":
+                            bitss.append(Bits.B32)
+                        elif x == "64":
+                            bitss.append(Bits.B64)
+                        else:
+                            logger.error(f"{asmfile} has unknown bits: '{x}'")
+
+                elif "expect:" in line:
+                    content = line.split("expect:", 1)[1].strip()
+                    if content == "success":
+                        expects = True
+                    elif content == "error":
+                        expects = False
                     else:
-                        if wantError:
-                            logger.debug(f"({name}) Arch: {arch_str}, Bits: {bits_str}, Format: {format_str}; {asmfile} failed")
-                        else:
-                            logger.warning(f"({name}) Arch: {arch_str}, Bits: {bits_str}, Format: {format_str}; {asmfile} failed")
-                    outputs.append(output)
+                        logger.error(f"{asmfile} has unknown expectation: '{content}'")
+
+        if not formats:
+            logger.warning(f"{asmfile}: no formats defined")
+
+        if not bitss:
+            logger.warning(f"{asmfile}: no bits defined")
+
+        if expects is None:
+            logger.warning(f"{asmfile}: no expectation defined - defaulting to success")
+            expects = True  # Default
+
+        for format in formats:
+            for bits in bitss:
+                arch_str: str
+                bits_str: str
+                format_str: str
+                try:
+                    arch_str = arch_map[arch]
+                    bits_str = bits_map[bits]
+                    format_str = format_map[format]
+                except KeyError as e:
+                    raise ValueError(f"Unsupported value: {e}")
+                result, output = run_function(
+                    src=asmfile,
+                    dst=dst_path,
+                    debug=True,
+                    logs=log_path,
+                    arch=arch,
+                    bits=bits,
+                    format=format
+                )
+                if result:
+                    if expects:
+                        logger.debug(f"({name}) Arch: {arch_str}, Bits: {bits_str}, Format: {format_str}; {asmfile} successful")
+                    else:
+                        logger.warning(f"({name}) Arch: {arch_str}, Bits: {bits_str}, Format: {format_str}; {asmfile} successful")
+                else:
+                    if expects:
+                        logger.warning(f"({name}) Arch: {arch_str}, Bits: {bits_str}, Format: {format_str}; {asmfile} failed")
+                    else:
+                        logger.debug(f"({name}) Arch: {arch_str}, Bits: {bits_str}, Format: {format_str}; {asmfile} failed")
+                outputs.append(output)
     return outputs
 
 def check_if_files_equal(p1: Path, p2: Path, blocksize: int = 8192) -> bool:
@@ -155,7 +143,7 @@ def test(dir: Path, log_dir: Path):
     build_dir = dir / "build"
 
     test_assembler(log_dir / "x86", dir / "x86", build_dir / "x86",
-                  [Arch.X86], [Bits.B16, Bits.B32, Bits.B64], [Format.BIN, Format.ELF],
+                  Arch.X86,
                   "*.asm", "lasm", run_lasm)
     
     nasm_log_dir = log_dir / "nasm"
@@ -163,10 +151,10 @@ def test(dir: Path, log_dir: Path):
     nasm_build_dir = build_dir / "nasm"
     nasm_cmp_file = nasm_log_dir / "cmp.log"
     nasm_lasm_outs: List[Path] = test_assembler(nasm_log_dir, nasm_source_dir, nasm_build_dir,
-                                                [Arch.X86], [Bits.B16, Bits.B32, Bits.B64], [Format.BIN, Format.ELF],
+                                                Arch.X86,
                                                 "*.asm", "lasm", run_lasm)
     nasm_nasm_outs: List[Path] = test_assembler(nasm_log_dir, nasm_source_dir, nasm_build_dir,
-                                                [Arch.X86], [Bits.B16, Bits.B32, Bits.B64], [Format.BIN, Format.ELF],
+                                                Arch.X86,
                                                 "*.asm", "nasm", run_nasm)
     nasm_cmp_file_content: List[List[str]] = []
     for nasm_lasm_out, nasm_nasm_out in zip(nasm_lasm_outs, nasm_nasm_outs):
