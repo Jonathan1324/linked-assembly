@@ -1,0 +1,45 @@
+C_SRCS = $(shell find $(SRC_DIR) -name '*.c' | sed "s|$(SRC_DIR)/||")
+C_OBJS = $(patsubst %.c, $(BUILD_DIR)/%.c.o, $(C_SRCS))
+
+CPP_SRCS = $(shell find $(SRC_DIR) -name '*.cpp' | sed "s|$(SRC_DIR)/||")
+CPP_OBJS = $(patsubst %.cpp, $(BUILD_DIR)/%.cpp.o, $(CPP_SRCS))
+
+DEPS := $(C_OBJS:.o=.d) $(CPP_OBJS:.o=.d) $(ASM_OBJS:.o=.d)
+
+TARGET = $(BUILD_DIR)/lfs$(EXE_EXT)
+
+CFLAGS	 += -I$(SRC_DIR)
+CXXFLAGS += -I$(SRC_DIR)
+
+.PHONY: all clean
+
+all: $(TARGET) record
+
+# Compile C files
+$(BUILD_DIR)/%.c.o: $(SRC_DIR)/%.c
+	@echo "Compiling " $<
+	@mkdir -p $(dir $@)
+	@$(CC) $(CFLAGS) -MMD -MF $(@:.o=.d) -c $< -o $@
+
+# Compile C++ files
+$(BUILD_DIR)/%.cpp.o: $(SRC_DIR)/%.cpp
+	@echo "Compiling  " $<
+	@mkdir -p $(dir $@)
+	@$(CXX) $(CXXFLAGS) -MMD -MF $(@:.o=.d) -c $< -o $@
+
+# link files
+$(TARGET): $(C_OBJS) $(CPP_OBJS) $(ASM_OBJS) $(wildcard $(LIB_DIR)/*.a)
+	@echo "Linking " $@
+	@mkdir -p $(BUILD_DIR)
+	@$(CXX) $(CXXFLAGS) $^ $(LDFLAGS) -o $@
+ifeq (${DEBUG},0)
+	@strip $(STRIPFLAGS) $@
+endif
+
+record:
+	@echo $(TARGET) >> $(BIN_DIR)/binaries.txt
+
+-include $(DEPS)
+
+clean:
+	@rm -rf $(BUILD_DIR)
