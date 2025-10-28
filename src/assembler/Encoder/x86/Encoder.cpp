@@ -20,7 +20,10 @@ std::vector<uint8_t> x86::Encoder::EncodeInstruction(Parser::Instruction::Instru
             break;
 
         // INTERRUPT
-        case Instructions::INT:
+        case Instructions::INT: case Instructions::IRET:
+        case Instructions::IRETQ: case Instructions::IRETD:
+        case Instructions::SYSCALL: case x86::Instructions::SYSRET:
+        case x86::Instructions::SYSENTER: case x86::Instructions::SYSEXIT:
             instr = EncodeInterruptInstruction(instruction, ignoreUnresolved, optimize);
             break;
 

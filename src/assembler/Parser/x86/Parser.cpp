@@ -521,7 +521,14 @@ void x86::Parser::Parse(const std::vector<Token::Token>& tokens)
 
         // INTERRUPT
         static const std::unordered_map<std::string_view, uint64_t> interruptInstructions = {
-            {"int", ::x86::Instructions::INT}
+            {"int", ::x86::Instructions::INT},
+            {"iret", ::x86::Instructions::IRET},
+            {"iretq", ::x86::Instructions::IRETQ},
+            {"iretd", ::x86::Instructions::IRETD},
+            {"syscall", ::x86::Instructions::SYSCALL},
+            {"sysret", x86::Instructions::SYSRET},
+            {"sysenter", x86::Instructions::SYSENTER},
+            {"sysexit", x86::Instructions::SYSEXIT}
         };
 
         it = interruptInstructions.find(lowerVal);
@@ -543,6 +550,15 @@ void x86::Parser::Parse(const std::vector<Token::Token>& tokens)
                     }
                     instruction.operands.push_back(imm);
                 } break;
+
+                case x86::Instructions::IRET:
+                case x86::Instructions::IRETQ:
+                case x86::Instructions::IRETD:
+                case x86::Instructions::SYSCALL:
+                case x86::Instructions::SYSRET:
+                case x86::Instructions::SYSENTER:
+                case x86::Instructions::SYSEXIT:
+                    break;
 
                 default:
                     throw Exception::InternalError("Unknown interrupt instruction", token.line, token.column);
