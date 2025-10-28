@@ -52,7 +52,7 @@ bool Encoder::Encoder::resolveConstantWithoutPos(Constant& c, std::unordered_set
     if (c.hasPos == HasPos::TRUE) return false;
 
     if (visited.count(c.name))
-        throw Exception::SemanticError("Circular dependency at " + c.name); // FIXME: no line or column
+        throw Exception::SemanticError("Circular dependency at " + c.name, -1, -1); // FIXME: no line or column
     visited.insert(c.name);
 
     for (const auto& dep : getDependencies(c.expression))
@@ -66,7 +66,7 @@ bool Encoder::Encoder::resolveConstantWithoutPos(Constant& c, std::unordered_set
 
         auto it = constants.find(dep);
         if (it == constants.end())
-            throw Exception::InternalError("Unknown dependency: " + dep);
+            throw Exception::InternalError("Unknown dependency: " + dep, -1, -1);
 
         if (!resolveConstantWithoutPos(it->second, visited))
         {
@@ -90,7 +90,7 @@ bool Encoder::Encoder::resolveConstantWithoutPos(Constant& c, std::unordered_set
 
         if (value < static_cast<Int128>(std::numeric_limits<int64_t>::min()) ||
             value > static_cast<Int128>(std::numeric_limits<int64_t>::max()))
-            throw Exception::OverflowError("Constant '" + c.name + "' too big for a signed 64-bit integer"); // FIXME: no line or column
+            throw Exception::OverflowError("Constant '" + c.name + "' too big for a signed 64-bit integer", -1, -1); // FIXME: no line or column
         c.value = static_cast<int64_t>(value);
     }
     c.resolved = true;
@@ -106,7 +106,7 @@ bool Encoder::Encoder::resolveConstantWithPos(Constant& c, std::unordered_set<st
     if (c.resolved) return true;
     
     if (visited.count(c.name))
-        throw Exception::SemanticError("Circular dependency at " + c.name); // FIXME: no line or column
+        throw Exception::SemanticError("Circular dependency at " + c.name, -1, -1); // FIXME: no line or column
     visited.insert(c.name);
 
     for (const auto& dep : getDependencies(c.expression))
@@ -115,10 +115,10 @@ bool Encoder::Encoder::resolveConstantWithPos(Constant& c, std::unordered_set<st
         
         auto it = constants.find(dep);
         if (it == constants.end())
-            throw Exception::InternalError("Unknown dependency: " + dep);
+            throw Exception::InternalError("Unknown dependency: " + dep, -1, -1);
 
         if (!resolveConstantWithPos(it->second, visited))
-            throw Exception::InternalError("Couldn't resolve constant '" + dep + "'");
+            throw Exception::InternalError("Couldn't resolve constant '" + dep + "'", -1, -1);
     }
 
     Evaluation evaluated = Evaluate(c.expression, c.bytesWritten, c.offset, &c.section);
@@ -135,7 +135,7 @@ bool Encoder::Encoder::resolveConstantWithPos(Constant& c, std::unordered_set<st
     
         if (value < static_cast<Int128>(std::numeric_limits<int64_t>::min()) ||
             value > static_cast<Int128>(std::numeric_limits<int64_t>::max()))
-            throw Exception::OverflowError("Constant '" + c.name + "' too big for a signed 64-bit integer"); // FIXME: no line or column
+            throw Exception::OverflowError("Constant '" + c.name + "' too big for a signed 64-bit integer", -1, -1); // FIXME: no line or column
         c.value = static_cast<int64_t>(value);
     }
     c.resolved = true;

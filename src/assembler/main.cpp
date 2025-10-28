@@ -51,6 +51,9 @@ int main(int argc, const char *argv[])
     Context context;
     context.warningManager = &warningManager;
 
+    StringPool stringPool;
+    context.stringPool = &stringPool;
+
     std::vector<std::string> inputFiles;
     std::string outputFile;
     BitMode bitMode;
@@ -62,8 +65,6 @@ int main(int argc, const char *argv[])
     Parser::Parser* parser = nullptr;
     Encoder::Encoder* encoder = nullptr;
     Output::Writer* outputWriter = nullptr;
-
-    StringPool stringPool;
 
     // Parse arguments
     try
@@ -100,7 +101,8 @@ int main(int argc, const char *argv[])
         tokenizer.clear();
         for (size_t i = 0; i < inputFiles.size(); i++)
         {
-            std::istream* file = openIstream(inputFiles.at(i));
+            std::istream* file = openIstream(inputFiles[i]);
+            context.filename = std::filesystem::path(inputFiles[i]).string();
             std::istream* input = file;
 
             if (doPreprocess)
@@ -124,7 +126,7 @@ int main(int argc, const char *argv[])
                         std::cerr << err_buf;
                         free_c_string(err_buf);
                     }
-                    throw Exception::InternalError("Preprocessor failed");
+                    throw Exception::InternalError("Preprocessor failed", -1, -1);
                 }
 
                 if (out_buf)
@@ -174,12 +176,14 @@ int main(int argc, const char *argv[])
         return handleError(e);
     }
 
+    context.filename = std::filesystem::path(inputFiles.at(0)).string();
+
     // Parse
     try
     {
         parser = Parser::getParser(context, arch, bitMode);
         if (!parser)
-            throw Exception::InternalError("Couldn't get parser");
+            throw Exception::InternalError("Couldn't get parser", -1, -1);
         
         parser->Parse(tokenizer.getTokens());
         if (debug)
@@ -208,7 +212,7 @@ int main(int argc, const char *argv[])
     {
         encoder = Encoder::getEncoder(context, arch, bitMode, parser);
         if (!encoder)
-            throw Exception::InternalError("Couldn't get encoder");
+            throw Exception::InternalError("Couldn't get encoder", -1, -1);
 
         encoder->Encode();
         encoder->Optimize();
@@ -238,7 +242,7 @@ int main(int argc, const char *argv[])
     {
         outputWriter = Output::getWriter(context, arch, bitMode, format, objectFile, parser, encoder);
         if (!outputWriter)
-            throw Exception::InternalError("Couldn't get outputWriter");
+            throw Exception::InternalError("Couldn't get outputWriter", -1, -1);
 
         outputWriter->Write();
         if (debug)

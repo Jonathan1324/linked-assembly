@@ -278,7 +278,7 @@ namespace ELF
     namespace Symbol
     {
         constexpr uint16_t XINDEX = 0xFFF1;
-
+        constexpr uint16_t UNDEFINDEX = 0;
 
         enum Bind : uint8_t
         {

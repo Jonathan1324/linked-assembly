@@ -2,6 +2,7 @@ from pathlib import Path
 import logging
 import os
 import sys
+import lasmp.test as lasmp
 import assembler.test as assembler
 import buildtool.test as buildtool
 import lbf.test as lbf
@@ -30,6 +31,8 @@ console_handler.setFormatter(console_formatter)
 logger.addHandler(console_handler)
 
 def main():
+    lasmp_dir = dir / "lasmp"
+    lasmp_log_dir = log_dir / "lasmp"
     assembler_dir = dir / "assembler"
     assembler_log_dir = log_dir / "assembler"
     buildtool_dir = dir / "buildtool"
@@ -38,15 +41,18 @@ def main():
     lbf_log_dir = log_dir / "lbf"
     
     if "-c" in sys.argv[1:]:
+        lasmp.clean(lasmp_dir, lasmp_log_dir)
         assembler.clean(assembler_dir, assembler_log_dir)
         buildtool.clean(buildtool_dir, buildtool_log_dir)
         lbf.clean(lbf_dir, lbf_log_dir)
         logs.unlink(missing_ok=True)
     else:
+        lasmp_log_dir.mkdir(parents=True, exist_ok=True)
         assembler_log_dir.mkdir(parents=True, exist_ok=True)
         buildtool_log_dir.mkdir(parents=True, exist_ok=True)
         lbf_log_dir.mkdir(parents=True, exist_ok=True)
 
+        lasmp.test(lasmp_dir, lasmp_log_dir)
         assembler.test(assembler_dir, assembler_log_dir)
         buildtool.test(buildtool_dir, buildtool_log_dir)
         lbf.test(lbf_dir, lbf_log_dir)

@@ -21,7 +21,7 @@ void Binary::Writer::Write()
     for (Encoder::Section& section : sections)
     {
         if (section.align == 0)
-            throw Exception::InternalError("Alignment not set for section '" + section.name + "'");
+            throw Exception::InternalError("Alignment not set for section '" + section.name + "'", -1, -1);
 
         uint64_t align = section.align;
         if (align < 4) align = 4; // TODO: minimal alignment of 4, check if useful
@@ -54,12 +54,14 @@ void Binary::Writer::Write()
 
     for (const Encoder::Relocation& relocation : encoder->getRelocations())
     {
+        if (relocation.isExtern) throw Exception::SemanticError("Can't use external labels with binary output", -1, -1);
+
         auto itBuf = sectionBuffers.find(relocation.section);
-        if (itBuf == sectionBuffers.end()) throw Exception::InternalError("Section wasn't found");
+        if (itBuf == sectionBuffers.end()) throw Exception::InternalError("Section wasn't found", -1, -1);
         std::vector<uint8_t>* sectionBuffer = itBuf->second;
 
         auto it = sectionOffsets.find(relocation.usedSection);
-        if (it == sectionOffsets.end()) throw Exception::InternalError("Used section wasn't found");
+        if (it == sectionOffsets.end()) throw Exception::InternalError("Used section wasn't found", -1, -1);
         const uint64_t& sectionOffset = it->second;
         const int64_t value = sectionOffset + relocation.addend;
 
@@ -75,7 +77,7 @@ void Binary::Writer::Write()
                     {
                         if (value < std::numeric_limits<int8_t>::min() ||
                             value > std::numeric_limits<int8_t>::max())
-                            throw Exception::OverflowError("Relocation would overflow");
+                            throw Exception::OverflowError("Relocation would overflow", -1, -1);
                         
                         const int8_t val = static_cast<int8_t>(value);
                         std::memcpy(sectionBuffer->data() + offset, &val, sizeof(uint8_t));
@@ -85,7 +87,7 @@ void Binary::Writer::Write()
                     {
                         if (value < std::numeric_limits<int16_t>::min() ||
                             value > std::numeric_limits<int16_t>::max())
-                            throw Exception::OverflowError("Relocation would overflow");
+                            throw Exception::OverflowError("Relocation would overflow", -1, -1);
 
                         const int16_t val = static_cast<int16_t>(value);
                         std::memcpy(sectionBuffer->data() + offset, &val, sizeof(uint16_t));
@@ -97,7 +99,7 @@ void Binary::Writer::Write()
                         constexpr int32_t max24 =  (1 << 23) - 1;  //  8388607
 
                         if (value < min24 || value > max24)
-                            throw Exception::OverflowError("Relocation would overflow (24-bit)");
+                            throw Exception::OverflowError("Relocation would overflow (24-bit)", -1, -1);
 
                         int32_t val = static_cast<int32_t>(value);
 
@@ -114,7 +116,7 @@ void Binary::Writer::Write()
                     {
                         if (value < std::numeric_limits<int32_t>::min() ||
                             value > std::numeric_limits<int32_t>::max())
-                            throw Exception::OverflowError("Relocation would overflow (32-bit)");
+                            throw Exception::OverflowError("Relocation would overflow (32-bit)", -1, -1);
 
                         const int32_t val = static_cast<int32_t>(value);
                         std::memcpy(sectionBuffer->data() + offset, &val, sizeof(uint32_t));
@@ -124,7 +126,7 @@ void Binary::Writer::Write()
                     {
                         if (value < std::numeric_limits<int64_t>::min() ||
                             value > std::numeric_limits<int64_t>::max())
-                            throw Exception::OverflowError("Relocation would overflow (64-bit)");
+                            throw Exception::OverflowError("Relocation would overflow (64-bit)", -1, -1);
 
                         const int64_t val = static_cast<int64_t>(value);
                         std::memcpy(sectionBuffer->data() + offset, &val, sizeof(uint64_t));
@@ -134,7 +136,7 @@ void Binary::Writer::Write()
                 break;
             }
 
-            default: throw Exception::InternalError("Unknown relocation type"); break;
+            default: throw Exception::InternalError("Unknown relocation type", -1, -1); break;
         }
     }
 
@@ -142,13 +144,13 @@ void Binary::Writer::Write()
     for (const Encoder::Section& section : sections)
     {
         if (section.align == 0)
-            throw Exception::InternalError("Alignment not set for section '" + section.name + "'");
+            throw Exception::InternalError("Alignment not set for section '" + section.name + "'", -1, -1);
 
         if (!section.isInitialized) continue;
 
         std::streampos pos = file->tellp();
         if (pos == -1)
-            throw Exception::IOError("Failed to get file position");
+            throw Exception::IOError("Failed to get file position", -1, -1);
 
         uint64_t offset = static_cast<uint64_t>(pos);
 

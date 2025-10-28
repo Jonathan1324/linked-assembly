@@ -11,7 +11,9 @@ namespace x86
         HLT,
 
         // INTERRUPT
-        INT,
+        INT, IRET, IRETQ, IRETD,
+        SYSCALL, SYSRET,
+        SYSENTER, SYSEXIT,
 
         // FLAGS
         CLC, STC, CMC,

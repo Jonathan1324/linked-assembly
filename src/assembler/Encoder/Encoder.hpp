@@ -31,6 +31,8 @@ namespace Encoder
 
         bool isGlobal;
         bool resolved;
+        bool isExtern = false;
+        bool externUsed = false;
     };
 
     enum class HasPos
@@ -87,6 +89,7 @@ namespace Encoder
         RelocationSize size;
 
         bool addendInCode = false;
+        bool isExtern = false;
     };
 
 
@@ -96,6 +99,7 @@ namespace Encoder
         int64_t offset;
         bool useOffset;
         bool relocationPossible;
+        bool isExtern;
 
         std::string usedSection;
     };
@@ -130,7 +134,7 @@ namespace Encoder
         std::vector<uint8_t> EncodeData(const Parser::DataDefinition& dataDefinition);
         uint64_t GetSize(const Parser::DataDefinition& dataDefinition);
 
-        Evaluation Evaluate(const Parser::Immediate& immediate, uint64_t bytesWritten, uint64_t sectionOffset, const std::string* curSection) const;
+        Evaluation Evaluate(const Parser::Immediate& immediate, uint64_t bytesWritten, uint64_t sectionOffset, const std::string* curSection);
 
         void resolveConstants(bool withPos);
         bool Resolvable(const Parser::Immediate& immediate);

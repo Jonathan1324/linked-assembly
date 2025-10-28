@@ -50,15 +50,15 @@ bool parseArguments(int argc, const char *argv[],
 
     if (argc < 2)
     {
-        throw Exception::ArgumentError("No input file specified");
+        throw Exception::ArgumentError("No input file specified", -1, -1, "command-line");
     }
 
-    if (strcmp(argv[1], "--version") == 0 || strcmp(argv[1], "-v") == 0)
+    if (std::strcmp(argv[1], "--version") == 0 || std::strcmp(argv[1], "-v") == 0)
     {
         printVersion();
         return true;
     }
-    else if (strcmp(argv[1], "--help") == 0 || strcmp(argv[1], "-h") == 0)
+    else if (std::strcmp(argv[1], "--help") == 0 || std::strcmp(argv[1], "-h") == 0)
     {
         printHelp();
         return true;
@@ -69,17 +69,17 @@ bool parseArguments(int argc, const char *argv[],
 
     for (int i = 1; i < argc; ++i)
     {
-        if (std::string(argv[i]).compare("-o") == 0)
+        if (std::strcmp(argv[i], "-o") == 0)
         {
             if (i + 1 < argc)
                 output = argv[++i];
             else
-                throw Exception::ArgumentError("Missing output file after '-o'");
+                throw Exception::ArgumentError("Missing output file after '-o'", -1, -1, "command-line");
         }
-        else if (std::string(argv[i]).compare("--arch") == 0)
+        else if (std::strcmp(argv[i], "--arch") == 0)
         {
             if (i + 1 >= argc)
-                throw Exception::ArgumentError("Missing arg after '--arch'");
+                throw Exception::ArgumentError("Missing arg after '--arch'", -1, -1, "command-line");
             
             std::string archStr = toLower(argv[++i]);
             archStr = trim(archStr);
@@ -103,12 +103,12 @@ bool parseArguments(int argc, const char *argv[],
                 arch = Architecture::RISC_V;
             }
             else
-                throw Exception::ArgumentError("Unknown architecture: " + archStr);
+                throw Exception::ArgumentError("Unknown architecture: " + archStr, -1, -1, "command-line");
         }
-        else if (std::string(argv[i]).compare("--format") == 0)
+        else if (std::strcmp(argv[i], "--format") == 0)
         {
             if (i + 1 >= argc)
-                throw Exception::ArgumentError("Missing arg after '--format'");
+                throw Exception::ArgumentError("Missing arg after '--format'", -1, -1, "command-line");
             
             std::string formatStr = toLower(argv[++i]);
             formatStr = trim(formatStr);
@@ -134,23 +134,28 @@ bool parseArguments(int argc, const char *argv[],
                 format = Format::COFF;
             }
             else
-                throw Exception::ArgumentError("Unknown format: " + formatStr);
+                throw Exception::ArgumentError("Unknown format: " + formatStr, -1, -1, "command-line");
         }
-        else if (std::string(argv[i]).find("-m") == 0)
+        else if (std::strcmp(argv[i], "--bits") == 0)
         {
-            std::string modeStr = std::string(argv[i]).substr(2);
-            if (modeStr == "16") bits = BitMode::Bits16;
-            else if (modeStr == "32") bits = BitMode::Bits32;
-            else if (modeStr == "64") bits = BitMode::Bits64;
+            if (i + 1 >= argc)
+                throw Exception::ArgumentError("Missing arg after '--format'", -1, -1, "command-line");
+            
+            std::string bitsStr = toLower(argv[++i]);
+            bitsStr = trim(bitsStr);
+
+            if (bitsStr == "16") bits = BitMode::Bits16;
+            else if (bitsStr == "32") bits = BitMode::Bits32;
+            else if (bitsStr == "64") bits = BitMode::Bits64;
             else
-                throw Exception::ArgumentError("Unknown bit mode: " + modeStr);
+                throw Exception::ArgumentError("Unknown bit mode: " + bitsStr, -1, -1, "command-line");
         }
 
-        else if (std::string(argv[i]).compare("--debug") == 0 || std::string(argv[i]).compare("-d") == 0)
+        else if (std::strcmp(argv[i], "--debug") == 0 || std::strcmp(argv[i], "-d") == 0)
         {
             debug = true;
         }
-        else if (std::string(argv[i]).compare("--no-preprocess") == 0)
+        else if (std::strcmp(argv[i], "--no-preprocess") == 0)
         {
             preprocess = false;
         }
@@ -167,7 +172,7 @@ bool parseArguments(int argc, const char *argv[],
 
     if (inputs.empty())
     {
-        throw Exception::ArgumentError("No input file entered");
+        throw Exception::ArgumentError("No input file entered", -1, -1, "command-line");
     }
 
     if (output.empty())

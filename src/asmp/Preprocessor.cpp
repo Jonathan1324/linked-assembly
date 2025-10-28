@@ -15,9 +15,9 @@ PreProcessor::PreProcessor(const Context& _context)
 void PreProcessor::Process(std::ostream* output, std::istream* input, const std::string& filename)
 {
     if (!input || !(*input))
-        throw Exception::InternalError("Input stream isn't open or is in a bad state");
+        throw Exception::InternalError("Input stream isn't open or is in a bad state", -1, -1);
     if (!output || !(*output))
-        throw Exception::InternalError("Output stream isn't open or is in a bad state");
+        throw Exception::InternalError("Output stream isn't open or is in a bad state", -1, -1);
     
     int64_t inputLine = 0;
     int64_t outputLine = std::numeric_limits<int64_t>::min();
@@ -104,23 +104,23 @@ void PreProcessor::Process(std::ostream* output, std::istream* input, const std:
                     openChar = '<';
                     closeChar = '>';
                 }
-                else throw Exception::SyntaxError("Missing opening quote or angle bracket in %include");
+                else throw Exception::SyntaxError("Missing opening quote or angle bracket in %include", -1, -1);
 
                 size_t firstPos = 0;
                 if (rest[firstPos] != openChar)
-                    throw Exception::SyntaxError("Opening character not found where expected");
+                    throw Exception::SyntaxError("Opening character not found where expected", -1, -1);
 
                 size_t secondPos = rest.find(closeChar, firstPos + 1);
                 if (secondPos == std::string::npos)
                 {
-                    throw Exception::SyntaxError("Missing closing character in %include");
+                    throw Exception::SyntaxError("Missing closing character in %include", -1, -1);
                 }
 
                 std::string filename = rest.substr(firstPos + 1, secondPos - firstPos - 1);
 
                 std::ostringstream buffer;
                 std::ifstream input(filename);
-                if (!input) throw Exception::IOError("Could not open include file: " + filename);
+                if (!input) throw Exception::IOError("Could not open include file: " + filename, -1, -1);
 
                 Process(&buffer, &input, filename);
 

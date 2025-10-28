@@ -125,7 +125,7 @@ std::tuple<uint8_t, bool, bool> x86::Encoder::getReg(uint64_t reg)
         case TR6:    return std::make_tuple(6, false, false);
         case TR7:    return std::make_tuple(7, false, false);
     }
-    throw Exception::InternalError("Unknown register");
+    throw Exception::InternalError("Unknown register", -1, -1);
 }
 
 uint8_t x86::Encoder::getRegSize(uint64_t reg, BitMode mode)

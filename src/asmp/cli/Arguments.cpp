@@ -15,7 +15,7 @@ bool parseArguments(int argc, const char *argv[], std::string& input, std::strin
 {
     if (argc < 2)
     {
-        throw Exception::ArgumentError("No input file specified");
+        throw Exception::ArgumentError("No input file specified", -1, -1, "command-line");
     }
 
     if (strcmp(argv[1], "--version") == 0 || strcmp(argv[1], "-v") == 0)
@@ -39,7 +39,7 @@ bool parseArguments(int argc, const char *argv[], std::string& input, std::strin
             if (i + 1 < argc)
                 output = argv[++i];
             else
-                throw Exception::ArgumentError("Missing output file after '-o'");
+                throw Exception::ArgumentError("Missing output file after '-o'", -1, -1, "command-line");
         }
         else if (std::string(argv[i]).compare("--debug") == 0 || std::string(argv[i]).compare("-d") == 0)
         {
@@ -52,14 +52,14 @@ bool parseArguments(int argc, const char *argv[], std::string& input, std::strin
         else
         {
             if (inputSet)
-                throw Exception::ArgumentError("Too many input streams specified");
+                throw Exception::ArgumentError("Too many input streams specified", -1, -1, "command-line");
             input = argv[i];
             inputSet = true;
         }
     }
 
     if (input.empty())
-        throw Exception::ArgumentError("No input file entered");
+        throw Exception::ArgumentError("No input file entered", -1, -1, "command-line");
 
     if (output.empty())
     {

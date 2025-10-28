@@ -45,6 +45,7 @@ void Encoder::Encoder::ResolveConstantsPrePass(const std::vector<Parser::Section
                 lbl.section = section.name;
                 lbl.resolved = false;
                 lbl.isGlobal = label.isGlobal;
+                lbl.isExtern = label.isExtern;
                 if (labels.find(lbl.name) == labels.end())
                 {
                     labels[lbl.name] = lbl;
@@ -330,7 +331,7 @@ void Encoder::Encoder::Print() const
 
     for (const auto& reloc : relocations)
     {
-        std::cout << "Relocation in '" << reloc.section << "' at " << reloc.offsetInSection << " using '" << reloc.usedSection << "':" << std::endl;
+        std::cout << "Relocation in '" << reloc.section << "' at " << reloc.offsetInSection << " using " << (reloc.isExtern ? "extern '" : "'") << reloc.usedSection << "':" << std::endl;
         std::cout << "  Bits: ";
         switch (reloc.size)
         {

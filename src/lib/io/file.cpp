@@ -25,7 +25,7 @@ std::istream* openIstream(const std::string& path, std::ios::openmode mode)
     if (!file->is_open())
     {
         delete file;
-        throw Exception::IOError("Couldn't open file " + path);
+        throw Exception::IOError("Couldn't open file " + path, -1, -1);
     }
     return file;
 }
@@ -47,7 +47,7 @@ std::ostream* openOstream(const std::string& path, std::ios::openmode mode)
     if (!file->is_open())
     {
         delete file;
-        throw Exception::IOError("Couldn't open file " + path);
+        throw Exception::IOError("Couldn't open file " + path, -1, -1);
     }
     return file;
 }
@@ -55,5 +55,5 @@ std::ostream* openOstream(const std::string& path, std::ios::openmode mode)
 void deleteFile(const std::string& path)
 {
     if (std::remove(path.c_str()) != 0)
-        throw Exception::IOError("Couldn't delete file " + path);
+        throw Exception::IOError("Couldn't delete file " + path, -1, -1);
 }

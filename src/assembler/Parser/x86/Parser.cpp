@@ -105,7 +105,11 @@ void x86::Parser::Parse(const std::vector<Token::Token>& tokens)
                 if (lowerVal == "global")
                     globals.push_back(next->value);
                 else
-                    externs.push_back(next->value);
+                {
+                    Token::Token externToken(Token::Type::ExternLabel, next->value, next->line, next->column, next->file);
+                    it = filteredTokens.insert(it, externToken);
+                    it++;
+                }
             }
 
             // remove "global"/"extern"
@@ -343,6 +347,19 @@ void x86::Parser::Parse(const std::vector<Token::Token>& tokens)
             continue;
         }
 
+        if (token.type == Token::Type::ExternLabel)
+        {
+            ::Parser::Label label;
+            label.name = token.value;
+            label.lineNumber = token.line;
+            label.column = token.column;
+            label.isExtern = true;
+
+            currentSection->entries.push_back(label);
+
+            continue;
+        }
+
         // Labels
         if (token.type == Token::Type::Token &&
            ((filteredTokens[i + 1].type == Token::Type::Punctuation && filteredTokens[i + 1].value == ":" && /*TODO: not segment:offset*/ ::x86::registers.find(token.value) == ::x86::registers.end())
@@ -352,6 +369,7 @@ void x86::Parser::Parse(const std::vector<Token::Token>& tokens)
             label.name = token.value;
             label.lineNumber = token.line;
             label.column = token.column;
+            label.isExtern = false;
 
             if (std::find(globals.begin(), globals.end(), token.value) != globals.end())
                 label.isGlobal = true;
@@ -503,7 +521,14 @@ void x86::Parser::Parse(const std::vector<Token::Token>& tokens)
 
         // INTERRUPT
         static const std::unordered_map<std::string_view, uint64_t> interruptInstructions = {
-            {"int", ::x86::Instructions::INT}
+            {"int", ::x86::Instructions::INT},
+            {"iret", ::x86::Instructions::IRET},
+            {"iretq", ::x86::Instructions::IRETQ},
+            {"iretd", ::x86::Instructions::IRETD},
+            {"syscall", ::x86::Instructions::SYSCALL},
+            {"sysret", x86::Instructions::SYSRET},
+            {"sysenter", x86::Instructions::SYSENTER},
+            {"sysexit", x86::Instructions::SYSEXIT}
         };
 
         it = interruptInstructions.find(lowerVal);
@@ -525,6 +550,15 @@ void x86::Parser::Parse(const std::vector<Token::Token>& tokens)
                     }
                     instruction.operands.push_back(imm);
                 } break;
+
+                case x86::Instructions::IRET:
+                case x86::Instructions::IRETQ:
+                case x86::Instructions::IRETD:
+                case x86::Instructions::SYSCALL:
+                case x86::Instructions::SYSRET:
+                case x86::Instructions::SYSENTER:
+                case x86::Instructions::SYSEXIT:
+                    break;
 
                 default:
                     throw Exception::InternalError("Unknown interrupt instruction", token.line, token.column);
@@ -702,7 +736,7 @@ void x86::Parser::Parse(const std::vector<Token::Token>& tokens)
             continue;
         }
 
-        context.warningManager->add(Warning::GeneralWarning("Unhandled token: " + token.what()));
+        context.warningManager->add(Warning::GeneralWarning("Unhandled token: " + token.what(&context)));
     }
 
     // TODO: probably better way to handle this

@@ -20,7 +20,8 @@ namespace Token
         Punctuation,
         Bracket,
         EOL,
-        _EOF
+        _EOF,
+        ExternLabel
     };
 
     inline const char* to_string(Type type)
@@ -36,6 +37,7 @@ namespace Token
             case Type::Bracket:     return "__Bracket_____";
             case Type::EOL:         return "_EOL__________";
             case Type::_EOF:        return "EOF___________";
+            case Type::ExternLabel: return "__Extern_Label";
             default:                return "_______Unknown";
         }
     }
@@ -51,7 +53,7 @@ namespace Token
         Token(Type t, std::string v, size_t l, size_t c, uint64_t f)
             : type(t), value(std::move(v)), line(l), column(c), file(f) {}
 
-        std::string what() const;
+        std::string what(const Context* context) const;
     };
 
     class Tokenizer
