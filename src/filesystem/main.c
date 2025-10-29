@@ -1,5 +1,5 @@
 #include <stdio.h>
-
+#include <stdlib.h>
 #include "fat/fat.h"
 
 int main(int argc, const char *argv[])
@@ -36,15 +36,44 @@ int main(int argc, const char *argv[])
         return 1;
     }
 
-    FILE* f = fopen(output, "wb");
+    FILE* f = fopen(output, "r+b");
     if (!f) {
         perror("fopen");
         return 1;
     }
 
-    FAT_WriteBootsector(f, "TEST", "MYDISK", 0x12345678);
+    FAT12_Filesystem fs;
+    fs.f = f;
+
+    FAT12_WriteBootsector(&fs,
+                          "mkfs.fat",                                   // oem name
+                          "NO NAME",                                    // volume label
+                          0xEB241F36,                                   // volume id
+                          1474560,                                      // total size in bytes
+                          512,                                          // bytes per sector
+                          1,                                            // sectors per cluster
+                          1,                                            // reserved_sectors
+                          2,                                            // number of fats
+                          224,                                          // max root directory entries
+                          18,                                           // sectors per track
+                          2,                                            // number of heads
+                          0x00,                                         // drive number
+                          FAT12_BOOTSECTOR_MEDIA_DESCRIPTOR_FLOPPY144   // media descriptor
+    );
+
+    fs.size = fs.bootsector.header.total_sectors * fs.bootsector.header.bytes_per_sector;
+    fs.fat_offset = fs.bootsector.header.reserved_sectors * fs.bootsector.header.bytes_per_sector;
+    fs.fat_size = fs.bootsector.header.fat_size * fs.bootsector.header.bytes_per_sector;
+
+    FAT12_WriteEmptyFAT(&fs);
+    FAT12_CopyFAT(&fs, 1, 0);
+
+    FAT12_WriteEmptyRootDir(&fs);
+
+    fseek(fs.f, fs.size - 1, SEEK_SET);
+    uint8_t zero = 0;
+    fwrite(&zero, 1, 1, fs.f);
 
     fclose(f);
-
     return 0;
 }
