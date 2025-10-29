@@ -2,7 +2,7 @@
 #include <stdio.h>
 #include <stdint.h>
 
-const uint32_t FAT12_MAX_CLUSTERS = 0xFFF;
+static const uint32_t FAT12_MAX_CLUSTERS = 0xFFF;
 
 #define FAT12_BOOTSECTOR_MEDIA_DESCRIPTOR_FLOPPY144     0xF0 // 1.44 MB
 #define FAT12_BOOTSECTOR_MEDIA_DESCRIPTOR_FLOPPY120     0xF4 // 1.2 MB
@@ -75,7 +75,7 @@ typedef struct FAT_DirectoryEntry {
 
     uint16_t last_access_date;
     
-    uint16_t high_word_of_first_cluster; // Only FAT32
+    uint16_t first_cluster_high; // Only FAT32
 
     uint16_t last_modification_time;
     uint16_t last_modification_date;
@@ -90,16 +90,30 @@ typedef struct FAT12_Filesystem {
     FILE* f;
     FAT12_Bootsector bootsector;
 
+    uint32_t size; // in bytes
+
     uint32_t fat_offset;    // in bytes
     uint32_t fat_size;      // in bytes
 
-    uint32_t size; // in bytes
+    uint32_t root_offset;   // in bytes
+    uint32_t root_size;     // in bytes
+
+    uint32_t data_offset;   // in bytes
+    uint32_t data_size;     // in bytes
 
     int is_floppy;
 
 } FAT12_Filesystem;
 
 // Functions:
+
+// Initializes an empty FAT12 Filesystem
+FAT12_Filesystem* FAT12_CreateEmptyFilesystem(FILE* f,
+                                              const char* oem_name, const char* volume_label, uint32_t volume_id,
+                                              uint32_t total_size, uint32_t bytes_per_sector, uint8_t sectors_per_cluster,
+                                              uint16_t reserved_sectors, uint8_t number_of_fats, uint16_t max_root_directory_entries,
+                                              uint16_t sectors_per_track, uint16_t number_of_heads, uint8_t drive_number,
+                                              uint8_t media_descriptor );
 
 // Writes a FAT12 bootsector to the given file stream 'f' using the specified OEM name and volume label.
 // Parameters:
