@@ -34,6 +34,13 @@ int FAT12_WriteBootsector(FAT12_Filesystem* fs,
     while (1) {
         data_sectors = total_sectors - (reserved_sectors + number_of_fats * fat_sectors + root_dir_sectors);
         total_clusters = data_sectors / sectors_per_cluster;
+        if (total_clusters > FAT12_MAX_CLUSTERS) {
+            fprintf(stderr, "Warning: Too many clusters for FAT12 (%u). Reducing to max %u.\n",
+                    total_clusters, FAT12_MAX_CLUSTERS);
+            total_clusters = FAT12_MAX_CLUSTERS;
+            data_sectors = total_clusters * sectors_per_cluster;
+        }
+
         fat_bytes = (total_clusters * 3 + 1) / 2;
         uint32_t new_fat_sectors = (fat_bytes + bytes_per_sector - 1) / bytes_per_sector;
         if (new_fat_sectors == fat_sectors) break;
