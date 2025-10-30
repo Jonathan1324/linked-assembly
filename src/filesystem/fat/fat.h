@@ -117,6 +117,22 @@ typedef struct FAT12_Filesystem {
 
 } FAT12_Filesystem;
 
+typedef struct FAT12_File {
+    FAT12_Filesystem* fs;
+
+    uint32_t size;
+
+    uint16_t first_cluster;
+
+    uint32_t directory_entry_offset; // absolute in bytes from file start
+
+    int is_root_directory;
+
+} FAT12_File;
+
+uint32_t FAT12_ReadFromFileRaw(FAT12_File* f, uint32_t offset, uint8_t* buffer, uint32_t size);
+uint32_t FAT12_WriteToFileRaw(FAT12_File* f, uint32_t offset, uint8_t* buffer, uint32_t size);
+
 // Functions:
 
 void FAT_EncodeTime(int64_t epoch, uint16_t* fat_date, uint16_t* fat_time, uint8_t* tenths);
@@ -148,7 +164,7 @@ uint16_t FAT12_FindNextFreeRootDirectoryEntry(FAT12_Filesystem* fs);
 int FAT12_CreateFileFromStream(FAT12_Filesystem* fs, FILE* f, const char* name,
                                uint64_t creation_time, uint64_t last_access_time,
                                uint64_t last_modification_time, uint64_t file_size);
-                               
+
 
 // EmptyFS:
 

@@ -278,21 +278,21 @@ int FAT12_CreateFileFromStream(FAT12_Filesystem* fs, FILE* f, const char* name,
                 free(clusters);
                 return 2;
             }
+        }
 
+        for (int i = 0; i < cluster_count; i++) {
             uint32_t to_write = (file_size > cluster_size) ? cluster_size : file_size;
-            /* FIXME
             if (fread(buffer, 1, to_write, f) != to_write) {
                 perror("fread");
                 free(clusters);
-                return 2;
+                return 3;
             }
 
             if (fwrite(buffer, 1, to_write, fs->f) != to_write) {
                 perror("fwrite");
                 free(clusters);
-                return 2;
+                return 3;
             }
-            */
 
             file_size -= to_write;
         }

@@ -52,7 +52,7 @@ int main(int argc, const char *argv[])
 
     int64_t now = time(NULL);
 
-    FILE* test = fopen("test.py", "rb");
+    FILE* test = fopen("roots/test/test.txt", "rb");
     if (!test) {
         FAT12_CloseFilesystem(fs);
         fclose(f);
@@ -60,10 +60,37 @@ int main(int argc, const char *argv[])
     }
     fseek(test, 0, SEEK_END);
     long length = ftell(test);
+    fseek(test, 0, SEEK_SET);
     FAT12_CreateFileFromStream(fs, test, "test.txt",
                                now, now, now,
                                length);
     fclose(test);
+
+    FAT12_File fat12_f;
+    fat12_f.fs = fs;
+    fat12_f.is_root_directory = 0;
+    fat12_f.size = length;
+    fat12_f.first_cluster = 2;
+    fat12_f.directory_entry_offset = fs->root_offset;
+
+    uint8_t buffer[600] = {0};
+    uint32_t read = FAT12_ReadFromFileRaw(&fat12_f, 0, &buffer, 600);
+    printf("Read: %u\n", read);
+    for (int i = 0; i < 600; i++) {
+        printf("%x ", buffer[i]);
+    }
+    fputc('\n', stdout);
+
+    FAT12_File root_dir;
+    root_dir.fs = fs;
+    root_dir.is_root_directory = 1;
+
+    uint8_t buffer2[16];
+    for (int i = 0; i < 16; i++) {
+        buffer2[i] = (uint8_t)i;
+    }
+    uint32_t written = FAT12_WriteToFileRaw(&root_dir, 32, &buffer2, 16);
+    printf("Written: %u\n", written);
 
     FAT12_CloseFilesystem(fs);
     fclose(f);
