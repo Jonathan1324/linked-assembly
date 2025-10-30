@@ -17,6 +17,17 @@ static const uint32_t FAT12_MAX_CLUSTERS = 0xFFF;
 #define FAT12_BOOTSECTOR_EXTENDED_BOOT_SIGNATURE_OLD    0x28
 #define FAT12_BOOTSECTOR_EXTENDED_BOOT_SIGNATURE        0x29
 
+#define FAT_BUFFER_SIZE 1024
+
+#define FAT_ENTRY_DELETED (char)0xE5
+
+#define FAT_ENTRY_READ_ONLY     0x01
+#define FAT_ENTRY_HIDDEN        0x02
+#define FAT_ENTRY_SYSTEM        0x04
+#define FAT_ENTRY_VOLUME_LABEL  0x08
+#define FAT_ENTRY_DIRECTORY     0x10
+#define FAT_ENTRY_ARCHIVE       0x20
+
 typedef struct FAT12_Bootsector_Header {
     char oem_name[8];
     
@@ -90,6 +101,9 @@ typedef struct FAT12_Filesystem {
     FILE* f;
     FAT12_Bootsector bootsector;
 
+    uint8_t fat_buffer[FAT_BUFFER_SIZE];
+    uint32_t fat_buffer_start;
+
     uint32_t size; // in bytes
 
     uint32_t fat_offset;    // in bytes
@@ -101,11 +115,14 @@ typedef struct FAT12_Filesystem {
     uint32_t data_offset;   // in bytes
     uint32_t data_size;     // in bytes
 
-    int is_floppy;
-
 } FAT12_Filesystem;
 
 // Functions:
+
+void FAT_EncodeTime(int64_t epoch, uint16_t* fat_date, uint16_t* fat_time, uint8_t* tenths);
+
+int FAT12_FlushFATBuffer(FAT12_Filesystem* fs);
+int FAT12_LoadFATBuffer(FAT12_Filesystem* fs, uint32_t offset);
 
 // Initializes an empty FAT12 Filesystem
 FAT12_Filesystem* FAT12_CreateEmptyFilesystem(FILE* f,
@@ -114,6 +131,26 @@ FAT12_Filesystem* FAT12_CreateEmptyFilesystem(FILE* f,
                                               uint16_t reserved_sectors, uint8_t number_of_fats, uint16_t max_root_directory_entries,
                                               uint16_t sectors_per_track, uint16_t number_of_heads, uint8_t drive_number,
                                               uint8_t media_descriptor );
+
+void FAT12_CloseFilesystem(FAT12_Filesystem* fs);
+
+
+uint16_t FAT12_ReadFATEntry(FAT12_Filesystem* fs, uint16_t cluster);
+int FAT12_WriteFATEntry(FAT12_Filesystem* fs, uint16_t cluster, uint16_t value);
+
+uint16_t FAT12_FindNextFreeCluster(FAT12_Filesystem* fs, uint16_t start_cluster);
+int FAT12_FindFreeClusters(FAT12_Filesystem* fs, uint16_t* cluster_array, uint16_t count);
+
+
+uint16_t FAT12_FindNextFreeRootDirectoryEntry(FAT12_Filesystem* fs);
+
+
+int FAT12_CreateFileFromStream(FAT12_Filesystem* fs, FILE* f, const char* name,
+                               uint64_t creation_time, uint64_t last_access_time,
+                               uint64_t last_modification_time, uint64_t file_size);
+                               
+
+// EmptyFS:
 
 // Writes a FAT12 bootsector to the given file stream 'f' using the specified OEM name and volume label.
 // Parameters:
