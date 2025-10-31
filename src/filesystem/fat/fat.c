@@ -139,13 +139,13 @@ void FAT12_CloseFilesystem(FAT12_Filesystem* fs)
 
 uint32_t FAT12_ReadFATEntry(FAT12_Filesystem* fs, uint32_t cluster)
 {
-    if (!fs || cluster > 0xFFF) return 0xFFFF; // TODO: invalid
+    if (!fs || cluster > 0xFFF) return 0xFFFFFFFF; // TODO: invalid
 
     uint32_t offset = cluster * 3 / 2;
 
     if (offset < fs->fat_buffer_start || offset + 1 >= fs->fat_buffer_start + FAT_BUFFER_SIZE) {
-        if (FAT12_FlushFATBuffer(fs) != 0) return 0xFFFF;
-        if (FAT12_LoadFATBuffer(fs, offset) != 0) return 0xFFFF;
+        if (FAT12_FlushFATBuffer(fs) != 0) return 0xFFFFFFFF;
+        if (FAT12_LoadFATBuffer(fs, offset) != 0) return 0xFFFFFFFF;
     }
 
     uint32_t rel = offset - fs->fat_buffer_start;
@@ -184,11 +184,11 @@ int FAT12_WriteFATEntry(FAT12_Filesystem* fs, uint32_t cluster, uint32_t value)
 
 uint32_t FAT12_FindNextFreeCluster(FAT12_Filesystem* fs, uint32_t start_cluster)
 {
-    if (!fs || start_cluster > 0xFFF) return 0xFFFF; // TODO: invalid
+    if (!fs || start_cluster > 0xFFF) return 0xFFFFFFFF; // TODO: invalid
     for (uint32_t c = start_cluster; c <= 0xFFF; c++) {
         if (FAT12_ReadFATEntry(fs, c) == 0x000) return c;
     }
-    return 0xFFFF;
+    return 0xFFFFFFFF;
 }
 
 int FAT12_FindFreeClusters(FAT12_Filesystem* fs, uint32_t* cluster_array, uint32_t count)

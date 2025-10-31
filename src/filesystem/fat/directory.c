@@ -2,7 +2,7 @@
 
 uint32_t FAT12_AddDirectoryEntry(FAT12_File* directory, FAT_DirectoryEntry* entry, FAT_LFNEntry* lfn_entries, uint32_t lfn_count)
 {
-    if (!directory || !directory->is_directory || !entry) return 0xFFFF; // TODO: error
+    if (!directory || !directory->is_directory || !entry) return 0xFFFFFFFF; // TODO: error
 
     uint32_t needed = lfn_count + 1;
     uint32_t offset = 0;
@@ -25,12 +25,12 @@ uint32_t FAT12_AddDirectoryEntry(FAT12_File* directory, FAT_DirectoryEntry* entr
     for (uint32_t i = 0; i < lfn_count; i++) {
         uint32_t off = base + i * sizeof(FAT_DirectoryEntry);
         if (FAT12_WriteToFileRaw(directory, off, (uint8_t*)&lfn_entries[lfn_count - 1 - i], sizeof(FAT_LFNEntry)) != sizeof(FAT_LFNEntry))
-            return 0xFFFF; // critical
+            return 0xFFFFFFFF; // critical
     }
 
     uint32_t short_off = base + lfn_count*sizeof(FAT_DirectoryEntry);
     if (FAT12_WriteToFileRaw(directory, short_off, (uint8_t*)entry, sizeof(FAT_DirectoryEntry)) != sizeof(FAT_DirectoryEntry))
-        return 0xFFFF;
+        return 0xFFFFFFFF;
 
     return short_off;
 }
