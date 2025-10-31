@@ -99,6 +99,23 @@ typedef struct FAT_DirectoryEntry {
 
 } __attribute__((packed)) FAT_DirectoryEntry;
 
+typedef struct FAT_LFNEntry {
+    uint8_t order;
+
+    uint16_t name1[5];
+
+    uint8_t attr;
+    uint8_t reserved;
+    uint8_t checksum;
+
+    uint16_t name2[6];
+
+    uint16_t reserved2;
+
+    uint16_t name3[2];
+
+} __attribute__((packed)) FAT_LFNEntry;
+
 typedef struct FAT12_Filesystem FAT12_Filesystem;
 
 typedef struct FAT12_File {
@@ -143,6 +160,7 @@ struct FAT12_Filesystem {
 // Functions:
 
 int FAT_ParseName(const char* name, char fat_name[8], char fat_ext[3]);
+FAT_LFNEntry* FAT_CreateLFNEntries(const char* name, uint32_t* out_count, uint8_t checksum);
 
 void FAT_EncodeTime(int64_t epoch, uint16_t* fat_date, uint16_t* fat_time, uint8_t* tenths);
 
@@ -154,14 +172,14 @@ uint32_t FAT12_WriteToFileRaw(FAT12_File* f, uint32_t offset, uint8_t* buffer, u
 int FAT12_ReserveSpace(FAT12_File* f, uint32_t extra, int update_entry_size);
 uint32_t FAT12_GetAbsoluteOffset(FAT12_File* f, uint32_t relative_offset);
 
-uint32_t FAT12_AddDirectoryEntry(FAT12_File* directory, FAT_DirectoryEntry* entry);
+uint32_t FAT12_AddDirectoryEntry(FAT12_File* directory, FAT_DirectoryEntry* entry, FAT_LFNEntry* lfn_entries, uint32_t lfn_count);
 int FAT12_AddDotsToDirectory(FAT12_File* directory, FAT12_File* parent);
 
 int FAT12_GetDirectoryEntry(FAT12_File* f, FAT_DirectoryEntry* entry);
 int FAT12_SetDirectoryEntry(FAT12_File* f, FAT_DirectoryEntry* entry);
 
 FAT12_File* FAT12_CreateEntry(FAT12_File* dir, FAT_DirectoryEntry* entry, int is_directory);
-void FAT12_CloseEntry(FAT_DirectoryEntry* entry);
+void FAT12_CloseEntry(FAT12_File* entry);
 
 static inline uint32_t FAT12_ReadFromFile(FAT12_File* f, uint32_t offset, uint8_t* buffer, uint32_t size)
 {

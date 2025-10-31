@@ -224,7 +224,7 @@ FAT12_File* FAT12_CreateEntry(FAT12_File* dir, FAT_DirectoryEntry* entry, int is
     FAT12_File* f = (FAT12_File*)malloc(sizeof(FAT12_File));
     if (!f) return NULL;
     
-    uint32_t rel_offset = FAT12_AddDirectoryEntry(dir, entry);
+    uint32_t rel_offset = FAT12_AddDirectoryEntry(dir, entry, NULL, 0);
 
     f->fs = dir->fs;
     f->size = 0;
@@ -236,7 +236,7 @@ FAT12_File* FAT12_CreateEntry(FAT12_File* dir, FAT_DirectoryEntry* entry, int is
     return f;
 }
 
-void FAT12_CloseEntry(FAT_DirectoryEntry* entry)
+void FAT12_CloseEntry(FAT12_File* entry)
 {
     if (!entry) return;
     free(entry);

@@ -63,7 +63,7 @@ int main(int argc, const char *argv[])
     FAT12_File* test_txt = FAT12_CreateEntry(fs->root, &entry_test_txt, 0);
 
     uint64_t offset = 0;
-    char buffer[512];
+    uint8_t buffer[512];
     while (1) {
         size_t read = fread(&buffer, 1, sizeof(buffer), test);
         if (read <= 0) break;
