@@ -1,41 +1,13 @@
 #include "fat.h"
+
 #include <string.h>
 #include <stdlib.h>
 
-static uint32_t utf8_to_utf16(const char* input, uint16_t** out)
+static int FAT_LFN_OrderCmp(const void* a, const void* b)
 {
-    uint32_t len = strlen(input);
-    uint16_t* buf = malloc(sizeof(uint16_t) * (len + 1) * 2);
-    if (!buf) return 0;
-    uint32_t outlen = 0;
-
-    const uint8_t* p = (const uint8_t*)input;
-
-    while (*p)
-    {
-        uint32_t code = 0;
-
-        if ((*p & 0x80) == 0x00) {
-            code = *p++;
-        } else if ((*p & 0xE0) == 0xC0) {
-            code = ((*p & 0x1F) << 6) | (p[1] & 0x3F);
-            p += 2;
-        } else if ((*p & 0xF0) == 0xE0) {
-            code = ((*p & 0x0F) << 12) |
-                   ((p[1] & 0x3F) << 6) |
-                   (p[2] & 0x3F);
-            p += 3;
-        } else {
-            // unsupported → replace
-            code = '?';
-            p++;
-        }
-
-        buf[outlen++] = (uint16_t)code;
-    }
-
-    *out = buf;
-    return outlen;
+    const FAT_LFNEntry* A = (const FAT_LFNEntry*)a;
+    const FAT_LFNEntry* B = (const FAT_LFNEntry*)b;
+    return (A->order & 0x1F) - (B->order & 0x1F);
 }
 
 FAT_LFNEntry* FAT_CreateLFNEntries(const char* name, uint32_t* out_count, uint8_t checksum)
@@ -107,4 +79,50 @@ uint8_t FAT_GetChecksum(const char shortname[11])
         sum = ((sum & 1) ? 0x80 : 0) + (sum >> 1) + shortname[i];
     }
     return sum;
+}
+
+uint16_t* FAT_CombineLFN(FAT_LFNEntry* entries, uint32_t entry_count, uint32_t* len)
+{
+    if (!entries || entry_count == 0) return NULL;
+
+    FAT_LFNEntry* list = malloc(entry_count * sizeof(FAT_LFNEntry));
+    if (!list) return NULL;
+    memcpy(list, entries, entry_count * sizeof(FAT_LFNEntry));
+    // TODO: Remove quicksort
+    qsort(list, entry_count, sizeof(FAT_LFNEntry), FAT_LFN_OrderCmp);
+
+    uint32_t max_chars = entry_count * 13;
+    uint16_t* out = malloc((max_chars + 1) * sizeof(uint16_t));
+    if (!out) {
+        free(list);
+        return NULL;
+    }
+
+    uint32_t pos = 0;
+
+    for (uint32_t i = 0; i < entry_count; i++)
+    {
+        FAT_LFNEntry* e = &list[i];
+
+        for (int j = 0; j < 5; j++)
+            out[pos++] = e->name1[j];
+        for (int j = 0; j < 6; j++)
+            out[pos++] = e->name2[j];
+        for (int j = 0; j < 2; j++)
+            out[pos++] = e->name3[j];
+    }
+
+    free(list);
+
+    while (pos > 0 && out[pos - 1] == 0xFFFF)
+        pos--;
+
+    if (pos > 0 && out[pos - 1] == 0x0000)
+        pos--;
+
+    if (len) * (uint32_t*)(&len) = pos;
+
+    out[pos] = 0x0000;
+
+    return out;
 }

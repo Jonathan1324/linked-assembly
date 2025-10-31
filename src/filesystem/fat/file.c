@@ -1,4 +1,6 @@
 #include "fat.h"
+
+#include <string.h>
 #include <stdlib.h>
 
 uint32_t FAT12_ReadFromFileRaw(FAT12_File* f, uint32_t offset, uint8_t* buffer, uint32_t size)
@@ -208,7 +210,7 @@ int FAT12_SetDirectoryEntry(FAT12_File* f, FAT_DirectoryEntry* entry)
     return 0;
 }
 
-FAT12_File* FAT12_CreateEntry(FAT12_File* dir, FAT_DirectoryEntry* entry, int is_directory, FAT_LFNEntry* lfn_entries, uint32_t lfn_count)
+FAT12_File* FAT12_CreateEntryRaw(FAT12_File* dir, FAT_DirectoryEntry* entry, int is_directory, FAT_LFNEntry* lfn_entries, uint32_t lfn_count)
 {
     if (!entry) return NULL;
 
@@ -231,4 +233,175 @@ void FAT12_CloseEntry(FAT12_File* entry)
 {
     if (!entry) return;
     free(entry);
+}
+
+FAT12_File* FAT12_CreateEntry(FAT12_File* parent, const char* name, uint8_t attribute, int is_directory, int64_t creation, int64_t last_modification, int64_t last_access, int use_lfn)
+{
+    if (!parent || !parent->is_directory || !name) return NULL;
+
+    FAT_DirectoryEntry entry;
+    if (FAT_ParseName(name, entry.name, entry.ext) != 0) return NULL;
+
+    entry.attribute = attribute;
+    entry.reserved = 0;
+    entry.first_cluster_high = 0;
+    entry.first_cluster = 0;
+    entry.file_size = 0;
+
+    FAT_EncodeTime(creation, &entry.creation_date, &entry.creation_time, &entry.creation_time_tenths);
+
+    uint8_t tenths;
+    FAT_EncodeTime(last_modification, &entry.last_modification_date, &entry.last_modification_time, &tenths);
+
+    uint16_t time;
+    FAT_EncodeTime(last_access, &entry.last_access_date, &time, &tenths);
+
+    uint8_t checksum = FAT_CreateChecksum(&entry);
+    uint32_t lfn_count = 0;
+    FAT_LFNEntry* lfn_entries = NULL;
+    if (use_lfn) {
+        lfn_entries = FAT_CreateLFNEntries(name, &lfn_count, checksum);
+        if (!lfn_entries) return NULL;
+    }
+
+    FAT12_File* file = FAT12_CreateEntryRaw(parent, &entry, is_directory, lfn_entries, lfn_count);
+
+    if (lfn_entries) free(lfn_entries);
+
+    return file;
+}
+
+FAT12_File* FAT12_FindEntry(FAT12_File* parent, const char* name)
+{
+    if (!parent || !parent->is_directory || !name) return NULL;
+
+    uint16_t* name16 = NULL;
+    uint32_t nameLen = utf8_to_utf16(name, &name16);
+
+    char short_name[8];
+    char short_ext[3];
+    if (FAT_ParseName(name, short_name, short_ext) != 0) return NULL;
+
+    uint32_t offset = 0;
+    FAT_DirectoryEntry entry;
+
+    FAT_LFNEntry* lfn_entries = NULL;
+    uint32_t lfn_count = 0;
+
+    while(1) {
+        uint32_t r = FAT12_ReadFromFileRaw(parent, offset, (uint8_t*)&entry, sizeof(FAT_DirectoryEntry));
+        if (r != sizeof(FAT_DirectoryEntry)) break;
+
+        if (entry.name[0] == 0x00) break; // End of directory
+
+        if (entry.name[0] == FAT_ENTRY_DELETED) {
+            offset += sizeof(FAT_DirectoryEntry);
+            continue;
+        }
+
+        if (entry.attribute == 0x0F) {
+            
+            FAT_LFNEntry* new_entries = (FAT_LFNEntry*)realloc(lfn_entries, sizeof(FAT_LFNEntry) * (lfn_count + 1));
+            if (!new_entries) {
+                free(lfn_entries);
+                free(name16);
+                return NULL;
+            }
+            lfn_entries = new_entries;
+            memcpy(&lfn_entries[lfn_count], &entry, sizeof(FAT_LFNEntry));
+            lfn_count++;
+
+            offset += sizeof(FAT_DirectoryEntry);
+            continue;
+        }
+
+        if (lfn_count > 0) {
+            uint32_t utf16_len = 0;
+            uint16_t* lfn_utf16 = FAT_CombineLFN(lfn_entries, lfn_count, &utf16_len);
+
+            // FIXME: not working yet
+            if (lfn_utf16) {
+                if (utf16_len == nameLen && memcmp(name16, lfn_utf16, utf16_len) == 0) {
+                    free(name16);
+                    free(lfn_utf16);
+                    free(lfn_entries);
+
+                    FAT12_File* file = (FAT12_File*)malloc(sizeof(FAT12_File));
+                    if (!file) return NULL;
+
+                    if (entry.attribute & FAT_ENTRY_DIRECTORY) {
+                        file->fs = parent->fs;
+                        file->first_cluster = entry.first_cluster;
+                        file->directory_entry_offset = FAT12_GetAbsoluteOffset(parent, offset);
+                        file->is_root_directory = 0;
+                        file->is_directory = 1;
+
+                        uint32_t cluster_count = 0;
+                        uint16_t cluster = entry.first_cluster;
+                        while (cluster < 0xFF8) {
+                            if (cluster == 0) break;
+                            cluster_count++;
+                            cluster = FAT12_ReadFATEntry(file->fs, cluster);
+                        }
+                        file->size = file->fs->cluster_size * cluster_count;
+                    } else {
+                        file->fs = parent->fs;
+                        file->size = entry.file_size;
+                        file->first_cluster = entry.first_cluster;
+                        file->directory_entry_offset = FAT12_GetAbsoluteOffset(parent, offset);
+                        file->is_root_directory = 0;
+                        file->is_directory = 0;
+                    }
+
+                    return file;
+                }
+            } else {
+                // TODO: warning
+            }
+
+            free(lfn_entries);
+            lfn_entries = NULL;
+            lfn_count = 0;
+        }
+
+        if (memcmp(entry.name, short_name, 8) == 0 && memcmp(entry.ext, short_ext, 3) == 0) {
+            free(name16);
+            free(lfn_entries);
+
+            FAT12_File* file = (FAT12_File*)malloc(sizeof(FAT12_File));
+            if (!file) return NULL;
+
+            if (entry.attribute & FAT_ENTRY_DIRECTORY) {
+                file->fs = parent->fs;
+                file->first_cluster = entry.first_cluster;
+                file->directory_entry_offset = FAT12_GetAbsoluteOffset(parent, offset);
+                file->is_root_directory = 0;
+                file->is_directory = 1;
+
+                uint32_t cluster_count = 0;
+                uint16_t cluster = entry.first_cluster;
+                while (cluster < 0xFF8) {
+                    cluster_count++;
+                    cluster = FAT12_ReadFATEntry(file->fs, cluster);
+                }
+                file->size = file->fs->cluster_size * cluster_count;
+            } else {
+                file->fs = parent->fs;
+                file->size = entry.file_size;
+                file->first_cluster = entry.first_cluster;
+                file->directory_entry_offset = FAT12_GetAbsoluteOffset(parent, offset);
+                file->is_root_directory = 0;
+                file->is_directory = 0;
+            }
+
+            return file;
+        }
+
+        offset += sizeof(entry);
+    }
+
+    free(name16);
+    free(lfn_entries);
+
+    return NULL;
 }

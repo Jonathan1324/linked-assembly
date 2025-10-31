@@ -70,14 +70,7 @@ int main(int argc, const char *argv[])
         return 1;
     }
 
-    FAT_DirectoryEntry entry_test_txt = {0};
-    FAT_ParseName("test.txt", entry_test_txt.name, entry_test_txt.ext);
-    entry_test_txt.attribute = FAT_ENTRY_ARCHIVE;
-    uint8_t checksum_test_txt = FAT_CreateChecksum(&entry_test_txt);
-    uint32_t lfn_count;
-    FAT_LFNEntry* lfn_entries = FAT_CreateLFNEntries("test file with extra long name.txt", &lfn_count, checksum_test_txt);
-    FAT12_File* test_txt = FAT12_CreateEntry(fs->root, &entry_test_txt, 0, lfn_entries, lfn_count);
-    free(lfn_entries);
+    FAT12_File* test_txt = FAT12_CreateEntry(fs->root, "test.txt", FAT_ENTRY_ARCHIVE, 0, 0, 0, 0, 1);
 
     uint64_t offset = 0;
     uint8_t buffer[512];
@@ -88,8 +81,16 @@ int main(int argc, const char *argv[])
         offset += read;
     }
 
+    FAT12_File* folder = FAT12_CreateEntry(fs->root, "folder", FAT_ENTRY_DIRECTORY, 1, 0, 0, 0, 1);
+
+    FAT12_File* folder_test = FAT12_CreateEntry(folder, "test.txt", FAT_ENTRY_ARCHIVE, 0, 0, 0, 0, 1);
+
+    FAT12_File* test_find = FAT12_FindEntry(fs->root, "folder");
+
     fclose(test);
     FAT12_CloseEntry(test_txt);
+    FAT12_CloseEntry(folder);
+    FAT12_CloseEntry(folder_test);
 
     FAT12_CloseFilesystem(fs);
     Partition_Close(partition);

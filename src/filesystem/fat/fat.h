@@ -1,5 +1,5 @@
 #pragma once
-#include <stdio.h>
+
 #include <stdint.h>
 #include "../partition/partition.h"
 
@@ -162,6 +162,7 @@ struct FAT12_Filesystem {
 
 int FAT_ParseName(const char* name, char fat_name[8], char fat_ext[3]);
 FAT_LFNEntry* FAT_CreateLFNEntries(const char* name, uint32_t* out_count, uint8_t checksum);
+uint16_t* FAT_CombineLFN(FAT_LFNEntry* entries, uint32_t entry_count, uint32_t* len);
 uint8_t FAT_GetChecksum(const char shortname[11]);
 static inline uint8_t FAT_CreateChecksum(FAT_DirectoryEntry* entry)
 {
@@ -187,8 +188,11 @@ int FAT12_AddDotsToDirectory(FAT12_File* directory, FAT12_File* parent);
 int FAT12_GetDirectoryEntry(FAT12_File* f, FAT_DirectoryEntry* entry);
 int FAT12_SetDirectoryEntry(FAT12_File* f, FAT_DirectoryEntry* entry);
 
-FAT12_File* FAT12_CreateEntry(FAT12_File* dir, FAT_DirectoryEntry* entry, int is_directory, FAT_LFNEntry* lfn_entries, uint32_t lfn_count);
+FAT12_File* FAT12_CreateEntryRaw(FAT12_File* dir, FAT_DirectoryEntry* entry, int is_directory, FAT_LFNEntry* lfn_entries, uint32_t lfn_count);
+FAT12_File* FAT12_CreateEntry(FAT12_File* parent, const char* name, uint8_t attribute, int is_directory, int64_t creation, int64_t last_modification, int64_t last_access, int use_lfn);
 void FAT12_CloseEntry(FAT12_File* entry);
+
+FAT12_File* FAT12_FindEntry(FAT12_File* parent, const char* name);
 
 static inline uint32_t FAT12_ReadFromFile(FAT12_File* f, uint32_t offset, uint8_t* buffer, uint32_t size)
 {
@@ -248,3 +252,41 @@ int FAT12_CopyFAT(FAT12_Filesystem* fs, uint8_t dst, uint8_t src);
 // Parameters:
 //   fs     - FAT12_Filesystem struct
 int FAT12_WriteEmptyRootDir(FAT12_Filesystem* fs);
+
+
+
+static uint32_t utf8_to_utf16(const char* input, uint16_t** out)
+{
+    uint32_t len = strlen(input);
+    uint16_t* buf = malloc(sizeof(uint16_t) * (len + 1) * 2);
+    if (!buf) return 0;
+    uint32_t outlen = 0;
+
+    const uint8_t* p = (const uint8_t*)input;
+
+    while (*p)
+    {
+        uint32_t code = 0;
+
+        if ((*p & 0x80) == 0x00) {
+            code = *p++;
+        } else if ((*p & 0xE0) == 0xC0) {
+            code = ((*p & 0x1F) << 6) | (p[1] & 0x3F);
+            p += 2;
+        } else if ((*p & 0xF0) == 0xE0) {
+            code = ((*p & 0x0F) << 12) |
+                   ((p[1] & 0x3F) << 6) |
+                   (p[2] & 0x3F);
+            p += 3;
+        } else {
+            // unsupported → replace
+            code = '?';
+            p++;
+        }
+
+        buf[outlen++] = (uint16_t)code;
+    }
+
+    *out = buf;
+    return outlen;
+}
