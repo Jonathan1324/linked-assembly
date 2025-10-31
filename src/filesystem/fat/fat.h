@@ -161,6 +161,14 @@ struct FAT12_Filesystem {
 
 int FAT_ParseName(const char* name, char fat_name[8], char fat_ext[3]);
 FAT_LFNEntry* FAT_CreateLFNEntries(const char* name, uint32_t* out_count, uint8_t checksum);
+uint8_t FAT_GetChecksum(const char shortname[11]);
+static inline uint8_t FAT_CreateChecksum(FAT_DirectoryEntry* entry)
+{
+    char full[11];
+    for (int i = 0; i < 8; i++) full[i] = entry->name[i];
+    for (int i = 0; i < 3; i++) full[i+8] = entry->ext[i];
+    return FAT_GetChecksum(full);
+}
 
 void FAT_EncodeTime(int64_t epoch, uint16_t* fat_date, uint16_t* fat_time, uint8_t* tenths);
 
@@ -178,7 +186,7 @@ int FAT12_AddDotsToDirectory(FAT12_File* directory, FAT12_File* parent);
 int FAT12_GetDirectoryEntry(FAT12_File* f, FAT_DirectoryEntry* entry);
 int FAT12_SetDirectoryEntry(FAT12_File* f, FAT_DirectoryEntry* entry);
 
-FAT12_File* FAT12_CreateEntry(FAT12_File* dir, FAT_DirectoryEntry* entry, int is_directory);
+FAT12_File* FAT12_CreateEntry(FAT12_File* dir, FAT_DirectoryEntry* entry, int is_directory, FAT_LFNEntry* lfn_entries, uint32_t lfn_count);
 void FAT12_CloseEntry(FAT12_File* entry);
 
 static inline uint32_t FAT12_ReadFromFile(FAT12_File* f, uint32_t offset, uint8_t* buffer, uint32_t size)

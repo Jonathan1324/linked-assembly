@@ -217,14 +217,14 @@ int FAT12_SetDirectoryEntry(FAT12_File* f, FAT_DirectoryEntry* entry)
     return 0;
 }
 
-FAT12_File* FAT12_CreateEntry(FAT12_File* dir, FAT_DirectoryEntry* entry, int is_directory)
+FAT12_File* FAT12_CreateEntry(FAT12_File* dir, FAT_DirectoryEntry* entry, int is_directory, FAT_LFNEntry* lfn_entries, uint32_t lfn_count)
 {
     if (!entry) return NULL;
 
     FAT12_File* f = (FAT12_File*)malloc(sizeof(FAT12_File));
     if (!f) return NULL;
     
-    uint32_t rel_offset = FAT12_AddDirectoryEntry(dir, entry, NULL, 0);
+    uint32_t rel_offset = FAT12_AddDirectoryEntry(dir, entry, lfn_entries, lfn_count);
 
     f->fs = dir->fs;
     f->size = 0;

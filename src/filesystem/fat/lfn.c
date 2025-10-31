@@ -1,4 +1,6 @@
 #include "fat.h"
+#include <string.h>
+#include <stdlib.h>
 
 static uint32_t utf8_to_utf16(const char* input, uint16_t** out)
 {
@@ -83,7 +85,7 @@ FAT_LFNEntry* FAT_CreateLFNEntries(const char* name, uint32_t* out_count, uint8_
 
     if (index < 13) {
         uint32_t k = 0;
-        while (k < 3 && index > lens[k]) {
+        while (k < 3 && index > (uint32_t)lens[k]) {
             index -= lens[k];
             k++;
         }
@@ -96,4 +98,13 @@ FAT_LFNEntry* FAT_CreateLFNEntries(const char* name, uint32_t* out_count, uint8_
 
     *out_count = entries;
     return arr;
+}
+
+uint8_t FAT_GetChecksum(const char shortname[11])
+{
+    uint8_t sum = 0;
+    for (int i = 0; i < 11; i++) {
+        sum = ((sum & 1) ? 0x80 : 0) + (sum >> 1) + shortname[i];
+    }
+    return sum;
 }

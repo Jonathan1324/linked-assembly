@@ -60,7 +60,11 @@ int main(int argc, const char *argv[])
     FAT_DirectoryEntry entry_test_txt = {0};
     FAT_ParseName("test.txt", entry_test_txt.name, entry_test_txt.ext);
     entry_test_txt.attribute = FAT_ENTRY_ARCHIVE;
-    FAT12_File* test_txt = FAT12_CreateEntry(fs->root, &entry_test_txt, 0);
+    uint8_t checksum_test_txt = FAT_CreateChecksum(&entry_test_txt);
+    uint32_t lfn_count;
+    FAT_LFNEntry* lfn_entries = FAT_CreateLFNEntries("test file with extra long name.txt", &lfn_count, checksum_test_txt);
+    FAT12_File* test_txt = FAT12_CreateEntry(fs->root, &entry_test_txt, 0, lfn_entries, lfn_count);
+    free(lfn_entries);
 
     uint64_t offset = 0;
     uint8_t buffer[512];
