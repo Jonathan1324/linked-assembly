@@ -144,7 +144,7 @@ int FAT12_LoadFATBuffer(FAT12_Filesystem* fs, uint32_t offset);
 
 uint32_t FAT12_ReadFromFileRaw(FAT12_File* f, uint32_t offset, uint8_t* buffer, uint32_t size);
 uint32_t FAT12_WriteToFileRaw(FAT12_File* f, uint32_t offset, uint8_t* buffer, uint32_t size);
-int FAT12_ReserveSpace(FAT12_File* f, uint32_t extra);
+int FAT12_ReserveSpace(FAT12_File* f, uint32_t extra, int update_entry_size);
 uint32_t FAT12_GetAbsoluteOffset(FAT12_File* f, uint32_t relative_offset);
 
 uint32_t FAT12_AddDirectoryEntry(FAT12_File* directory, FAT_DirectoryEntry* entry);

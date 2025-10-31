@@ -73,7 +73,9 @@ uint32_t FAT12_WriteToFileRaw(FAT12_File* f, uint32_t offset, uint8_t* buffer, u
     if (offset + remaining > f->size) {
         uint32_t old_end = f->size;
         uint32_t reserve = offset + remaining - f->size;
-        if (FAT12_ReserveSpace(f, reserve) != 0) return 0;
+        // TODO
+        int r = FAT12_ReserveSpace(f, reserve, !f->is_directory);
+        if (r != 0) return 0;
         if (offset > old_end) {
             // fill in the rest
             uint32_t uninitialized = offset - old_end;
@@ -82,8 +84,9 @@ uint32_t FAT12_WriteToFileRaw(FAT12_File* f, uint32_t offset, uint8_t* buffer, u
             uint32_t off = old_end;
             while (uninitialized > 0) {
                 uint32_t chunk = (uninitialized > CHUNK_SIZE) ? CHUNK_SIZE : uninitialized;
+                // TODO: set to zero with a better way
                 if (FAT12_WriteToFileRaw(f, off, zero_buffer, chunk) != chunk) {
-                    // TODO: warning
+                    // warning
                 }
                 off += chunk;
                 uninitialized -= chunk;
@@ -123,7 +126,7 @@ uint32_t FAT12_WriteToFileRaw(FAT12_File* f, uint32_t offset, uint8_t* buffer, u
     return written;
 }
 
-int FAT12_ReserveSpace(FAT12_File* f, uint32_t extra)
+int FAT12_ReserveSpace(FAT12_File* f, uint32_t extra, int update_entry_size)
 {
     if (!f || f->is_root_directory) return 1;
 
@@ -134,8 +137,11 @@ int FAT12_ReserveSpace(FAT12_File* f, uint32_t extra)
 
     FAT_DirectoryEntry entry;
     if (fseek(f->fs->f, f->directory_entry_offset, SEEK_SET) != 0) return 1;
-    if (fread(&entry, sizeof(FAT_DirectoryEntry), 1, f->fs->f) != 1) return 1;
-    entry.file_size = total_size;
+
+    size_t read = fread(&entry, sizeof(FAT_DirectoryEntry), 1, f->fs->f);
+    if (read != 1) return 1;
+
+    if (update_entry_size) entry.file_size = total_size;
 
     if (needed_clusters > current_clusters) {
         uint32_t new_clusters = needed_clusters - current_clusters;
