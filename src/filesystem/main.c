@@ -61,40 +61,41 @@ int main(int argc, const char *argv[])
     fseek(test, 0, SEEK_END);
     long length = ftell(test);
     fseek(test, 0, SEEK_SET);
-    FAT12_CreateFileFromStream(fs, test, "test.txt",
-                               now, now, now,
-                               length);
+
+    FAT12_File root;
+    root.fs = fs;
+    root.is_directory = 1;
+    root.is_root_directory = 1;
+    root.size = fs->root_size;
+
+    FAT_DirectoryEntry entry = {0};
+    memset(entry.name, ' ', 8);
+    memset(entry.ext, ' ', 3);
+    entry.attribute = FAT_ENTRY_ARCHIVE;
+
+    entry.name[0] = 'T';
+    entry.name[1] = 'E';
+    entry.name[2] = 'S';
+    entry.name[3] = 'T';
+    entry.ext[0] = 'T';
+    entry.ext[1] = 'X';
+    entry.ext[2] = 'T';
+
+    uint32_t rel_offset = FAT12_AddDirectoryEntry(&root, &entry);
+    
+    FAT12_File test_txt;
+    test_txt.fs = fs;
+    test_txt.size = 0;
+    test_txt.first_cluster = 0;
+    test_txt.directory_entry_offset = FAT12_GetAbsoluteOffset(&root, rel_offset);
+    test_txt.is_root_directory = 0;
+    test_txt.is_directory = 0;
+
+    uint8_t buffer[16];
+    memset(buffer, 'A', sizeof(buffer));
+    FAT12_WriteToFileRaw(&test_txt, 0, buffer, 16);
+
     fclose(test);
-
-    FAT12_File fat12_f;
-    fat12_f.fs = fs;
-    fat12_f.is_root_directory = 0;
-    fat12_f.size = length;
-    fat12_f.first_cluster = 2;
-    fat12_f.directory_entry_offset = fs->root_offset;
-
-    uint8_t buffer[600] = {0};
-    uint32_t read = FAT12_ReadFromFileRaw(&fat12_f, 0, &buffer, 600);
-    printf("Read: %u\n", read);
-    for (int i = 0; i < 600; i++) {
-        printf("%x ", buffer[i]);
-    }
-    fputc('\n', stdout);
-
-    FAT12_File root_dir;
-    root_dir.fs = fs;
-    root_dir.is_root_directory = 1;
-
-    uint8_t buffer2[16];
-    for (int i = 0; i < 16; i++) {
-        buffer2[i] = (uint8_t)i;
-    }
-    uint32_t written = FAT12_WriteToFileRaw(&root_dir, 32, &buffer2, 16);
-    printf("Written: %u\n", written);
-
-    uint8_t buffer3[16] = {1,2,3,4,5,6,7,8,9,10,11,12,13,14,15,16};
-    written = FAT12_WriteToFileRaw(&fat12_f, 16, buffer3, 16);
-    printf("Written: %u\n", written);
 
     FAT12_CloseFilesystem(fs);
     fclose(f);

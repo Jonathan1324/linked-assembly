@@ -117,6 +117,8 @@ typedef struct FAT12_Filesystem {
     uint32_t data_offset;   // in bytes
     uint32_t data_size;     // in bytes
 
+    uint32_t cluster_size;  // in bytes
+
 } FAT12_Filesystem;
 
 typedef struct FAT12_File {
@@ -129,12 +131,9 @@ typedef struct FAT12_File {
     uint32_t directory_entry_offset; // absolute in bytes from file start
 
     int is_root_directory;
+    int is_directory;
 
 } FAT12_File;
-
-uint32_t FAT12_ReadFromFileRaw(FAT12_File* f, uint32_t offset, uint8_t* buffer, uint32_t size);
-uint32_t FAT12_WriteToFileRaw(FAT12_File* f, uint32_t offset, uint8_t* buffer, uint32_t size);
-int FAT12_ReserveSpace(FAT12_File* f, uint32_t extra);
 
 // Functions:
 
@@ -142,6 +141,13 @@ void FAT_EncodeTime(int64_t epoch, uint16_t* fat_date, uint16_t* fat_time, uint8
 
 int FAT12_FlushFATBuffer(FAT12_Filesystem* fs);
 int FAT12_LoadFATBuffer(FAT12_Filesystem* fs, uint32_t offset);
+
+uint32_t FAT12_ReadFromFileRaw(FAT12_File* f, uint32_t offset, uint8_t* buffer, uint32_t size);
+uint32_t FAT12_WriteToFileRaw(FAT12_File* f, uint32_t offset, uint8_t* buffer, uint32_t size);
+int FAT12_ReserveSpace(FAT12_File* f, uint32_t extra);
+uint32_t FAT12_GetAbsoluteOffset(FAT12_File* f, uint32_t relative_offset);
+
+uint32_t FAT12_AddDirectoryEntry(FAT12_File* directory, FAT_DirectoryEntry* entry);
 
 // Initializes an empty FAT12 Filesystem
 FAT12_Filesystem* FAT12_CreateEmptyFilesystem(FILE* f,
@@ -159,15 +165,6 @@ int FAT12_WriteFATEntry(FAT12_Filesystem* fs, uint16_t cluster, uint16_t value);
 
 uint16_t FAT12_FindNextFreeCluster(FAT12_Filesystem* fs, uint16_t start_cluster);
 int FAT12_FindFreeClusters(FAT12_Filesystem* fs, uint16_t* cluster_array, uint16_t count);
-
-
-uint16_t FAT12_FindNextFreeRootDirectoryEntry(FAT12_Filesystem* fs);
-
-
-int FAT12_CreateFileFromStream(FAT12_Filesystem* fs, FILE* f, const char* name,
-                               uint64_t creation_time, uint64_t last_access_time,
-                               uint64_t last_modification_time, uint64_t file_size);
-
 
 // EmptyFS:
 

@@ -171,3 +171,50 @@ int FAT12_ReserveSpace(FAT12_File* f, uint32_t extra)
 
     return 0;
 }
+
+uint32_t FAT12_GetAbsoluteOffset(FAT12_File* f, uint32_t relative_offset)
+{
+    if (!f) return 0;
+
+    if (relative_offset > f->size) return 0;
+
+    if (f->is_root_directory) {
+        return f->fs->root_offset + relative_offset;
+    }
+
+    uint16_t cluster = f->first_cluster;
+    if (cluster < 2) return 0;
+
+    uint32_t skip = relative_offset / f->fs->cluster_size;
+    uint32_t off = relative_offset % f->fs->cluster_size;
+
+    while (skip--) {
+        cluster = FAT12_ReadFATEntry(f->fs, cluster);
+        if (cluster >= 0xFF8) return 0;
+    }
+
+    return f->fs->data_offset + (cluster - 2) * f->fs->cluster_size + off;
+}
+
+uint32_t FAT12_AddDirectoryEntry(FAT12_File* directory, FAT_DirectoryEntry* entry)
+{
+    if (!directory || !entry || !directory->is_directory) return 0xFFFF; // TODO: error
+
+    uint32_t offset = 0;
+    FAT_DirectoryEntry tmp;
+
+    while (FAT12_ReadFromFileRaw(directory, offset, (uint8_t*)&tmp, sizeof(tmp)) == sizeof(tmp)) {
+        if (tmp.name[0] == 0x00 || tmp.name[0] == FAT_ENTRY_DELETED) {
+            if (FAT12_WriteToFileRaw(directory, offset, (uint8_t*)entry, sizeof(FAT_DirectoryEntry)) != sizeof(FAT_DirectoryEntry))
+                return 0xFFFF;
+            return offset;
+        }
+        offset += sizeof(FAT_DirectoryEntry);
+    }
+
+    // no empty slot
+    if (FAT12_WriteToFileRaw(directory, offset, (uint8_t*)entry, sizeof(FAT_DirectoryEntry)) != sizeof(FAT_DirectoryEntry))
+        return 0xFFFF;
+
+    return offset;
+}
