@@ -2,6 +2,8 @@
 #include <stdio.h>
 #include <stdint.h>
 
+#define CHUNK_SIZE 512
+
 static const uint32_t FAT12_MAX_CLUSTERS = 0xFFF;
 
 #define FAT12_BOOTSECTOR_MEDIA_DESCRIPTOR_FLOPPY144     0xF0 // 1.44 MB
@@ -132,6 +134,7 @@ typedef struct FAT12_File {
 
 uint32_t FAT12_ReadFromFileRaw(FAT12_File* f, uint32_t offset, uint8_t* buffer, uint32_t size);
 uint32_t FAT12_WriteToFileRaw(FAT12_File* f, uint32_t offset, uint8_t* buffer, uint32_t size);
+int FAT12_ReserveSpace(FAT12_File* f, uint32_t extra);
 
 // Functions:
 

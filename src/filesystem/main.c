@@ -92,6 +92,10 @@ int main(int argc, const char *argv[])
     uint32_t written = FAT12_WriteToFileRaw(&root_dir, 32, &buffer2, 16);
     printf("Written: %u\n", written);
 
+    uint8_t buffer3[16] = {1,2,3,4,5,6,7,8,9,10,11,12,13,14,15,16};
+    written = FAT12_WriteToFileRaw(&fat12_f, 16, buffer3, 16);
+    printf("Written: %u\n", written);
+
     FAT12_CloseFilesystem(fs);
     fclose(f);
     return 0;

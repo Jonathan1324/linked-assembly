@@ -20,8 +20,6 @@ int FAT12_LoadFATBuffer(FAT12_Filesystem* fs, uint32_t offset)
     return 0;
 }
 
-#define CHUNK_SIZE 512
-
 FAT12_Filesystem* FAT12_CreateEmptyFilesystem(FILE* f,
                                               const char* oem_name, const char* volume_label, uint32_t volume_id,
                                               uint32_t total_size, uint32_t bytes_per_sector, uint8_t sectors_per_cluster,
@@ -94,7 +92,16 @@ FAT12_Filesystem* FAT12_CreateEmptyFilesystem(FILE* f,
 
 void FAT12_CloseFilesystem(FAT12_Filesystem* fs)
 {
-    FAT12_FlushFATBuffer(fs);
+    if (FAT12_FlushFATBuffer(fs) != 0) {
+        //TODO
+    }
+
+    for (int i = 1; i < fs->bootsector.header.number_of_fats; i++) {
+        if (FAT12_CopyFAT(fs, i, 0) != 0) {
+            //TODO
+        }
+    }
+
     free(fs);
 }
 
