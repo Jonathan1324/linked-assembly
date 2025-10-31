@@ -124,7 +124,7 @@ typedef struct FAT12_File {
 
     uint32_t size;
 
-    uint16_t first_cluster;
+    uint32_t first_cluster;
 
     uint32_t directory_entry_offset; // absolute in bytes from file start
 
@@ -141,20 +141,20 @@ struct FAT12_Filesystem {
     FAT12_File static_root;
 
     uint8_t fat_buffer[FAT_BUFFER_SIZE];
-    uint32_t fat_buffer_start;
+    uint64_t fat_buffer_start;
 
-    uint32_t size; // in bytes
+    uint64_t size; // in bytes
 
-    uint32_t fat_offset;    // in bytes
-    uint32_t fat_size;      // in bytes
+    uint64_t fat_offset;    // in bytes
+    uint64_t fat_size;      // in bytes
 
-    uint32_t root_offset;   // in bytes
-    uint32_t root_size;     // in bytes
+    uint64_t root_offset;   // in bytes
+    uint64_t root_size;     // in bytes
 
-    uint32_t data_offset;   // in bytes
-    uint32_t data_size;     // in bytes
+    uint64_t data_offset;   // in bytes
+    uint64_t data_size;     // in bytes
 
-    uint32_t cluster_size;  // in bytes
+    uint64_t cluster_size;  // in bytes
 
 };
 
@@ -217,11 +217,11 @@ FAT12_Filesystem* FAT12_CreateEmptyFilesystem(Partition* partition,
 void FAT12_CloseFilesystem(FAT12_Filesystem* fs);
 
 
-uint16_t FAT12_ReadFATEntry(FAT12_Filesystem* fs, uint16_t cluster);
-int FAT12_WriteFATEntry(FAT12_Filesystem* fs, uint16_t cluster, uint16_t value);
+uint32_t FAT12_ReadFATEntry(FAT12_Filesystem* fs, uint32_t cluster);
+int FAT12_WriteFATEntry(FAT12_Filesystem* fs, uint32_t cluster, uint32_t value);
 
-uint16_t FAT12_FindNextFreeCluster(FAT12_Filesystem* fs, uint16_t start_cluster);
-int FAT12_FindFreeClusters(FAT12_Filesystem* fs, uint16_t* cluster_array, uint16_t count);
+uint32_t FAT12_FindNextFreeCluster(FAT12_Filesystem* fs, uint32_t start_cluster);
+int FAT12_FindFreeClusters(FAT12_Filesystem* fs, uint32_t* cluster_array, uint32_t count);
 
 // EmptyFS:
 

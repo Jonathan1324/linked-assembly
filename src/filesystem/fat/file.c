@@ -22,7 +22,7 @@ uint32_t FAT12_ReadFromFileRaw(FAT12_File* f, uint32_t offset, uint8_t* buffer, 
 
     uint32_t cluster_size = f->fs->bootsector.header.bytes_per_sector * f->fs->bootsector.header.sectors_per_cluster;
 
-    uint16_t cluster = f->first_cluster;
+    uint32_t cluster = f->first_cluster;
     if (cluster < 2) return 0;
 
     uint32_t skip = file_pos / cluster_size;
@@ -93,7 +93,7 @@ uint32_t FAT12_WriteToFileRaw(FAT12_File* f, uint32_t offset, uint8_t* buffer, u
         }
     }
 
-    uint16_t cluster = f->first_cluster;
+    uint32_t cluster = f->first_cluster;
     if (cluster < 2) return 0;
 
     uint32_t skip = offset / cluster_size;
@@ -141,17 +141,17 @@ int FAT12_ReserveSpace(FAT12_File* f, uint32_t extra, int update_entry_size)
     if (needed_clusters > current_clusters) {
         uint32_t new_clusters = needed_clusters - current_clusters;
 
-        uint16_t* clusters = (uint16_t*)malloc(new_clusters * sizeof(uint16_t));
+        uint32_t* clusters = (uint32_t*)malloc(new_clusters * sizeof(uint32_t));
         if (FAT12_FindFreeClusters(f->fs, clusters, new_clusters) != 0) return 1;
 
-        uint16_t cluster = f->first_cluster;
+        uint32_t cluster = f->first_cluster;
         if (cluster == 0) {
             f->first_cluster = clusters[0];
             entry.first_cluster = clusters[0];
         } else {
-            uint16_t last = f->first_cluster;
+            uint32_t last = f->first_cluster;
             while (1) {
-                uint16_t next = FAT12_ReadFATEntry(f->fs, last);
+                uint32_t next = FAT12_ReadFATEntry(f->fs, last);
                 if (next >= 0xFF8) break;
                 last = next;
             }
@@ -159,7 +159,7 @@ int FAT12_ReserveSpace(FAT12_File* f, uint32_t extra, int update_entry_size)
         }
 
         for (uint32_t i = 0; i < new_clusters; i++) {
-            uint16_t next = (i + 1 < new_clusters) ? clusters[i + 1] : 0xFFF;
+            uint32_t next = (i + 1 < new_clusters) ? clusters[i + 1] : 0xFFF;
             FAT12_WriteFATEntry(f->fs, clusters[i], next);
         }
 
@@ -182,7 +182,7 @@ uint32_t FAT12_GetAbsoluteOffset(FAT12_File* f, uint32_t relative_offset)
         return f->fs->root_offset + relative_offset;
     }
 
-    uint16_t cluster = f->first_cluster;
+    uint32_t cluster = f->first_cluster;
     if (cluster < 2) return 0;
 
     uint32_t skip = relative_offset / f->fs->cluster_size;
@@ -337,7 +337,7 @@ FAT12_File* FAT12_FindEntry(FAT12_File* parent, const char* name)
                         file->is_directory = 1;
 
                         uint32_t cluster_count = 0;
-                        uint16_t cluster = entry.first_cluster;
+                        uint32_t cluster = entry.first_cluster;
                         while (cluster < 0xFF8) {
                             if (cluster == 0) break;
                             cluster_count++;
@@ -379,7 +379,7 @@ FAT12_File* FAT12_FindEntry(FAT12_File* parent, const char* name)
                 file->is_directory = 1;
 
                 uint32_t cluster_count = 0;
-                uint16_t cluster = entry.first_cluster;
+                uint32_t cluster = entry.first_cluster;
                 while (cluster < 0xFF8) {
                     cluster_count++;
                     cluster = FAT12_ReadFATEntry(file->fs, cluster);
