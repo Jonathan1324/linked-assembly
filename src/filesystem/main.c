@@ -50,8 +50,6 @@ int main(int argc, const char *argv[])
         return 1;
     }
 
-    int64_t now = time(NULL);
-
     FILE* test = fopen("roots/test/test.txt", "rb");
     if (!test) {
         FAT12_CloseFilesystem(fs);
