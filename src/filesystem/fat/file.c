@@ -3,7 +3,7 @@
 #include <string.h>
 #include <stdlib.h>
 
-uint32_t FAT12_ReadFromFileRaw(FAT12_File* f, uint32_t offset, uint8_t* buffer, uint32_t size)
+uint32_t FAT_ReadFromFileRaw(FAT_File* f, uint32_t offset, uint8_t* buffer, uint32_t size)
 {
     if (!f || !buffer) return 0;
     if (offset >= f->size) return 0;
@@ -52,7 +52,7 @@ uint32_t FAT12_ReadFromFileRaw(FAT12_File* f, uint32_t offset, uint8_t* buffer, 
     return total_read;
 }
 
-uint32_t FAT12_WriteToFileRaw(FAT12_File* f, uint32_t offset, uint8_t* buffer, uint32_t size)
+uint32_t FAT_WriteToFileRaw(FAT_File* f, uint32_t offset, uint8_t* buffer, uint32_t size)
 {
     if (!f || !buffer) return 0;
 
@@ -73,7 +73,7 @@ uint32_t FAT12_WriteToFileRaw(FAT12_File* f, uint32_t offset, uint8_t* buffer, u
         uint32_t old_end = f->size;
         uint32_t reserve = offset + remaining - f->size;
         // TODO
-        int r = FAT12_ReserveSpace(f, reserve, !f->is_directory);
+        int r = FAT_ReserveSpace(f, reserve, !f->is_directory);
         if (r != 0) return 0;
         if (offset > old_end) {
             // fill in the rest
@@ -84,7 +84,7 @@ uint32_t FAT12_WriteToFileRaw(FAT12_File* f, uint32_t offset, uint8_t* buffer, u
             while (uninitialized > 0) {
                 uint32_t chunk = (uninitialized > CHUNK_SIZE) ? CHUNK_SIZE : uninitialized;
                 // TODO: set to zero with a better way
-                if (FAT12_WriteToFileRaw(f, off, zero_buffer, chunk) != chunk) {
+                if (FAT_WriteToFileRaw(f, off, zero_buffer, chunk) != chunk) {
                     // warning
                 }
                 off += chunk;
@@ -124,7 +124,7 @@ uint32_t FAT12_WriteToFileRaw(FAT12_File* f, uint32_t offset, uint8_t* buffer, u
     return written;
 }
 
-int FAT12_ReserveSpace(FAT12_File* f, uint32_t extra, int update_entry_size)
+int FAT_ReserveSpace(FAT_File* f, uint32_t extra, int update_entry_size)
 {
     if (!f || f->is_root_directory) return 1;
 
@@ -172,7 +172,7 @@ int FAT12_ReserveSpace(FAT12_File* f, uint32_t extra, int update_entry_size)
     return 0;
 }
 
-uint32_t FAT12_GetAbsoluteOffset(FAT12_File* f, uint32_t relative_offset)
+uint32_t FAT_GetAbsoluteOffset(FAT_File* f, uint32_t relative_offset)
 {
     if (!f) return 0;
 
@@ -196,46 +196,46 @@ uint32_t FAT12_GetAbsoluteOffset(FAT12_File* f, uint32_t relative_offset)
     return f->fs->data_offset + (cluster - 2) * f->fs->cluster_size + off;
 }
 
-int FAT12_GetDirectoryEntry(FAT12_File* f, FAT_DirectoryEntry* entry)
+int FAT_GetDirectoryEntry(FAT_File* f, FAT_DirectoryEntry* entry)
 {
     if (!f || !entry) return 1;
     if (Partition_Read(f->fs->partition, &entry, f->directory_entry_offset, sizeof(FAT_DirectoryEntry)) != sizeof(FAT_DirectoryEntry)) return 1;
     return 0;
 }
 
-int FAT12_SetDirectoryEntry(FAT12_File* f, FAT_DirectoryEntry* entry)
+int FAT_SetDirectoryEntry(FAT_File* f, FAT_DirectoryEntry* entry)
 {
     if (!f || !entry) return 1;
     if (Partition_Write(f->fs->partition, &entry, f->directory_entry_offset, sizeof(FAT_DirectoryEntry)) != sizeof(FAT_DirectoryEntry)) return 1;
     return 0;
 }
 
-FAT12_File* FAT12_CreateEntryRaw(FAT12_File* dir, FAT_DirectoryEntry* entry, int is_directory, FAT_LFNEntry* lfn_entries, uint32_t lfn_count)
+FAT_File* FAT_CreateEntryRaw(FAT_File* dir, FAT_DirectoryEntry* entry, int is_directory, FAT_LFNEntry* lfn_entries, uint32_t lfn_count)
 {
     if (!entry) return NULL;
 
-    FAT12_File* f = (FAT12_File*)malloc(sizeof(FAT12_File));
+    FAT_File* f = (FAT_File*)malloc(sizeof(FAT_File));
     if (!f) return NULL;
     
-    uint32_t rel_offset = FAT12_AddDirectoryEntry(dir, entry, lfn_entries, lfn_count);
+    uint32_t rel_offset = FAT_AddDirectoryEntry(dir, entry, lfn_entries, lfn_count);
 
     f->fs = dir->fs;
     f->size = 0;
     f->first_cluster = 0;
-    f->directory_entry_offset = FAT12_GetAbsoluteOffset(dir, rel_offset);
+    f->directory_entry_offset = FAT_GetAbsoluteOffset(dir, rel_offset);
     f->is_root_directory = 0;
     f->is_directory = is_directory;
 
     return f;
 }
 
-void FAT12_CloseEntry(FAT12_File* entry)
+void FAT_CloseEntry(FAT_File* entry)
 {
     if (!entry) return;
     free(entry);
 }
 
-FAT12_File* FAT12_CreateEntry(FAT12_File* parent, const char* name, uint8_t attribute, int is_directory, int64_t creation, int64_t last_modification, int64_t last_access, int use_lfn)
+FAT_File* FAT_CreateEntry(FAT_File* parent, const char* name, uint8_t attribute, int is_directory, int64_t creation, int64_t last_modification, int64_t last_access, int use_lfn)
 {
     if (!parent || !parent->is_directory || !name) return NULL;
 
@@ -264,14 +264,16 @@ FAT12_File* FAT12_CreateEntry(FAT12_File* parent, const char* name, uint8_t attr
         if (!lfn_entries) return NULL;
     }
 
-    FAT12_File* file = FAT12_CreateEntryRaw(parent, &entry, is_directory, lfn_entries, lfn_count);
+    FAT_File* file = FAT_CreateEntryRaw(parent, &entry, is_directory, lfn_entries, lfn_count);
 
     if (lfn_entries) free(lfn_entries);
+
+    if (is_directory) FAT_AddDotsToDirectory(file, parent);
 
     return file;
 }
 
-FAT12_File* FAT12_FindEntry(FAT12_File* parent, const char* name)
+FAT_File* FAT_FindEntry(FAT_File* parent, const char* name)
 {
     if (!parent || !parent->is_directory || !name) return NULL;
 
@@ -289,7 +291,7 @@ FAT12_File* FAT12_FindEntry(FAT12_File* parent, const char* name)
     uint32_t lfn_count = 0;
 
     while(1) {
-        uint32_t r = FAT12_ReadFromFileRaw(parent, offset, (uint8_t*)&entry, sizeof(FAT_DirectoryEntry));
+        uint32_t r = FAT_ReadFromFileRaw(parent, offset, (uint8_t*)&entry, sizeof(FAT_DirectoryEntry));
         if (r != sizeof(FAT_DirectoryEntry)) break;
 
         if (entry.name[0] == 0x00) break; // End of directory
@@ -326,13 +328,13 @@ FAT12_File* FAT12_FindEntry(FAT12_File* parent, const char* name)
                     free(lfn_utf16);
                     free(lfn_entries);
 
-                    FAT12_File* file = (FAT12_File*)malloc(sizeof(FAT12_File));
+                    FAT_File* file = (FAT_File*)malloc(sizeof(FAT_File));
                     if (!file) return NULL;
 
                     if (entry.attribute & FAT_ENTRY_DIRECTORY) {
                         file->fs = parent->fs;
                         file->first_cluster = entry.first_cluster;
-                        file->directory_entry_offset = FAT12_GetAbsoluteOffset(parent, offset);
+                        file->directory_entry_offset = FAT_GetAbsoluteOffset(parent, offset);
                         file->is_root_directory = 0;
                         file->is_directory = 1;
 
@@ -348,7 +350,7 @@ FAT12_File* FAT12_FindEntry(FAT12_File* parent, const char* name)
                         file->fs = parent->fs;
                         file->size = entry.file_size;
                         file->first_cluster = entry.first_cluster;
-                        file->directory_entry_offset = FAT12_GetAbsoluteOffset(parent, offset);
+                        file->directory_entry_offset = FAT_GetAbsoluteOffset(parent, offset);
                         file->is_root_directory = 0;
                         file->is_directory = 0;
                     }
@@ -368,13 +370,13 @@ FAT12_File* FAT12_FindEntry(FAT12_File* parent, const char* name)
             free(name16);
             free(lfn_entries);
 
-            FAT12_File* file = (FAT12_File*)malloc(sizeof(FAT12_File));
+            FAT_File* file = (FAT_File*)malloc(sizeof(FAT_File));
             if (!file) return NULL;
 
             if (entry.attribute & FAT_ENTRY_DIRECTORY) {
                 file->fs = parent->fs;
                 file->first_cluster = entry.first_cluster;
-                file->directory_entry_offset = FAT12_GetAbsoluteOffset(parent, offset);
+                file->directory_entry_offset = FAT_GetAbsoluteOffset(parent, offset);
                 file->is_root_directory = 0;
                 file->is_directory = 1;
 
@@ -389,7 +391,7 @@ FAT12_File* FAT12_FindEntry(FAT12_File* parent, const char* name)
                 file->fs = parent->fs;
                 file->size = entry.file_size;
                 file->first_cluster = entry.first_cluster;
-                file->directory_entry_offset = FAT12_GetAbsoluteOffset(parent, offset);
+                file->directory_entry_offset = FAT_GetAbsoluteOffset(parent, offset);
                 file->is_root_directory = 0;
                 file->is_directory = 0;
             }
