@@ -1,6 +1,7 @@
 #pragma once
 #include <stdio.h>
 #include <stdint.h>
+#include "../partition/partition.h"
 
 #define CHUNK_SIZE 512
 
@@ -133,7 +134,7 @@ typedef struct FAT12_File {
 } FAT12_File;
 
 struct FAT12_Filesystem {
-    FILE* f;
+    Partition* partition;
     FAT12_Bootsector bootsector;
 
     FAT12_File* root;
@@ -202,7 +203,7 @@ static inline uint32_t FAT12_WriteToFile(FAT12_File* f, uint32_t offset, uint8_t
 }
 
 // Initializes an empty FAT12 Filesystem
-FAT12_Filesystem* FAT12_CreateEmptyFilesystem(FILE* f,
+FAT12_Filesystem* FAT12_CreateEmptyFilesystem(Partition* partition,
                                               const char* oem_name, const char* volume_label, uint32_t volume_id,
                                               uint32_t total_size, uint32_t bytes_per_sector, uint8_t sectors_per_cluster,
                                               uint16_t reserved_sectors, uint8_t number_of_fats, uint16_t max_root_directory_entries,

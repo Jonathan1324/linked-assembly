@@ -13,9 +13,8 @@ uint32_t FAT12_ReadFromFileRaw(FAT12_File* f, uint32_t offset, uint8_t* buffer, 
     if (offset + size > f->size) remaining = f->size - offset;
 
     if (f->is_root_directory) {
-        uint32_t abs = f->fs->root_offset + offset;
-        if (fseek(f->fs->f, abs, SEEK_SET) != 0) return 0;
-        if (fread(out, 1, remaining, f->fs->f) != remaining) return 0;
+        uint64_t abs = f->fs->root_offset + offset;
+        if (Partition_Read(f->fs->partition, out, abs, remaining) != remaining) return 0;
         return remaining;
     }
 
@@ -38,8 +37,7 @@ uint32_t FAT12_ReadFromFileRaw(FAT12_File* f, uint32_t offset, uint8_t* buffer, 
         uint32_t chunk = cluster_size - off;
         if (chunk > remaining) chunk = remaining;
 
-        if (fseek(f->fs->f, abs, SEEK_SET) != 0) break;
-        if (fread(out, 1, chunk, f->fs->f) != chunk) break;
+        if (Partition_Read(f->fs->partition, out, abs, chunk) != chunk) break;
 
         out += chunk;
         remaining -= chunk;
@@ -61,8 +59,7 @@ uint32_t FAT12_WriteToFileRaw(FAT12_File* f, uint32_t offset, uint8_t* buffer, u
         if (offset > f->size) return 0;
         uint32_t remaining = size;
         if (offset + remaining > f->size) remaining = f->size - offset;
-        if (fseek(f->fs->f, abs, SEEK_SET) != 0) return 0;
-        if (fwrite(buffer, 1, remaining, f->fs->f) != remaining) return 0;
+        if (Partition_Write(f->fs->partition, buffer, abs, remaining) != remaining) return 0;
         return remaining;
     }
 
@@ -112,8 +109,7 @@ uint32_t FAT12_WriteToFileRaw(FAT12_File* f, uint32_t offset, uint8_t* buffer, u
         uint32_t chunk = cluster_size - off;
         if (chunk > remaining) chunk = remaining;
 
-        if (fseek(f->fs->f, abs, SEEK_SET) != 0) break;
-        if (fwrite(out, 1, chunk, f->fs->f) != chunk) break;
+        if (Partition_Write(f->fs->partition, out, abs, chunk) != chunk) break;;
 
         written += chunk;
         remaining -= chunk;
@@ -136,9 +132,7 @@ int FAT12_ReserveSpace(FAT12_File* f, uint32_t extra, int update_entry_size)
     uint32_t current_clusters = (f->size + cluster_size - 1) / cluster_size;
 
     FAT_DirectoryEntry entry;
-    if (fseek(f->fs->f, f->directory_entry_offset, SEEK_SET) != 0) return 1;
-
-    if (fread(&entry, sizeof(FAT_DirectoryEntry), 1, f->fs->f) != 1) return 1;
+    if (Partition_Read(f->fs->partition, &entry, f->directory_entry_offset, sizeof(FAT_DirectoryEntry)) != sizeof(FAT_DirectoryEntry)) return 1;
 
     if (update_entry_size) entry.file_size = total_size;
 
@@ -170,8 +164,7 @@ int FAT12_ReserveSpace(FAT12_File* f, uint32_t extra, int update_entry_size)
         free(clusters);
     }
 
-    if (fseek(f->fs->f, f->directory_entry_offset, SEEK_SET) != 0) return 1;
-    if (fwrite(&entry, sizeof(FAT_DirectoryEntry), 1, f->fs->f) != 1) return 1;
+    if (Partition_Write(f->fs->partition, &entry, f->directory_entry_offset, sizeof(FAT_DirectoryEntry)) != sizeof(FAT_DirectoryEntry)) return 1;
     f->size = total_size;
 
     return 0;
@@ -204,16 +197,14 @@ uint32_t FAT12_GetAbsoluteOffset(FAT12_File* f, uint32_t relative_offset)
 int FAT12_GetDirectoryEntry(FAT12_File* f, FAT_DirectoryEntry* entry)
 {
     if (!f || !entry) return 1;
-    if (fseek(f->fs->f, f->directory_entry_offset, SEEK_SET) != 0) return 1;
-    if (fread(&entry, sizeof(FAT_DirectoryEntry), 1, f->fs->f) != 1) return 1;
+    if (Partition_Read(f->fs->partition, &entry, f->directory_entry_offset, sizeof(FAT_DirectoryEntry)) != sizeof(FAT_DirectoryEntry)) return 1;
     return 0;
 }
 
 int FAT12_SetDirectoryEntry(FAT12_File* f, FAT_DirectoryEntry* entry)
 {
     if (!f || !entry) return 1;
-    if (fseek(f->fs->f, f->directory_entry_offset, SEEK_SET) != 0) return 1;
-    if (fwrite(&entry, sizeof(FAT_DirectoryEntry), 1, f->fs->f) != 1) return 1;
+    if (Partition_Write(f->fs->partition, &entry, f->directory_entry_offset, sizeof(FAT_DirectoryEntry)) != sizeof(FAT_DirectoryEntry)) return 1;
     return 0;
 }
 

@@ -33,35 +33,29 @@ int FAT_ParseName(const char* name, char fat_name[8], char fat_ext[3])
 int FAT12_FlushFATBuffer(FAT12_Filesystem* fs)
 {
     if (!fs) return 1;
-    if (fseek(fs->f, fs->fat_offset + fs->fat_buffer_start, SEEK_SET) != 0) return 1;
-    if (fwrite(fs->fat_buffer, FAT_BUFFER_SIZE, 1, fs->f) != 1) return 1;
+    if (Partition_Write(fs->partition, fs->fat_buffer, fs->fat_offset + fs->fat_buffer_start, FAT_BUFFER_SIZE) != FAT_BUFFER_SIZE) return 1;
     return 0;
 }
 
 int FAT12_LoadFATBuffer(FAT12_Filesystem* fs, uint32_t offset)
 {
     if (!fs) return 1;
-    if (fseek(fs->f, fs->fat_offset + offset, SEEK_SET) != 0) return 1;
-    if (fread(fs->fat_buffer, FAT_BUFFER_SIZE, 1, fs->f) != 1) return 1;
+    if (Partition_Read(fs->partition, fs->fat_buffer, fs->fat_offset + offset, FAT_BUFFER_SIZE) != FAT_BUFFER_SIZE) return 1;
     fs->fat_buffer_start = offset;
     return 0;
 }
 
-FAT12_Filesystem* FAT12_CreateEmptyFilesystem(FILE* f,
+FAT12_Filesystem* FAT12_CreateEmptyFilesystem(Partition* partition,
                                               const char* oem_name, const char* volume_label, uint32_t volume_id,
                                               uint32_t total_size, uint32_t bytes_per_sector, uint8_t sectors_per_cluster,
                                               uint16_t reserved_sectors, uint8_t number_of_fats, uint16_t max_root_directory_entries,
                                               uint16_t sectors_per_track, uint16_t number_of_heads, uint8_t drive_number,
                                               uint8_t media_descriptor )
 {
-    if (!f || !oem_name || !volume_label) return NULL;
+    if (!partition || !oem_name || !volume_label) return NULL;
     FAT12_Filesystem* fs = calloc(1, sizeof(FAT12_Filesystem));
-    fs->f = f;
+    fs->partition = partition;
 
-    if (fseek(fs->f, 0, SEEK_SET) != 0) {
-        free(fs);
-        return NULL;
-    }
     if (FAT12_WriteBootsector(fs, oem_name, volume_label, volume_id, total_size, bytes_per_sector, sectors_per_cluster,
                               reserved_sectors, number_of_fats, max_root_directory_entries, sectors_per_track,
                               number_of_heads, drive_number, media_descriptor) != 0) {
@@ -99,18 +93,16 @@ FAT12_Filesystem* FAT12_CreateEmptyFilesystem(FILE* f,
     }
 
     // fill data area
-    if (fseek(fs->f, fs->data_offset, SEEK_SET) != 0) {
-        free(fs);
-        return NULL;
-    }
+    uint64_t offset = fs->data_offset;
     uint8_t zero_block[CHUNK_SIZE] = {0};
     uint32_t written = 0;
     while (written < fs->data_size) {
         uint32_t chunk = (fs->data_size - written) < CHUNK_SIZE ? (fs->data_size - written) : CHUNK_SIZE;
-        if (fwrite(zero_block, 1, chunk, fs->f) != chunk) {
+        if (Partition_Write(fs->partition, zero_block, offset, chunk) != chunk) {
             free(fs);
             return NULL;
         }
+        offset += chunk;
         written += chunk;
     }
 
@@ -315,8 +307,8 @@ int FAT12_WriteBootsector(FAT12_Filesystem* fs,
     memcpy(fs->bootsector.bootcode, code, sizeof(code));
     memcpy(fs->bootsector.bootcode + sizeof(code), data, sizeof(data));
 
-    size_t written = fwrite(&fs->bootsector, sizeof(FAT12_Bootsector), 1, fs->f);
-    if (written != 1) {
+    uint64_t written = Partition_Write(fs->partition, &fs->bootsector, 0, sizeof(FAT12_Bootsector));
+    if (written != sizeof(FAT12_Bootsector)) {
         perror("fwrite");
         return 1;
     }
@@ -327,19 +319,21 @@ int FAT12_WriteEmptyFAT(FAT12_Filesystem* fs)
 {
     if (!fs) return 1;
 
-    if (fseek(fs->f, fs->fat_offset, SEEK_SET) != 0) return 1;
+    uint64_t offset = fs->fat_offset;
 
     uint32_t fat_size = fs->fat_size;
     uint32_t written = 0;
 
     uint8_t header[3] = { fs->bootsector.header.media_descriptor, 0xFF, 0xFF };
-    if (fwrite(header, 1, 3, fs->f) != 3) return 1;
+    if (Partition_Write(fs->partition, header, offset, 3) != 3) return 1;
+    offset += 3;
     written += 3;
 
     uint8_t zero_block[CHUNK_SIZE] = {0};
     while (written < fat_size) {
         uint32_t chunk = (fat_size - written) < CHUNK_SIZE ? (fat_size - written) : CHUNK_SIZE;
-        if (fwrite(zero_block, 1, chunk, fs->f) != chunk) return 1;
+        if (Partition_Write(fs->partition, zero_block, offset, chunk) != chunk) return 1;
+        offset += chunk;
         written += chunk;
     }
 
@@ -359,11 +353,8 @@ int FAT12_CopyFAT(FAT12_Filesystem* fs, uint8_t dst, uint8_t src)
     while (remaining > 0) {
         size_t to_copy = remaining < CHUNK_SIZE ? remaining : CHUNK_SIZE;
 
-        if (fseek(fs->f, offset_src, SEEK_SET) != 0) return 1;
-        if (fread(buf, 1, to_copy, fs->f) != to_copy) return 1;
-
-        if (fseek(fs->f, offset_dst, SEEK_SET) != 0) return 1;
-        if (fwrite(buf, 1, to_copy, fs->f) != to_copy) return 1;
+        if (Partition_Read(fs->partition, buf, offset_src, to_copy) != to_copy) return 1;
+        if (Partition_Write(fs->partition, buf, offset_dst, to_copy) != to_copy) return 1;
 
         offset_src += to_copy;
         offset_dst += to_copy;
@@ -376,15 +367,15 @@ int FAT12_CopyFAT(FAT12_Filesystem* fs, uint8_t dst, uint8_t src)
 int FAT12_WriteEmptyRootDir(FAT12_Filesystem* fs)
 {
     if (!fs) return 1;
-    
-    if (fseek(fs->f, fs->root_offset, SEEK_SET) != 0) return 1;
 
+    uint64_t offset = fs->root_offset;
     uint8_t zero_block[CHUNK_SIZE] = {0};
     uint32_t written = 0;
 
     while (written < fs->root_size) {
         uint32_t chunk = (fs->root_size - written) < CHUNK_SIZE ? (fs->root_size - written) : CHUNK_SIZE;
-        if (fwrite(zero_block, 1, chunk, fs->f) != chunk) return 1;
+        if (Partition_Write(fs->partition, zero_block, offset, chunk) != chunk) return 1;
+        offset += chunk;
         written += chunk;
     }
 

@@ -2,7 +2,7 @@
 #include <stdlib.h>
 #include <string.h>
 #include "fat/fat.h"
-#include <time.h>
+#include "file/file.h"
 
 int main(int argc, const char *argv[])
 {
@@ -24,17 +24,28 @@ int main(int argc, const char *argv[])
         return 1;
     }
 
-    FILE* f = fopen(image_file, "w+b");
-    if (!f) {
+    FILE* f_raw = fopen(image_file, "w+b");
+    if (!f_raw) {
         perror("fopen");
         return 1;
     }
+    File* f = File_Create(f_raw);
+    if (!f) {
+        fclose(f_raw);
+        return 1;
+    }
 
-    FAT12_Filesystem* fs = FAT12_CreateEmptyFilesystem(f,
+    Partition* partition = Partition_Create(f, 0, 1474560);
+    if (!partition) {
+        File_Close(f);
+        return 1;
+    }
+
+    FAT12_Filesystem* fs = FAT12_CreateEmptyFilesystem(partition,
                                                        "mkfs.fat",                                   // oem name
                                                        "NO NAME",                                    // volume label
                                                        0x12345678,                                   // volume id
-                                                       1474560,                                      // total size in bytes
+                                                       partition->size,                              // total size in bytes
                                                        512,                                          // bytes per sector
                                                        1,                                            // sectors per cluster
                                                        1,                                            // reserved_sectors
@@ -46,14 +57,16 @@ int main(int argc, const char *argv[])
                                                        FAT12_BOOTSECTOR_MEDIA_DESCRIPTOR_FLOPPY144   // media descriptor
     );
     if (!fs) {
-        fclose(f);
+        File_Close(f);
+        Partition_Close(partition);
         return 1;
     }
 
     FILE* test = fopen("roots/test/test.txt", "rb");
     if (!test) {
         FAT12_CloseFilesystem(fs);
-        fclose(f);
+        Partition_Close(partition);
+        File_Close(f);
         return 1;
     }
 
@@ -78,6 +91,10 @@ int main(int argc, const char *argv[])
     fclose(test);
     FAT12_CloseEntry(test_txt);
 
+    FAT12_CloseFilesystem(fs);
+    Partition_Close(partition);
+    File_Close(f);
+
     /*
     FAT_DirectoryEntry entry_folder = {0};
     FAT_ParseName("folder", entry_folder.name, entry_folder.ext);
@@ -99,7 +116,5 @@ int main(int argc, const char *argv[])
     FAT12_CloseEntry(folder__text_txt);
     */
 
-    FAT12_CloseFilesystem(fs);
-    fclose(f);
     return 0;
 }
