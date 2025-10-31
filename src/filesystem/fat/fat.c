@@ -3,6 +3,33 @@
 #include <string.h>
 #include <ctype.h>
 
+int FAT_ParseName(const char* name, char fat_name[8], char fat_ext[3])
+{
+    fat_name[0] = ' '; fat_name[1] = ' ';
+    fat_name[2] = ' '; fat_name[3] = ' ';
+    fat_name[4] = ' '; fat_name[5] = ' ';
+    fat_name[6] = ' '; fat_name[7] = ' ';
+    fat_ext[0] = ' '; fat_ext[1] = ' '; fat_ext[2] = ' ';
+
+    size_t len = strlen(name);
+
+    const char* dot = strrchr(name, '.');
+    size_t nlen = dot ? (size_t)(dot - name) : len;
+    if (nlen > 8) nlen = 8;
+
+    for (size_t i = 0; i < nlen; i++)
+        fat_name[i] = toupper((unsigned char)name[i]);
+
+    if (dot) {
+        size_t elen = len - (size_t)(dot - name) - 1;
+        if (elen > 3) elen = 3;
+        for (size_t i = 0; i < elen; i++)
+            fat_ext[i] = toupper((unsigned char)dot[i+1]);
+    }
+
+    return 0;
+}
+
 int FAT12_FlushFATBuffer(FAT12_Filesystem* fs)
 {
     if (!fs) return 1;
@@ -86,6 +113,15 @@ FAT12_Filesystem* FAT12_CreateEmptyFilesystem(FILE* f,
         }
         written += chunk;
     }
+
+    fs->static_root.fs = fs;
+    fs->static_root.size = fs->root_size;
+    fs->static_root.first_cluster = 0;
+    fs->static_root.directory_entry_offset = 0;
+    fs->static_root.is_root_directory = 1;
+    fs->static_root.is_directory = 1;
+
+    fs->root = &fs->static_root;
 
     FAT12_LoadFATBuffer(fs, 0);
 

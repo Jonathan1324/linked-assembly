@@ -138,8 +138,7 @@ int FAT12_ReserveSpace(FAT12_File* f, uint32_t extra, int update_entry_size)
     FAT_DirectoryEntry entry;
     if (fseek(f->fs->f, f->directory_entry_offset, SEEK_SET) != 0) return 1;
 
-    size_t read = fread(&entry, sizeof(FAT_DirectoryEntry), 1, f->fs->f);
-    if (read != 1) return 1;
+    if (fread(&entry, sizeof(FAT_DirectoryEntry), 1, f->fs->f) != 1) return 1;
 
     if (update_entry_size) entry.file_size = total_size;
 
@@ -202,25 +201,43 @@ uint32_t FAT12_GetAbsoluteOffset(FAT12_File* f, uint32_t relative_offset)
     return f->fs->data_offset + (cluster - 2) * f->fs->cluster_size + off;
 }
 
-uint32_t FAT12_AddDirectoryEntry(FAT12_File* directory, FAT_DirectoryEntry* entry)
+int FAT12_GetDirectoryEntry(FAT12_File* f, FAT_DirectoryEntry* entry)
 {
-    if (!directory || !entry || !directory->is_directory) return 0xFFFF; // TODO: error
+    if (!f || !entry) return 1;
+    if (fseek(f->fs->f, f->directory_entry_offset, SEEK_SET) != 0) return 1;
+    if (fread(&entry, sizeof(FAT_DirectoryEntry), 1, f->fs->f) != 1) return 1;
+    return 0;
+}
 
-    uint32_t offset = 0;
-    FAT_DirectoryEntry tmp;
+int FAT12_SetDirectoryEntry(FAT12_File* f, FAT_DirectoryEntry* entry)
+{
+    if (!f || !entry) return 1;
+    if (fseek(f->fs->f, f->directory_entry_offset, SEEK_SET) != 0) return 1;
+    if (fwrite(&entry, sizeof(FAT_DirectoryEntry), 1, f->fs->f) != 1) return 1;
+    return 0;
+}
 
-    while (FAT12_ReadFromFileRaw(directory, offset, (uint8_t*)&tmp, sizeof(tmp)) == sizeof(tmp)) {
-        if (tmp.name[0] == 0x00 || tmp.name[0] == FAT_ENTRY_DELETED) {
-            if (FAT12_WriteToFileRaw(directory, offset, (uint8_t*)entry, sizeof(FAT_DirectoryEntry)) != sizeof(FAT_DirectoryEntry))
-                return 0xFFFF;
-            return offset;
-        }
-        offset += sizeof(FAT_DirectoryEntry);
-    }
+FAT12_File* FAT12_CreateEntry(FAT12_File* dir, FAT_DirectoryEntry* entry, int is_directory)
+{
+    if (!entry) return NULL;
 
-    // no empty slot
-    if (FAT12_WriteToFileRaw(directory, offset, (uint8_t*)entry, sizeof(FAT_DirectoryEntry)) != sizeof(FAT_DirectoryEntry))
-        return 0xFFFF;
+    FAT12_File* f = (FAT12_File*)malloc(sizeof(FAT12_File));
+    if (!f) return NULL;
+    
+    uint32_t rel_offset = FAT12_AddDirectoryEntry(dir, entry);
 
-    return offset;
+    f->fs = dir->fs;
+    f->size = 0;
+    f->first_cluster = 0;
+    f->directory_entry_offset = FAT12_GetAbsoluteOffset(dir, rel_offset);
+    f->is_root_directory = 0;
+    f->is_directory = is_directory;
+
+    return f;
+}
+
+void FAT12_CloseEntry(FAT_DirectoryEntry* entry)
+{
+    if (!entry) return;
+    free(entry);
 }

@@ -99,9 +99,28 @@ typedef struct FAT_DirectoryEntry {
 
 } __attribute__((packed)) FAT_DirectoryEntry;
 
-typedef struct FAT12_Filesystem {
+typedef struct FAT12_Filesystem FAT12_Filesystem;
+
+typedef struct FAT12_File {
+    FAT12_Filesystem* fs;
+
+    uint32_t size;
+
+    uint16_t first_cluster;
+
+    uint32_t directory_entry_offset; // absolute in bytes from file start
+
+    int is_root_directory;
+    int is_directory;
+
+} FAT12_File;
+
+struct FAT12_Filesystem {
     FILE* f;
     FAT12_Bootsector bootsector;
+
+    FAT12_File* root;
+    FAT12_File static_root;
 
     uint8_t fat_buffer[FAT_BUFFER_SIZE];
     uint32_t fat_buffer_start;
@@ -119,23 +138,11 @@ typedef struct FAT12_Filesystem {
 
     uint32_t cluster_size;  // in bytes
 
-} FAT12_Filesystem;
-
-typedef struct FAT12_File {
-    FAT12_Filesystem* fs;
-
-    uint32_t size;
-
-    uint16_t first_cluster;
-
-    uint32_t directory_entry_offset; // absolute in bytes from file start
-
-    int is_root_directory;
-    int is_directory;
-
-} FAT12_File;
+};
 
 // Functions:
+
+int FAT_ParseName(const char* name, char fat_name[8], char fat_ext[3]);
 
 void FAT_EncodeTime(int64_t epoch, uint16_t* fat_date, uint16_t* fat_time, uint8_t* tenths);
 
@@ -148,6 +155,25 @@ int FAT12_ReserveSpace(FAT12_File* f, uint32_t extra, int update_entry_size);
 uint32_t FAT12_GetAbsoluteOffset(FAT12_File* f, uint32_t relative_offset);
 
 uint32_t FAT12_AddDirectoryEntry(FAT12_File* directory, FAT_DirectoryEntry* entry);
+int FAT12_AddDotsToDirectory(FAT12_File* directory, FAT12_File* parent);
+
+int FAT12_GetDirectoryEntry(FAT12_File* f, FAT_DirectoryEntry* entry);
+int FAT12_SetDirectoryEntry(FAT12_File* f, FAT_DirectoryEntry* entry);
+
+FAT12_File* FAT12_CreateEntry(FAT12_File* dir, FAT_DirectoryEntry* entry, int is_directory);
+void FAT12_CloseEntry(FAT_DirectoryEntry* entry);
+
+static inline uint32_t FAT12_ReadFromFile(FAT12_File* f, uint32_t offset, uint8_t* buffer, uint32_t size)
+{
+    if (!f || f->is_directory) return 0;
+    return FAT12_ReadFromFileRaw(f, offset, buffer, size);
+}
+
+static inline uint32_t FAT12_WriteToFile(FAT12_File* f, uint32_t offset, uint8_t* buffer, uint32_t size)
+{
+    if (!f || f->is_directory) return 0;
+    return FAT12_WriteToFileRaw(f, offset, buffer, size);
+}
 
 // Initializes an empty FAT12 Filesystem
 FAT12_Filesystem* FAT12_CreateEmptyFilesystem(FILE* f,
