@@ -58,20 +58,25 @@ int main(int argc, const char *argv[])
         fclose(f);
         return 1;
     }
-    fseek(test, 0, SEEK_END);
-    long length = ftell(test);
-    fseek(test, 0, SEEK_SET);
 
     FAT_DirectoryEntry entry_test_txt = {0};
     FAT_ParseName("test.txt", entry_test_txt.name, entry_test_txt.ext);
     entry_test_txt.attribute = FAT_ENTRY_ARCHIVE;
     FAT12_File* test_txt = FAT12_CreateEntry(fs->root, &entry_test_txt, 0);
 
-    uint8_t buffer_test_txt[16];
-    memset(buffer_test_txt, 'B', sizeof(buffer_test_txt));
-    FAT12_WriteToFile(test_txt, 0, buffer_test_txt, sizeof(buffer_test_txt));
+    uint64_t offset = 0;
+    char buffer[512];
+    while (1) {
+        size_t read = fread(&buffer, 1, sizeof(buffer), test);
+        if (read <= 0) break;
+        FAT12_WriteToFile(test_txt, offset, buffer, read);
+        offset += read;
+    }
 
+    fclose(test);
+    FAT12_CloseEntry(test_txt);
 
+    /*
     FAT_DirectoryEntry entry_folder = {0};
     FAT_ParseName("folder", entry_folder.name, entry_folder.ext);
     entry_folder.attribute = FAT_ENTRY_DIRECTORY;
@@ -88,12 +93,9 @@ int main(int argc, const char *argv[])
     memset(buf, 'E', sizeof(buf));
     FAT12_WriteToFile(folder__text_txt, 0, buf, sizeof(buf));
 
-
-    FAT12_CloseEntry(test_txt);
     FAT12_CloseEntry(folder);
     FAT12_CloseEntry(folder__text_txt);
-
-    fclose(test);
+    */
 
     FAT12_CloseFilesystem(fs);
     fclose(f);
