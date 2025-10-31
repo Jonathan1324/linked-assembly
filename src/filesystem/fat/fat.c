@@ -309,7 +309,6 @@ int FAT12_WriteBootsector(FAT12_Filesystem* fs,
 
     uint64_t written = Partition_Write(fs->partition, &fs->bootsector, 0, sizeof(FAT12_Bootsector));
     if (written != sizeof(FAT12_Bootsector)) {
-        perror("fwrite");
         return 1;
     }
     return 0;
