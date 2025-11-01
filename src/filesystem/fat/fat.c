@@ -54,13 +54,13 @@ FAT_Filesystem* FAT_CreateEmptyFilesystem(Partition* partition, Fat_Version vers
                                           uint8_t media_descriptor )
 {
     if (!partition || !oem_name || !volume_label) return NULL;
-    if (version != FAT12) return NULL; //TODO
     FAT_Filesystem* fs = calloc(1, sizeof(FAT_Filesystem));
     fs->partition = partition;
+    fs->version = version;
 
-    if (FAT12_WriteBootsector(fs, oem_name, volume_label, volume_id, total_size, bytes_per_sector, sectors_per_cluster,
-                              reserved_sectors, number_of_fats, max_root_directory_entries, sectors_per_track,
-                              number_of_heads, drive_number, media_descriptor) != 0) {
+    if (FAT12_FAT16_WriteBootsector(fs, oem_name, volume_label, volume_id, total_size, bytes_per_sector, sectors_per_cluster,
+                                    reserved_sectors, number_of_fats, max_root_directory_entries, sectors_per_track,
+                                    number_of_heads, drive_number, media_descriptor) != 0) {
         free(fs);
         return NULL;
     }
@@ -78,7 +78,7 @@ FAT_Filesystem* FAT_CreateEmptyFilesystem(Partition* partition, Fat_Version vers
 
     fs->cluster_size = fs->bootsector.header.bytes_per_sector * fs->bootsector.header.sectors_per_cluster;
 
-    if (FAT12_WriteEmptyFAT(fs) != 0) {
+    if (FAT_WriteEmptyFAT(fs) != 0) {
         free(fs);
         return NULL;
     }
@@ -138,69 +138,172 @@ void FAT_CloseFilesystem(FAT_Filesystem* fs)
 }
 
 
-uint32_t FAT12_ReadFATEntry(FAT_Filesystem* fs, uint32_t cluster)
+uint32_t FAT_ReadFATEntry(FAT_Filesystem* fs, uint32_t cluster)
 {
-    if (!fs || cluster > 0xFFF) return 0xFFFFFFFF; // TODO: invalid
+    if (!fs || cluster > FAT_GetLastCluster(fs)) return 0xFFFFFFFF;
 
-    uint32_t offset = cluster * 3 / 2;
+    uint32_t offset;
+    uint8_t* bytes;
+    uint32_t rel;
 
-    if (offset < fs->fat_buffer_start || offset + 1 >= fs->fat_buffer_start + FAT_BUFFER_SIZE) {
-        if (FAT_FlushFATBuffer(fs) != 0) return 0xFFFFFFFF;
-        if (FAT_LoadFATBuffer(fs, offset) != 0) return 0xFFFFFFFF;
+    switch (fs->version)
+    {
+        case FAT12:
+            offset = (cluster * 3) / 2;
+
+            if (offset < fs->fat_buffer_start ||
+                offset + 1 >= fs->fat_buffer_start + FAT_BUFFER_SIZE)
+            {
+                if (FAT_FlushFATBuffer(fs) != 0) return 0xFFFFFFFF;
+                if (FAT_LoadFATBuffer(fs, offset) != 0) return 0xFFFFFFFF;
+            }
+
+            rel   = offset - fs->fat_buffer_start;
+            bytes = &fs->fat_buffer[rel];
+
+            if (cluster & 1)
+                return ((bytes[0] >> 4) | (bytes[1] << 4)) & 0x0FFF;
+            else
+                return  (bytes[0] | ((bytes[1] & 0x0F) << 8)) & 0x0FFF;
+
+
+        case FAT16:
+            offset = cluster * 2;
+
+            if (offset < fs->fat_buffer_start ||
+                offset + 1 >= fs->fat_buffer_start + FAT_BUFFER_SIZE)
+            {
+                if (FAT_FlushFATBuffer(fs) != 0) return 0xFFFFFFFF;
+                if (FAT_LoadFATBuffer(fs, offset) != 0) return 0xFFFFFFFF;
+            }
+
+            rel   = offset - fs->fat_buffer_start;
+            bytes = &fs->fat_buffer[rel];
+
+            return (uint32_t)(bytes[0] | (bytes[1] << 8));
+
+
+        case FAT32:
+            offset = cluster * 4;
+
+            if (offset < fs->fat_buffer_start ||
+                offset + 3 >= fs->fat_buffer_start + FAT_BUFFER_SIZE)
+            {
+                if (FAT_FlushFATBuffer(fs) != 0) return 0xFFFFFFFF;
+                if (FAT_LoadFATBuffer(fs, offset) != 0) return 0xFFFFFFFF;
+            }
+
+            rel   = offset - fs->fat_buffer_start;
+            bytes = &fs->fat_buffer[rel];
+
+            return (bytes[0] |
+                   (bytes[1] << 8) |
+                   (bytes[2] << 16) |
+                   (bytes[3] << 24)) & 0x0FFFFFFF;
     }
 
-    uint32_t rel = offset - fs->fat_buffer_start;
-    uint8_t* bytes = &fs->fat_buffer[rel];
-
-    if (cluster & 1)
-        return ((bytes[0] >> 4) | (bytes[1] << 4)) & 0x0FFF;
-    else
-        return bytes[0] | ((bytes[1] & 0x0F) << 8);
+    return 0xFFFFFFFF;
 }
 
-int FAT12_WriteFATEntry(FAT_Filesystem* fs, uint32_t cluster, uint32_t value)
+int FAT_WriteFATEntry(FAT_Filesystem* fs, uint32_t cluster, uint32_t value)
 {
-    if (!fs || cluster > 0xFFF || value > 0xFFF) return 1;
+    if (!fs || cluster > FAT_GetLastCluster(fs)) return 1;
 
-    uint32_t offset = (cluster * 3) / 2;
+    uint32_t offset;
+    uint8_t* entry_bytes;
+    uint32_t rel;
 
-    if (offset < fs->fat_buffer_start || offset + 1 >= fs->fat_buffer_start + FAT_BUFFER_SIZE) {
-        if (FAT_FlushFATBuffer(fs) != 0) return 1;
-        if (FAT_LoadFATBuffer(fs, offset) != 0) return 1;
+    switch (fs->version)
+    {
+        case FAT12:
+            value &= 0x0FFF;
+            offset = (cluster * 3) / 2;
+
+            if (offset < fs->fat_buffer_start ||
+                offset + 1 >= fs->fat_buffer_start + FAT_BUFFER_SIZE)
+            {
+                if (FAT_FlushFATBuffer(fs) != 0) return 1;
+                if (FAT_LoadFATBuffer(fs, offset) != 0) return 1;
+            }
+
+            rel = offset - fs->fat_buffer_start;
+            entry_bytes = &fs->fat_buffer[rel];
+
+            if (cluster & 1)
+            {
+                entry_bytes[0] = (entry_bytes[0] & 0x0F) | ((value & 0x0F) << 4);
+                entry_bytes[1] = (value >> 4) & 0xFF;
+            }
+            else
+            {
+                entry_bytes[0] = (value & 0xFF);
+                entry_bytes[1] = (entry_bytes[1] & 0xF0) | ((value >> 8) & 0x0F);
+            }
+            return 0;
+
+
+        case FAT16:
+            value &= 0xFFFF;
+            offset = cluster * 2;
+
+            if (offset < fs->fat_buffer_start ||
+                offset + 1 >= fs->fat_buffer_start + FAT_BUFFER_SIZE)
+            {
+                if (FAT_FlushFATBuffer(fs) != 0) return 1;
+                if (FAT_LoadFATBuffer(fs, offset) != 0) return 1;
+            }
+
+            rel = offset - fs->fat_buffer_start;
+            entry_bytes = &fs->fat_buffer[rel];
+
+            entry_bytes[0] = value & 0xFF;
+            entry_bytes[1] = (value >> 8) & 0xFF;
+            return 0;
+
+
+        case FAT32:
+            value &= 0x0FFFFFFF;
+            offset = cluster * 4;
+
+            if (offset < fs->fat_buffer_start ||
+                offset + 3 >= fs->fat_buffer_start + FAT_BUFFER_SIZE)
+            {
+                if (FAT_FlushFATBuffer(fs) != 0) return 1;
+                if (FAT_LoadFATBuffer(fs, offset) != 0) return 1;
+            }
+
+            rel   = offset - fs->fat_buffer_start;
+            entry_bytes = &fs->fat_buffer[rel];
+
+            entry_bytes[0] = value & 0xFF;
+            entry_bytes[1] = (value >> 8) & 0xFF;
+            entry_bytes[2] = (value >> 16) & 0xFF;
+            entry_bytes[3] = (entry_bytes[3] & 0xF0) | ((value >> 24) & 0x0F);
+
+            return 0;
     }
 
-    uint32_t rel = offset - fs->fat_buffer_start;
-    uint8_t* entry_bytes = &fs->fat_buffer[rel];
-
-    if (cluster & 1) {
-        entry_bytes[0] = (entry_bytes[0] & 0x0F) | ((value & 0x0F) << 4);
-        entry_bytes[1] = (value >> 4) & 0xFF;
-    } else {
-        entry_bytes[0] = value & 0xFF;
-        entry_bytes[1] = (entry_bytes[1] & 0xF0) | ((value >> 8) & 0x0F);
-    }
-
-    return 0;
+    return 1;
 }
 
-uint32_t FAT12_FindNextFreeCluster(FAT_Filesystem* fs, uint32_t start_cluster)
+uint32_t FAT_FindNextFreeCluster(FAT_Filesystem* fs, uint32_t start_cluster)
 {
-    if (!fs || start_cluster > 0xFFF) return 0xFFFFFFFF; // TODO: invalid
-    for (uint32_t c = start_cluster; c <= 0xFFF; c++) {
-        if (FAT12_ReadFATEntry(fs, c) == 0x000) return c;
+    if (!fs || start_cluster > FAT_GetLastCluster(fs)) return 0xFFFFFFFF;
+    for (uint32_t c = start_cluster; c <= FAT_GetLastCluster(fs); c++) {
+        if (FAT_ReadFATEntry(fs, c) == 0) return c;
     }
     return 0xFFFFFFFF;
 }
 
-int FAT12_FindFreeClusters(FAT_Filesystem* fs, uint32_t* cluster_array, uint32_t count)
+int FAT_FindFreeClusters(FAT_Filesystem* fs, uint32_t* cluster_array, uint32_t count)
 {
     if (!fs || !cluster_array) return 1;
 
     uint32_t current_count = 0;
     uint32_t last_free_cluster = 0;
     while (current_count < count) {
-        uint32_t next_free_cluster = FAT12_FindNextFreeCluster(fs, last_free_cluster);
-        if (next_free_cluster > 0xFFF) return 1;
+        uint32_t next_free_cluster = FAT_FindNextFreeCluster(fs, last_free_cluster);
+        if (next_free_cluster > FAT_GetLastCluster(fs)) return 1;
 
         cluster_array[current_count] = next_free_cluster;
         last_free_cluster = next_free_cluster + 1;
@@ -210,15 +313,17 @@ int FAT12_FindFreeClusters(FAT_Filesystem* fs, uint32_t* cluster_array, uint32_t
     return 0;
 }
 
-int FAT12_WriteBootsector(FAT_Filesystem* fs,
-                          const char* oem_name, const char* volume_label, uint32_t volume_id,
-                          uint32_t total_size, uint32_t bytes_per_sector, uint8_t sectors_per_cluster,
-                          uint16_t reserved_sectors, uint8_t number_of_fats, uint16_t max_root_directory_entries,
-                          uint16_t sectors_per_track, uint16_t number_of_heads, uint8_t drive_number,
-                          uint8_t media_descriptor)
+int FAT12_FAT16_WriteBootsector(FAT_Filesystem* fs,
+                             const char* oem_name, const char* volume_label, uint32_t volume_id,
+                             uint32_t total_size, uint32_t bytes_per_sector, uint8_t sectors_per_cluster,
+                             uint16_t reserved_sectors, uint8_t number_of_fats, uint16_t max_root_directory_entries,
+                             uint16_t sectors_per_track, uint16_t number_of_heads, uint8_t drive_number,
+                             uint8_t media_descriptor)
 {
     if (!fs) return 1;
     memset(&fs->bootsector, 0, sizeof(FAT12_FAT16_Bootsector));
+
+    if (fs->version != FAT12 && fs->version != FAT16) return 1;
 
     fs->bootsector.signature = 0xAA55;
 
@@ -231,8 +336,8 @@ int FAT12_WriteBootsector(FAT_Filesystem* fs,
     uint32_t total_sectors = total_size / bytes_per_sector;
     uint32_t root_dir_sectors = (max_root_directory_entries * sizeof(FAT_DirectoryEntry) + bytes_per_sector - 1) / bytes_per_sector;
 
-    uint32_t total_clusters;
-    uint32_t fat_bytes;
+    uint32_t total_clusters = 0;
+    uint32_t fat_bytes = 0;
     uint32_t fat_sectors = 1;
     uint32_t data_sectors = total_size / bytes_per_sector - (reserved_sectors + number_of_fats * fat_sectors + root_dir_sectors);
 
@@ -242,14 +347,17 @@ int FAT12_WriteBootsector(FAT_Filesystem* fs,
     while (1) {
         data_sectors = total_sectors - (reserved_sectors + number_of_fats * fat_sectors + root_dir_sectors);
         total_clusters = data_sectors / sectors_per_cluster;
-        if (total_clusters > FAT12_MAX_CLUSTERS) {
-            fprintf(stderr, "Warning: Too many clusters for FAT12 (%u). Reducing to max %u.\n",
-                    total_clusters, FAT12_MAX_CLUSTERS);
-            total_clusters = FAT12_MAX_CLUSTERS;
+        if (total_clusters > FAT_GetMaxClusters(fs)) {
+            fprintf(stderr, "Warning: Too many clusters for FAT%u (%u). Reducing to max %u.\n",
+                    total_clusters, (fs->version == FAT12 ? 12 : (fs->version == FAT16 ? 16 : /*TODO*/ 32)), FAT_GetMaxClusters(fs));
+            total_clusters = FAT_GetMaxClusters(fs);
             data_sectors = total_clusters * sectors_per_cluster;
         }
 
-        fat_bytes = (total_clusters * 3 + 1) / 2;
+        switch (fs->version) {
+            case FAT12: fat_bytes = ((total_clusters + 2) * 3 + 1) / 2; break;
+            case FAT16: fat_bytes = (total_clusters + 2) * 2; break;
+        }
         uint32_t new_fat_sectors = (fat_bytes + bytes_per_sector - 1) / bytes_per_sector;
         if (new_fat_sectors == fat_sectors) break;
         fat_sectors = new_fat_sectors;
@@ -287,7 +395,14 @@ int FAT12_WriteBootsector(FAT_Filesystem* fs,
     fs->bootsector.header.filesystem_type[1] = 'A';
     fs->bootsector.header.filesystem_type[2] = 'T';
     fs->bootsector.header.filesystem_type[3] = '1';
-    fs->bootsector.header.filesystem_type[4] = '2';
+    switch (fs->version) {
+        case FAT12:
+            fs->bootsector.header.filesystem_type[4] = '2';
+            break;
+        case FAT16:
+            fs->bootsector.header.filesystem_type[4] = '6';
+            break;
+    }
     fs->bootsector.header.filesystem_type[5] = ' ';
     fs->bootsector.header.filesystem_type[6] = ' ';
     fs->bootsector.header.filesystem_type[7] = ' ';
@@ -316,19 +431,35 @@ int FAT12_WriteBootsector(FAT_Filesystem* fs,
     return 0;
 }
 
-int FAT12_WriteEmptyFAT(FAT_Filesystem* fs)
+int FAT_WriteEmptyFAT(FAT_Filesystem* fs)
 {
     if (!fs) return 1;
+    if (fs->version != FAT12 && fs->version != FAT16 && fs->version != FAT32) return 1;
 
     uint64_t offset = fs->fat_offset;
 
     uint32_t fat_size = fs->fat_size;
     uint32_t written = 0;
 
-    uint8_t header[3] = { fs->bootsector.header.media_descriptor, 0xFF, 0xFF };
-    if (Partition_Write(fs->partition, header, offset, 3) != 3) return 1;
-    offset += 3;
-    written += 3;
+    uint8_t header[8] = {fs->bootsector.header.media_descriptor, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF};
+
+    switch (fs->version) {
+        case FAT12:
+            if (Partition_Write(fs->partition, header, offset, 3) != 3) return 1;
+            offset += 3;
+            written += 3;
+            break;
+        case FAT16:
+            if (Partition_Write(fs->partition, header, offset, 4) != 4) return 1;
+            offset += 4;
+            written += 4;
+            break;
+        case FAT32:
+            if (Partition_Write(fs->partition, header, offset, 8) != 8) return 1;
+            offset += 8;
+            written += 8;
+            break;
+    }
 
     uint8_t zero_block[CHUNK_SIZE] = {0};
     while (written < fat_size) {

@@ -29,12 +29,12 @@ uint32_t FAT_ReadFromFileRaw(FAT_File* f, uint32_t offset, uint8_t* buffer, uint
     uint32_t off = file_pos % cluster_size;
 
     while (skip--) {
-        cluster = FAT12_ReadFATEntry(f->fs, cluster);
-        if (cluster >= 0xFF8) return 0;
+        cluster = FAT_ReadFATEntry(f->fs, cluster);
+        if (FAT_ClusterType(f->fs, cluster) == FAT_CLUSTER_EOC) return 0;
     }
 
     uint32_t total_read = 0;
-    while (remaining > 0 && cluster < 0xFF8) {
+    while (remaining > 0 && FAT_ClusterType(f->fs, cluster) != FAT_CLUSTER_EOC) {
         uint32_t abs = f->fs->data_offset + (cluster - 2) * cluster_size + off;
         uint32_t chunk = cluster_size - off;
         if (chunk > remaining) chunk = remaining;
@@ -46,7 +46,7 @@ uint32_t FAT_ReadFromFileRaw(FAT_File* f, uint32_t offset, uint8_t* buffer, uint
         total_read += chunk;
         off = 0;
 
-        if (remaining > 0) cluster = FAT12_ReadFATEntry(f->fs, cluster);
+        if (remaining > 0) cluster = FAT_ReadFATEntry(f->fs, cluster);
     }
 
     return total_read;
@@ -100,13 +100,13 @@ uint32_t FAT_WriteToFileRaw(FAT_File* f, uint32_t offset, uint8_t* buffer, uint3
     uint32_t off = offset % cluster_size;
 
     while (skip--) {
-        cluster = FAT12_ReadFATEntry(f->fs, cluster);
-        if (cluster >= 0xFF8) return 0;
+        cluster = FAT_ReadFATEntry(f->fs, cluster);
+        if (FAT_ClusterType(f->fs, cluster) == FAT_CLUSTER_EOC) return 0;
     }
 
     uint32_t written = 0;
 
-    while (remaining > 0 && cluster < 0xFF8) {
+    while (remaining > 0 && FAT_ClusterType(f->fs, cluster) != FAT_CLUSTER_EOC) {
         uint32_t abs = f->fs->data_offset + (cluster - 2) * cluster_size + off;
         uint32_t chunk = cluster_size - off;
         if (chunk > remaining) chunk = remaining;
@@ -118,7 +118,7 @@ uint32_t FAT_WriteToFileRaw(FAT_File* f, uint32_t offset, uint8_t* buffer, uint3
         out += chunk;
         off = 0;
 
-        if (remaining > 0) cluster = FAT12_ReadFATEntry(f->fs, cluster);
+        if (remaining > 0) cluster = FAT_ReadFATEntry(f->fs, cluster);
     }
 
     return written;
@@ -142,25 +142,30 @@ int FAT_ReserveSpace(FAT_File* f, uint32_t extra, int update_entry_size)
         uint32_t new_clusters = needed_clusters - current_clusters;
 
         uint32_t* clusters = (uint32_t*)malloc(new_clusters * sizeof(uint32_t));
-        if (FAT12_FindFreeClusters(f->fs, clusters, new_clusters) != 0) return 1;
+        if (FAT_FindFreeClusters(f->fs, clusters, new_clusters) != 0) return 1;
 
         uint32_t cluster = f->first_cluster;
         if (cluster == 0) {
             f->first_cluster = clusters[0];
-            entry.first_cluster = clusters[0];
+            if (f->fs->version == FAT32) {
+                entry.first_cluster = (uint16_t)clusters[0];
+                entry.first_cluster_high = (uint16_t)(clusters[0] >> 16);
+            } else {
+                entry.first_cluster = (uint16_t)clusters[0];
+            }
         } else {
             uint32_t last = f->first_cluster;
             while (1) {
-                uint32_t next = FAT12_ReadFATEntry(f->fs, last);
-                if (next >= 0xFF8) break;
+                uint32_t next = FAT_ReadFATEntry(f->fs, last);
+                if (FAT_ClusterType(f->fs, next) == FAT_CLUSTER_EOC) break;
                 last = next;
             }
-            FAT12_WriteFATEntry(f->fs, last, clusters[0]);
+            FAT_WriteFATEntry(f->fs, last, clusters[0]);
         }
 
         for (uint32_t i = 0; i < new_clusters; i++) {
-            uint32_t next = (i + 1 < new_clusters) ? clusters[i + 1] : 0xFFF;
-            FAT12_WriteFATEntry(f->fs, clusters[i], next);
+            uint32_t next = (i + 1 < new_clusters) ? clusters[i + 1] : FAT_GetEOF(f->fs);
+            FAT_WriteFATEntry(f->fs, clusters[i], next);
         }
 
         free(clusters);
@@ -189,8 +194,8 @@ uint32_t FAT_GetAbsoluteOffset(FAT_File* f, uint32_t relative_offset)
     uint32_t off = relative_offset % f->fs->cluster_size;
 
     while (skip--) {
-        cluster = FAT12_ReadFATEntry(f->fs, cluster);
-        if (cluster >= 0xFF8) return 0;
+        cluster = FAT_ReadFATEntry(f->fs, cluster);
+        if (FAT_ClusterType(f->fs, cluster) == FAT_CLUSTER_EOC) return 0;
     }
 
     return f->fs->data_offset + (cluster - 2) * f->fs->cluster_size + off;
@@ -333,23 +338,23 @@ FAT_File* FAT_FindEntry(FAT_File* parent, const char* name)
 
                     if (entry.attribute & FAT_ENTRY_DIRECTORY) {
                         file->fs = parent->fs;
-                        file->first_cluster = entry.first_cluster;
+                        file->first_cluster = ((uint32_t)entry.first_cluster_high << 16) | entry.first_cluster;
                         file->directory_entry_offset = FAT_GetAbsoluteOffset(parent, offset);
                         file->is_root_directory = 0;
                         file->is_directory = 1;
 
                         uint32_t cluster_count = 0;
-                        uint32_t cluster = entry.first_cluster;
-                        while (cluster < 0xFF8) {
+                        uint32_t cluster = ((uint32_t)entry.first_cluster_high << 16) | entry.first_cluster;
+                        while (FAT_ClusterType(parent->fs, cluster) != FAT_CLUSTER_EOC) {
                             if (cluster == 0) break;
                             cluster_count++;
-                            cluster = FAT12_ReadFATEntry(file->fs, cluster);
+                            cluster = FAT_ReadFATEntry(file->fs, cluster);
                         }
                         file->size = file->fs->cluster_size * cluster_count;
                     } else {
                         file->fs = parent->fs;
                         file->size = entry.file_size;
-                        file->first_cluster = entry.first_cluster;
+                        file->first_cluster = ((uint32_t)entry.first_cluster_high << 16) | entry.first_cluster;
                         file->directory_entry_offset = FAT_GetAbsoluteOffset(parent, offset);
                         file->is_root_directory = 0;
                         file->is_directory = 0;
@@ -375,22 +380,22 @@ FAT_File* FAT_FindEntry(FAT_File* parent, const char* name)
 
             if (entry.attribute & FAT_ENTRY_DIRECTORY) {
                 file->fs = parent->fs;
-                file->first_cluster = entry.first_cluster;
+                file->first_cluster = ((uint32_t)entry.first_cluster_high << 16) | entry.first_cluster;
                 file->directory_entry_offset = FAT_GetAbsoluteOffset(parent, offset);
                 file->is_root_directory = 0;
                 file->is_directory = 1;
 
                 uint32_t cluster_count = 0;
-                uint32_t cluster = entry.first_cluster;
-                while (cluster < 0xFF8) {
+                uint32_t cluster = ((uint32_t)entry.first_cluster_high << 16) | entry.first_cluster;
+                while (FAT_ClusterType(parent->fs, cluster) != FAT_CLUSTER_EOC) {
                     cluster_count++;
-                    cluster = FAT12_ReadFATEntry(file->fs, cluster);
+                    cluster = FAT_ReadFATEntry(file->fs, cluster);
                 }
                 file->size = file->fs->cluster_size * cluster_count;
             } else {
                 file->fs = parent->fs;
                 file->size = entry.file_size;
-                file->first_cluster = entry.first_cluster;
+                file->first_cluster = ((uint32_t)entry.first_cluster_high << 16) | entry.first_cluster;
                 file->directory_entry_offset = FAT_GetAbsoluteOffset(parent, offset);
                 file->is_root_directory = 0;
                 file->is_directory = 0;

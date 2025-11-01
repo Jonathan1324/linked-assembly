@@ -35,12 +35,13 @@ int main(int argc, const char *argv[])
         return 1;
     }
 
-    Partition* partition = Partition_Create(f, 0, 1474560);
+    Partition* partition = Partition_Create(f, 0, 16777216);
     if (!partition) {
         File_Close(f);
         return 1;
     }
 
+    /*
     FAT_Filesystem* fs = FAT_CreateEmptyFilesystem(partition, FAT12,
                                                    "mkfs.fat",                                   // oem name
                                                    "NO NAME",                                    // volume label
@@ -56,12 +57,29 @@ int main(int argc, const char *argv[])
                                                    0x00,                                         // drive number
                                                    FAT_BOOTSECTOR_MEDIA_DESCRIPTOR_FLOPPY144     // media descriptor
     );
+    */
+    FAT_Filesystem* fs = FAT_CreateEmptyFilesystem(partition, FAT16,
+                                                   "mkfs.fat",
+                                                   "NO NAME",
+                                                   0x12345678,
+                                                   partition->size,
+                                                   512,
+                                                   4,
+                                                   4,
+                                                   2,
+                                                   512,
+                                                   32,
+                                                   2,
+                                                   0x80,
+                                                   FAT_BOOTSECTOR_MEDIA_DESCRIPTOR_DISK
+    );
     if (!fs) {
         File_Close(f);
         Partition_Close(partition);
         return 1;
     }
 
+    /*
     FILE* test = fopen("roots/test/test.txt", "rb");
     if (!test) {
         FAT_CloseFilesystem(fs);
@@ -94,6 +112,14 @@ int main(int argc, const char *argv[])
     FAT_CloseEntry(folder_test);
     FAT_CloseEntry(folder_test2);
     FAT_CloseEntry(test_find);
+
+    */
+
+    FAT_File* folder = FAT_CreateEntry(fs->root, "test", FAT_ENTRY_DIRECTORY, 1, 0, 0, 0, 1);
+
+    FAT_File* e = FAT_CreateEntry(folder, "text.txt", FAT_ENTRY_ARCHIVE, 0, 0, 0, 0, 1);
+    FAT_CloseEntry(e);
+    FAT_CloseEntry(folder);
 
     FAT_CloseFilesystem(fs);
     Partition_Close(partition);
