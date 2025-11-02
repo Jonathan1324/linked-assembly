@@ -4,6 +4,12 @@
 #include <string.h>
 #include <ctype.h>
 
+static int FAT_IsInvalidChar(char c) {
+    return (c < 0x20) || c == '"' || c == '*' || c == '/' || c == ':' ||
+           c == '<' || c == '>' || c == '?' || c == '\\' || c == '|' ||
+           c == '+' || c == ',' || c == ';' || c == '=' || c == '[' || c == ']';
+}
+
 int FAT_ParseName(const char* name, char fat_name[8], char fat_ext[3])
 {
     fat_name[0] = ' '; fat_name[1] = ' ';
@@ -18,14 +24,20 @@ int FAT_ParseName(const char* name, char fat_name[8], char fat_ext[3])
     size_t nlen = dot ? (size_t)(dot - name) : len;
     if (nlen > 8) nlen = 8;
 
-    for (size_t i = 0; i < nlen; i++)
-        fat_name[i] = toupper((unsigned char)name[i]);
+    for (size_t i = 0; i < nlen; i++) {
+        char c = toupper((unsigned char)name[i]);
+        if (FAT_IsInvalidChar(c)) c = '_';
+        fat_name[i] = c;
+    }
 
     if (dot) {
         size_t elen = len - (size_t)(dot - name) - 1;
         if (elen > 3) elen = 3;
-        for (size_t i = 0; i < elen; i++)
-            fat_ext[i] = toupper((unsigned char)dot[i+1]);
+        for (size_t i = 0; i < elen; i++) {
+            char c = toupper((unsigned char)dot[i + 1]);
+            if (FAT_IsInvalidChar(c)) c = '_';
+            fat_ext[i] = c;
+        }
     }
 
     return 0;
@@ -54,6 +66,7 @@ FAT_Filesystem* FAT_CreateEmptyFilesystem(Partition* partition, Fat_Version vers
                                           uint8_t media_descriptor )
 {
     if (!partition || !oem_name || !volume_label) return NULL;
+    if (version != FAT12 && version != FAT16 && version != FAT32) return NULL;
     FAT_Filesystem* fs = calloc(1, sizeof(FAT_Filesystem));
     fs->partition = partition;
     fs->version = version;
@@ -135,7 +148,15 @@ FAT_Filesystem* FAT_CreateEmptyFilesystem(Partition* partition, Fat_Version vers
         return NULL;
     }
 
-    if (fs->version == FAT32) {
+    if (fs->version == FAT12 || fs->version == FAT16) {
+        fs->static_root.fs = fs;
+        fs->static_root.size = fs->root_size;
+        fs->static_root.first_cluster = 0;
+        fs->static_root.directory_entry_offset = 0;
+        fs->static_root.is_root_directory = 1;
+        fs->static_root.is_directory = 1;
+        fs->static_root.is_root_directory_fat32 = 0;
+    } else {
         fs->static_root.fs = fs;
         fs->static_root.size = fs->root_size;
         fs->static_root.first_cluster = 0;
@@ -148,7 +169,72 @@ FAT_Filesystem* FAT_CreateEmptyFilesystem(Partition* partition, Fat_Version vers
             free(fs);
             return NULL;
         }
+    }
+
+    fs->root = &fs->static_root;
+
+    return fs;
+}
+
+FAT_Filesystem* FAT_OpenFilesystem(Partition* partition, Fat_Version version)
+{
+    if (!partition) return NULL;
+    if (version != FAT12 && version != FAT16 && version != FAT32) return NULL;
+    FAT_Filesystem* fs = calloc(1, sizeof(FAT_Filesystem));
+    fs->partition = partition;
+    fs->version = version;
+
+    if (Partition_Read(partition, fs->bootsector.buffer, 0, sizeof(FAT_Bootsector)) != sizeof(FAT_Bootsector)) {
+        free(fs);
+        return NULL;
+    }
+
+    if (fs->version == FAT12 || fs->version == FAT16) {
+        FAT12_FAT16_Bootsector_Header* header = &fs->bootsector.fat12_fat16.header;
+
+        uint32_t total_sectors;
+        if (header->total_sectors == 0)
+            total_sectors = header->large_total_sectors;
+        else
+            total_sectors = (uint32_t)header->total_sectors;
+
+        fs->size = total_sectors * header->bytes_per_sector;
+
+        fs->fat_offset = header->reserved_sectors * header->bytes_per_sector;
+        fs->fat_size = header->fat_size * header->bytes_per_sector;
+
+        fs->root_offset = fs->fat_offset + fs->fat_size * header->number_of_fats;
+        fs->root_size = header->max_root_directory_entries * sizeof(FAT_DirectoryEntry);
+
+        fs->data_offset = fs->root_offset + fs->root_size;
+        fs->data_size = fs->size - fs->data_offset;
+
+        fs->cluster_size = header->bytes_per_sector * header->sectors_per_cluster;
     } else {
+        FAT32_Bootsector_Header* header = &fs->bootsector.fat32.header;
+        
+        uint32_t total_sectors = header->total_sectors_large;
+
+        fs->size = total_sectors * header->bytes_per_sector;
+
+        fs->fat_offset = header->reserved_sectors * header->bytes_per_sector;
+        fs->fat_size = header->fat_size_32 * header->bytes_per_sector;
+
+        fs->data_offset = fs->fat_offset + fs->fat_size * header->number_of_fats;
+        fs->data_size = fs->size - fs->data_offset;
+
+        fs->root_offset = fs->data_offset + (header->root_cluster - 2) * fs->cluster_size;
+        fs->root_size = 0;
+
+        fs->cluster_size = header->bytes_per_sector * header->sectors_per_cluster;
+    }
+
+    if (FAT_LoadFATBuffer(fs, 0) != 0) {
+        free(fs);
+        return NULL;
+    }
+
+    if (fs->version == FAT12 || fs->version == FAT16) {
         fs->static_root.fs = fs;
         fs->static_root.size = fs->root_size;
         fs->static_root.first_cluster = 0;
@@ -156,6 +242,21 @@ FAT_Filesystem* FAT_CreateEmptyFilesystem(Partition* partition, Fat_Version vers
         fs->static_root.is_root_directory = 1;
         fs->static_root.is_directory = 1;
         fs->static_root.is_root_directory_fat32 = 0;
+    } else {
+        fs->static_root.fs = fs;
+        fs->static_root.first_cluster = fs->bootsector.fat32.header.root_cluster;
+        fs->static_root.directory_entry_offset = 0;
+        fs->static_root.is_root_directory = 0;
+        fs->static_root.is_directory = 1;
+        fs->static_root.is_root_directory_fat32 = 1;
+
+        uint32_t cluster_count = 0;
+        uint32_t cluster = fs->static_root.first_cluster;
+        while (FAT_ClusterType(fs, cluster) != FAT_CLUSTER_EOC) {
+            cluster_count++;
+            cluster = FAT_ReadFATEntry(fs, cluster);
+        }
+        fs->static_root.size = fs->cluster_size * cluster_count;
     }
 
     fs->root = &fs->static_root;
@@ -690,17 +791,15 @@ int FAT_WriteBootsector(FAT_Filesystem* fs)
 {
     if (!fs) return 1;
 
-    uint64_t size = fs->version == FAT32 ? sizeof(FAT32_Bootsector) : sizeof(FAT12_FAT16_Bootsector);
-
-    uint64_t written = Partition_Write(fs->partition, &fs->bootsector, 0, size);
-    if (written != size) {
+    uint64_t written = Partition_Write(fs->partition, &fs->bootsector, 0, sizeof(FAT_Bootsector));
+    if (written != sizeof(FAT_Bootsector)) {
         return 1;
     }
 
     if (fs->version == FAT32) {
         uint64_t offset = fs->bootsector.fat32.header.backup_boot_sector * fs->bootsector.fat32.header.bytes_per_sector;
-        written = Partition_Write(fs->partition, &fs->bootsector, offset, size);
-        if (written != size) {
+        written = Partition_Write(fs->partition, &fs->bootsector, offset, sizeof(FAT_Bootsector));
+        if (written != sizeof(FAT_Bootsector)) {
             return 1;
         }
     }

@@ -178,8 +178,19 @@ typedef struct FAT_File {
     int is_root_directory;
     int is_directory;
     int is_root_directory_fat32;
+    int read_only;
+    int changed;
+
+    int is_hidden;
+    int is_system;
 
 } FAT_File;
+
+typedef union FAT_Bootsector {
+    uint8_t buffer[512];
+    FAT12_FAT16_Bootsector fat12_fat16;
+    FAT32_Bootsector fat32;
+} FAT_Bootsector;
 
 typedef uint8_t Fat_Version;
 #define FAT12 ((Fat_Version)1)
@@ -191,11 +202,7 @@ struct FAT_Filesystem {
 
     Partition* partition;
     
-    union
-    {
-        FAT12_FAT16_Bootsector fat12_fat16;
-        FAT32_Bootsector fat32;
-    } bootsector;
+    FAT_Bootsector bootsector;
 
     FAT_File* root;
     FAT_File static_root;
@@ -322,7 +329,7 @@ int FAT_GetDirectoryEntry(FAT_File* f, FAT_DirectoryEntry* entry);
 int FAT_SetDirectoryEntry(FAT_File* f, FAT_DirectoryEntry* entry);
 
 FAT_File* FAT_CreateEntryRaw(FAT_File* dir, FAT_DirectoryEntry* entry, int is_directory, FAT_LFNEntry* lfn_entries, uint32_t lfn_count);
-FAT_File* FAT_CreateEntry(FAT_File* parent, const char* name, uint8_t attribute, int is_directory, int64_t creation, int64_t last_modification, int64_t last_access, int use_lfn);
+FAT_File* FAT_CreateEntry(FAT_File* parent, const char* name, int is_directory, int is_hidden, int is_system, int64_t creation, int64_t last_modification, int64_t last_access, int use_lfn);
 void FAT_CloseEntry(FAT_File* entry);
 
 FAT_File* FAT_FindEntry(FAT_File* parent, const char* name);
@@ -339,13 +346,16 @@ static inline uint32_t FAT_WriteToFile(FAT_File* f, uint32_t offset, uint8_t* bu
     return FAT_WriteToFileRaw(f, offset, buffer, size);
 }
 
-// Initializes an empty FAT12 Filesystem
+// Initializes an empty FAT Filesystem
 FAT_Filesystem* FAT_CreateEmptyFilesystem(Partition* partition, Fat_Version version,
                                           const char* oem_name, const char* volume_label, uint32_t volume_id,
                                           uint64_t total_size, uint32_t bytes_per_sector, uint8_t sectors_per_cluster,
                                           uint16_t reserved_sectors, uint8_t number_of_fats, uint16_t max_root_directory_entries,
                                           uint16_t sectors_per_track, uint16_t number_of_heads, uint8_t drive_number,
                                           uint8_t media_descriptor );
+
+// Reads an existing FAT Filesystem
+FAT_Filesystem* FAT_OpenFilesystem(Partition* partition, Fat_Version version);
 
 void FAT_CloseFilesystem(FAT_Filesystem* fs);
 
@@ -356,13 +366,12 @@ int FAT_WriteFATEntry(FAT_Filesystem* fs, uint32_t cluster, uint32_t value);
 uint32_t FAT_FindNextFreeCluster(FAT_Filesystem* fs, uint32_t start_cluster);
 int FAT_FindFreeClusters(FAT_Filesystem* fs, uint32_t* cluster_array, uint32_t count);
 
+int FAT_WriteBootsector(FAT_Filesystem* fs);
+int FAT32_WriteFSInfo(FAT_Filesystem* fs);
+int FAT_CopyFAT(FAT_Filesystem* fs, uint8_t dst, uint8_t src);
+
 // EmptyFS:
 
-// Writes a FAT12 bootsector to the given file stream 'f' using the specified OEM name and volume label.
-// Parameters:
-//   f      - Pointer to the file stream to write the bootsector to.
-//   oem    - OEM name string (up to 8 characters).
-//   volume - Volume label string (up to 11 characters).
 int FAT12_FAT16_WriteBootsector(FAT_Filesystem* fs,
                                 const char* oem_name, const char* volume_label, uint32_t volume_id,
                                 uint64_t total_size, uint32_t bytes_per_sector, uint8_t sectors_per_cluster,
@@ -377,28 +386,17 @@ int FAT32_WriteBootsector(FAT_Filesystem* fs,
                           uint16_t sectors_per_track, uint16_t number_of_heads, uint8_t drive_number,
                           uint8_t media_descriptor);
 
-int FAT_WriteBootsector(FAT_Filesystem* fs);
-int FAT32_WriteFSInfo(FAT_Filesystem* fs);
-
 // Seeks to fs->fat_offset and writes FAT
 // Parameters:
 //   fs     - FAT_Filesystem struct
 int FAT_WriteEmptyFAT(FAT_Filesystem* fs);
-// Copies fs->fat_offset + fs->fat_size*src to fs->fat_offset + fs->fat_size*dst
-// Parameters:
-//   fs     - FAT_Filesystem struct
-//   dst    - index of destination for the FAT
-//   src    - FAT that needs to be copied
-int FAT_CopyFAT(FAT_Filesystem* fs, uint8_t dst, uint8_t src);
 
 // Creates an empty root directory
 // Parameters:
 //   fs     - FAT_Filesystem struct
 int FAT_WriteEmptyRootDir(FAT_Filesystem* fs);
 
-
-
-static uint32_t utf8_to_utf16(const char* input, uint16_t** out)
+static inline uint32_t utf8_to_utf16(const char* input, uint16_t** out)
 {
     uint32_t len = strlen(input);
     uint16_t* buf = malloc(sizeof(uint16_t) * (len + 1) * 2);

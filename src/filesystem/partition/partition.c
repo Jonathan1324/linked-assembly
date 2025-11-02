@@ -8,7 +8,7 @@ uint64_t Partition_Read(Partition* partition, uint8_t* buffer, uint64_t offset, 
 
     if (offset + size > partition->size) size = partition->size - offset;
 
-    return File_Read(partition->file, buffer, partition->offset + offset, size);
+    return Disk_Read(partition->disk, buffer, partition->offset + offset, size);
 }
 
 uint64_t Partition_Write(Partition* partition, uint8_t* buffer, uint64_t offset, uint64_t size)
@@ -17,15 +17,15 @@ uint64_t Partition_Write(Partition* partition, uint8_t* buffer, uint64_t offset,
 
     if (offset + size > partition->size) size = partition->size - offset;
 
-    return File_Write(partition->file, buffer, partition->offset + offset, size);
+    return Disk_Write(partition->disk, buffer, partition->offset + offset, size);
 }
 
-Partition* Partition_Create(File* f, uint64_t offset, uint64_t size)
+Partition* Partition_Create(Disk* disk, uint64_t offset, uint64_t size)
 {
-    if (!f) return NULL;
+    if (!disk) return NULL;
     Partition* partition = (Partition*)malloc(sizeof(Partition));
     if (!partition) return NULL;
-    partition->file = f;
+    partition->disk = disk;
     partition->offset = offset;
     partition->size = size;
     return partition;

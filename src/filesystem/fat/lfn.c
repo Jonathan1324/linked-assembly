@@ -120,7 +120,7 @@ uint16_t* FAT_CombineLFN(FAT_LFNEntry* entries, uint32_t entry_count, uint32_t* 
     if (pos > 0 && out[pos - 1] == 0x0000)
         pos--;
 
-    if (len) * (uint32_t*)(&len) = pos;
+    if (len) *len = pos;
 
     out[pos] = 0x0000;
 

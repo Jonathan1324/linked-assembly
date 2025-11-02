@@ -2,7 +2,7 @@
 #include <stdlib.h>
 #include <string.h>
 #include "fat/fat.h"
-#include "file/file.h"
+#include "disk/disk.h"
 
 int main(int argc, const char *argv[])
 {
@@ -24,22 +24,39 @@ int main(int argc, const char *argv[])
         return 1;
     }
 
-    FILE* f_raw = fopen(image_file, "w+b");
-    if (!f_raw) {
+    //FILE* f = fopen(image_file, "w+b");
+    FILE* f = fopen(image_file, "r+b");
+    if (!f) {
         perror("fopen");
         return 1;
     }
-    File* f = File_Create(f_raw);
-    if (!f) {
-        fclose(f_raw);
+    Disk* disk = Disk_CreateFromFile(f);
+    if (!disk) {
+        fclose(f);
         return 1;
     }
 
-    Partition* partition = Partition_Create(f, 0, /*1474560*/ /*16777216*/ 104857600);
+    Partition* partition = Partition_Create(disk, 0, /*1474560*/ /*16777216*/ 104857600);
     if (!partition) {
-        File_Close(f);
+        Disk_Close(disk);
         return 1;
     }
+
+    FAT_Filesystem* fs_o = FAT_OpenFilesystem(partition, FAT32);
+    if (!fs_o) {
+        Partition_Close(partition);
+        Disk_Close(disk);
+        return 1;
+    }
+
+    FAT_File* test_txt2 = FAT_CreateEntry(fs_o->root, "test_long_very_long_2.txt", 0, 0, 0, 0, 0, 0, 1);
+    if (test_txt2) FAT_CloseEntry(test_txt2);
+
+    FAT_CloseFilesystem(fs_o);
+    Partition_Close(partition);
+    Disk_Close(disk);
+
+    return 0;
 
     /*
     FAT_Filesystem* fs = FAT_CreateEmptyFilesystem(partition, FAT12,
@@ -93,7 +110,7 @@ int main(int argc, const char *argv[])
     );
     //*/
     if (!fs) {
-        File_Close(f);
+        Disk_Close(disk);
         Partition_Close(partition);
         return 1;
     }
@@ -102,11 +119,11 @@ int main(int argc, const char *argv[])
     if (!test) {
         FAT_CloseFilesystem(fs);
         Partition_Close(partition);
-        File_Close(f);
+        Disk_Close(disk);
         return 1;
     }
 
-    FAT_File* test_txt = FAT_CreateEntry(fs->root, "test.txt", FAT_ENTRY_ARCHIVE, 0, 0, 0, 0, 1);
+    FAT_File* test_txt = FAT_CreateEntry(fs->root, "test.txt", 0, 0, 0, 0, 0, 0, 1);
 
     uint64_t offset = 0;
     uint8_t buffer[512];
@@ -120,9 +137,9 @@ int main(int argc, const char *argv[])
     fclose(test);
     FAT_CloseEntry(test_txt);
 
-    FAT_File* test_dict = FAT_CreateEntry(fs->root, "test_dict", FAT_ENTRY_DIRECTORY, 1, 0, 0, 0, 1);
-    FAT_File* test1 = FAT_CreateEntry(test_dict, "test.txt", FAT_ENTRY_ARCHIVE, 0, 0, 0, 0, 1);
-    FAT_File* test2 = FAT_CreateEntry(test_dict, "test_2.txt", FAT_ENTRY_ARCHIVE, 0, 0, 0, 0, 1);
+    FAT_File* test_dict = FAT_CreateEntry(fs->root, "test_dict", 1, 0, 0, 0, 0, 0, 1);
+    FAT_File* test1 = FAT_CreateEntry(test_dict, "test.txt", 0, 0, 0, 0, 0, 0, 1);
+    FAT_File* test2 = FAT_CreateEntry(test_dict, "test_2.txt", 0, 0, 0, 0, 0, 0, 1);
 
     FAT_CloseEntry(test_dict);
     FAT_CloseEntry(test1);
@@ -130,7 +147,7 @@ int main(int argc, const char *argv[])
 
     FAT_CloseFilesystem(fs);
     Partition_Close(partition);
-    File_Close(f);
+    Disk_Close(disk);
 
     return 0;
 }
