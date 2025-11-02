@@ -3,29 +3,78 @@
 #include <string.h>
 #include "fat/fat.h"
 #include "disk/disk.h"
+#include "filesystem/filesystem.h"
+
+typedef Filesystem_Action;
+#define FILESYSTEM_FORMAT   ((Filesystem_Action)1)
+
+void print_help(const char* name)
+{
+    fputs("Usage:\n", stderr);
+    fprintf(stderr, "- %s create <image> (--type fat12/fat16/fat32)\n", name);
+}
 
 int main(int argc, const char *argv[])
 {
-    if (argc < 3) {
-        fprintf(stderr, "Usage: %s create <filename>\n", argv[0]);
+    Filesystem_Action action;
+    const char* image_file = NULL;
+
+    if (strcmp(argv[1], "create") == 0) {
+        action = FILESYSTEM_FORMAT;
+
+        if (argc < 3) {
+            print_help(argv[0]);
+            return 1;
+        }
+        image_file = argv[2];
+    } else {
+        fputs("Unknown action\n", stderr);
         return 1;
     }
-
-
-    if (strcmp(argv[1], "create") != 0) {
-        fprintf(stderr, "Only create is implemented yet\n");
-        return 1;
-    }
-
-    const char* image_file = argv[2];
 
     if (!image_file) {
         fputs("Output file is required\n", stderr);
         return 1;
     }
 
-    //FILE* f = fopen(image_file, "w+b");
-    FILE* f = fopen(image_file, "r+b");
+    Filesystem_Type fs_type = FILESYSTEM_FAT32; // default
+
+    for (int i = 3; i < argc; i++) {
+        if (strcmp(argv[i], "--type") == 0) {
+            i++;
+            if (argc < i) {
+                fputs("No type after '--type'\n", stderr);
+                return 1;
+            }
+            if (
+                (argv[i][0] == 'f' || argv[i][0] == 'F') &&
+                (argv[i][1] == 'a' || argv[i][1] == 'A') &&
+                (argv[i][2] == 't' || argv[i][2] == 'T')
+            ) {
+                //FAT
+                if      (argv[i][3] == '1' && argv[i][4] == '2') fs_type = FILESYSTEM_FAT12;
+                else if (argv[i][3] == '1' && argv[i][4] == '6') fs_type = FILESYSTEM_FAT16;
+                else if (argv[i][3] == '3' && argv[i][4] == '2') fs_type = FILESYSTEM_FAT32;
+                else fprintf("Unknown FS: %s\n", argv[i]);
+            } else {
+                fprintf(stderr, "Unknown FS: %s\n", argv[i]);
+            }
+        }
+    }
+
+    Fat_Version fat_version;
+
+    switch (fs_type) {
+        case FILESYSTEM_FAT12: fat_version = FAT_VERSION_12; break;
+        case FILESYSTEM_FAT16: fat_version = FAT_VERSION_16; break;
+        case FILESYSTEM_FAT32: fat_version = FAT_VERSION_32; break;
+        default:
+            fputs("Unknown FS: internal\n", stderr);
+            return 1;
+    }
+
+    //FILE* f = fopen(image_file, "r+b");
+    FILE* f = fopen(image_file, "w+b"); // truncate
     if (!f) {
         perror("fopen");
         return 1;
@@ -36,116 +85,84 @@ int main(int argc, const char *argv[])
         return 1;
     }
 
-    Partition* partition = Partition_Create(disk, 0, /*1474560*/ /*16777216*/ 104857600, 0);
+    uint64_t partition_size;
+    switch (fs_type) {
+        case FILESYSTEM_FAT12: partition_size = 1474560; break;   // 1.44 MB
+        case FILESYSTEM_FAT16: partition_size = 16777216; break;  // 16 MB
+        case FILESYSTEM_FAT32: partition_size = 104857600; break; // 100 MB
+    }
+
+    Partition* partition = Partition_Create(disk, 0, partition_size, 0);
     if (!partition) {
         Disk_Close(disk);
         return 1;
     }
 
-    FAT_Filesystem* fs_o = FAT_OpenFilesystem(partition, FAT_VERSION_32, 0);
-    if (!fs_o) {
+    FAT_Filesystem* fat_fs = NULL;
+    switch (action) {
+        case FILESYSTEM_FORMAT:
+        {
+            // Format FS
+
+            const char* oem_name = "lfs";
+            const char* volume_name = "NO NAME";
+            uint32_t volume_id = 0x12345678;
+
+            uint32_t bytes_per_sector = 512;
+            uint32_t sectors_per_cluster = fat_version == FAT_VERSION_16 ? 4 : 1;
+            uint16_t reserved_sectors;
+            switch (fat_version) {
+                case FAT_VERSION_12: reserved_sectors = 1; break;
+                case FAT_VERSION_16: reserved_sectors = 4; break;
+                case FAT_VERSION_32: reserved_sectors = 32; break;
+            }
+            uint8_t number_of_fats = 2;
+            uint16_t max_root_directory_entries;
+            switch (fat_version) {
+                case FAT_VERSION_12: max_root_directory_entries = 224; break;
+                case FAT_VERSION_16: max_root_directory_entries = 512; break;
+                case FAT_VERSION_32: max_root_directory_entries = 0; break;
+            }
+            uint16_t sectors_per_track = fat_version == FAT_VERSION_12 ? 18 : 32;
+            uint16_t number_of_heads = fat_version == FAT_VERSION_32 ? 8 : 2;
+            uint8_t drive_number = fat_version == FAT_VERSION_12 ? 0x00 : 0x80;
+            uint8_t media_descriptor = fat_version == FAT_VERSION_12 ? FAT_BOOTSECTOR_MEDIA_DESCRIPTOR_FLOPPY144 : FAT_BOOTSECTOR_MEDIA_DESCRIPTOR_DISK;
+
+            fat_fs = FAT_CreateEmptyFilesystem(partition, fat_version,
+                                               oem_name, volume_name, volume_id,
+                                               partition->size, bytes_per_sector,
+                                               sectors_per_cluster, reserved_sectors,
+                                               number_of_fats, max_root_directory_entries,
+                                               sectors_per_track, number_of_heads,
+                                               drive_number, media_descriptor);
+
+            break;
+        }
+
+        default:
+            fputs("Unknown action\n", stderr);
+            Partition_Close(partition);
+            Disk_Close(disk);
+            return 1;
+    }
+    if (!fat_fs) {
         Partition_Close(partition);
         Disk_Close(disk);
         return 1;
     }
 
-    FAT_File* test_txt2 = FAT_CreateEntry(fs_o->root, "test_long_very_long_2.txt", 0, 0, 0, 0, 0, 0, 1);
-    if (test_txt2) FAT_CloseEntry(test_txt2);
-
-    FAT_CloseFilesystem(fs_o);
-    Partition_Close(partition);
-    Disk_Close(disk);
-
-    return 0;
-
-    /*
-    FAT_Filesystem* fs = FAT_CreateEmptyFilesystem(partition, FAT_VERSION_12,
-                                                   "mkfs.fat",                                   // oem name
-                                                   "NO NAME",                                    // volume label
-                                                   0x12345678,                                   // volume id
-                                                   partition->size,                              // total size in bytes
-                                                   512,                                          // bytes per sector
-                                                   1,                                            // sectors per cluster
-                                                   1,                                            // reserved_sectors
-                                                   2,                                            // number of fats
-                                                   224,                                          // max root directory entries
-                                                   18,                                           // sectors per track
-                                                   2,                                            // number of heads
-                                                   0x00,                                         // drive number
-                                                   FAT_BOOTSECTOR_MEDIA_DESCRIPTOR_FLOPPY144     // media descriptor
-    );
-    */
-    /*
-    FAT_Filesystem* fs = FAT_CreateEmptyFilesystem(partition, FAT_VERSION_16,
-                                                   "mkfs.fat",
-                                                   "NO NAME",
-                                                   0x12345678,
-                                                   partition->size,
-                                                   512,
-                                                   4,
-                                                   4,
-                                                   2,
-                                                   512,
-                                                   32,
-                                                   2,
-                                                   0x80,
-                                                   FAT_BOOTSECTOR_MEDIA_DESCRIPTOR_DISK
-    );
-    */
-    ///*
-    FAT_Filesystem* fs = FAT_CreateEmptyFilesystem(partition, FAT_VERSION_32,
-                                                   "mkfs.fat",
-                                                   "NO NAME",
-                                                   0x12345678,
-                                                   partition->size,
-                                                   512,
-                                                   1,
-                                                   32,
-                                                   2,
-                                                   0,
-                                                   32,
-                                                   8,
-                                                   0x80,
-                                                   FAT_BOOTSECTOR_MEDIA_DESCRIPTOR_DISK
-    );
-    //*/
+    Filesystem* fs = Filesystem_CreateFromFAT(fat_fs);
     if (!fs) {
-        Disk_Close(disk);
-        Partition_Close(partition);
-        return 1;
-    }
-
-    FILE* test = fopen("roots/test/test.txt", "rb");
-    if (!test) {
         FAT_CloseFilesystem(fs);
         Partition_Close(partition);
         Disk_Close(disk);
         return 1;
     }
 
-    FAT_File* test_txt = FAT_CreateEntry(fs->root, "test.txt", 0, 0, 0, 0, 0, 0, 1);
+    //Filesystem_File* test_f = Filesystem_OpenPath(fs->root, "test_dir/test.txt", 1, 0, 0, 0, 0, 0, 0);
+    //Filesystem_CloseEntry(test_f);
 
-    uint64_t offset = 0;
-    uint8_t buffer[512];
-    while (1) {
-        size_t read = fread(&buffer, 1, sizeof(buffer), test);
-        if (read <= 0) break;
-        FAT_WriteToFile(test_txt, offset, buffer, read);
-        offset += read;
-    }
-
-    fclose(test);
-    FAT_CloseEntry(test_txt);
-
-    FAT_File* test_dict = FAT_CreateEntry(fs->root, "test_dict", 1, 0, 0, 0, 0, 0, 1);
-    FAT_File* test1 = FAT_CreateEntry(test_dict, "test.txt", 0, 0, 0, 0, 0, 0, 1);
-    FAT_File* test2 = FAT_CreateEntry(test_dict, "test_2.txt", 0, 0, 0, 0, 0, 0, 1);
-
-    FAT_CloseEntry(test_dict);
-    FAT_CloseEntry(test1);
-    FAT_CloseEntry(test2);
-
-    FAT_CloseFilesystem(fs);
+    Filesystem_Close(fs);
     Partition_Close(partition);
     Disk_Close(disk);
 

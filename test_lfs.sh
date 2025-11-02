@@ -13,8 +13,11 @@ dd if=/dev/zero of=build/mkfs/fat32.img bs=1M count=100
 mkfs.fat -F 32 build/mkfs/fat32.img -i 0x12345678
 
 mkdir -p build/test
-../../dist/bin/lfs create build/test/fat12.img $@
 
-../../dist/bin/lfs create build/test/fat12_root.img --root roots/test $@
+../../dist/bin/lfs create build/test/fat12.img --type fat12
+
+../../dist/bin/lfs create build/test/fat16.img --type fat16
+
+../../dist/bin/lfs create build/test/fat32.img --type fat32
 
 cd ../..

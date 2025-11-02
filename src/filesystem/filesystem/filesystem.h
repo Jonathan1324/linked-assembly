@@ -1,0 +1,39 @@
+#pragma once
+
+#include <stdint.h>
+#include "../fat/fat.h"
+
+typedef unsigned char Filesystem_Type;
+#define FILESYSTEM_FAT12    ((Filesystem_Type)1)
+#define FILESYSTEM_FAT16    ((Filesystem_Type)2)
+#define FILESYSTEM_FAT32    ((Filesystem_Type)3)
+
+char** SeparatePaths(const char* path, uint32_t* out_count);
+
+typedef struct Filesystem Filesystem;
+
+typedef struct Filesystem_File {
+    Filesystem* fs;
+    FAT_File* fat_f;
+} Filesystem_File;
+
+struct Filesystem {
+    FAT_Filesystem* fat_fs;
+
+    Filesystem_File* root;
+    Filesystem_File static_root;
+};
+
+Filesystem* Filesystem_CreateFromFAT(FAT_Filesystem* fat_fs);
+void Filesystem_Close(Filesystem* fs);
+
+Filesystem_File* Filesystem_CreateEntry(Filesystem_File* parent, const char* name, int is_directory, int is_hidden, int is_system, int64_t creation, int64_t last_modification, int64_t last_access);
+Filesystem_File* Filesystem_FindEntry(Filesystem_File* parent, const char* name);
+
+Filesystem_File* Filesystem_OpenEntry(Filesystem_File* parent, const char* name, int is_directory, int is_hidden, int is_system, int64_t creation, int64_t last_modification, int64_t last_access);
+
+Filesystem_File* Filesystem_OpenPath(Filesystem_File* current_path, const char* path, int create_parents, int is_directory, int is_hidden, int is_system, int64_t creation, int64_t last_modification, int64_t last_access);
+
+void Filesystem_CloseEntry(Filesystem_File* file);
+
+
