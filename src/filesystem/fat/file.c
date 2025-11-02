@@ -145,7 +145,7 @@ int FAT_ReserveSpace(FAT_File* f, uint32_t extra, int update_entry_size)
         uint32_t* clusters = (uint32_t*)malloc(new_clusters * sizeof(uint32_t));
         if (FAT_FindFreeClusters(f->fs, clusters, new_clusters) != 0) return 1;
 
-        if (f->fs->version == FAT32) {
+        if (f->fs->version == FAT_VERSION_32) {
             f->fs->fs_info.free_cluster_count -= new_clusters;
             f->fs->fs_info.next_free_cluster = clusters[new_clusters-1]; //FIXME: somehow working, I don't know why
         }
@@ -157,7 +157,7 @@ int FAT_ReserveSpace(FAT_File* f, uint32_t extra, int update_entry_size)
             if (f->is_root_directory_fat32) {
                 f->fs->bootsector.fat32.header.root_cluster = clusters[0];
             } else {
-                if (f->fs->version == FAT32) {
+                if (f->fs->version == FAT_VERSION_32) {
                     entry.first_cluster = (uint16_t)clusters[0];
                     entry.first_cluster_high = (uint16_t)(clusters[0] >> 16);
                 } else {

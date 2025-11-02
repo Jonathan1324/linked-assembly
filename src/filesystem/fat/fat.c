@@ -67,13 +67,13 @@ FAT_Filesystem* FAT_CreateEmptyFilesystem(Partition* partition, Fat_Version vers
                                           uint8_t media_descriptor )
 {
     if (!partition || !oem_name || !volume_label) return NULL;
-    if (version != FAT12 && version != FAT16 && version != FAT32) return NULL;
+    if (version != FAT_VERSION_12 && version != FAT_VERSION_16 && version != FAT_VERSION_32) return NULL;
     FAT_Filesystem* fs = calloc(1, sizeof(FAT_Filesystem));
     fs->partition = partition;
     fs->version = version;
     fs->read_only = 0;
 
-    if (fs->version == FAT12 || fs->version == FAT16) {
+    if (fs->version == FAT_VERSION_12 || fs->version == FAT_VERSION_16) {
         if (FAT12_FAT16_WriteBootsector(fs, oem_name, volume_label, volume_id, total_size, bytes_per_sector, sectors_per_cluster,
                                         reserved_sectors, number_of_fats, max_root_directory_entries, sectors_per_track,
                                         number_of_heads, drive_number, media_descriptor) != 0) {
@@ -150,7 +150,7 @@ FAT_Filesystem* FAT_CreateEmptyFilesystem(Partition* partition, Fat_Version vers
         return NULL;
     }
 
-    if (fs->version == FAT12 || fs->version == FAT16) {
+    if (fs->version == FAT_VERSION_12 || fs->version == FAT_VERSION_16) {
         fs->static_root.fs = fs;
         fs->static_root.size = fs->root_size;
         fs->static_root.first_cluster = 0;
@@ -181,7 +181,7 @@ FAT_Filesystem* FAT_CreateEmptyFilesystem(Partition* partition, Fat_Version vers
 FAT_Filesystem* FAT_OpenFilesystem(Partition* partition, Fat_Version version, int read_only)
 {
     if (!partition) return NULL;
-    if (version != FAT12 && version != FAT16 && version != FAT32) return NULL;
+    if (version != FAT_VERSION_12 && version != FAT_VERSION_16 && version != FAT_VERSION_32) return NULL;
     FAT_Filesystem* fs = calloc(1, sizeof(FAT_Filesystem));
     fs->partition = partition;
     fs->version = version;
@@ -192,7 +192,7 @@ FAT_Filesystem* FAT_OpenFilesystem(Partition* partition, Fat_Version version, in
         return NULL;
     }
 
-    if (fs->version == FAT12 || fs->version == FAT16) {
+    if (fs->version == FAT_VERSION_12 || fs->version == FAT_VERSION_16) {
         FAT12_FAT16_Bootsector_Header* header = &fs->bootsector.fat12_fat16.header;
 
         uint32_t total_sectors;
@@ -237,7 +237,7 @@ FAT_Filesystem* FAT_OpenFilesystem(Partition* partition, Fat_Version version, in
         return NULL;
     }
 
-    if (fs->version == FAT12 || fs->version == FAT16) {
+    if (fs->version == FAT_VERSION_12 || fs->version == FAT_VERSION_16) {
         fs->static_root.fs = fs;
         fs->static_root.size = fs->root_size;
         fs->static_root.first_cluster = 0;
@@ -274,7 +274,7 @@ void FAT_CloseFilesystem(FAT_Filesystem* fs)
             //TODO
         }
 
-        if (fs->version == FAT32) {
+        if (fs->version == FAT_VERSION_32) {
             if (FAT32_WriteFSInfo(fs) != 0) {
                 //TODO
             }
@@ -284,7 +284,7 @@ void FAT_CloseFilesystem(FAT_Filesystem* fs)
             //TODO
         }
 
-        uint8_t number_of_fats = fs->version == FAT32 ? fs->bootsector.fat32.header.number_of_fats : fs->bootsector.fat12_fat16.header.number_of_fats;
+        uint8_t number_of_fats = fs->version == FAT_VERSION_32 ? fs->bootsector.fat32.header.number_of_fats : fs->bootsector.fat12_fat16.header.number_of_fats;
         for (int i = 1; i < number_of_fats; i++) {
             if (FAT_CopyFAT(fs, i, 0) != 0) {
                 //TODO
@@ -306,7 +306,7 @@ uint32_t FAT_ReadFATEntry(FAT_Filesystem* fs, uint32_t cluster)
 
     switch (fs->version)
     {
-        case FAT12:
+        case FAT_VERSION_12:
             offset = (cluster * 3) / 2;
 
             if (offset < fs->fat_buffer_start ||
@@ -325,7 +325,7 @@ uint32_t FAT_ReadFATEntry(FAT_Filesystem* fs, uint32_t cluster)
                 return  (bytes[0] | ((bytes[1] & 0x0F) << 8)) & 0x0FFF;
 
 
-        case FAT16:
+        case FAT_VERSION_16:
             offset = cluster * 2;
 
             if (offset < fs->fat_buffer_start ||
@@ -341,7 +341,7 @@ uint32_t FAT_ReadFATEntry(FAT_Filesystem* fs, uint32_t cluster)
             return (uint32_t)(bytes[0] | (bytes[1] << 8));
 
 
-        case FAT32:
+        case FAT_VERSION_32:
             offset = cluster * 4;
 
             if (offset < fs->fat_buffer_start ||
@@ -373,7 +373,7 @@ int FAT_WriteFATEntry(FAT_Filesystem* fs, uint32_t cluster, uint32_t value)
 
     switch (fs->version)
     {
-        case FAT12:
+        case FAT_VERSION_12:
             value &= 0x0FFF;
             offset = (cluster * 3) / 2;
 
@@ -400,7 +400,7 @@ int FAT_WriteFATEntry(FAT_Filesystem* fs, uint32_t cluster, uint32_t value)
             return 0;
 
 
-        case FAT16:
+        case FAT_VERSION_16:
             value &= 0xFFFF;
             offset = cluster * 2;
 
@@ -419,7 +419,7 @@ int FAT_WriteFATEntry(FAT_Filesystem* fs, uint32_t cluster, uint32_t value)
             return 0;
 
 
-        case FAT32:
+        case FAT_VERSION_32:
             value &= 0x0FFFFFFF;
             offset = cluster * 4;
 
@@ -485,7 +485,7 @@ int FAT12_FAT16_WriteBootsector(FAT_Filesystem* fs,
     if (reserved_sectors < 1) return 1; // Bootsector
     memset(&fs->bootsector, 0, sizeof(FAT12_FAT16_Bootsector));
 
-    if (fs->version != FAT12 && fs->version != FAT16) return 1;
+    if (fs->version != FAT_VERSION_12 && fs->version != FAT_VERSION_16) return 1;
 
     fs->bootsector.fat12_fat16.signature = 0xAA55;
 
@@ -508,15 +508,15 @@ int FAT12_FAT16_WriteBootsector(FAT_Filesystem* fs,
         data_sectors = total_sectors - (reserved_sectors + number_of_fats * fat_sectors + root_dir_sectors);
         total_clusters = data_sectors / sectors_per_cluster;
         if (total_clusters > FAT_GetMaxClusters(fs)) {
-            fprintf(stderr, "Warning: Too many clusters for FAT%u (%u). Reducing to max %u.\n",
-                    total_clusters, (fs->version == FAT12 ? 12 : 16), FAT_GetMaxClusters(fs));
+            fprintf(stderr, "Warning: Too many clusters for FAT1%c (%u). Reducing to max %u.\n",
+                    total_clusters, (fs->version == FAT_VERSION_12 ? '2' : '6'), FAT_GetMaxClusters(fs));
             total_clusters = FAT_GetMaxClusters(fs);
             data_sectors = total_clusters * sectors_per_cluster;
         }
 
         switch (fs->version) {
-            case FAT12: fat_bytes = ((total_clusters + 2) * 3 + 1) / 2; break;
-            case FAT16: fat_bytes = (total_clusters + 2) * 2; break;
+            case FAT_VERSION_12: fat_bytes = ((total_clusters + 2) * 3 + 1) / 2; break;
+            case FAT_VERSION_16: fat_bytes = (total_clusters + 2) * 2; break;
         }
         uint32_t new_fat_sectors = (fat_bytes + bytes_per_sector - 1) / bytes_per_sector;
         if (new_fat_sectors == fat_sectors) break;
@@ -556,10 +556,10 @@ int FAT12_FAT16_WriteBootsector(FAT_Filesystem* fs,
     fs->bootsector.fat12_fat16.header.filesystem_type[2] = 'T';
     fs->bootsector.fat12_fat16.header.filesystem_type[3] = '1';
     switch (fs->version) {
-        case FAT12:
+        case FAT_VERSION_12:
             fs->bootsector.fat12_fat16.header.filesystem_type[4] = '2';
             break;
-        case FAT16:
+        case FAT_VERSION_16:
             fs->bootsector.fat12_fat16.header.filesystem_type[4] = '6';
             break;
     }
@@ -598,7 +598,7 @@ int FAT32_WriteBootsector(FAT_Filesystem* fs,
     if (reserved_sectors < 8) return 1; // Backup boot and fs info
     memset(&fs->bootsector, 0, sizeof(FAT32_Bootsector));
     
-    if (fs->version != FAT32) return 1;
+    if (fs->version != FAT_VERSION_32) return 1;
 
     fs->bootsector.fat32.signature = 0xAA55;
 
@@ -710,28 +710,28 @@ int FAT32_WriteBootsector(FAT_Filesystem* fs,
 int FAT_WriteEmptyFAT(FAT_Filesystem* fs)
 {
     if (!fs || fs->read_only) return 1;
-    if (fs->version != FAT12 && fs->version != FAT16 && fs->version != FAT32) return 1;
+    if (fs->version != FAT_VERSION_12 && fs->version != FAT_VERSION_16 && fs->version != FAT_VERSION_32) return 1;
 
     uint64_t offset = fs->fat_offset;
 
     uint32_t fat_size = fs->fat_size;
     uint32_t written = 0;
 
-    uint8_t media_descriptor = fs->version == FAT32 ? fs->bootsector.fat32.header.media_descriptor : fs->bootsector.fat12_fat16.header.media_descriptor;
+    uint8_t media_descriptor = fs->version == FAT_VERSION_32 ? fs->bootsector.fat32.header.media_descriptor : fs->bootsector.fat12_fat16.header.media_descriptor;
     uint8_t header[8] = {media_descriptor, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF};
 
     switch (fs->version) {
-        case FAT12:
+        case FAT_VERSION_12:
             if (Partition_Write(fs->partition, header, offset, 3) != 3) return 1;
             offset += 3;
             written += 3;
             break;
-        case FAT16:
+        case FAT_VERSION_16:
             if (Partition_Write(fs->partition, header, offset, 4) != 4) return 1;
             offset += 4;
             written += 4;
             break;
-        case FAT32:
+        case FAT_VERSION_32:
             header[3] = 0x0F;
             header[7] = 0x0F;
             if (Partition_Write(fs->partition, header, offset, 8) != 8) return 1;
@@ -802,7 +802,7 @@ int FAT_WriteBootsector(FAT_Filesystem* fs)
         return 1;
     }
 
-    if (fs->version == FAT32) {
+    if (fs->version == FAT_VERSION_32) {
         uint64_t offset = fs->bootsector.fat32.header.backup_boot_sector * fs->bootsector.fat32.header.bytes_per_sector;
         written = Partition_Write(fs->partition, &fs->bootsector, offset, sizeof(FAT_Bootsector));
         if (written != sizeof(FAT_Bootsector)) {
@@ -815,7 +815,7 @@ int FAT_WriteBootsector(FAT_Filesystem* fs)
 
 int FAT32_WriteFSInfo(FAT_Filesystem* fs)
 {
-    if (!fs || fs->read_only || fs->version != FAT32) return 1;
+    if (!fs || fs->read_only || fs->version != FAT_VERSION_32) return 1;
 
     uint64_t offset = fs->bootsector.fat32.header.fs_info_sector * fs->bootsector.fat32.header.bytes_per_sector;
 

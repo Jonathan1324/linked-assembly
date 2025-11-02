@@ -42,7 +42,7 @@ int main(int argc, const char *argv[])
         return 1;
     }
 
-    FAT_Filesystem* fs_o = FAT_OpenFilesystem(partition, FAT32, 0);
+    FAT_Filesystem* fs_o = FAT_OpenFilesystem(partition, FAT_VERSION_32, 0);
     if (!fs_o) {
         Partition_Close(partition);
         Disk_Close(disk);
@@ -59,7 +59,7 @@ int main(int argc, const char *argv[])
     return 0;
 
     /*
-    FAT_Filesystem* fs = FAT_CreateEmptyFilesystem(partition, FAT12,
+    FAT_Filesystem* fs = FAT_CreateEmptyFilesystem(partition, FAT_VERSION_12,
                                                    "mkfs.fat",                                   // oem name
                                                    "NO NAME",                                    // volume label
                                                    0x12345678,                                   // volume id
@@ -76,7 +76,7 @@ int main(int argc, const char *argv[])
     );
     */
     /*
-    FAT_Filesystem* fs = FAT_CreateEmptyFilesystem(partition, FAT16,
+    FAT_Filesystem* fs = FAT_CreateEmptyFilesystem(partition, FAT_VERSION_16,
                                                    "mkfs.fat",
                                                    "NO NAME",
                                                    0x12345678,
@@ -93,7 +93,7 @@ int main(int argc, const char *argv[])
     );
     */
     ///*
-    FAT_Filesystem* fs = FAT_CreateEmptyFilesystem(partition, FAT32,
+    FAT_Filesystem* fs = FAT_CreateEmptyFilesystem(partition, FAT_VERSION_32,
                                                    "mkfs.fat",
                                                    "NO NAME",
                                                    0x12345678,

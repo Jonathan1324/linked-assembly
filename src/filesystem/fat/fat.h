@@ -193,9 +193,9 @@ typedef union FAT_Bootsector {
 } FAT_Bootsector;
 
 typedef uint8_t Fat_Version;
-#define FAT12 ((Fat_Version)1)
-#define FAT16 ((Fat_Version)2)
-#define FAT32 ((Fat_Version)3)
+#define FAT_VERSION_12 ((Fat_Version)1)
+#define FAT_VERSION_16 ((Fat_Version)2)
+#define FAT_VERSION_32 ((Fat_Version)3)
 
 struct FAT_Filesystem {
     Fat_Version version;
@@ -233,9 +233,9 @@ struct FAT_Filesystem {
 static inline const uint32_t FAT_GetMaxClusters(FAT_Filesystem* fs)
 {
     switch (fs->version) {
-        case FAT12: return 4084;
-        case FAT16: return 65524;
-        case FAT32: return 268435444;
+        case FAT_VERSION_12: return 4084;
+        case FAT_VERSION_16: return 65524;
+        case FAT_VERSION_32: return 268435444;
         default: return 0;
     }
 }
@@ -243,9 +243,9 @@ static inline const uint32_t FAT_GetMaxClusters(FAT_Filesystem* fs)
 static inline const uint32_t FAT_GetLastCluster(FAT_Filesystem* fs)
 {
     switch (fs->version) {
-        case FAT12: return 0xFEF;
-        case FAT16: return 0xFFEF;
-        case FAT32: return 0x0FFFFFEF;
+        case FAT_VERSION_12: return 0xFEF;
+        case FAT_VERSION_16: return 0xFFEF;
+        case FAT_VERSION_32: return 0x0FFFFFEF;
         default: return 0;
     }
 }
@@ -253,9 +253,9 @@ static inline const uint32_t FAT_GetLastCluster(FAT_Filesystem* fs)
 static inline const uint32_t FAT_GetEOF(FAT_Filesystem* fs)
 {
     switch (fs->version) {
-        case FAT12: return 0xFF8;
-        case FAT16: return 0xFFF8;
-        case FAT32: return 0x0FFFFFF8;
+        case FAT_VERSION_12: return 0xFF8;
+        case FAT_VERSION_16: return 0xFFF8;
+        case FAT_VERSION_32: return 0x0FFFFFF8;
         default: return 0;
     }
 }
@@ -272,7 +272,7 @@ static inline FAT_ClusterState FAT_ClusterType(FAT_Filesystem* fs, uint32_t valu
 {
     switch (fs->version) {
 
-        case FAT12:
+        case FAT_VERSION_12:
             if (value == 0x000) return FAT_CLUSTER_FREE;
             if (value == 0x001) return FAT_CLUSTER_RESERVED;
             if (value >= 0xFF0 && value <= 0xFF6) return FAT_CLUSTER_RESERVED;
@@ -280,7 +280,7 @@ static inline FAT_ClusterState FAT_ClusterType(FAT_Filesystem* fs, uint32_t valu
             if (value >= 0xFF8 && value <= 0xFFF) return FAT_CLUSTER_EOC;
             return FAT_CLUSTER_ALLOCATED;
 
-        case FAT16:
+        case FAT_VERSION_16:
             if (value == 0x0000) return FAT_CLUSTER_FREE;
             if (value == 0x0001) return FAT_CLUSTER_RESERVED;
             if (value >= 0xFFF0 && value <= 0xFFF6) return FAT_CLUSTER_RESERVED;
@@ -288,7 +288,7 @@ static inline FAT_ClusterState FAT_ClusterType(FAT_Filesystem* fs, uint32_t valu
             if (value >= 0xFFF8 && value <= 0xFFFF) return FAT_CLUSTER_EOC;
             return FAT_CLUSTER_ALLOCATED;
 
-        case FAT32:
+        case FAT_VERSION_32:
             value &= 0x0FFFFFFF;
             if (value == 0x0000000) return FAT_CLUSTER_FREE;
             if (value == 0x0000001) return FAT_CLUSTER_RESERVED;
