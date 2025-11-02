@@ -64,7 +64,7 @@ typedef struct FAT12_FAT16_Bootsector_Header {
 
 } __attribute__((packed)) FAT12_FAT16_Bootsector_Header;
 
-typedef struct FAT32_Bootsector {
+typedef struct FAT32_Bootsector_Header {
     char     oem_name[8];
     uint16_t bytes_per_sector;
     uint8_t  sectors_per_cluster;
@@ -94,7 +94,7 @@ typedef struct FAT32_Bootsector {
     uint32_t volume_id;
     char     volume_label[11];
     char     filesystem_type[8];
-} __attribute__((packed)) FAT32_Bootsector;
+} __attribute__((packed)) FAT32_Bootsector_Header;
 
 #define FAT_BOOTSECTOR_SIGNATURE 0x55AA
 
@@ -104,6 +104,23 @@ typedef struct FAT12_FAT16_Bootsector {
     uint8_t bootcode[448];
     uint16_t signature;
 } __attribute__((packed)) FAT12_FAT16_Bootsector;
+
+typedef struct FAT32_Bootsector {
+    uint8_t jump[3];
+    FAT32_Bootsector_Header header;
+    uint8_t bootcode[420];
+    uint16_t signature;
+} __attribute__((packed)) FAT32_Bootsector;
+
+typedef struct FAT32_FS_Info {
+    uint32_t lead_signature;
+    uint8_t reserved[480];
+    uint32_t struct_signature;
+    uint32_t free_cluster_count;
+    uint32_t next_free_cluster;
+    uint8_t reserved2[12];
+    uint32_t trail_signature;
+} FAT32_FS_Info;
 
 typedef struct FAT_DirectoryEntry {
     char name[8];
@@ -160,6 +177,7 @@ typedef struct FAT_File {
 
     int is_root_directory;
     int is_directory;
+    int is_root_directory_fat32;
 
 } FAT_File;
 
@@ -172,7 +190,12 @@ struct FAT_Filesystem {
     Fat_Version version;
 
     Partition* partition;
-    FAT12_FAT16_Bootsector bootsector;
+    
+    union
+    {
+        FAT12_FAT16_Bootsector fat12_fat16;
+        FAT32_Bootsector fat32;
+    } bootsector;
 
     FAT_File* root;
     FAT_File static_root;
@@ -192,6 +215,9 @@ struct FAT_Filesystem {
     uint64_t data_size;     // in bytes
 
     uint64_t cluster_size;  // in bytes
+
+    // FAT32 only
+    FAT32_FS_Info fs_info;
 
 };
 
@@ -218,9 +244,9 @@ static inline const uint32_t FAT_GetLastCluster(FAT_Filesystem* fs)
 static inline const uint32_t FAT_GetEOF(FAT_Filesystem* fs)
 {
     switch (fs->version) {
-        case FAT12: return 0xFFF;
-        case FAT16: return 0xFFFF;
-        case FAT32: return 0x0FFFFFFF;
+        case FAT12: return 0xFF8;
+        case FAT16: return 0xFFF8;
+        case FAT32: return 0x0FFFFFF8;
         default: return 0;
     }
 }
@@ -316,7 +342,7 @@ static inline uint32_t FAT_WriteToFile(FAT_File* f, uint32_t offset, uint8_t* bu
 // Initializes an empty FAT12 Filesystem
 FAT_Filesystem* FAT_CreateEmptyFilesystem(Partition* partition, Fat_Version version,
                                           const char* oem_name, const char* volume_label, uint32_t volume_id,
-                                          uint32_t total_size, uint32_t bytes_per_sector, uint8_t sectors_per_cluster,
+                                          uint64_t total_size, uint32_t bytes_per_sector, uint8_t sectors_per_cluster,
                                           uint16_t reserved_sectors, uint8_t number_of_fats, uint16_t max_root_directory_entries,
                                           uint16_t sectors_per_track, uint16_t number_of_heads, uint8_t drive_number,
                                           uint8_t media_descriptor );
@@ -339,10 +365,20 @@ int FAT_FindFreeClusters(FAT_Filesystem* fs, uint32_t* cluster_array, uint32_t c
 //   volume - Volume label string (up to 11 characters).
 int FAT12_FAT16_WriteBootsector(FAT_Filesystem* fs,
                                 const char* oem_name, const char* volume_label, uint32_t volume_id,
-                                uint32_t total_size, uint32_t bytes_per_sector, uint8_t sectors_per_cluster,
+                                uint64_t total_size, uint32_t bytes_per_sector, uint8_t sectors_per_cluster,
                                 uint16_t reserved_sectors, uint8_t number_of_fats, uint16_t max_root_directory_entries,
                                 uint16_t sectors_per_track, uint16_t number_of_heads, uint8_t drive_number,
                                 uint8_t media_descriptor);
+
+int FAT32_WriteBootsector(FAT_Filesystem* fs,
+                          const char* oem_name, const char* volume_label, uint32_t volume_id,
+                          uint64_t total_size, uint32_t bytes_per_sector, uint8_t sectors_per_cluster,
+                          uint16_t reserved_sectors, uint8_t number_of_fats, uint16_t max_root_directory_entries,
+                          uint16_t sectors_per_track, uint16_t number_of_heads, uint8_t drive_number,
+                          uint8_t media_descriptor);
+
+int FAT_WriteBootsector(FAT_Filesystem* fs);
+int FAT32_WriteFSInfo(FAT_Filesystem* fs);
 
 // Seeks to fs->fat_offset and writes FAT
 // Parameters:

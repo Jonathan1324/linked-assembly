@@ -35,7 +35,7 @@ int main(int argc, const char *argv[])
         return 1;
     }
 
-    Partition* partition = Partition_Create(f, 0, 16777216);
+    Partition* partition = Partition_Create(f, 0, 104857600);
     if (!partition) {
         File_Close(f);
         return 1;
@@ -58,6 +58,7 @@ int main(int argc, const char *argv[])
                                                    FAT_BOOTSECTOR_MEDIA_DESCRIPTOR_FLOPPY144     // media descriptor
     );
     */
+    /*
     FAT_Filesystem* fs = FAT_CreateEmptyFilesystem(partition, FAT16,
                                                    "mkfs.fat",
                                                    "NO NAME",
@@ -73,13 +74,28 @@ int main(int argc, const char *argv[])
                                                    0x80,
                                                    FAT_BOOTSECTOR_MEDIA_DESCRIPTOR_DISK
     );
+    */
+    FAT_Filesystem* fs = FAT_CreateEmptyFilesystem(partition, FAT32,
+                                                   "mkfs.fat",
+                                                   "NO NAME",
+                                                   0x12345678,
+                                                   partition->size,
+                                                   512,
+                                                   1,
+                                                   32,
+                                                   2,
+                                                   0,
+                                                   32,
+                                                   8,
+                                                   0x80,
+                                                   FAT_BOOTSECTOR_MEDIA_DESCRIPTOR_DISK
+    );
     if (!fs) {
         File_Close(f);
         Partition_Close(partition);
         return 1;
     }
 
-    /*
     FILE* test = fopen("roots/test/test.txt", "rb");
     if (!test) {
         FAT_CloseFilesystem(fs);
@@ -99,52 +115,20 @@ int main(int argc, const char *argv[])
         offset += read;
     }
 
-    FAT_File* folder = FAT_CreateEntry(fs->root, "folder", FAT_ENTRY_DIRECTORY, 1, 0, 0, 0, 1);
-
-    FAT_File* folder_test = FAT_CreateEntry(folder, "test.txt", FAT_ENTRY_ARCHIVE, 0, 0, 0, 0, 1);
-    FAT_File* folder_test2 = FAT_CreateEntry(folder, "test2.txt", FAT_ENTRY_ARCHIVE, 0, 0, 0, 0, 1);
-
-    FAT_File* test_find = FAT_FindEntry(fs->root, "folder");
-
     fclose(test);
     FAT_CloseEntry(test_txt);
-    FAT_CloseEntry(folder);
-    FAT_CloseEntry(folder_test);
-    FAT_CloseEntry(folder_test2);
-    FAT_CloseEntry(test_find);
 
-    */
+    FAT_File* test_dict = FAT_CreateEntry(fs->root, "test_dict", FAT_ENTRY_DIRECTORY, 1, 0, 0, 0, 1);
+    FAT_File* test1 = FAT_CreateEntry(test_dict, "test.txt", FAT_ENTRY_ARCHIVE, 0, 0, 0, 0, 1);
+    FAT_File* test2 = FAT_CreateEntry(test_dict, "test_2.txt", FAT_ENTRY_ARCHIVE, 0, 0, 0, 0, 1);
 
-    FAT_File* folder = FAT_CreateEntry(fs->root, "test", FAT_ENTRY_DIRECTORY, 1, 0, 0, 0, 1);
-
-    FAT_File* e = FAT_CreateEntry(folder, "text.txt", FAT_ENTRY_ARCHIVE, 0, 0, 0, 0, 1);
-    FAT_CloseEntry(e);
-    FAT_CloseEntry(folder);
+    FAT_CloseEntry(test_dict);
+    FAT_CloseEntry(test1);
+    FAT_CloseEntry(test2);
 
     FAT_CloseFilesystem(fs);
     Partition_Close(partition);
     File_Close(f);
-
-    /*
-    FAT_DirectoryEntry entry_folder = {0};
-    FAT_ParseName("folder", entry_folder.name, entry_folder.ext);
-    entry_folder.attribute = FAT_ENTRY_DIRECTORY;
-    FAT12_File* folder = FAT_CreateEntry(fs->root, &entry_folder, 1);
-    FAT_AddDotsToDirectory(folder, fs->root);
-
-
-    FAT_DirectoryEntry entry_folder__text_txt = {0};
-    FAT_ParseName("text.txt", entry_folder__text_txt.name, entry_folder__text_txt.ext);
-    entry_folder__text_txt.attribute = FAT_ENTRY_ARCHIVE;
-    FAT12_File* folder__text_txt = FAT_CreateEntry(folder, &entry_folder__text_txt, 0);
-
-    uint8_t buf[16];
-    memset(buf, 'E', sizeof(buf));
-    FAT_WriteToFile(folder__text_txt, 0, buf, sizeof(buf));
-
-    FAT_CloseEntry(folder);
-    FAT_CloseEntry(folder__text_txt);
-    */
 
     return 0;
 }
