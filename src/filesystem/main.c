@@ -35,7 +35,7 @@ int main(int argc, const char *argv[])
         return 1;
     }
 
-    Partition* partition = Partition_Create(f, 0, 104857600);
+    Partition* partition = Partition_Create(f, 0, /*1474560*/ /*16777216*/ 104857600);
     if (!partition) {
         File_Close(f);
         return 1;
@@ -75,6 +75,7 @@ int main(int argc, const char *argv[])
                                                    FAT_BOOTSECTOR_MEDIA_DESCRIPTOR_DISK
     );
     */
+    ///*
     FAT_Filesystem* fs = FAT_CreateEmptyFilesystem(partition, FAT32,
                                                    "mkfs.fat",
                                                    "NO NAME",
@@ -90,6 +91,7 @@ int main(int argc, const char *argv[])
                                                    0x80,
                                                    FAT_BOOTSECTOR_MEDIA_DESCRIPTOR_DISK
     );
+    //*/
     if (!fs) {
         File_Close(f);
         Partition_Close(partition);
