@@ -36,7 +36,7 @@ int main(int argc, const char *argv[])
         return 1;
     }
 
-    Partition* partition = Partition_Create(disk, 0, /*1474560*/ /*16777216*/ 104857600);
+    Partition* partition = Partition_Create(disk, 0, /*1474560*/ /*16777216*/ 104857600, 0);
     if (!partition) {
         Disk_Close(disk);
         return 1;

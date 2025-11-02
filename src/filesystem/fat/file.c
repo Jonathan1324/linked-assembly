@@ -217,14 +217,14 @@ uint32_t FAT_GetAbsoluteOffset(FAT_File* f, uint32_t relative_offset)
 int FAT_GetDirectoryEntry(FAT_File* f, FAT_DirectoryEntry* entry)
 {
     if (!f || !entry) return 1;
-    if (Partition_Read(f->fs->partition, &entry, f->directory_entry_offset, sizeof(FAT_DirectoryEntry)) != sizeof(FAT_DirectoryEntry)) return 1;
+    if (Partition_Read(f->fs->partition, entry, f->directory_entry_offset, sizeof(FAT_DirectoryEntry)) != sizeof(FAT_DirectoryEntry)) return 1;
     return 0;
 }
 
 int FAT_SetDirectoryEntry(FAT_File* f, FAT_DirectoryEntry* entry)
 {
     if (!f || f->read_only || f->fs->read_only || !entry) return 1;
-    if (Partition_Write(f->fs->partition, &entry, f->directory_entry_offset, sizeof(FAT_DirectoryEntry)) != sizeof(FAT_DirectoryEntry)) return 1;
+    if (Partition_Write(f->fs->partition, entry, f->directory_entry_offset, sizeof(FAT_DirectoryEntry)) != sizeof(FAT_DirectoryEntry)) return 1;
     return 0;
 }
 
