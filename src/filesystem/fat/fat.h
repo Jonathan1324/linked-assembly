@@ -226,6 +226,8 @@ struct FAT_Filesystem {
     // FAT32 only
     FAT32_FS_Info fs_info;
 
+    int read_only;
+
 };
 
 static inline const uint32_t FAT_GetMaxClusters(FAT_Filesystem* fs)
@@ -355,7 +357,7 @@ FAT_Filesystem* FAT_CreateEmptyFilesystem(Partition* partition, Fat_Version vers
                                           uint8_t media_descriptor );
 
 // Reads an existing FAT Filesystem
-FAT_Filesystem* FAT_OpenFilesystem(Partition* partition, Fat_Version version);
+FAT_Filesystem* FAT_OpenFilesystem(Partition* partition, Fat_Version version, int read_only);
 
 void FAT_CloseFilesystem(FAT_Filesystem* fs);
 

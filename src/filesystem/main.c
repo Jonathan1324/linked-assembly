@@ -42,7 +42,7 @@ int main(int argc, const char *argv[])
         return 1;
     }
 
-    FAT_Filesystem* fs_o = FAT_OpenFilesystem(partition, FAT32);
+    FAT_Filesystem* fs_o = FAT_OpenFilesystem(partition, FAT32, 0);
     if (!fs_o) {
         Partition_Close(partition);
         Disk_Close(disk);

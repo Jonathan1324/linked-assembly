@@ -52,7 +52,7 @@ uint32_t FAT_ReadFromFileRaw(FAT_File* f, uint32_t offset, uint8_t* buffer, uint
 
 uint32_t FAT_WriteToFileRaw(FAT_File* f, uint32_t offset, uint8_t* buffer, uint32_t size)
 {
-    if (!f || !buffer || f->read_only) return 0;
+    if (!f || !buffer || f->read_only || f->fs->read_only) return 0;
 
     if (f->size > 0) f->changed = 1;
 
@@ -125,7 +125,7 @@ uint32_t FAT_WriteToFileRaw(FAT_File* f, uint32_t offset, uint8_t* buffer, uint3
 
 int FAT_ReserveSpace(FAT_File* f, uint32_t extra, int update_entry_size)
 {
-    if (!f || f->is_root_directory || f->read_only) return 1;
+    if (!f || f->is_root_directory || f->read_only || f->fs->read_only) return 1;
 
     uint32_t total_size = f->size + extra;
     uint32_t needed_clusters = (total_size + f->fs->cluster_size - 1) / f->fs->cluster_size;
@@ -133,7 +133,7 @@ int FAT_ReserveSpace(FAT_File* f, uint32_t extra, int update_entry_size)
 
     FAT_DirectoryEntry entry;
     if (!f->is_root_directory_fat32) {
-        if (Partition_Read(f->fs->partition, &entry, f->directory_entry_offset, sizeof(FAT_DirectoryEntry)) != sizeof(FAT_DirectoryEntry)) return 1;
+        if (FAT_GetDirectoryEntry(f, &entry) != 0) return 1;
     }
 
     if (update_entry_size) entry.file_size = total_size;
@@ -183,7 +183,7 @@ int FAT_ReserveSpace(FAT_File* f, uint32_t extra, int update_entry_size)
     }
 
     if (!f->is_root_directory_fat32) {
-        if (Partition_Write(f->fs->partition, &entry, f->directory_entry_offset, sizeof(FAT_DirectoryEntry)) != sizeof(FAT_DirectoryEntry)) return 1;
+        if (FAT_SetDirectoryEntry(f, &entry) != 0) return 1;
     }
     f->size = total_size;
 
@@ -223,14 +223,14 @@ int FAT_GetDirectoryEntry(FAT_File* f, FAT_DirectoryEntry* entry)
 
 int FAT_SetDirectoryEntry(FAT_File* f, FAT_DirectoryEntry* entry)
 {
-    if (!f || !entry) return 1;
+    if (!f || f->read_only || f->fs->read_only || !entry) return 1;
     if (Partition_Write(f->fs->partition, &entry, f->directory_entry_offset, sizeof(FAT_DirectoryEntry)) != sizeof(FAT_DirectoryEntry)) return 1;
     return 0;
 }
 
 FAT_File* FAT_CreateEntryRaw(FAT_File* dir, FAT_DirectoryEntry* entry, int is_directory, FAT_LFNEntry* lfn_entries, uint32_t lfn_count)
 {
-    if (!entry) return NULL;
+    if (!dir || dir->fs->read_only || !entry) return NULL;
 
     FAT_File* f = (FAT_File*)malloc(sizeof(FAT_File));
     if (!f) return NULL;
@@ -251,11 +251,11 @@ FAT_File* FAT_CreateEntryRaw(FAT_File* dir, FAT_DirectoryEntry* entry, int is_di
 
 void FAT_CloseEntry(FAT_File* entry)
 {
-    if (!entry) return;
+    if (!entry || entry->fs->read_only) return;
 
     if (entry->changed && !entry->is_root_directory && !entry->is_root_directory_fat32) {
         FAT_DirectoryEntry dir_entry;
-        if (Partition_Read(entry->fs->partition, &dir_entry, entry->directory_entry_offset, sizeof(FAT_DirectoryEntry)) != sizeof(FAT_DirectoryEntry)) {
+        if (FAT_GetDirectoryEntry(entry, &dir_entry) != 0) {
             //TODO: Error
         }
         if (!entry->is_directory) dir_entry.attribute |= FAT_ENTRY_ARCHIVE;
@@ -269,7 +269,7 @@ void FAT_CloseEntry(FAT_File* entry)
         if (entry->is_system) dir_entry.attribute |= FAT_ENTRY_SYSTEM;
         else dir_entry.attribute &= ~FAT_ENTRY_SYSTEM;
 
-        if (Partition_Write(entry->fs->partition, &dir_entry, entry->directory_entry_offset, sizeof(FAT_DirectoryEntry)) != sizeof(FAT_DirectoryEntry)) {
+        if (FAT_SetDirectoryEntry(entry, &dir_entry) != 0) {
             //TODO: Error
         }
     }
@@ -279,7 +279,7 @@ void FAT_CloseEntry(FAT_File* entry)
 
 FAT_File* FAT_CreateEntry(FAT_File* parent, const char* name, int is_directory, int is_hidden, int is_system, int64_t creation, int64_t last_modification, int64_t last_access, int use_lfn)
 {
-    if (!parent || !parent->is_directory || !name) return NULL;
+    if (!parent || parent->fs->read_only || !parent->is_directory || !name) return NULL;
 
     FAT_DirectoryEntry entry;
     if (FAT_ParseName(name, entry.name, entry.ext) != 0) return NULL;

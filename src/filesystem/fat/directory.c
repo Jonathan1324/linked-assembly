@@ -2,7 +2,7 @@
 
 uint32_t FAT_AddDirectoryEntry(FAT_File* directory, FAT_DirectoryEntry* entry, FAT_LFNEntry* lfn_entries, uint32_t lfn_count)
 {
-    if (!directory || !directory->is_directory || !entry) return 0xFFFFFFFF; // TODO: error
+    if (!directory || directory->fs->read_only || !directory->is_directory || !entry) return 0xFFFFFFFF; // TODO: error
 
     uint32_t needed = lfn_count + 1;
     uint32_t offset = 0;
@@ -41,7 +41,7 @@ uint32_t FAT_AddDirectoryEntry(FAT_File* directory, FAT_DirectoryEntry* entry, F
 
 int FAT_AddDotsToDirectory(FAT_File* directory, FAT_File* parent)
 {
-    if (!directory || !directory->is_directory) return 1;
+    if (!directory || directory->fs->read_only || !directory->is_directory) return 1;
 
     FAT_DirectoryEntry dot = {0};
     dot.name[0] = '.';
