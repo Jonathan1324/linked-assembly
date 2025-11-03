@@ -108,6 +108,20 @@ Filesystem_File* Filesystem_OpenEntry(Filesystem_File* parent, const char* name,
 
 Filesystem_File* Filesystem_OpenPath(Filesystem_File* current_path, const char* path, int create_file, int create_parents, int is_directory, int is_hidden, int is_system, int64_t creation, int64_t last_modification, int64_t last_access)
 {
+    uint64_t str_len = strlen(path);
+    if (str_len == 0 && strcmp("/", path) == 0) {
+        Filesystem_File* f = (Filesystem_File*)malloc(sizeof(Filesystem_File));
+        if (!f) return NULL;
+        f->fs = current_path->fs;
+        FAT_File* fat_f = (FAT_File*)malloc(sizeof(FAT_File));
+        if (!fat_f) {
+            free(f);
+            return NULL;
+        }
+        f->fat_f =fat_f;
+        return f;
+    }
+
     uint32_t path_out_count;
     char** entries = SeparatePaths(path, &path_out_count);
     if (!entries) return NULL;
