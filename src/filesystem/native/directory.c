@@ -4,9 +4,17 @@
 
 #ifdef _WIN32
 #include <windows.h>
+#include <direct.h>
+#include <io.h>
+#define MKDIR(path) _mkdir(path)
+#define EXISTS(path) (_access(path, 0) == 0)
 #else
 #include <sys/stat.h>
+#include <sys/types.h>
 #include <dirent.h>
+#include <unistd.h>
+#define MKDIR(path) mkdir(path, 0755)
+#define EXISTS(path) (access(path, F_OK) == 0)
 #endif
 
 PathType Path_GetType(const char* path)
@@ -79,4 +87,47 @@ char** Path_ListDir(const char *dir_path, uint64_t *out_count)
 
     *out_count = count;
     return list;
+}
+
+int Path_MakeDirsForPath(const char* path)
+{
+    if (!path || !*path) return 1;
+
+    size_t len = strlen(path);
+    char *current_path = malloc(1);
+    if (!current_path) return 1;
+    current_path[0] = '\0';
+    size_t current_len = 0;
+
+    const char *p = path;
+    while (*p) {
+        const char *slash = strchr(p, '/');
+        size_t segment_len = slash ? (size_t)(slash - p) : 0;
+        if (segment_len == 0) break;
+
+        char *tmp = realloc(current_path, current_len + segment_len + 2);
+        if (!tmp) {
+            free(current_path);
+            return -1;
+        }
+        current_path = tmp;
+
+        if (current_len > 0) current_path[current_len++] = '/';
+        memcpy(current_path + current_len, p, segment_len);
+        current_len += segment_len;
+        current_path[current_len] = '\0';
+
+        if (!EXISTS(current_path)) {
+            if (MKDIR(current_path) != 0) {
+                free(current_path);
+                return 1;
+            }
+        }
+
+        if (slash) p = slash + 1;
+        else break;
+    }
+
+    free(current_path);
+    return 0;
 }

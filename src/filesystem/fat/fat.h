@@ -372,6 +372,8 @@ int FAT_WriteBootsector(FAT_Filesystem* fs);
 int FAT32_WriteFSInfo(FAT_Filesystem* fs);
 int FAT_CopyFAT(FAT_Filesystem* fs, uint8_t dst, uint8_t src);
 
+char** FAT_ListDir(FAT_File* dir, uint64_t* out_count);
+
 // EmptyFS:
 
 int FAT12_FAT16_WriteBootsector(FAT_Filesystem* fs,
@@ -430,6 +432,37 @@ static inline uint32_t utf8_to_utf16(const char* input, uint16_t** out)
         buf[outlen++] = (uint16_t)code;
     }
 
+    *out = buf;
+    return outlen;
+}
+
+static inline uint32_t utf16_to_utf8(const uint16_t* input, uint32_t inlen, char** out)
+{
+    if (!input) return 0;
+
+    char* buf = malloc((inlen * 3) + 1);
+    if (!buf) return 0;
+
+    uint32_t outlen = 0;
+
+    for (uint32_t i = 0; i < inlen; i++) {
+        uint32_t code = input[i];
+
+        if (code == 0x0000) break;
+
+        if (code <= 0x7F) {
+            buf[outlen++] = (char)code;
+        } else if (code <= 0x7FF) {
+            buf[outlen++] = (char)(0xC0 | ((code >> 6) & 0x1F));
+            buf[outlen++] = (char)(0x80 | (code & 0x3F));
+        } else {
+            buf[outlen++] = (char)(0xE0 | ((code >> 12) & 0x0F));
+            buf[outlen++] = (char)(0x80 | ((code >> 6) & 0x3F));
+            buf[outlen++] = (char)(0x80 | (code & 0x3F));
+        }
+    }
+
+    buf[outlen] = '\0';
     *out = buf;
     return outlen;
 }

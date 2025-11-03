@@ -9,3 +9,4 @@ typedef unsigned char PathType;
 
 PathType Path_GetType(const char* path);
 char** Path_ListDir(const char *dir_path, uint64_t *out_count);
+int Path_MakeDirsForPath(const char* path);

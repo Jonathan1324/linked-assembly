@@ -167,6 +167,12 @@ uint64_t Filesystem_WriteToFile(Filesystem_File* file, uint64_t offset, uint8_t*
     return FAT_WriteToFile(file->fat_f, (uint32_t)offset, buffer, (uint32_t)size);
 }
 
+char** Filesystem_ListDir(Filesystem_File* file, uint64_t* out_count)
+{
+    if (!file || !out_count || !file->fat_f->is_directory) return NULL;
+    return FAT_ListDir(file->fat_f, out_count);
+}
+
 
 // TODO: Don't Override
 int Filesystem_SyncPathsToFS(Filesystem_File* dir, const char* path, const char* o_path)
@@ -250,6 +256,7 @@ int Filesystem_SyncPathsToFS(Filesystem_File* dir, const char* path, const char*
 }
 
 // TODO: Don't Override
+// FIXME: '/'
 int Filesystem_SyncPathsFromFS(Filesystem_File* dir, const char* path, const char* o_path)
 {
     if (!dir || !path || !o_path) return 1;
@@ -267,9 +274,10 @@ int Filesystem_SyncPathsFromFS(Filesystem_File* dir, const char* path, const cha
 
     if (type == TYPE_FILE) {
         Filesystem_File* fs_f = Filesystem_OpenPath(dir, path, 0, 0, 0, is_hidden, is_system, creation, last_modification, last_access);
+        int result = Path_MakeDirsForPath(o_path);
         FILE* o_f = fopen(o_path, "w+b"); //truncate
 
-        if (!fs_f || !o_f) {
+        if (!fs_f || !o_f || result != 0) {
             if (fs_f) Filesystem_CloseEntry(fs_f);
             if (o_f) fclose(o_f);
             fprintf(stderr, "Couldn't add file '%s' as '%s'\n", o_path, path);
@@ -294,37 +302,59 @@ int Filesystem_SyncPathsFromFS(Filesystem_File* dir, const char* path, const cha
         Filesystem_CloseEntry(fs_f);
 
     } else if (type == TYPE_DIR) {
+        Filesystem_File* fs_f = Filesystem_OpenPath(dir, path, 0, 0, 0, is_hidden, is_system, creation, last_modification, last_access);
+        if (!fs_f) {
+            fprintf(stderr, "Couldn't get entries of '%s'\n", o_path);
+            return;
+        }
         uint64_t sub_entry_count;
-        char** sub_entries = Path_ListDir(o_path, &sub_entry_count);
+        char** sub_entries = Filesystem_ListDir(fs_f, &sub_entry_count);
         if (!sub_entries) {
             fprintf(stderr, "Couldn't get entries of '%s'\n", o_path);
             return;
         }
+        Filesystem_CloseEntry(fs_f);
 
         for (uint64_t i = 0; i < sub_entry_count; i++) {
-            char* entry = sub_entries[i];
+            char* entry_name = sub_entries[i];
+            if ((entry_name[0] == '.' && entry_name[1] == '\0') || entry_name[0] == '.' && entry_name[1] == '.' && entry_name[2] == '\0') {
+                free(entry_name);
+                continue;
+            }
 
-            char* name = strrchr(entry, '/');
+            uint64_t o_path_len = strlen(o_path);
+            uint64_t name_len = strlen(entry_name);
+            int add_slash = (o_path_len > 0 && o_path[o_path_len - 1] != '/') ? 1 : 0;
+            char* full_o_path = (char*)malloc(o_path_len + add_slash + name_len + 1);
+            if (!full_o_path) {
+                printf("Warning: Couldn't sync '%s'\n", entry_name);
+                free(entry_name);
+                continue;
+            }
+            strcpy(full_o_path, o_path);
+            if (add_slash) full_o_path[o_path_len++] = '/';
+            strcpy(full_o_path + o_path_len, entry_name);
+            full_o_path[o_path_len + name_len] = '\0';
+
             uint64_t path_len = strlen(path);
-            uint64_t name_len = strlen(name);
-            char* new_path = (char*)malloc(path_len + name_len + 1);
+            char* new_path = (char*)malloc(path_len + add_slash + name_len + 1);
             if (!new_path) {
-                printf("Warning: Couldn't sync '%s' to '%s'\n", entry, new_path);
-                free(entry);
+                printf("Warning: Couldn't sync '%s' to FS\n", entry_name);
+                free(full_o_path);
+                free(entry_name);
                 continue;
             }
             strcpy(new_path, path);
-            strcpy(new_path + path_len, name);
+            if (add_slash) new_path[path_len++] = '/';
+            strcpy(new_path + path_len, entry_name);
             new_path[path_len + name_len] = '\0';
 
-            if (Filesystem_SyncPathsFromFS(dir, new_path, entry) != 0) {
-                printf("Warning: Couldn't sync '%s' to '%s'\n", entry, new_path);
-                free(entry);
-                continue;
+            if (Filesystem_SyncPathsFromFS(dir, new_path, full_o_path) != 0) {
+                printf("Warning: Couldn't sync '%s' to '%s'\n", new_path, full_o_path);
             }
 
             free(new_path);
-            free(entry);
+            free(entry_name);
         }
 
         free(sub_entries);
