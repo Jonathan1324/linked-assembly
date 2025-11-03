@@ -61,8 +61,11 @@ FAT_LFNEntry* FAT_CreateLFNEntries(const char* name, uint32_t* out_count, uint8_
             index -= lens[k];
             k++;
         }
-        if (k < 3) {
+        if (k < 3 && index < (uint32_t)lens[k]) {
             slots[k][index] = 0x0000;
+        } else if (k < 3 && index == lens[k]) {
+            if (k + 1 < 3)
+                slots[k + 1][0] = 0x0000;
         }
     }
 

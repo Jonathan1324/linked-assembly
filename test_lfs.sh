@@ -14,10 +14,10 @@ mkfs.fat -F 32 build/mkfs/fat32.img -i 0x12345678
 
 mkdir -p build/test
 
-../../dist/bin/lfs create build/test/fat12.img --type fat12
+../../dist/bin/lfs create build/test/fat12.img --type fat12 --root roots/test
 
-../../dist/bin/lfs create build/test/fat16.img --type fat16
+../../dist/bin/lfs create build/test/fat16.img --type fat16 --root roots/test
 
-../../dist/bin/lfs create build/test/fat32.img --type fat32
+../../dist/bin/lfs create build/test/fat32.img --type fat32 --root roots/test
 
 cd ../..
