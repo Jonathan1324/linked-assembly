@@ -160,6 +160,7 @@ uint64_t Filesystem_WriteToFile(Filesystem_File* file, uint64_t offset, uint8_t*
 }
 
 
+// TODO: Don't Override
 int Filesystem_SyncPathsToFS(Filesystem_File* dir, const char* path, const char* o_path)
 {
     if (!dir || !path || !o_path) return 1;
@@ -240,6 +241,7 @@ int Filesystem_SyncPathsToFS(Filesystem_File* dir, const char* path, const char*
     return 0;
 }
 
+// TODO: Don't Override
 int Filesystem_SyncPathsFromFS(Filesystem_File* dir, const char* path, const char* o_path)
 {
     if (!dir || !path || !o_path) return 1;
