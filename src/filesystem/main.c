@@ -14,12 +14,14 @@ typedef uint8_t FS_Action;
 #define FS_INSERT   0x2
 #define FS_EXTRACT  0x4
 
-void print_help(const char* name)
+void print_help(const char* name, FILE* s)
 {
-    fputs("Usage:\n", stderr);
-    fprintf(stderr, "- %s create <image> (--type fat12/fat16/fat32) (--root <host path>)\n", name);
-    fprintf(stderr, "- %s insert <host path> <image> (--path <image path>)\n", name);
-    fprintf(stderr, "- %s extract <image path> <image> (--path <host path>)\n", name);
+    fputs("Usage:\n", s);
+    fprintf(s, "> %s create <image> (--type fat12/fat16/fat32) (--root <host path>) (flags)\n", name);
+    fprintf(s, "> %s insert <host path> <image> (--path <image path>) (flags)\n", name);
+    fprintf(s, "> %s extract <image path> <image> (--path <host path>) (flags)\n", name);
+    fputs("Flags:\n", s);
+    fputs("> --no-lfn\n", s);
 }
 
 int main(int argc, const char *argv[])
@@ -27,7 +29,7 @@ int main(int argc, const char *argv[])
     for (int i = 0; i < argc; i++) {
         if (strcmp(argv[i], "-h") == 0 || strcmp(argv[i], "--help") == 0)
         {
-            print_help(argv[0]);
+            print_help(argv[0], stdout);
             return 0;
         }
         else if (strcmp(argv[i], "-v") == 0 || strcmp(argv[i], "--version") == 0)
@@ -55,7 +57,7 @@ int main(int argc, const char *argv[])
     const char* path = NULL;
 
     if (argc < 2) {
-        print_help(argv[0]);
+        print_help(argv[0], stderr);
         return 1;
     }
 
@@ -66,7 +68,7 @@ int main(int argc, const char *argv[])
         allow_root_flag = 1;
 
         if (argc < 3) {
-            print_help(argv[0]);
+            print_help(argv[0], stderr);
             return 1;
         }
         image_file = argv[2];
@@ -76,7 +78,7 @@ int main(int argc, const char *argv[])
         fs_actions |= FS_INSERT;
 
         if (argc < 4) {
-            print_help(argv[0]);
+            print_help(argv[0], stderr);
             return 1;
         }
         image_file = argv[3];
@@ -90,7 +92,7 @@ int main(int argc, const char *argv[])
         fs_actions |= FS_EXTRACT;
 
         if (argc < 4) {
-            print_help(argv[0]);
+            print_help(argv[0], stderr);
             return 1;
         }
         image_file = argv[3];
