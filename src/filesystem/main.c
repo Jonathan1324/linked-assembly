@@ -21,7 +21,7 @@ void print_help(const char* name, FILE* s)
     fprintf(s, "> %s insert <host path> <image> (--path <image path>) (flags)\n", name);
     fprintf(s, "> %s extract <image path> <image> (--path <host path>) (flags)\n", name);
     fputs("Flags:\n", s);
-    fputs("> --no-lfn\n", s);
+    //fputs("> --no-lfn\n", s);
 }
 
 int main(int argc, const char *argv[])
