@@ -74,7 +74,8 @@
         "text_encoding": "cpp",
         "tape.h": "c",
         "unordered_set": "cpp",
-        "string.h": "c"
+        "string.h": "c",
+        "partition.h": "c"
     },
     "C_Cpp.errorSquiggles": "enabled",
 

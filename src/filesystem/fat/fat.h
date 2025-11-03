@@ -1,6 +1,7 @@
 #pragma once
 
 #include <stdint.h>
+#include <string.h>
 #include "../partition/partition.h"
 
 #define CHUNK_SIZE 512
