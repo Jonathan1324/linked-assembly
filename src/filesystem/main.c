@@ -17,9 +17,9 @@ typedef uint8_t FS_Action;
 void print_help(const char* name)
 {
     fputs("Usage:\n", stderr);
-    fprintf(stderr, "- %s create <image> (--type fat12/fat16/fat32) (--root <path>)\n", name);
-    fprintf(stderr, "- %s insert <path> <image> (--path <image path>)\n", name);
-    fprintf(stderr, "- %s extract <image path> <image> (--path <path>)\n", name);
+    fprintf(stderr, "- %s create <image> (--type fat12/fat16/fat32) (--root <host path>)\n", name);
+    fprintf(stderr, "- %s insert <host path> <image> (--path <image path>)\n", name);
+    fprintf(stderr, "- %s extract <image path> <image> (--path <host path>)\n", name);
 }
 
 int main(int argc, const char *argv[])
