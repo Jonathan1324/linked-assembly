@@ -1,6 +1,7 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
+#include <ctype.h>
 #include "fat/fat.h"
 #include "disk/disk.h"
 #include "filesystem/filesystem.h"
@@ -17,12 +18,60 @@ typedef uint8_t FS_Action;
 void print_help(const char* name, FILE* s)
 {
     fputs("Usage:\n", s);
-    fprintf(s, "> %s create <image> (--type fat12/fat16/fat32) (--root <host path>) (flags)\n", name);
+    fprintf(s, "> %s create <image> (--type fat12/fat16/fat32) (--root <host path>) (--size B/K/M/G/T) (flags)\n", name);
     fprintf(s, "> %s insert <host path> <image> (--path <image path>) (flags)\n", name);
     fprintf(s, "> %s extract <image path> <image> (--path <host path>) (flags)\n", name);
     fputs("Flags:\n", s);
     fputs("> --no-lfn\n", s);
     fputs("> --read-only\n", s);
+}
+
+uint64_t parse_size(const char* size_str)
+{
+    if (!size_str) return 0;
+
+    uint64_t len = strlen(size_str);
+    if (len == 0) return 0;
+
+    uint64_t multiplier = 1;
+    char last = size_str[len - 1];
+    switch (toupper(last)) {
+        case 'T': multiplier = 1024ULL*1024*1024*1024; len--; break;
+        case 'G': multiplier = 1024ULL*1024*1024; len--; break;
+        case 'M': multiplier = 1024ULL*1024; len--; break;
+        case 'K': multiplier = 1024ULL; len--; break;
+        case 'B': default: multiplier = 1; break;
+    }
+
+    uint64_t whole = 0;
+    uint64_t fraction = 0;
+    uint64_t frac_divisor = 1;
+    int after_dot = 0;
+
+    for (size_t i = 0; i < len; i++) {
+        char c = size_str[i];
+        if (c == '.') {
+            after_dot = 1;
+            continue;
+        }
+        if (!isdigit(c)) break;
+
+        if (!after_dot) {
+            whole = whole * 10 + (c - '0');
+        } else {
+            if (frac_divisor < 1000000000000000000ULL) {
+                fraction = fraction * 10 + (c - '0');
+                frac_divisor *= 10;
+            }
+        }
+    }
+
+    uint64_t result = whole * multiplier;
+    if (fraction > 0) {
+        result += (fraction * multiplier) / frac_divisor;
+    }
+
+    return result;
 }
 
 int main(int argc, const char *argv[])
@@ -54,6 +103,7 @@ int main(int argc, const char *argv[])
 
     int allow_path_flag = 0;
     int allow_root_flag = 0;
+    int allow_size = 0;
 
     const char* path = NULL;
 
@@ -67,6 +117,7 @@ int main(int argc, const char *argv[])
         truncate = 1;
         fs_actions |= FS_CREATE;
         allow_root_flag = 1;
+        allow_size = 1;
 
         if (argc < 3) {
             print_help(argv[0], stderr);
@@ -115,6 +166,7 @@ int main(int argc, const char *argv[])
 
     int fat_use_lfn = 1;
     int read_only = 0;
+    uint64_t fs_size = 0;
 
     for (int i = 3; i < argc; i++) {
         if (format && strcmp(argv[i], "--type") == 0) {
@@ -154,6 +206,13 @@ int main(int argc, const char *argv[])
             uint64_t len = strlen(argv[i]);
             //if (argv[i][len-1] == '/') argv[i][len-1] = '\0';
             root_file = argv[i];
+        } else if (allow_size && strcmp(argv[i], "--size") == 0) {
+            i++;
+            if (argc < i) {
+                fputs("No size after '--size'\n", stderr);
+                return 1;
+            }
+            fs_size = parse_size(argv[i]);
         }
         else if (strcmp(argv[i], "--no-lfn") == 0) {
             fat_use_lfn = 0;
@@ -194,18 +253,19 @@ int main(int argc, const char *argv[])
         }
     }
 
-    uint64_t partition_size;
     if (format) {
-        switch (fs_type) {
-            case FILESYSTEM_FAT12: partition_size = 1474560; break;   // 1.44 MB
-            case FILESYSTEM_FAT16: partition_size = 16777216; break;  // 16 MB
-            case FILESYSTEM_FAT32: partition_size = 104857600; break; // 100 MB
+        if (fs_size == 0) {
+            switch (fs_type) {
+                case FILESYSTEM_FAT12: fs_size = 1474560; break;   // 1440 KB
+                case FILESYSTEM_FAT16: fs_size = 16777216; break;  // 16 MB
+                case FILESYSTEM_FAT32: fs_size = 104857600; break; // 100 MB
+            }
         }
     } else {
-        partition_size = disk->size;
+        fs_size = disk->size;
     }
 
-    Partition* partition = Partition_Create(disk, 0, partition_size, read_only);
+    Partition* partition = Partition_Create(disk, 0, fs_size, read_only);
     if (!partition) {
         Disk_Close(disk);
         return 1;
