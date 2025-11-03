@@ -21,7 +21,8 @@ void print_help(const char* name, FILE* s)
     fprintf(s, "> %s insert <host path> <image> (--path <image path>) (flags)\n", name);
     fprintf(s, "> %s extract <image path> <image> (--path <host path>) (flags)\n", name);
     fputs("Flags:\n", s);
-    //fputs("> --no-lfn\n", s);
+    fputs("> --no-lfn\n", s);
+    fputs("> --read-only\n", s);
 }
 
 int main(int argc, const char *argv[])
@@ -112,6 +113,9 @@ int main(int argc, const char *argv[])
 
     Filesystem_Type fs_type = FILESYSTEM_FAT32; // default
 
+    int fat_use_lfn = 1;
+    int read_only = 0;
+
     for (int i = 3; i < argc; i++) {
         if (format && strcmp(argv[i], "--type") == 0) {
             i++;
@@ -138,6 +142,8 @@ int main(int argc, const char *argv[])
                 fputs("No path after '--path'\n", stderr);
                 return 1;
             }
+            uint64_t len = strlen(argv[i]);
+            //if (argv[i][len-1] == '/') argv[i][len-1] = '\0';
             path = argv[i];
         } else if (allow_root_flag && strcmp(argv[i], "--root") == 0) {
             i++;
@@ -145,7 +151,14 @@ int main(int argc, const char *argv[])
                 fputs("No path after '--root'\n", stderr);
                 return 1;
             }
+            uint64_t len = strlen(argv[i]);
+            //if (argv[i][len-1] == '/') argv[i][len-1] = '\0';
             root_file = argv[i];
+        }
+        else if (strcmp(argv[i], "--no-lfn") == 0) {
+            fat_use_lfn = 0;
+        } else if (strcmp(argv[i], "--read-only") == 0) {
+            read_only = 1;
         }
     }
 
@@ -192,7 +205,7 @@ int main(int argc, const char *argv[])
         partition_size = disk->size;
     }
 
-    Partition* partition = Partition_Create(disk, 0, partition_size, 0);
+    Partition* partition = Partition_Create(disk, 0, partition_size, read_only);
     if (!partition) {
         Disk_Close(disk);
         return 1;
@@ -244,7 +257,7 @@ int main(int argc, const char *argv[])
                                            sectors_per_track, number_of_heads,
                                            drive_number, media_descriptor);
     } else {
-        fat_fs = FAT_OpenFilesystem(partition, fat_version, 0);
+        fat_fs = FAT_OpenFilesystem(partition, fat_version, read_only);
     }
 
     if (!fat_fs) {
@@ -253,7 +266,7 @@ int main(int argc, const char *argv[])
         return 1;
     }
 
-    Filesystem* fs = Filesystem_CreateFromFAT(fat_fs);
+    Filesystem* fs = Filesystem_CreateFromFAT(fat_fs, fat_use_lfn);
     if (!fs) {
         FAT_CloseFilesystem(fs);
         Partition_Close(partition);

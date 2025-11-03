@@ -19,12 +19,13 @@ typedef struct Filesystem_File {
 
 struct Filesystem {
     FAT_Filesystem* fat_fs;
+    int fat_use_lfn;
 
     Filesystem_File* root;
     Filesystem_File static_root;
 };
 
-Filesystem* Filesystem_CreateFromFAT(FAT_Filesystem* fat_fs);
+Filesystem* Filesystem_CreateFromFAT(FAT_Filesystem* fat_fs, int use_lfn);
 void Filesystem_Close(Filesystem* fs);
 
 Filesystem_File* Filesystem_CreateEntry(Filesystem_File* parent, const char* name, int is_directory, int is_hidden, int is_system, int64_t creation, int64_t last_modification, int64_t last_access);

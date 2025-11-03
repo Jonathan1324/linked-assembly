@@ -44,11 +44,12 @@ char** SeparatePaths(const char* path, uint32_t* out_count)
     return parts;
 }
 
-Filesystem* Filesystem_CreateFromFAT(FAT_Filesystem* fat_fs)
+Filesystem* Filesystem_CreateFromFAT(FAT_Filesystem* fat_fs, int use_lfn)
 {
     Filesystem* fs = (Filesystem*)malloc(sizeof(Filesystem));
     if (!fs) return NULL;
     fs->fat_fs = fat_fs;
+    fs->fat_use_lfn = use_lfn;
 
     fs->static_root.fs = fs;
     fs->static_root.fat_f = fat_fs->root;
@@ -72,7 +73,7 @@ Filesystem_File* Filesystem_CreateEntry(Filesystem_File* parent, const char* nam
     file->fs = parent->fs;
 
     //TODO: dynamically choose if to use lfn
-    file->fat_f = FAT_CreateEntry(parent->fat_f, name, is_directory, is_hidden, is_system, creation, last_modification, last_access, 1);
+    file->fat_f = FAT_CreateEntry(parent->fat_f, name, is_directory, is_hidden, is_system, creation, last_modification, last_access, parent->fs->fat_use_lfn);
     if (!file->fat_f) {
         free(file);
         return NULL;
@@ -111,11 +112,17 @@ Filesystem_File* Filesystem_OpenPath(Filesystem_File* current_path, const char* 
     char** entries = SeparatePaths(path, &path_out_count);
     if (!entries) return NULL;
 
+    int skip = 0;
     for (uint32_t i = 0; i < path_out_count; i++) {
         char* name = entries[i];
+        if (skip) {
+            free(name);
+            continue;
+        }
         if (!name) {
-            Filesystem_CloseEntry(current_path);
-            return NULL;
+            if (i > 0) Filesystem_CloseEntry(current_path);
+            skip = 1;
+            continue;
         }
 
         Filesystem_File* new_entry;
@@ -127,8 +134,9 @@ Filesystem_File* Filesystem_OpenPath(Filesystem_File* current_path, const char* 
             else             new_entry = Filesystem_FindEntry(current_path, name);
         }
         if (!new_entry) {
-            Filesystem_CloseEntry(current_path);
-            return NULL;
+            if (i > 0) Filesystem_CloseEntry(current_path);
+            skip = 1;
+            continue;
         }
         if (i > 0) Filesystem_CloseEntry(current_path);
         current_path = new_entry;
@@ -137,7 +145,7 @@ Filesystem_File* Filesystem_OpenPath(Filesystem_File* current_path, const char* 
 
     free(entries);
 
-    return current_path;
+    return skip ? NULL : current_path;
 }
 
 void Filesystem_CloseEntry(Filesystem_File* file)
@@ -206,7 +214,7 @@ int Filesystem_SyncPathsToFS(Filesystem_File* dir, const char* path, const char*
         char** sub_entries = Path_ListDir(o_path, &sub_entry_count);
         if (!sub_entries) {
             fprintf(stderr, "Couldn't get entries of '%s'\n", o_path);
-            return;
+            return 1;
         }
 
         for (uint64_t i = 0; i < sub_entry_count; i++) {
@@ -217,7 +225,7 @@ int Filesystem_SyncPathsToFS(Filesystem_File* dir, const char* path, const char*
             uint64_t name_len = strlen(name);
             char* new_path = (char*)malloc(path_len + name_len + 1);
             if (!new_path) {
-                printf("Warning: Couldn't sync '%s' to '%s'", entry, new_path);
+                printf("Warning: Couldn't sync '%s' to '%s'\n", entry, new_path);
                 free(entry);
                 continue;
             }
@@ -226,7 +234,7 @@ int Filesystem_SyncPathsToFS(Filesystem_File* dir, const char* path, const char*
             new_path[path_len + name_len] = '\0';
 
             if (Filesystem_SyncPathsToFS(dir, new_path, entry) != 0) {
-                printf("Warning: Couldn't sync '%s' to '%s'", entry, new_path);
+                printf("Warning: Couldn't sync '%s' to '%s'\n", entry, new_path);
                 free(entry);
                 continue;
             }
@@ -301,7 +309,7 @@ int Filesystem_SyncPathsFromFS(Filesystem_File* dir, const char* path, const cha
             uint64_t name_len = strlen(name);
             char* new_path = (char*)malloc(path_len + name_len + 1);
             if (!new_path) {
-                printf("Warning: Couldn't sync '%s' to '%s'", entry, new_path);
+                printf("Warning: Couldn't sync '%s' to '%s'\n", entry, new_path);
                 free(entry);
                 continue;
             }
@@ -310,7 +318,7 @@ int Filesystem_SyncPathsFromFS(Filesystem_File* dir, const char* path, const cha
             new_path[path_len + name_len] = '\0';
 
             if (Filesystem_SyncPathsFromFS(dir, new_path, entry) != 0) {
-                printf("Warning: Couldn't sync '%s' to '%s'", entry, new_path);
+                printf("Warning: Couldn't sync '%s' to '%s'\n", entry, new_path);
                 free(entry);
                 continue;
             }
