@@ -4,6 +4,7 @@
 #include "fat/fat.h"
 #include "disk/disk.h"
 #include "filesystem/filesystem.h"
+#include "version.h"
 
 #include "native/directory.h"
 
@@ -17,12 +18,25 @@ void print_help(const char* name)
 {
     fputs("Usage:\n", stderr);
     fprintf(stderr, "- %s create <image> (--type fat12/fat16/fat32) (--root <path>)\n", name);
-    fprintf(stderr, "- %s insert <file> <image> (--path <image path>)\n", name);
-    fprintf(stderr, "- %s extract <file> <image> (--path <path>)\n", name);
+    fprintf(stderr, "- %s insert <path> <image> (--path <image path>)\n", name);
+    fprintf(stderr, "- %s extract <image path> <image> (--path <path>)\n", name);
 }
 
 int main(int argc, const char *argv[])
 {
+    for (int i = 0; i < argc; i++) {
+        if (strcmp(argv[i], "-h") == 0 || strcmp(argv[i], "--help") == 0)
+        {
+            print_help(argv[0]);
+            return 0;
+        }
+        else if (strcmp(argv[i], "-v") == 0 || strcmp(argv[i], "--version") == 0)
+        {
+            printVersion();
+            return 0;
+        }
+    }
+
     int format;
     int truncate;
 
