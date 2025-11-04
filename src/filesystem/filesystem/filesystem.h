@@ -42,5 +42,7 @@ uint64_t Filesystem_WriteToFile(Filesystem_File* file, uint64_t offset, uint8_t*
 
 char** Filesystem_ListDir(Filesystem_File* file, uint64_t* out_count);
 
+int Filesystem_DirectoryReserve(Filesystem_File* dir, char** file_names, uint64_t file_count);
+
 int Filesystem_SyncPathsToFS(Filesystem_File* dir, const char* path, const char* o_path);
 int Filesystem_SyncPathsFromFS(Filesystem_File* dir, const char* path, const char* o_path);

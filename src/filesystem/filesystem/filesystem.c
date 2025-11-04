@@ -193,6 +193,20 @@ char** Filesystem_ListDir(Filesystem_File* file, uint64_t* out_count)
     return FAT_ListDir(file->fat_f, out_count);
 }
 
+int Filesystem_DirectoryReserve(Filesystem_File* dir, char** file_names, uint64_t file_count)
+{
+    if (!dir || !dir->fat_f->is_directory || !file_names) return 1;
+
+    uint32_t entry_count = 0;
+    for (uint64_t i = 0; i < file_count; i++) {
+        uint64_t name_len = strlen(file_names[i]);
+        uint64_t lfn_count = (name_len + 12) / 13;
+        entry_count += lfn_count + 1;
+    }
+
+    return FAT_ReserveDirectorySpace(dir->fat_f, entry_count);
+}
+
 
 // TODO: Don't Override
 int Filesystem_SyncPathsToFS(Filesystem_File* dir, const char* path, const char* o_path)
@@ -238,14 +252,20 @@ int Filesystem_SyncPathsToFS(Filesystem_File* dir, const char* path, const char*
     } else if (type == TYPE_DIR) {
         // TODO: better way
         Filesystem_File* tmp_dir = Filesystem_OpenPath(dir, path, 1, 1, 1, is_hidden, is_system, creation, last_modification, last_access);
-        if (tmp_dir) Filesystem_CloseEntry(tmp_dir);
 
         uint64_t sub_entry_count;
         char** sub_entries = Path_ListDir(o_path, &sub_entry_count);
         if (!sub_entries) {
+            Filesystem_CloseEntry(tmp_dir);
             fprintf(stderr, "Couldn't get entries of '%s'\n", o_path);
             return 1;
         }
+
+        if (Filesystem_DirectoryReserve(tmp_dir, sub_entries, sub_entry_count) != 0) {
+            // TODO: Warning?
+        }
+
+        if (tmp_dir) Filesystem_CloseEntry(tmp_dir);
 
         for (uint64_t i = 0; i < sub_entry_count; i++) {
             char* entry = sub_entries[i];

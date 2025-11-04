@@ -2,6 +2,7 @@
 
 #include <stdint.h>
 #include <string.h>
+#include <wctype.h>
 #include "../partition/partition.h"
 
 #define CHUNK_SIZE 512
@@ -323,6 +324,7 @@ int FAT_LoadFATBuffer(FAT_Filesystem* fs, uint32_t offset);
 uint32_t FAT_ReadFromFileRaw(FAT_File* f, uint32_t offset, uint8_t* buffer, uint32_t size);
 uint32_t FAT_WriteToFileRaw(FAT_File* f, uint32_t offset, uint8_t* buffer, uint32_t size);
 int FAT_ReserveSpace(FAT_File* f, uint32_t extra, int update_entry_size);
+int FAT_ReserveDirectorySpace(FAT_File* dir, uint32_t entry_count);
 uint32_t FAT_GetAbsoluteOffset(FAT_File* f, uint32_t relative_offset);
 
 uint32_t FAT_AddDirectoryEntry(FAT_File* directory, FAT_DirectoryEntry* entry, FAT_LFNEntry* lfn_entries, uint32_t lfn_count);
@@ -466,4 +468,13 @@ static inline uint32_t utf16_to_utf8(const uint16_t* input, uint32_t inlen, char
     buf[outlen] = '\0';
     *out = buf;
     return outlen;
+}
+
+static inline int utf16_case_insensitive_equal(const uint16_t* name1, const uint16_t* name2, size_t len) {
+    for (size_t i = 0; i < len; ++i) {
+        if (towupper(name1[i]) != towupper(name2[i])) {
+            return 0;
+        }
+    }
+    return 1;
 }

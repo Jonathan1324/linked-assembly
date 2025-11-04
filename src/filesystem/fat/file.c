@@ -190,6 +190,18 @@ int FAT_ReserveSpace(FAT_File* f, uint32_t extra, int update_entry_size)
     return 0;
 }
 
+int FAT_ReserveDirectorySpace(FAT_File* dir, uint32_t entry_count)
+{
+    if (!dir) return 1;
+
+    uint32_t entry_size = entry_count * sizeof(FAT_DirectoryEntry);
+    if (dir->size > entry_size) return 0;
+
+    uint32_t extra_size = entry_size - dir->size;
+
+    return FAT_ReserveSpace(dir, extra_size, !dir->is_directory);
+}
+
 uint32_t FAT_GetAbsoluteOffset(FAT_File* f, uint32_t relative_offset)
 {
     if (!f) return 0;
@@ -369,7 +381,7 @@ FAT_File* FAT_FindEntry(FAT_File* parent, const char* name)
             uint16_t* lfn_utf16 = FAT_CombineLFN(lfn_entries, lfn_count, &utf16_len);
 
             if (lfn_utf16) {
-                if (utf16_len == nameLen && memcmp(name16, lfn_utf16, utf16_len) == 0) {
+                if (utf16_len == nameLen && utf16_case_insensitive_equal(name16, lfn_utf16, utf16_len)) {
                     free(name16);
                     free(lfn_utf16);
                     free(lfn_entries);
