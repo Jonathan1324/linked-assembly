@@ -352,7 +352,7 @@ static inline uint32_t FAT_WriteToFile(FAT_File* f, uint32_t offset, uint8_t* bu
 }
 
 // Initializes an empty FAT Filesystem
-FAT_Filesystem* FAT_CreateEmptyFilesystem(Partition* partition, Fat_Version version,
+FAT_Filesystem* FAT_CreateEmptyFilesystem(Partition* partition, Fat_Version version, uint8_t* bootsector, int force_bootsector,
                                           const char* oem_name, const char* volume_label, uint32_t volume_id,
                                           uint64_t total_size, uint32_t bytes_per_sector, uint8_t sectors_per_cluster,
                                           uint16_t reserved_sectors, uint8_t number_of_fats, uint16_t max_root_directory_entries,
@@ -379,14 +379,14 @@ char** FAT_ListDir(FAT_File* dir, uint64_t* out_count);
 
 // EmptyFS:
 
-int FAT12_FAT16_WriteBootsector(FAT_Filesystem* fs,
+int FAT12_FAT16_WriteBootsector(FAT_Filesystem* fs, uint8_t* bootsector, int force_bootsector,
                                 const char* oem_name, const char* volume_label, uint32_t volume_id,
                                 uint64_t total_size, uint32_t bytes_per_sector, uint8_t sectors_per_cluster,
                                 uint16_t reserved_sectors, uint8_t number_of_fats, uint16_t max_root_directory_entries,
                                 uint16_t sectors_per_track, uint16_t number_of_heads, uint8_t drive_number,
                                 uint8_t media_descriptor);
 
-int FAT32_WriteBootsector(FAT_Filesystem* fs,
+int FAT32_WriteBootsector(FAT_Filesystem* fs, uint8_t* bootsector, int force_bootsector,
                           const char* oem_name, const char* volume_label, uint32_t volume_id,
                           uint64_t total_size, uint32_t bytes_per_sector, uint8_t sectors_per_cluster,
                           uint16_t reserved_sectors, uint8_t number_of_fats, uint16_t max_root_directory_entries,

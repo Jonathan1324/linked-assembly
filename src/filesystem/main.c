@@ -19,7 +19,7 @@ typedef uint8_t FS_Action;
 void print_help(const char* name, FILE* s)
 {
     fputs("Usage:\n", s);
-    fprintf(s, "> %s create <image> (--type fat12|fat16|fat32) [--size B/K/M/G/T] [--root <host path>] [flags]\n", name);
+    fprintf(s, "> %s create <image> (--type fat12|fat16|fat32) [--size B/K/M/G/T] [--boot <file of bootsector>] [--root <host path>] [flags]\n", name);
     fprintf(s, "> %s insert <host path> <image> [--path <image path>] [flags]\n", name);
     fprintf(s, "> %s extract <image path> <image> [--path <host path>] [flags]\n", name);
     fprintf(s, "> %s list <image path> <image> [flags]\n", name);
@@ -28,6 +28,7 @@ void print_help(const char* name, FILE* s)
     fputs("Flags:\n", s);
     fputs("> --no-lfn                   Disable long file names for FAT\n", s);
     fputs("> --read-only                Open image in read-only mode\n", s);
+    fputs("> --force-bootsector         Force the bootsector file to be written and don't override header and signature\n", s);
 }
 
 uint64_t parse_size(const char* size_str)
@@ -113,6 +114,8 @@ int main(int argc, const char *argv[])
 
     const char* path = NULL;
 
+    int allow_bootcode_flag = 0;
+
     if (argc < 2) {
         print_help(argv[0], stderr);
         return 1;
@@ -124,6 +127,7 @@ int main(int argc, const char *argv[])
         fs_actions |= FS_CREATE;
         allow_root_flag = 1;
         allow_size = 1;
+        allow_bootcode_flag = 1;
 
         if (argc < 3) {
             print_help(argv[0], stderr);
@@ -198,6 +202,9 @@ int main(int argc, const char *argv[])
     int read_only = 0;
     uint64_t fs_size = 0;
 
+    const char* bootcode_file = NULL;
+    int force_bootsector = 0;
+
     for (int i = 1; i < argc; i++) {
         if (format && strcmp(argv[i], "--type") == 0) {
             i++;
@@ -243,11 +250,21 @@ int main(int argc, const char *argv[])
                 return 1;
             }
             fs_size = parse_size(argv[i]);
+        } else if (allow_bootcode_flag && strcmp(argv[i], "--boot") == 0) {
+            i++;
+            if (argc < i) {
+                fputs("No file after '--boot'\n", stderr);
+                return 1;
+            }
+            bootcode_file = argv[i];
         }
+
         else if (strcmp(argv[i], "--no-lfn") == 0) {
             fat_use_lfn = 0;
         } else if (strcmp(argv[i], "--read-only") == 0) {
             read_only = 1;
+        } else if (strcmp(argv[i], "--force-bootsector") == 0) {
+            force_bootsector = 1;
         }
     }
 
@@ -313,6 +330,24 @@ int main(int argc, const char *argv[])
             return 1;
     }
 
+    uint8_t bootsector_buffer[512];
+    if (bootcode_file) {
+        FILE* bootcode_f = fopen(bootcode_file, "rb");
+        if (!bootcode_f) {
+            Partition_Close(partition);
+            Disk_Close(disk);
+            fprintf(stderr, "Couldn't open '%s'\n", bootcode_file);
+            return 1;
+        }
+        if (fread(bootsector_buffer, sizeof(bootsector_buffer), 1, bootcode_f) != 1) {
+            Partition_Close(partition);
+            Disk_Close(disk);
+            fprintf(stderr, "Couldn't read 512 bytes of '%s'\n", bootcode_file);
+            return 1;
+        }
+        fclose(bootcode_f);
+    }
+
     FAT_Filesystem* fat_fs = NULL;
     if (format) {
         const char* oem_name = "lfs";
@@ -339,7 +374,8 @@ int main(int argc, const char *argv[])
         uint8_t drive_number = fat_version == FAT_VERSION_12 ? 0x00 : 0x80;
         uint8_t media_descriptor = fat_version == FAT_VERSION_12 ? FAT_BOOTSECTOR_MEDIA_DESCRIPTOR_FLOPPY144 : FAT_BOOTSECTOR_MEDIA_DESCRIPTOR_DISK;
 
-        fat_fs = FAT_CreateEmptyFilesystem(partition, fat_version,
+        // TODO
+        fat_fs = FAT_CreateEmptyFilesystem(partition, fat_version, (bootcode_file ? bootsector_buffer : NULL), force_bootsector,
                                            oem_name, volume_name, volume_id,
                                            partition->size, bytes_per_sector,
                                            sectors_per_cluster, reserved_sectors,
