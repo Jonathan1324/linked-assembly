@@ -38,7 +38,7 @@ int main(int argc, const char *argv[])
         {
             if (i + 1 >= argc)
             {
-                fprintf(stderr, "Usage: %s [-c] <input.bf> [-o output.bf]\n", argv[0]);
+                printHelp(argv[0]);
                 return 1;
             }
             outputFile = argv[++i];

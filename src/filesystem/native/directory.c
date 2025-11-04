@@ -2,6 +2,7 @@
 
 #include <stdlib.h>
 #include <string.h>
+#include <stdio.h>
 
 #ifdef _WIN32
 #include <windows.h>
@@ -34,17 +35,25 @@ PathType Path_GetType(const char* path)
 #endif
 }
 
-char** Path_ListDir(const char *dir_path, uint64_t *out_count)
+char **Path_ListDir(const char *dir_path, uint64_t *out_count)
 {
     char **list = NULL;
     uint64_t count = 0;
 
 #ifdef _WIN32
-    char search_path[1024];
-    snprintf(search_path, sizeof(search_path), "%s\\*", dir_path);
+    size_t dir_len = strlen(dir_path);
+    char *search_path = malloc(dir_len + 3); // for "\\*" and '\0'
+    if (!search_path) {
+        *out_count = 0;
+        return NULL;
+    }
+    strcpy(search_path, dir_path);
+    strcat(search_path, "\\*");
 
     WIN32_FIND_DATA ffd;
     HANDLE hFind = FindFirstFile(search_path, &ffd);
+    free(search_path);
+
     if (hFind == INVALID_HANDLE_VALUE) {
         *out_count = 0;
         return NULL;
@@ -54,11 +63,21 @@ char** Path_ListDir(const char *dir_path, uint64_t *out_count)
         if (strcmp(ffd.cFileName, ".") == 0 || strcmp(ffd.cFileName, "..") == 0)
             continue;
 
-        char full_path[1024];
-        snprintf(full_path, sizeof(full_path), "%s/%s", dir_path, ffd.cFileName); // '/' verwenden
+        size_t name_len = strlen(ffd.cFileName);
+        char *full_path = malloc(dir_len + 1 + name_len + 1); // dir + '/' + name + '\0'
+        if (!full_path) continue;
 
-        list = realloc(list, sizeof(char*) * (count + 1));
-        list[count++] = strdup(full_path);
+        strcpy(full_path, dir_path);
+        full_path[dir_len] = '/'; // always use forward slash
+        strcpy(full_path + dir_len + 1, ffd.cFileName);
+
+        char **tmp = realloc(list, sizeof(char*) * (count + 1));
+        if (!tmp) {
+            free(full_path);
+            continue;
+        }
+        list = tmp;
+        list[count++] = full_path;
 
     } while (FindNextFile(hFind, &ffd) != 0);
 
@@ -71,24 +90,34 @@ char** Path_ListDir(const char *dir_path, uint64_t *out_count)
         return NULL;
     }
 
+    size_t dir_len = strlen(dir_path);
+
     struct dirent *entry;
     while ((entry = readdir(dir)) != NULL) {
         if (strcmp(entry->d_name, ".") == 0 || strcmp(entry->d_name, "..") == 0)
             continue;
 
-        char full_path[1024];
-        snprintf(full_path, sizeof(full_path), "%s/%s", dir_path, entry->d_name);
+        size_t name_len = strlen(entry->d_name);
+        char *full_path = malloc(dir_len + 1 + name_len + 1); // dir + '/' + name + '\0'
+        if (!full_path) continue;
 
-        list = realloc(list, sizeof(char*) * (count + 1));
-        list[count++] = strdup(full_path);
+        strcpy(full_path, dir_path);
+        full_path[dir_len] = '/';
+        strcpy(full_path + dir_len + 1, entry->d_name);
+
+        char **tmp = realloc(list, sizeof(char*) * (count + 1));
+        if (!tmp) {
+            free(full_path);
+            continue;
+        }
+        list = tmp;
+        list[count++] = full_path;
     }
 
     closedir(dir);
 #endif
 
-    if (!list) {
-        list = malloc(1);
-    }
+    if (!list) list = (char**)malloc(1);
 
     *out_count = count;
     return list;

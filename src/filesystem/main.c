@@ -19,14 +19,15 @@ typedef uint8_t FS_Action;
 void print_help(const char* name, FILE* s)
 {
     fputs("Usage:\n", s);
-    fprintf(s, "> %s create <image> (--type fat12/fat16/fat32) (--root <host path>) (--size B/K/M/G/T) (flags)\n", name);
-    fprintf(s, "> %s insert <host path> <image> (--path <image path>) (flags)\n", name);
-    fprintf(s, "> %s extract <image path> <image> (--path <host path>) (flags)\n", name);
-    fprintf(s, "> %s list <image path> <image> (flags)\n", name);
-    fprintf(s, "> %s listall <image> (flags)\n", name);
+    fprintf(s, "> %s create <image> (--type fat12|fat16|fat32) [--size B/K/M/G/T] [--root <host path>] [flags]\n", name);
+    fprintf(s, "> %s insert <host path> <image> [--path <image path>] [flags]\n", name);
+    fprintf(s, "> %s extract <image path> <image> [--path <host path>] [flags]\n", name);
+    fprintf(s, "> %s list <image path> <image> [flags]\n", name);
+    fprintf(s, "> %s listall <image> [flags]\n", name);
+    fputc('\n', s);
     fputs("Flags:\n", s);
-    fputs("> --no-lfn\n", s);
-    fputs("> --read-only\n", s);
+    fputs("> --no-lfn                   Disable long file names for FAT\n", s);
+    fputs("> --read-only                Open image in read-only mode\n", s);
 }
 
 uint64_t parse_size(const char* size_str)
