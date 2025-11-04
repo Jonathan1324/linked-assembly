@@ -108,8 +108,13 @@ Filesystem_File* Filesystem_OpenEntry(Filesystem_File* parent, const char* name,
 
 Filesystem_File* Filesystem_OpenPath(Filesystem_File* current_path, const char* path, int create_file, int create_parents, int is_directory, int is_hidden, int is_system, int64_t creation, int64_t last_modification, int64_t last_access)
 {
+    if (path[0] == '/') {
+        current_path = current_path->fs->root;
+        path++;
+    }
+
     uint64_t str_len = strlen(path);
-    if (str_len == 0 || strcmp("/", path) == 0) {
+    if (str_len == 0) {
         Filesystem_File* f = (Filesystem_File*)malloc(sizeof(Filesystem_File));
         if (!f) return NULL;
         f->fs = current_path->fs;
@@ -118,7 +123,7 @@ Filesystem_File* Filesystem_OpenPath(Filesystem_File* current_path, const char* 
             free(f);
             return NULL;
         }
-        memcpy(fat_f, current_path->fs->root->fat_f, sizeof(FAT_File));
+        memcpy(fat_f, current_path->fat_f, sizeof(FAT_File));
         f->fat_f = fat_f;
         return f;
     }
