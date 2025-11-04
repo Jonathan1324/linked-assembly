@@ -85,11 +85,15 @@ char** Path_ListDir(const char *dir_path, uint64_t *out_count)
     closedir(dir);
 #endif
 
+    if (!list) {
+        list = malloc(1);
+    }
+
     *out_count = count;
     return list;
 }
 
-int Path_MakeDirsForPath(const char* path)
+int Path_MakeDirsForPath(const char* path, int is_dir)
 {
     if (!path || !*path) return 1;
 
@@ -102,7 +106,10 @@ int Path_MakeDirsForPath(const char* path)
     const char *p = path;
     while (*p) {
         const char *slash = strchr(p, '/');
-        size_t segment_len = slash ? (size_t)(slash - p) : 0;
+        size_t segment_len;
+        if (slash) segment_len = (size_t)(slash - p);
+        else segment_len = is_dir ? strlen(p) : 0;
+        
         if (segment_len == 0) break;
 
         char *tmp = realloc(current_path, current_len + segment_len + 2);

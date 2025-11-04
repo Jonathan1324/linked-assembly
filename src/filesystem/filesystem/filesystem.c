@@ -236,6 +236,10 @@ int Filesystem_SyncPathsToFS(Filesystem_File* dir, const char* path, const char*
         Filesystem_CloseEntry(fs_f);
 
     } else if (type == TYPE_DIR) {
+        // TODO: better way
+        Filesystem_File* tmp_dir = Filesystem_OpenPath(dir, path, 1, 1, 1, is_hidden, is_system, creation, last_modification, last_access);
+        if (tmp_dir) Filesystem_CloseEntry(tmp_dir);
+
         uint64_t sub_entry_count;
         char** sub_entries = Path_ListDir(o_path, &sub_entry_count);
         if (!sub_entries) {
@@ -251,7 +255,7 @@ int Filesystem_SyncPathsToFS(Filesystem_File* dir, const char* path, const char*
             uint64_t name_len = strlen(name);
             char* new_path = (char*)malloc(path_len + name_len + 1);
             if (!new_path) {
-                printf("Warning: Couldn't sync '%s' to '%s'\n", entry, new_path);
+                printf("Warning: Couldn't allocate memory to sync '%s' to '%s'\n", entry, new_path);
                 free(entry);
                 continue;
             }
@@ -293,7 +297,7 @@ int Filesystem_SyncPathsFromFS(Filesystem_File* dir, const char* path, const cha
 
     if (type == TYPE_FILE) {
         Filesystem_File* fs_f = Filesystem_OpenPath(dir, path, 0, 0, 0, is_hidden, is_system, creation, last_modification, last_access);
-        int result = Path_MakeDirsForPath(o_path);
+        int result = Path_MakeDirsForPath(o_path, 0);
         FILE* o_f = fopen(o_path, "w+b"); //truncate
 
         if (!fs_f || !o_f || result != 0) {
@@ -324,13 +328,20 @@ int Filesystem_SyncPathsFromFS(Filesystem_File* dir, const char* path, const cha
         Filesystem_File* fs_f = Filesystem_OpenPath(dir, path, 0, 0, 0, is_hidden, is_system, creation, last_modification, last_access);
         if (!fs_f) {
             fprintf(stderr, "Couldn't get entries of '%s'\n", o_path);
-            return;
+            return 1;
         }
+
+        int result = Path_MakeDirsForPath(o_path, 1);
+        if (result != 0) {
+            fprintf(stderr, "Couldn't create dir '%s'\n", o_path);
+            return 1;
+        }
+
         uint64_t sub_entry_count;
         char** sub_entries = Filesystem_ListDir(fs_f, &sub_entry_count);
         if (!sub_entries) {
             fprintf(stderr, "Couldn't get entries of '%s'\n", o_path);
-            return;
+            return 1;
         }
         Filesystem_CloseEntry(fs_f);
 
