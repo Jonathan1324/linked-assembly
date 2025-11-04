@@ -488,7 +488,7 @@ int FAT12_FAT16_WriteBootsector(FAT_Filesystem* fs, uint8_t* bootsector, int for
     if (bootsector) memcpy(&fs->bootsector, bootsector, sizeof(FAT12_FAT16_Bootsector));
     else memset(&fs->bootsector, 0, sizeof(FAT12_FAT16_Bootsector));
 
-    if (bootsector && force_bootsector) {
+    if (!bootsector || !force_bootsector) {
         fs->bootsector.fat12_fat16.signature = 0xAA55;
 
         memset(fs->bootsector.fat12_fat16.header.oem_name, ' ', 8);
@@ -609,7 +609,7 @@ int FAT32_WriteBootsector(FAT_Filesystem* fs, uint8_t* bootsector, int force_boo
     else memset(&fs->bootsector, 0, sizeof(FAT32_Bootsector));
 
     uint32_t total_clusters = 0;
-    if (bootsector && force_bootsector) {
+    if (!bootsector || !force_bootsector) {
         fs->bootsector.fat32.signature = 0xAA55;
 
         memset(fs->bootsector.fat12_fat16.header.oem_name, ' ', 8);
@@ -683,6 +683,9 @@ int FAT32_WriteBootsector(FAT_Filesystem* fs, uint8_t* bootsector, int force_boo
         fs->bootsector.fat32.header.filesystem_type[7] = ' ';
 
         fs->bootsector.fat32.header.volume_id = volume_id;
+
+        fs->bootsector.fat32.header.root_cluster = 0;
+        memset(fs->bootsector.fat32.header.reserved, 0, sizeof(fs->bootsector.fat32.header.reserved));
 
         fs->bootsector.fat32.header.fs_info_sector = 1;
         fs->bootsector.fat32.header.backup_boot_sector = 6;
