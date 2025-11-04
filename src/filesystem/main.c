@@ -14,6 +14,7 @@ typedef uint8_t FS_Action;
 #define FS_CREATE   0x1
 #define FS_INSERT   0x2
 #define FS_EXTRACT  0x4
+#define FS_LIST     0x8
 
 void print_help(const char* name, FILE* s)
 {
@@ -21,6 +22,8 @@ void print_help(const char* name, FILE* s)
     fprintf(s, "> %s create <image> (--type fat12/fat16/fat32) (--root <host path>) (--size B/K/M/G/T) (flags)\n", name);
     fprintf(s, "> %s insert <host path> <image> (--path <image path>) (flags)\n", name);
     fprintf(s, "> %s extract <image path> <image> (--path <host path>) (flags)\n", name);
+    fprintf(s, "> %s list <image path> <image> (flags)\n", name);
+    fprintf(s, "> %s listall <image> (flags)\n", name);
     fputs("Flags:\n", s);
     fputs("> --no-lfn\n", s);
     fputs("> --read-only\n", s);
@@ -105,6 +108,8 @@ int main(int argc, const char *argv[])
     int allow_root_flag = 0;
     int allow_size = 0;
 
+    const char* list_path = NULL;
+
     const char* path = NULL;
 
     if (argc < 2) {
@@ -152,6 +157,30 @@ int main(int argc, const char *argv[])
         extract_file = argv[2];
         path = argv[2];
         allow_path_flag = 1;
+    } else if(strcmp(argv[1], "list") == 0) {
+        format = 0;
+        truncate = 0;
+        fs_actions |= FS_LIST;
+
+        if (argc < 4) {
+            print_help(argv[0], stderr);
+            return 1;
+        }
+        image_file = argv[3];
+
+        list_path = argv[2];
+    } else if(strcmp(argv[1], "listall") == 0) {
+        format = 0;
+        truncate = 0;
+        fs_actions |= FS_LIST;
+
+        if (argc < 3) {
+            print_help(argv[0], stderr);
+            return 1;
+        }
+        image_file = argv[2];
+
+        list_path = "/";
     } else {
         fputs("Unknown action\n", stderr);
         return 1;
@@ -168,7 +197,7 @@ int main(int argc, const char *argv[])
     int read_only = 0;
     uint64_t fs_size = 0;
 
-    for (int i = 3; i < argc; i++) {
+    for (int i = 1; i < argc; i++) {
         if (format && strcmp(argv[i], "--type") == 0) {
             i++;
             if (argc < i) {
@@ -353,6 +382,17 @@ int main(int argc, const char *argv[])
         if (result != 0) {
             printf("Warning: Couldn't sync '%s' to '%s'\n", path, extract_file);
         }
+    }
+
+    if (fs_actions & FS_LIST) {
+        Filesystem_File* l = Filesystem_OpenPath(fs->root, list_path, 0, 0, 0, 0, 0, 0, 0, 0);
+        if (!l) {
+            printf("Warning: Couldn't open '%s'\n", list_path);
+        }
+        if (Filesystem_PrintAll(l, list_path, 0) != 0) {
+            printf("Warning: Couldn't list '%s'\n", list_path);
+        }
+        Filesystem_CloseEntry(l);
     }
 
     Filesystem_Close(fs);

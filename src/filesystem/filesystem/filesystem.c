@@ -412,3 +412,60 @@ int Filesystem_SyncPathsFromFS(Filesystem_File* dir, const char* path, const cha
 
     return 0;
 }
+
+int compare_strings(const void* a, const void* b) {
+    const char* sa = *(const char**)a;
+    const char* sb = *(const char**)b;
+    return strcmp(sa, sb);
+}
+
+int Filesystem_PrintAll(Filesystem_File* start_dir, const char* name, int indent)
+{
+    if (!start_dir) return 1;
+
+    PathType type = start_dir->fat_f->is_directory ? TYPE_DIR : TYPE_FILE;
+
+    for (int i = 0; i < indent; i++) fputc(' ', stdout);
+
+    if (type == TYPE_FILE) {
+        fputs(name, stdout);
+        fputc('\n', stdout);
+    } else if (type == TYPE_DIR) {
+        uint64_t sub_entry_count;
+        char** sub_entries = Filesystem_ListDir(start_dir, &sub_entry_count);
+        if (!sub_entries) {
+            fprintf(stderr, "Couldn't get entries of '%s'\n", name);
+            return 1;
+        }
+
+        fputs(name, stdout);
+        fputs(":\n", stdout);
+
+        qsort(sub_entries, sub_entry_count, sizeof(char*), compare_strings);
+
+        for (uint64_t i = 0; i < sub_entry_count; i++) {
+            char* entry_name = sub_entries[i];
+            if ((entry_name[0] == '.' && entry_name[1] == '\0') || entry_name[0] == '.' && entry_name[1] == '.' && entry_name[2] == '\0') {
+                free(entry_name);
+                continue;
+            }
+
+            Filesystem_File* entry = Filesystem_OpenPath(start_dir, entry_name, 0, 0, 0, 0, 0, 0, 0, 0);
+            if (!entry) {
+                fprintf(stderr, "Warning: Couldn't open '%s'\n", name);
+            }
+
+            if (Filesystem_PrintAll(entry, entry_name, indent + 2) != 0) {
+                fprintf(stderr, "Warning: Couldn't print (entries of) '%s'\n", name);
+            }
+
+            Filesystem_CloseEntry(entry);
+
+            free(entry_name);
+        }
+
+        free(sub_entries);
+    }
+
+    return 0;
+}

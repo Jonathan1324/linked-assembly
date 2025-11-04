@@ -46,3 +46,5 @@ int Filesystem_DirectoryReserve(Filesystem_File* dir, char** file_names, uint64_
 
 int Filesystem_SyncPathsToFS(Filesystem_File* dir, const char* path, const char* o_path);
 int Filesystem_SyncPathsFromFS(Filesystem_File* dir, const char* path, const char* o_path);
+
+int Filesystem_PrintAll(Filesystem_File* start_dir, const char* name, int indent);
