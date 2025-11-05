@@ -3,6 +3,7 @@
 #include <stdint.h>
 #include <string.h>
 #include <wctype.h>
+#include <stdlib.h>
 #include "../partition/partition.h"
 
 #define CHUNK_SIZE 512
