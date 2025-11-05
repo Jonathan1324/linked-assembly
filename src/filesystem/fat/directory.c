@@ -10,14 +10,14 @@ int FAT_RemoveDirectoryEntry(FAT_File* f)
     
     uint64_t offset = f->lfn_offset;
     while (1) {
-        if (Partition_Read(f->fs->partition, &entry, offset, sizeof(FAT_DirectoryEntry)) != sizeof(FAT_DirectoryEntry)) {
+        if (Partition_Read(f->fs->partition, (uint8_t*)&entry, offset, sizeof(FAT_DirectoryEntry)) != sizeof(FAT_DirectoryEntry)) {
             //TODO
         }
 
         if (entry.attribute != 0x0F) break;
         entry.name[0] = FAT_ENTRY_DELETED;
 
-        if (Partition_Write(f->fs->partition, &entry, offset, sizeof(FAT_DirectoryEntry)) != sizeof(FAT_DirectoryEntry)) {
+        if (Partition_Write(f->fs->partition, (uint8_t*)&entry, offset, sizeof(FAT_DirectoryEntry)) != sizeof(FAT_DirectoryEntry)) {
             //TODO
         }
 

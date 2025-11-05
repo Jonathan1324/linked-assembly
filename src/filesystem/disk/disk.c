@@ -13,7 +13,7 @@
     typedef off_t file_offset_t;
 #endif
 
-uint64_t Disk_Read(Disk* disk, uint8_t* buffer, uint64_t offset, uint64_t size)
+uint64_t Disk_Read(Disk* disk, void* buffer, uint64_t offset, uint64_t size)
 {
     if (!disk || !buffer || offset >= disk->size || size == 0) return 0;
 
@@ -28,7 +28,7 @@ uint64_t Disk_Read(Disk* disk, uint8_t* buffer, uint64_t offset, uint64_t size)
     return read;
 }
 
-uint64_t Disk_Write(Disk* disk, uint8_t* buffer, uint64_t offset, uint64_t size)
+uint64_t Disk_Write(Disk* disk, void* buffer, uint64_t offset, uint64_t size)
 {
     if (!disk || !buffer || size == 0) return 0;
 

@@ -11,7 +11,7 @@ typedef struct Disk {
     uint64_t size;
 } Disk;
 
-uint64_t Disk_Read(Disk* disk, uint8_t* buffer, uint64_t offset, uint64_t size);
-uint64_t Disk_Write(Disk* disk, uint8_t* buffer, uint64_t offset, uint64_t size);
+uint64_t Disk_Read(Disk* disk, void* buffer, uint64_t offset, uint64_t size);
+uint64_t Disk_Write(Disk* disk, void* buffer, uint64_t offset, uint64_t size);
 Disk* Disk_CreateFromFile(FILE* raw);
 void Disk_Close(Disk* disk);

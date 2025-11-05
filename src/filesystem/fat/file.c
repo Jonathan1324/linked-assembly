@@ -3,14 +3,14 @@
 #include <string.h>
 #include <stdlib.h>
 
-uint32_t FAT_ReadFromFileRaw(FAT_File* f, uint32_t offset, uint8_t* buffer, uint32_t size)
+uint32_t FAT_ReadFromFileRaw(FAT_File* f, uint32_t offset, void* buffer, uint32_t size)
 {
     if (!f || !buffer) return 0;
     if (offset >= f->size) return 0;
 
     uint32_t remaining = size;
     uint32_t file_pos = offset;
-    uint8_t* out = buffer;
+    void* out = buffer;
 
     if (offset + size > f->size) remaining = f->size - offset;
 
@@ -50,7 +50,7 @@ uint32_t FAT_ReadFromFileRaw(FAT_File* f, uint32_t offset, uint8_t* buffer, uint
     return total_read;
 }
 
-uint32_t FAT_WriteToFileRaw(FAT_File* f, uint32_t offset, uint8_t* buffer, uint32_t size)
+uint32_t FAT_WriteToFileRaw(FAT_File* f, uint32_t offset, void* buffer, uint32_t size)
 {
     if (!f || !buffer || f->read_only || f->fs->read_only) return 0;
 
@@ -61,11 +61,11 @@ uint32_t FAT_WriteToFileRaw(FAT_File* f, uint32_t offset, uint8_t* buffer, uint3
         if (offset > f->size) return 0;
         uint32_t remaining = size;
         if (offset + remaining > f->size) remaining = f->size - offset;
-        if (Partition_Write(f->fs->partition, buffer, abs, remaining) != remaining) return 0;
+        if (Partition_Write(f->fs->partition, (void*)buffer, abs, remaining) != remaining) return 0;
         return remaining;
     }
 
-    uint8_t* out = buffer;
+    void* out = buffer;
 
     uint32_t remaining = size;
     if (offset + remaining > f->size) {
@@ -110,7 +110,7 @@ uint32_t FAT_WriteToFileRaw(FAT_File* f, uint32_t offset, uint8_t* buffer, uint3
         uint32_t chunk = f->fs->cluster_size - off;
         if (chunk > remaining) chunk = remaining;
 
-        if (Partition_Write(f->fs->partition, out, abs, chunk) != chunk) break;
+        if (Partition_Write(f->fs->partition, (void*)out, abs, chunk) != chunk) break;
 
         written += chunk;
         remaining -= chunk;
@@ -229,14 +229,14 @@ uint32_t FAT_GetAbsoluteOffset(FAT_File* f, uint32_t relative_offset)
 int FAT_GetDirectoryEntry(FAT_File* f, FAT_DirectoryEntry* entry)
 {
     if (!f || !entry) return 1;
-    if (Partition_Read(f->fs->partition, entry, f->directory_entry_offset, sizeof(FAT_DirectoryEntry)) != sizeof(FAT_DirectoryEntry)) return 1;
+    if (Partition_Read(f->fs->partition, (void*)entry, f->directory_entry_offset, sizeof(FAT_DirectoryEntry)) != sizeof(FAT_DirectoryEntry)) return 1;
     return 0;
 }
 
 int FAT_SetDirectoryEntry(FAT_File* f, FAT_DirectoryEntry* entry)
 {
     if (!f || f->read_only || f->fs->read_only || !entry) return 1;
-    if (Partition_Write(f->fs->partition, entry, f->directory_entry_offset, sizeof(FAT_DirectoryEntry)) != sizeof(FAT_DirectoryEntry)) return 1;
+    if (Partition_Write(f->fs->partition, (void*)entry, f->directory_entry_offset, sizeof(FAT_DirectoryEntry)) != sizeof(FAT_DirectoryEntry)) return 1;
     return 0;
 }
 
@@ -351,7 +351,7 @@ FAT_File* FAT_FindEntry(FAT_File* parent, const char* name)
     uint32_t lfn_count = 0;
 
     while(1) {
-        uint32_t r = FAT_ReadFromFileRaw(parent, offset, (uint8_t*)&entry, sizeof(FAT_DirectoryEntry));
+        uint32_t r = FAT_ReadFromFileRaw(parent, offset, (void*)&entry, sizeof(FAT_DirectoryEntry));
         if (r != sizeof(FAT_DirectoryEntry)) break;
 
         if (entry.name[0] == 0x00) break; // End of directory

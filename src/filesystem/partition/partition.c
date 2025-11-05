@@ -2,7 +2,7 @@
 
 #include <stdlib.h>
 
-uint64_t Partition_Read(Partition* partition, uint8_t* buffer, uint64_t offset, uint64_t size)
+uint64_t Partition_Read(Partition* partition, void* buffer, uint64_t offset, uint64_t size)
 {
     if (!buffer || !partition || offset >= partition->size || size == 0) return 0;
 
@@ -11,7 +11,7 @@ uint64_t Partition_Read(Partition* partition, uint8_t* buffer, uint64_t offset, 
     return Disk_Read(partition->disk, buffer, partition->offset + offset, size);
 }
 
-uint64_t Partition_Write(Partition* partition, uint8_t* buffer, uint64_t offset, uint64_t size)
+uint64_t Partition_Write(Partition* partition, void* buffer, uint64_t offset, uint64_t size)
 {
     if (!partition || partition->read_only || !buffer || offset >= partition->size || size == 0) return 0;
 
