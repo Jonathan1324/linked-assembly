@@ -10,11 +10,12 @@
 #include "native/directory.h"
 
 typedef uint8_t FS_Action;
-#define FS_NONE     0x0
-#define FS_CREATE   0x1
-#define FS_INSERT   0x2
-#define FS_EXTRACT  0x4
-#define FS_LIST     0x8
+#define FS_NONE     0x00
+#define FS_CREATE   0x01
+#define FS_INSERT   0x02
+#define FS_EXTRACT  0x04
+#define FS_LIST     0x08
+#define FS_REMOVE   0x10
 
 void print_help(const char* name, FILE* s)
 {
@@ -22,6 +23,7 @@ void print_help(const char* name, FILE* s)
     fprintf(s, "> %s create <image> (--type fat12|fat16|fat32) [--size B/K/M/G/T] [--boot <file of bootsector>] [--root <host path>] [flags]\n", name);
     fprintf(s, "> %s insert <host path> <image> [--path <image path>] [flags]\n", name);
     fprintf(s, "> %s extract <image path> <image> [--path <host path>] [flags]\n", name);
+    fprintf(s, "> %s remove <image path> <image> [flags]", name);
     fprintf(s, "> %s list <image path> <image> [flags]\n", name);
     fprintf(s, "> %s listall <image> [flags]\n", name);
     fputc('\n', s);
@@ -106,6 +108,8 @@ int main(int argc, const char *argv[])
 
     const char* extract_file = NULL;
 
+    const char* remove_path = NULL;
+
     int allow_path_flag = 0;
     int allow_root_flag = 0;
     int allow_size = 0;
@@ -121,6 +125,8 @@ int main(int argc, const char *argv[])
         return 1;
     }
 
+    int arg_start = 1;
+
     if (strcmp(argv[1], "create") == 0) {
         format = 1;
         truncate = 1;
@@ -134,6 +140,8 @@ int main(int argc, const char *argv[])
             return 1;
         }
         image_file = argv[2];
+
+        arg_start += 2;
     } else if (strcmp(argv[1], "insert") == 0) {
         format = 0;
         truncate = 0;
@@ -148,6 +156,8 @@ int main(int argc, const char *argv[])
         insert_file = argv[2];
         path = argv[2];
         allow_path_flag = 1;
+
+        arg_start += 3;
     } else if (strcmp(argv[1], "extract") == 0) {
         format = 0;
         truncate = 0;
@@ -162,6 +172,22 @@ int main(int argc, const char *argv[])
         extract_file = argv[2];
         path = argv[2];
         allow_path_flag = 1;
+
+        arg_start += 3;
+    } else if (strcmp(argv[1], "remove") == 0) {
+        format = 0;
+        truncate = 0;
+        fs_actions |= FS_REMOVE;
+
+        if (argc < 4) {
+            print_help(argv[0], stderr);
+            return 1;
+        }
+        image_file = argv[3];
+
+        remove_path = argv[2];
+
+        arg_start += 3;
     } else if(strcmp(argv[1], "list") == 0) {
         format = 0;
         truncate = 0;
@@ -174,6 +200,8 @@ int main(int argc, const char *argv[])
         image_file = argv[3];
 
         list_path = argv[2];
+
+        arg_start += 3;
     } else if(strcmp(argv[1], "listall") == 0) {
         format = 0;
         truncate = 0;
@@ -186,6 +214,8 @@ int main(int argc, const char *argv[])
         image_file = argv[2];
 
         list_path = "/";
+
+        arg_start += 2;
     } else {
         fputs("Unknown action\n", stderr);
         return 1;
@@ -205,7 +235,7 @@ int main(int argc, const char *argv[])
     const char* bootcode_file = NULL;
     int force_bootsector = 0;
 
-    for (int i = 1; i < argc; i++) {
+    for (int i = arg_start; i < argc; i++) {
         if (format && strcmp(argv[i], "--type") == 0) {
             i++;
             if (argc < i) {
@@ -265,6 +295,10 @@ int main(int argc, const char *argv[])
             read_only = 1;
         } else if (strcmp(argv[i], "--force-bootsector") == 0) {
             force_bootsector = 1;
+        }
+
+        else {
+            fprintf(stderr, "Unknown argument '%s'\n", argv[i]);
         }
     }
 
@@ -418,6 +452,13 @@ int main(int argc, const char *argv[])
         int result = Filesystem_SyncPathsFromFS(fs->root, extract_file, path);
         if (result != 0) {
             printf("Warning: Couldn't sync '%s' to '%s'\n", path, extract_file);
+        }
+    }
+
+    if (fs_actions & FS_REMOVE) {
+        int result = Filesystem_DeletePath(fs->root, remove_path);
+        if (result != 0) {
+            printf("Warning: Couldn't remove '%s'\n", remove_path);
         }
     }
 

@@ -1,5 +1,38 @@
 #include "fat.h"
 
+int FAT_RemoveDirectoryEntry(FAT_File* f)
+{
+    if (!f || f->read_only || f->fs->read_only) return 1;
+
+    FAT_DirectoryEntry entry;
+    
+    uint64_t offset = f->lfn_offset;
+    while (1) {
+        if (Partition_Read(f->fs->partition, &entry, offset, sizeof(FAT_DirectoryEntry)) != sizeof(FAT_DirectoryEntry)) {
+            //TODO
+        }
+
+        if (entry.attribute != 0x0F) break;
+        entry.name[0] = FAT_ENTRY_DELETED;
+
+        if (Partition_Write(f->fs->partition, &entry, offset, sizeof(FAT_DirectoryEntry)) != sizeof(FAT_DirectoryEntry)) {
+            //TODO
+        }
+
+        offset += sizeof(FAT_DirectoryEntry);
+    }
+
+    if (FAT_GetDirectoryEntry(f, &entry) != 0) {
+        //TODO
+    }
+    entry.name[0] = FAT_ENTRY_DELETED;
+    if (FAT_SetDirectoryEntry(f, &entry) != 0) {
+        //TODO
+    }
+
+    return 0;
+}
+
 uint32_t FAT_AddDirectoryEntry(FAT_File* directory, FAT_DirectoryEntry* entry, FAT_LFNEntry* lfn_entries, uint32_t lfn_count)
 {
     if (!directory || directory->fs->read_only || !directory->is_directory || !entry) return 0xFFFFFFFF; // TODO: error

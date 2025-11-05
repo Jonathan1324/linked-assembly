@@ -22,7 +22,7 @@
 
 #define FAT_BUFFER_SIZE 1024
 
-#define FAT_ENTRY_DELETED (char)0xE5
+#define FAT_ENTRY_DELETED 0xE5
 
 #define FAT_ENTRY_READ_ONLY     0x01
 #define FAT_ENTRY_HIDDEN        0x02
@@ -175,6 +175,7 @@ typedef struct FAT_File {
 
     uint32_t first_cluster;
 
+    uint64_t lfn_offset;
     uint32_t directory_entry_offset; // absolute in bytes from file start
 
     int is_root_directory;
@@ -332,9 +333,11 @@ int FAT_AddDotsToDirectory(FAT_File* directory, FAT_File* parent);
 
 int FAT_GetDirectoryEntry(FAT_File* f, FAT_DirectoryEntry* entry);
 int FAT_SetDirectoryEntry(FAT_File* f, FAT_DirectoryEntry* entry);
+int FAT_RemoveDirectoryEntry(FAT_File* f);
 
 FAT_File* FAT_CreateEntryRaw(FAT_File* dir, FAT_DirectoryEntry* entry, int is_directory, FAT_LFNEntry* lfn_entries, uint32_t lfn_count);
 FAT_File* FAT_CreateEntry(FAT_File* parent, const char* name, int is_directory, int is_hidden, int is_system, int64_t creation, int64_t last_modification, int64_t last_access, int use_lfn);
+int FAT_DeleteEntry(FAT_File* f);
 void FAT_CloseEntry(FAT_File* entry);
 
 FAT_File* FAT_FindEntry(FAT_File* parent, const char* name);
@@ -367,6 +370,7 @@ void FAT_CloseFilesystem(FAT_Filesystem* fs);
 
 uint32_t FAT_ReadFATEntry(FAT_Filesystem* fs, uint32_t cluster);
 int FAT_WriteFATEntry(FAT_Filesystem* fs, uint32_t cluster, uint32_t value);
+int FAT_RemoveFATEntries(FAT_File* entry);
 
 uint32_t FAT_FindNextFreeCluster(FAT_Filesystem* fs, uint32_t start_cluster);
 int FAT_FindFreeClusters(FAT_Filesystem* fs, uint32_t* cluster_array, uint32_t count);

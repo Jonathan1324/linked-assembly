@@ -253,6 +253,7 @@ FAT_File* FAT_CreateEntryRaw(FAT_File* dir, FAT_DirectoryEntry* entry, int is_di
     f->size = 0;
     f->first_cluster = 0;
     f->directory_entry_offset = FAT_GetAbsoluteOffset(dir, rel_offset);
+    f->lfn_offset = f->directory_entry_offset - (lfn_count * sizeof(FAT_LFNEntry));
     f->is_root_directory = 0;
     f->is_root_directory_fat32 = 0;
     f->is_directory = is_directory;
@@ -393,6 +394,7 @@ FAT_File* FAT_FindEntry(FAT_File* parent, const char* name)
                         file->fs = parent->fs;
                         file->first_cluster = ((uint32_t)entry.first_cluster_high << 16) | entry.first_cluster;
                         file->directory_entry_offset = FAT_GetAbsoluteOffset(parent, offset);
+                        file->lfn_offset = file->directory_entry_offset - (lfn_count * sizeof(FAT_LFNEntry));
                         file->is_root_directory = 0;
                         file->is_directory = 1;
                         file->is_root_directory_fat32 = 0;
@@ -414,6 +416,7 @@ FAT_File* FAT_FindEntry(FAT_File* parent, const char* name)
                         file->size = entry.file_size;
                         file->first_cluster = ((uint32_t)entry.first_cluster_high << 16) | entry.first_cluster;
                         file->directory_entry_offset = FAT_GetAbsoluteOffset(parent, offset);
+                        file->lfn_offset = file->directory_entry_offset - (lfn_count * sizeof(FAT_LFNEntry));
                         file->is_root_directory = 0;
                         file->is_directory = 0;
                         file->is_root_directory_fat32 = 0;
@@ -445,6 +448,7 @@ FAT_File* FAT_FindEntry(FAT_File* parent, const char* name)
                 file->fs = parent->fs;
                 file->first_cluster = ((uint32_t)entry.first_cluster_high << 16) | entry.first_cluster;
                 file->directory_entry_offset = FAT_GetAbsoluteOffset(parent, offset);
+                file->lfn_offset = file->directory_entry_offset - (lfn_count * sizeof(FAT_LFNEntry));
                 file->is_root_directory = 0;
                 file->is_directory = 1;
                 file->is_root_directory_fat32 = 0;
@@ -465,6 +469,7 @@ FAT_File* FAT_FindEntry(FAT_File* parent, const char* name)
                 file->size = entry.file_size;
                 file->first_cluster = ((uint32_t)entry.first_cluster_high << 16) | entry.first_cluster;
                 file->directory_entry_offset = FAT_GetAbsoluteOffset(parent, offset);
+                file->lfn_offset = file->directory_entry_offset - (lfn_count * sizeof(FAT_LFNEntry));
                 file->is_root_directory = 0;
                 file->is_directory = 0;
                 file->is_root_directory_fat32 = 0;
@@ -484,4 +489,20 @@ FAT_File* FAT_FindEntry(FAT_File* parent, const char* name)
     free(lfn_entries);
 
     return NULL;
+}
+
+int FAT_DeleteEntry(FAT_File* f)
+{
+    if (!f || f->read_only || f->fs->read_only) return 1;
+
+    if (FAT_RemoveFATEntries(f) != 0) {
+        return 1;
+    }
+
+    if (FAT_RemoveDirectoryEntry(f) != 0) {
+        // TODO
+    }
+
+    FAT_CloseEntry(f);
+    return 0;
 }

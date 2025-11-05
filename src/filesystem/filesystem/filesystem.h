@@ -33,8 +33,10 @@ Filesystem_File* Filesystem_FindEntry(Filesystem_File* parent, const char* name)
 
 Filesystem_File* Filesystem_OpenEntry(Filesystem_File* parent, const char* name, int is_directory, int is_hidden, int is_system, int64_t creation, int64_t last_modification, int64_t last_access);
 
-Filesystem_File* Filesystem_OpenPath(Filesystem_File* current_path, const char* path, int create_file, int create_parents, int is_directory, int is_hidden, int is_system, int64_t creation, int64_t last_modification, int64_t last_access);
+int Filesystem_DeleteEntry(Filesystem_File* parent, const char* name);
 
+Filesystem_File* Filesystem_OpenPath(Filesystem_File* current_path, const char* path, int create_file, int create_parents, int is_directory, int is_hidden, int is_system, int64_t creation, int64_t last_modification, int64_t last_access);
+int Filesystem_DeletePath(Filesystem_File* current_path, const char* path);
 void Filesystem_CloseEntry(Filesystem_File* file);
 
 uint64_t Filesystem_ReadFromFile(Filesystem_File* file, uint64_t offset, uint8_t* buffer, uint64_t size);

@@ -106,6 +106,18 @@ Filesystem_File* Filesystem_OpenEntry(Filesystem_File* parent, const char* name,
     return Filesystem_CreateEntry(parent, name, is_directory, is_hidden, is_system, creation, last_modification, last_access);
 }
 
+int Filesystem_DeleteEntry(Filesystem_File* parent, const char* name)
+{
+    if (!parent || !name) return 1;
+    Filesystem_File* entry = Filesystem_FindEntry(parent, name);
+    if (!entry) return 1;
+    if (entry->fat_f->is_directory) {
+        // TODO
+    } else {
+        return FAT_DeleteEntry(entry->fat_f);
+    }
+}
+
 Filesystem_File* Filesystem_OpenPath(Filesystem_File* current_path, const char* path, int create_file, int create_parents, int is_directory, int is_hidden, int is_system, int64_t creation, int64_t last_modification, int64_t last_access)
 {
     if (path[0] == '/') {
@@ -166,6 +178,18 @@ Filesystem_File* Filesystem_OpenPath(Filesystem_File* current_path, const char* 
     free(entries);
 
     return skip ? NULL : current_path;
+}
+
+int Filesystem_DeletePath(Filesystem_File* current_path, const char* path)
+{
+    if (!current_path || !path) return 1;
+    Filesystem_File* entry = Filesystem_OpenPath(current_path, path, 0, 0, 0, 0, 0, 0, 0, 0);
+    if (!entry) return 1;
+    if (entry->fat_f->is_directory) {
+        // TODO
+    } else {
+        return FAT_DeleteEntry(entry->fat_f);
+    }
 }
 
 void Filesystem_CloseEntry(Filesystem_File* file)

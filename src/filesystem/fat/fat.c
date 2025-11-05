@@ -253,7 +253,7 @@ FAT_Filesystem* FAT_OpenFilesystem(Partition* partition, Fat_Version version, in
         fs->static_root.is_directory = 1;
         fs->static_root.is_root_directory_fat32 = 1;
 
-        uint32_t cluster_count = 0;
+        uint32_t cluster_count = 1;
         uint32_t cluster = fs->static_root.first_cluster;
         while (FAT_ClusterType(fs, cluster) != FAT_CLUSTER_EOC) {
             cluster_count++;
@@ -443,6 +443,23 @@ int FAT_WriteFATEntry(FAT_Filesystem* fs, uint32_t cluster, uint32_t value)
 
     return 1;
 }
+
+int FAT_RemoveFATEntries(FAT_File* entry)
+{
+    if (!entry || entry->read_only || entry->fs->read_only) return 1;
+
+    uint32_t cluster = entry->first_cluster;
+    while (FAT_ClusterType(entry->fs, cluster) == FAT_CLUSTER_ALLOCATED) {
+        uint32_t next = FAT_ReadFATEntry(entry->fs, cluster);
+        if (FAT_WriteFATEntry(entry->fs, cluster, 0) != 0) {
+            //TODO
+        }
+        cluster = next;
+    }
+
+    return 0;
+}
+
 
 uint32_t FAT_FindNextFreeCluster(FAT_Filesystem* fs, uint32_t start_cluster)
 {
