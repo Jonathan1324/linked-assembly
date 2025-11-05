@@ -251,7 +251,7 @@ int main(int argc, const char *argv[])
                 if      (argv[i][3] == '1' && argv[i][4] == '2') fs_type = FILESYSTEM_FAT12;
                 else if (argv[i][3] == '1' && argv[i][4] == '6') fs_type = FILESYSTEM_FAT16;
                 else if (argv[i][3] == '3' && argv[i][4] == '2') fs_type = FILESYSTEM_FAT32;
-                else fprintf("Unknown FS: %s\n", argv[i]);
+                else fprintf(stderr, "Unknown FS: %s\n", argv[i]);
             } else {
                 fprintf(stderr, "Unknown FS: %s\n", argv[i]);
             }
