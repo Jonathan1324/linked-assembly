@@ -71,7 +71,7 @@ jobs:
             COUNT=$((COUNT+1))
           fi
           if [[ "${{ github.event.inputs.macos_x86_64 }}" == "true" ]]; then
-            MATRIX+='{"os":"macos-13","arch":"x86_64","os_name":"macos"},'
+            MATRIX+='{"os":"macos-15-intel","arch":"x86_64","os_name":"macos"},'
             COUNT=$((COUNT+1))
           fi
           if [[ "${{ github.event.inputs.macos_arm }}" == "true" ]]; then
