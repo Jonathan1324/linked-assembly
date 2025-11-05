@@ -123,7 +123,7 @@ int Filesystem_DeleteEntry(Filesystem_File* parent, const char* name)
         free(sub_entries);
 
         // FIXME: currently working, but check for . and ..
-        if ((sub_entry_count - 2) > 0) return 1;
+        if ((sub_entry_count - 2) > 0) return 2;
         return FAT_DeleteEntry(entry->fat_f);
     } else {
         return FAT_DeleteEntry(entry->fat_f);
@@ -209,7 +209,7 @@ int Filesystem_DeletePath(Filesystem_File* current_path, const char* path)
         free(sub_entries);
 
         // FIXME: currently working, but check for . and ..
-        if ((sub_entry_count - 2) > 0) return 1;
+        if ((sub_entry_count - 2) > 0) return 2;
         return FAT_DeleteEntry(entry->fat_f);
     } else {
         return FAT_DeleteEntry(entry->fat_f);

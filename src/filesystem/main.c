@@ -457,7 +457,9 @@ int main(int argc, const char *argv[])
 
     if (fs_actions & FS_REMOVE) {
         int result = Filesystem_DeletePath(fs->root, remove_path);
-        if (result != 0) {
+        if (result == 2) {
+            printf("Warning: Directory '%s' isn't empty\n", remove_path);
+        } else if (result != 0) {
             printf("Warning: Couldn't remove '%s'\n", remove_path);
         }
     }
