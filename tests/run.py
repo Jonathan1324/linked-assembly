@@ -6,6 +6,7 @@ import lasmp.test as lasmp
 import assembler.test as assembler
 import buildtool.test as buildtool
 import lbf.test as lbf
+import lfs.test as lfs
 
 # Paths
 dir = Path("tests")
@@ -33,18 +34,25 @@ logger.addHandler(console_handler)
 def main():
     lasmp_dir = dir / "lasmp"
     lasmp_log_dir = log_dir / "lasmp"
+
     assembler_dir = dir / "assembler"
     assembler_log_dir = log_dir / "assembler"
+
     buildtool_dir = dir / "buildtool"
     buildtool_log_dir = log_dir / "buildtool"
+
     lbf_dir = dir / "lbf"
     lbf_log_dir = log_dir / "lbf"
+
+    lfs_dir = dir / "lfs"
+    lfs_log_dir = log_dir / "lfs"
     
     if "-c" in sys.argv[1:]:
         lasmp.clean(lasmp_dir, lasmp_log_dir)
         assembler.clean(assembler_dir, assembler_log_dir)
         buildtool.clean(buildtool_dir, buildtool_log_dir)
         lbf.clean(lbf_dir, lbf_log_dir)
+        lfs.clean(lfs_dir, lfs_log_dir)
         logs.unlink(missing_ok=True)
     else:
         lasmp_log_dir.mkdir(parents=True, exist_ok=True)
@@ -56,6 +64,7 @@ def main():
         assembler.test(assembler_dir, assembler_log_dir)
         buildtool.test(buildtool_dir, buildtool_log_dir)
         lbf.test(lbf_dir, lbf_log_dir)
+        lfs.test(lfs_dir, lfs_log_dir)
 
 if __name__ == "__main__":
     main()

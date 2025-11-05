@@ -29,7 +29,7 @@ RUSTLDFLAGS = -lstatic=core -lstatic=rust
 
 .PHONY: all clean libcore librust buildtool asmp assembler linker
 
-all: libcore librust lbf buildtool asmp assembler linker
+all: libcore librust lbf buildtool asmp assembler linker lfs
 
 libcore:
 	@$(MAKE) -C $(SRC_DIR)/lib 				\
@@ -135,6 +135,20 @@ linker: libcore librust
 		LIB_DIR=$(LIB_DIR)					\
 		EXE_EXT=$(EXE_EXT)
 
+lfs: libcore librust
+	@$(MAKE) -C $(SRC_DIR)/filesystem 		\
+		DEBUG=$(DEBUG)						\
+											\
+		AS=$(AS) ASFLAGS="$(ASFLAGS)"		\
+		CC=$(CC) CFLAGS="$(CFLAGS)" 		\
+		CXX=$(CXX) CXXFLAGS="$(CXXFLAGS)"	\
+		LDFLAGS="$(LDFLAGSSRC) $(LDFLAGS)"	\
+		STRIPFLAGS="$(STRIPFLAGS)"			\
+		SRC_DIR=$(SRC_DIR)/filesystem 		\
+		BUILD_DIR=$(BUILD_DIR)/filesystem	\
+		BIN_DIR=$(BIN_DIR)					\
+		LIB_DIR=$(LIB_DIR)					\
+		EXE_EXT=$(EXE_EXT)
 
 clean:
 	@$(MAKE) -C $(SRC_DIR)/assembler clean 	\
@@ -160,6 +174,11 @@ clean:
 	@$(MAKE) -C $(SRC_DIR)/linker clean 	\
 		SRC_DIR=$(SRC_DIR)/linker 			\
 		BUILD_DIR=$(BUILD_DIR)/linker		\
+		EXE_EXT=$(EXE_EXT)
+
+	@$(MAKE) -C $(SRC_DIR)/filesystem clean \
+		SRC_DIR=$(SRC_DIR)/filesystem 		\
+		BUILD_DIR=$(BUILD_DIR)/filesystem	\
 		EXE_EXT=$(EXE_EXT)
 
 	@$(MAKE) -C $(SRC_DIR)/lib clean 		\
