@@ -110,9 +110,21 @@ int Filesystem_DeleteEntry(Filesystem_File* parent, const char* name)
 {
     if (!parent || !name) return 1;
     Filesystem_File* entry = Filesystem_FindEntry(parent, name);
-    if (!entry) return 1;
+    if (!entry || entry->fat_f->is_root_directory || entry->fat_f->is_root_directory_fat32) return 1;
     if (entry->fat_f->is_directory) {
-        // TODO
+        uint64_t sub_entry_count;
+        char** sub_entries = Filesystem_ListDir(entry, &sub_entry_count);
+        if (!sub_entries) {
+            return 1;
+        }
+        for (uint64_t i = 0; i < sub_entry_count; i++) {
+            free(sub_entries[i]);
+        }
+        free(sub_entries);
+
+        // FIXME: currently working, but check for . and ..
+        if ((sub_entry_count - 2) > 0) return 1;
+        return FAT_DeleteEntry(entry->fat_f);
     } else {
         return FAT_DeleteEntry(entry->fat_f);
     }
@@ -184,9 +196,21 @@ int Filesystem_DeletePath(Filesystem_File* current_path, const char* path)
 {
     if (!current_path || !path) return 1;
     Filesystem_File* entry = Filesystem_OpenPath(current_path, path, 0, 0, 0, 0, 0, 0, 0, 0);
-    if (!entry) return 1;
+    if (!entry || entry->fat_f->is_root_directory || entry->fat_f->is_root_directory_fat32) return 1;
     if (entry->fat_f->is_directory) {
-        // TODO
+        uint64_t sub_entry_count;
+        char** sub_entries = Filesystem_ListDir(entry, &sub_entry_count);
+        if (!sub_entries) {
+            return 1;
+        }
+        for (uint64_t i = 0; i < sub_entry_count; i++) {
+            free(sub_entries[i]);
+        }
+        free(sub_entries);
+
+        // FIXME: currently working, but check for . and ..
+        if ((sub_entry_count - 2) > 0) return 1;
+        return FAT_DeleteEntry(entry->fat_f);
     } else {
         return FAT_DeleteEntry(entry->fat_f);
     }

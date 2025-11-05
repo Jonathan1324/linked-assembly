@@ -230,6 +230,13 @@ FAT_Filesystem* FAT_OpenFilesystem(Partition* partition, Fat_Version version, in
         fs->root_size = 0;
 
         fs->cluster_size = header->bytes_per_sector * header->sectors_per_cluster;
+
+        uint64_t fs_info_offset = header->fs_info_sector * header->bytes_per_sector;
+
+        if (Partition_Read(partition, (uint8_t*)&fs->fs_info, fs_info_offset, sizeof(FAT32_FS_Info)) != sizeof(FAT32_FS_Info)) {
+            free(fs);
+            return NULL;
+        }
     }
 
     if (FAT_LoadFATBuffer(fs, 0) != 0) {
@@ -454,6 +461,10 @@ int FAT_RemoveFATEntries(FAT_File* entry)
         if (FAT_WriteFATEntry(entry->fs, cluster, 0) != 0) {
             //TODO
         }
+        if (entry->fs->version == FAT_VERSION_32) {
+            if (cluster < entry->fs->fs_info.next_free_cluster) entry->fs->fs_info.next_free_cluster = cluster;
+            entry->fs->fs_info.free_cluster_count += 1;
+        }
         cluster = next;
     }
 
@@ -476,7 +487,7 @@ int FAT_FindFreeClusters(FAT_Filesystem* fs, uint32_t* cluster_array, uint32_t c
 
     uint32_t current_count = 0;
     uint32_t last_free_cluster = 0;
-    //TODO: if (fs->version == FAT32) last_free_cluster = fs->fs_info.next_free_cluster;
+    //TODO: if (fs->version == FAT_VERSION_32) last_free_cluster = fs->fs_info.next_free_cluster;
     while (current_count < count) {
         uint32_t next_free_cluster = FAT_FindNextFreeCluster(fs, last_free_cluster);
         if (next_free_cluster > FAT_GetLastCluster(fs)) return 1;

@@ -1,5 +1,7 @@
 #include "fat.h"
 
+#include <stdlib.h>
+
 int FAT_RemoveDirectoryEntry(FAT_File* f)
 {
     if (!f || f->read_only || f->fs->read_only) return 1;
@@ -128,9 +130,9 @@ char** FAT_ListDir(FAT_File* dir, uint64_t* out_count)
         uint32_t r = FAT_ReadFromFileRaw(dir, offset, (uint8_t*)&entry, sizeof(FAT_DirectoryEntry));
         if (r != sizeof(FAT_DirectoryEntry)) break;
 
-        if (entry.name[0] == 0x00) break; // End of directory
+        if ((uint32_t)(unsigned char)entry.name[0] == 0x00) break; // End of directory
 
-        if (entry.name[0] == FAT_ENTRY_DELETED) {
+        if ((uint32_t)(unsigned char)entry.name[0] == FAT_ENTRY_DELETED) {
             offset += sizeof(FAT_DirectoryEntry);
             continue;
         }
@@ -196,6 +198,8 @@ char** FAT_ListDir(FAT_File* dir, uint64_t* out_count)
 
         offset += sizeof(FAT_DirectoryEntry);
     }
+
+    if (!list) list = (char**)malloc(1);
 
     *out_count = count;
     return list;
