@@ -428,7 +428,7 @@ int main(int argc, const char *argv[])
 
     Filesystem* fs = Filesystem_CreateFromFAT(fat_fs, fat_use_lfn);
     if (!fs) {
-        FAT_CloseFilesystem(fs);
+        Filesystem_Close(fs);
         Partition_Close(partition);
         Disk_Close(disk);
         return 1;
