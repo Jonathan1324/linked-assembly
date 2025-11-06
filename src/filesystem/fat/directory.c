@@ -47,7 +47,7 @@ uint32_t FAT_AddDirectoryEntry(FAT_File* directory, FAT_DirectoryEntry* entry, F
 
     int found = 0;
     while (FAT_ReadFromFileRaw(directory, offset, (uint8_t*)&tmp, sizeof(tmp)) == sizeof(tmp)) {
-        if (tmp.name[0] == 0x00 || tmp.name[0] == FAT_ENTRY_DELETED) {
+        if ((uint32_t)(unsigned char)tmp.name[0] == 0x00 || (uint32_t)(unsigned char)tmp.name[0] == FAT_ENTRY_DELETED) {
             run++;
             if (run == needed) {
                 found = 1;

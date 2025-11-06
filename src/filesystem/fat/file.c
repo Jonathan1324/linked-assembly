@@ -354,9 +354,9 @@ FAT_File* FAT_FindEntry(FAT_File* parent, const char* name)
         uint32_t r = FAT_ReadFromFileRaw(parent, offset, (void*)&entry, sizeof(FAT_DirectoryEntry));
         if (r != sizeof(FAT_DirectoryEntry)) break;
 
-        if (entry.name[0] == 0x00) break; // End of directory
+        if ((uint32_t)(unsigned char)entry.name[0] == 0x00) break; // End of directory
 
-        if (entry.name[0] == FAT_ENTRY_DELETED) {
+        if ((uint32_t)(unsigned char)entry.name[0] == FAT_ENTRY_DELETED) {
             offset += sizeof(FAT_DirectoryEntry);
             continue;
         }
@@ -390,19 +390,18 @@ FAT_File* FAT_FindEntry(FAT_File* parent, const char* name)
                     FAT_File* file = (FAT_File*)malloc(sizeof(FAT_File));
                     if (!file) return NULL;
 
-                    if (entry.attribute & FAT_ENTRY_DIRECTORY) {
-                        file->fs = parent->fs;
-                        file->first_cluster = ((uint32_t)entry.first_cluster_high << 16) | entry.first_cluster;
-                        file->directory_entry_offset = FAT_GetAbsoluteOffset(parent, offset);
-                        file->lfn_offset = file->directory_entry_offset - (lfn_count * sizeof(FAT_LFNEntry));
-                        file->is_root_directory = 0;
-                        file->is_directory = 1;
-                        file->is_root_directory_fat32 = 0;
-                        file->read_only = (entry.attribute & FAT_ENTRY_READ_ONLY) != 0;
-                        file->is_hidden = (entry.attribute & FAT_ENTRY_HIDDEN) != 0;
-                        file->is_system = (entry.attribute & FAT_ENTRY_SYSTEM) != 0;
-                        file->changed = 0;
+                    file->fs = parent->fs;
+                    file->first_cluster = ((parent->fs->version == FAT_VERSION_32) ? ((uint32_t)entry.first_cluster_high << 16) : 0) | entry.first_cluster;
+                    file->directory_entry_offset = FAT_GetAbsoluteOffset(parent, offset);
+                    file->lfn_offset = file->directory_entry_offset - (lfn_count * sizeof(FAT_LFNEntry));
+                    file->is_root_directory = 0;
+                    file->is_root_directory_fat32 = 0;
+                    file->read_only = (entry.attribute & FAT_ENTRY_READ_ONLY) != 0;
+                    file->is_hidden = (entry.attribute & FAT_ENTRY_HIDDEN) != 0;
+                    file->is_system = (entry.attribute & FAT_ENTRY_SYSTEM) != 0;
+                    file->changed = 0;
 
+                    if (entry.attribute & FAT_ENTRY_DIRECTORY) {
                         uint32_t cluster_count = 0;
                         uint32_t cluster = ((uint32_t)entry.first_cluster_high << 16) | entry.first_cluster;
                         while (FAT_ClusterType(parent->fs, cluster) != FAT_CLUSTER_EOC) {
@@ -411,19 +410,10 @@ FAT_File* FAT_FindEntry(FAT_File* parent, const char* name)
                             cluster = FAT_ReadFATEntry(file->fs, cluster);
                         }
                         file->size = file->fs->cluster_size * cluster_count;
+                        file->is_directory = 1;
                     } else {
-                        file->fs = parent->fs;
                         file->size = entry.file_size;
-                        file->first_cluster = ((uint32_t)entry.first_cluster_high << 16) | entry.first_cluster;
-                        file->directory_entry_offset = FAT_GetAbsoluteOffset(parent, offset);
-                        file->lfn_offset = file->directory_entry_offset - (lfn_count * sizeof(FAT_LFNEntry));
-                        file->is_root_directory = 0;
                         file->is_directory = 0;
-                        file->is_root_directory_fat32 = 0;
-                        file->read_only = (entry.attribute & FAT_ENTRY_READ_ONLY) != 0;
-                        file->is_hidden = (entry.attribute & FAT_ENTRY_HIDDEN) != 0;
-                        file->is_system = (entry.attribute & FAT_ENTRY_SYSTEM) != 0;
-                        file->changed = 0;
                     }
 
                     return file;
@@ -444,19 +434,18 @@ FAT_File* FAT_FindEntry(FAT_File* parent, const char* name)
             FAT_File* file = (FAT_File*)malloc(sizeof(FAT_File));
             if (!file) return NULL;
 
-            if (entry.attribute & FAT_ENTRY_DIRECTORY) {
-                file->fs = parent->fs;
-                file->first_cluster = ((uint32_t)entry.first_cluster_high << 16) | entry.first_cluster;
-                file->directory_entry_offset = FAT_GetAbsoluteOffset(parent, offset);
-                file->lfn_offset = file->directory_entry_offset - (lfn_count * sizeof(FAT_LFNEntry));
-                file->is_root_directory = 0;
-                file->is_directory = 1;
-                file->is_root_directory_fat32 = 0;
-                file->read_only = (entry.attribute & FAT_ENTRY_READ_ONLY) != 0;
-                file->is_hidden = (entry.attribute & FAT_ENTRY_HIDDEN) != 0;
-                file->is_system = (entry.attribute & FAT_ENTRY_SYSTEM) != 0;
-                file->changed = 0;
+            file->fs = parent->fs;
+            file->first_cluster = ((parent->fs->version == FAT_VERSION_32) ? ((uint32_t)entry.first_cluster_high << 16) : 0) | entry.first_cluster;
+            file->directory_entry_offset = FAT_GetAbsoluteOffset(parent, offset);
+            file->lfn_offset = file->directory_entry_offset - (lfn_count * sizeof(FAT_LFNEntry));
+            file->is_root_directory = 0;
+            file->is_root_directory_fat32 = 0;
+            file->read_only = (entry.attribute & FAT_ENTRY_READ_ONLY) != 0;
+            file->is_hidden = (entry.attribute & FAT_ENTRY_HIDDEN) != 0;
+            file->is_system = (entry.attribute & FAT_ENTRY_SYSTEM) != 0;
+            file->changed = 0;
 
+            if (entry.attribute & FAT_ENTRY_DIRECTORY) {
                 uint32_t cluster_count = 0;
                 uint32_t cluster = ((uint32_t)entry.first_cluster_high << 16) | entry.first_cluster;
                 while (FAT_ClusterType(parent->fs, cluster) != FAT_CLUSTER_EOC) {
@@ -464,19 +453,10 @@ FAT_File* FAT_FindEntry(FAT_File* parent, const char* name)
                     cluster = FAT_ReadFATEntry(file->fs, cluster);
                 }
                 file->size = file->fs->cluster_size * cluster_count;
+                file->is_directory = 1;
             } else {
-                file->fs = parent->fs;
                 file->size = entry.file_size;
-                file->first_cluster = ((uint32_t)entry.first_cluster_high << 16) | entry.first_cluster;
-                file->directory_entry_offset = FAT_GetAbsoluteOffset(parent, offset);
-                file->lfn_offset = file->directory_entry_offset - (lfn_count * sizeof(FAT_LFNEntry));
-                file->is_root_directory = 0;
                 file->is_directory = 0;
-                file->is_root_directory_fat32 = 0;
-                file->read_only = (entry.attribute & FAT_ENTRY_READ_ONLY) != 0;
-                file->is_hidden = (entry.attribute & FAT_ENTRY_HIDDEN) != 0;
-                file->is_system = (entry.attribute & FAT_ENTRY_SYSTEM) != 0;
-                file->changed = 0;
             }
 
             return file;
