@@ -20,7 +20,7 @@ typedef uint8_t FS_Action;
 void print_help(const char* name, FILE* s)
 {
     fputs("Usage:\n", s);
-    fprintf(s, "> %s create fat12|fat16|fat32 <image> [--size B/K/M/G/T] [--boot <file of bootsector>] [--root <host path>] [flags]\n", name);
+    fprintf(s, "> %s create fat12|fat16|fat32 <image> [--size B/K/M/G/T] [--boot <file>] [--root <path>] [flags]\n", name);
     fprintf(s, "> %s insert <host path> <image> [--path <image path>] [flags]\n", name);
     fprintf(s, "> %s extract <image path> <image> [--path <host path>] [flags]\n", name);
     fprintf(s, "> %s remove <image path> <image> [flags]", name);
@@ -32,6 +32,11 @@ void print_help(const char* name, FILE* s)
     fputs("> --read-only                Open image in read-only mode\n", s);
     fputs("> --force-bootsector         Force the bootsector file to be written and don't override header and signature\n", s);
     fputs("> --save                     Don't delete directories recursively\n", s);
+    fputc('\n', s);
+    fputs("Filesystems:\n", s);
+    fputs("> FAT12\n", s);
+    fputs("> FAT16\n", s);
+    fputs("> FAT32\n", s);
 }
 
 uint64_t parse_size(const char* size_str)
