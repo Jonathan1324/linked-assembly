@@ -20,7 +20,7 @@ typedef uint8_t FS_Action;
 void print_help(const char* name, FILE* s)
 {
     fputs("Usage:\n", s);
-    fprintf(s, "> %s create <image> (--type fat12|fat16|fat32) [--size B/K/M/G/T] [--boot <file of bootsector>] [--root <host path>] [flags]\n", name);
+    fprintf(s, "> %s create fat12|fat16|fat32 <image> [--size B/K/M/G/T] [--boot <file of bootsector>] [--root <host path>] [flags]\n", name);
     fprintf(s, "> %s insert <host path> <image> [--path <image path>] [flags]\n", name);
     fprintf(s, "> %s extract <image path> <image> [--path <host path>] [flags]\n", name);
     fprintf(s, "> %s remove <image path> <image> [flags]", name);
@@ -121,6 +121,8 @@ int main(int argc, const char *argv[])
 
     int allow_bootcode_flag = 0;
 
+    Filesystem_Type fs_type;
+
     if (argc < 2) {
         print_help(argv[0], stderr);
         return 1;
@@ -140,9 +142,24 @@ int main(int argc, const char *argv[])
             print_help(argv[0], stderr);
             return 1;
         }
-        image_file = argv[2];
+        image_file = argv[3];
 
-        arg_start += 2;
+        const char* fs_name = argv[2];
+        if (
+            (fs_name[0] == 'f' || fs_name[0] == 'F') &&
+            (fs_name[1] == 'a' || fs_name[1] == 'A') &&
+            (fs_name[2] == 't' || fs_name[2] == 'T')
+        ) {
+            //FAT
+            if      (fs_name[3] == '1' && fs_name[4] == '2') fs_type = FILESYSTEM_FAT12;
+            else if (fs_name[3] == '1' && fs_name[4] == '6') fs_type = FILESYSTEM_FAT16;
+            else if (fs_name[3] == '3' && fs_name[4] == '2') fs_type = FILESYSTEM_FAT32;
+            else fprintf(stderr, "Unknown FS: %s\n", fs_name);
+        } else {
+            fprintf(stderr, "Unknown FS: %s\n", fs_name);
+        }
+
+        arg_start += 3;
     } else if (strcmp(argv[1], "insert") == 0) {
         format = 0;
         truncate = 0;
@@ -227,8 +244,6 @@ int main(int argc, const char *argv[])
         return 1;
     }
 
-    Filesystem_Type fs_type = FILESYSTEM_FAT32; // default
-
     int fat_use_lfn = 1;
     int read_only = 0;
     uint64_t fs_size = 0;
@@ -239,26 +254,7 @@ int main(int argc, const char *argv[])
     int force_bootsector = 0;
 
     for (int i = arg_start; i < argc; i++) {
-        if (format && strcmp(argv[i], "--type") == 0) {
-            i++;
-            if (argc < i) {
-                fputs("No type after '--type'\n", stderr);
-                return 1;
-            }
-            if (
-                (argv[i][0] == 'f' || argv[i][0] == 'F') &&
-                (argv[i][1] == 'a' || argv[i][1] == 'A') &&
-                (argv[i][2] == 't' || argv[i][2] == 'T')
-            ) {
-                //FAT
-                if      (argv[i][3] == '1' && argv[i][4] == '2') fs_type = FILESYSTEM_FAT12;
-                else if (argv[i][3] == '1' && argv[i][4] == '6') fs_type = FILESYSTEM_FAT16;
-                else if (argv[i][3] == '3' && argv[i][4] == '2') fs_type = FILESYSTEM_FAT32;
-                else fprintf(stderr, "Unknown FS: %s\n", argv[i]);
-            } else {
-                fprintf(stderr, "Unknown FS: %s\n", argv[i]);
-            }
-        } else if (allow_path_flag && strcmp(argv[i], "--path") == 0) {
+        if (allow_path_flag && strcmp(argv[i], "--path") == 0) {
             i++;
             if (argc < i) {
                 fputs("No path after '--path'\n", stderr);
