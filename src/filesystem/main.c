@@ -31,6 +31,7 @@ void print_help(const char* name, FILE* s)
     fputs("> --no-lfn                   Disable long file names for FAT\n", s);
     fputs("> --read-only                Open image in read-only mode\n", s);
     fputs("> --force-bootsector         Force the bootsector file to be written and don't override header and signature\n", s);
+    fputs("> --save                     Don't delete directories recursively\n", s);
 }
 
 uint64_t parse_size(const char* size_str)
@@ -232,6 +233,8 @@ int main(int argc, const char *argv[])
     int read_only = 0;
     uint64_t fs_size = 0;
 
+    int save = 0;
+
     const char* bootcode_file = NULL;
     int force_bootsector = 0;
 
@@ -295,6 +298,8 @@ int main(int argc, const char *argv[])
             read_only = 1;
         } else if (strcmp(argv[i], "--force-bootsector") == 0) {
             force_bootsector = 1;
+        } else if (strcmp(argv[i], "--save") == 0) {
+            save = 1;
         }
 
         else {
@@ -456,7 +461,7 @@ int main(int argc, const char *argv[])
     }
 
     if (fs_actions & FS_REMOVE) {
-        int result = Filesystem_DeletePath(fs->root, remove_path);
+        int result = Filesystem_DeletePath(fs->root, remove_path, save);
         if (result == 2) {
             printf("Warning: Directory '%s' isn't empty\n", remove_path);
         } else if (result != 0) {

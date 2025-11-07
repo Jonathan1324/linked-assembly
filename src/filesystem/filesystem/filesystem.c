@@ -192,28 +192,45 @@ Filesystem_File* Filesystem_OpenPath(Filesystem_File* current_path, const char* 
     return skip ? NULL : current_path;
 }
 
-int Filesystem_DeletePath(Filesystem_File* current_path, const char* path)
+int Filesystem_DeletePath(Filesystem_File* current_path, const char* path, int save)
 {
     if (!current_path || !path) return 1;
+
     Filesystem_File* entry = Filesystem_OpenPath(current_path, path, 0, 0, 0, 0, 0, 0, 0, 0);
+
     if (!entry || entry->fat_f->is_root_directory || entry->fat_f->is_root_directory_fat32) return 1;
-    if (entry->fat_f->is_directory) {
-        uint64_t sub_entry_count;
-        char** sub_entries = Filesystem_ListDir(entry, &sub_entry_count);
-        if (!sub_entries) {
-            return 1;
-        }
-        for (uint64_t i = 0; i < sub_entry_count; i++) {
+
+    if (!entry->fat_f->is_directory) return FAT_DeleteEntry(entry->fat_f);
+
+    uint64_t sub_entry_count = 0;
+    char** sub_entries = Filesystem_ListDir(entry, &sub_entry_count);
+    if (!sub_entries) return 1;
+
+    if (save)
+    {
+        //TODO: currently just removing '.' and '..' with that
+        int is_empty = (sub_entry_count <= 2);
+
+        for (uint64_t i = 0; i < sub_entry_count; i++)
             free(sub_entries[i]);
-        }
         free(sub_entries);
 
-        // FIXME: currently working, but check for . and ..
-        if ((sub_entry_count - 2) > 0) return 2;
-        return FAT_DeleteEntry(entry->fat_f);
-    } else {
+        if (!is_empty) return 2;
         return FAT_DeleteEntry(entry->fat_f);
     }
+
+    for (uint64_t i = 0; i < sub_entry_count; i++) {
+        if (strcmp(sub_entries[i], ".") == 0 || strcmp(sub_entries[i], "..") == 0) continue;
+        int r = Filesystem_DeletePath(entry, sub_entries[i], save);
+        free(sub_entries[i]);
+
+        if (r != 0) {
+            // TODO
+        }
+    }
+    free(sub_entries);
+
+    return FAT_DeleteEntry(entry->fat_f);
 }
 
 void Filesystem_CloseEntry(Filesystem_File* file)
