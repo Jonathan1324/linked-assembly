@@ -20,7 +20,8 @@ typedef uint8_t FS_Action;
 void print_help(const char* name, FILE* s)
 {
     fputs("Usage:\n", s);
-    fprintf(s, "> %s create fat12|fat16|fat32 <image> [--fast] [--size B/K/M/G/T] [--boot <file>] [--root <path>] [flags]\n", name);
+    fprintf(s, "> %s create fat12|fat16|fat32 <image> [--size B/K/M/G/T] [--boot <file>] [--root <path>] [flags]\n", name);
+    fprintf(s, "> %s format fat12|fat16|fat32 <image> [--size B/K/M/G/T] [--boot <file>] [--root <path>] [flags]\n", name);
     fprintf(s, "> %s insert <host path> <image> [--path <image path>] [flags]\n", name);
     fprintf(s, "> %s extract <image path> <image> [--path <host path>] [flags]\n", name);
     fprintf(s, "> %s remove <image path> <image> [flags]\n", name);
@@ -31,6 +32,7 @@ void print_help(const char* name, FILE* s)
     fputs("> --no-lfn                   Disable long file names for FAT\n", s);
     fputs("> --read-only                Open image in read-only mode\n", s);
     fputs("> --force-bootsector         Force the bootsector file to be written and don't override header and signature\n", s);
+    fputs("> --fast                     Don't fill the data area with zeros\n", s);
     fputs("> --save                     Don't delete directories recursively\n", s);
     fputc('\n', s);
     fputs("Supported Filesystems:\n", s);
@@ -138,7 +140,37 @@ int main(int argc, const char *argv[])
 
     if (strcmp(argv[1], "create") == 0) {
         format = 1;
-        //truncate = 1;
+        truncate = 1;
+        fs_actions |= FS_CREATE;
+        allow_root_flag = 1;
+        allow_size = 1;
+        allow_bootcode_flag = 1;
+
+        if (argc < 3) {
+            print_help(argv[0], stderr);
+            return 1;
+        }
+        image_file = argv[3];
+
+        const char* fs_name = argv[2];
+        if (
+            (fs_name[0] == 'f' || fs_name[0] == 'F') &&
+            (fs_name[1] == 'a' || fs_name[1] == 'A') &&
+            (fs_name[2] == 't' || fs_name[2] == 'T')
+        ) {
+            //FAT
+            if      (fs_name[3] == '1' && fs_name[4] == '2') fs_type = FILESYSTEM_FAT12;
+            else if (fs_name[3] == '1' && fs_name[4] == '6') fs_type = FILESYSTEM_FAT16;
+            else if (fs_name[3] == '3' && fs_name[4] == '2') fs_type = FILESYSTEM_FAT32;
+            else fprintf(stderr, "Unknown FS: %s\n", fs_name);
+        } else {
+            fprintf(stderr, "Unknown FS: %s\n", fs_name);
+        }
+
+        arg_start += 3;
+    } else if (strcmp(argv[1], "format") == 0) {
+        // Doesn't truncate
+        format = 1;
         fs_actions |= FS_CREATE;
         allow_root_flag = 1;
         allow_size = 1;
