@@ -351,7 +351,7 @@ int main(int argc, const char *argv[])
         perror("fopen");
         return 1;
     }
-    Disk* disk = Disk_CreateFromFile(f);
+    Disk* disk = Disk_CreateFromFile(f, fs_size > 104857600 ? fs_size : 104857600); //TODO: fix
     if (!disk) {
         fclose(f);
         return 1;
