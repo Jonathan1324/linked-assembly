@@ -1,18 +1,5 @@
 #include "disk.h"
 
-#include <stdlib.h>
-
-#ifdef _WIN32
-    #define FileSeek _fseeki64
-    #define FileTell _ftelli64
-    typedef __int64 file_offset_t;
-#else
-    #define FileSeek fseeko
-    #define FileTell ftello
-    #include <sys/types.h>
-    typedef off_t file_offset_t;
-#endif
-
 uint64_t Disk_Read(Disk* disk, void* buffer, uint64_t offset, uint64_t size)
 {
     if (!disk || !buffer || offset >= disk->size || size == 0) return 0;

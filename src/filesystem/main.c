@@ -343,6 +343,18 @@ int main(int argc, const char *argv[])
         }
     }
 
+    if (format) {
+        if (fs_size == 0) {
+            switch (fs_type) {
+                case FILESYSTEM_FAT12: fs_size = 1474560; break;   // 1440 KB
+                case FILESYSTEM_FAT16: fs_size = 16777216; break;  // 16 MB
+                case FILESYSTEM_FAT32: fs_size = 104857600; break; // 100 MB
+            }
+        }
+    } else {
+        fs_size = Path_GetSize(image_file);
+    }
+
     //FILE* f = fopen(image_file, "r+b");
     FILE* f = NULL;
     if (truncate) f = fopen(image_file, "w+b");
@@ -351,7 +363,7 @@ int main(int argc, const char *argv[])
         perror("fopen");
         return 1;
     }
-    Disk* disk = Disk_CreateFromFile(f, fs_size > 104857600 ? fs_size : 104857600); //TODO: fix
+    Disk* disk = Disk_CreateFromFile(f, fs_size);
     if (!disk) {
         fclose(f);
         return 1;
@@ -373,18 +385,6 @@ int main(int argc, const char *argv[])
         } else if (memcmp(bootsector.fat32.header.filesystem_type, "FAT32", 5) == 0) {
             fs_type = FILESYSTEM_FAT32;
         }
-    }
-
-    if (format) {
-        if (fs_size == 0) {
-            switch (fs_type) {
-                case FILESYSTEM_FAT12: fs_size = 1474560; break;   // 1440 KB
-                case FILESYSTEM_FAT16: fs_size = 16777216; break;  // 16 MB
-                case FILESYSTEM_FAT32: fs_size = 104857600; break; // 100 MB
-            }
-        }
-    } else {
-        fs_size = disk->size;
     }
 
     if (fast_mode) {
