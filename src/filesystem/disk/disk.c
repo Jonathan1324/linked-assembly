@@ -39,7 +39,7 @@ uint64_t Disk_Write(Disk* disk, void* buffer, uint64_t offset, uint64_t size)
     }
 
     if (offset + size > disk->size) size = disk->size - offset;
-    
+
     uint64_t written = fwrite(buffer, 1, size, disk->f);
     if (offset + written > disk->size) disk->size = offset + written;
     disk->current_position += written;
@@ -49,6 +49,8 @@ uint64_t Disk_Write(Disk* disk, void* buffer, uint64_t offset, uint64_t size)
 
 Disk* Disk_CreateFromFile(FILE* raw, uint64_t max_size)
 {
+    if (FileSeek(raw, 0, SEEK_SET) != 0) return NULL;
+
     Disk* disk = (Disk*)malloc(sizeof(Disk));
     if (!disk) return NULL;
     disk->f = raw;
