@@ -121,7 +121,6 @@ int main(int argc, const char *argv[])
     int allow_path_flag = 0;
     int allow_root_flag = 0;
     int allow_size = 0;
-    int allow_fast = 0;
 
     const char* list_path = NULL;
 
@@ -175,7 +174,6 @@ int main(int argc, const char *argv[])
         allow_root_flag = 1;
         allow_size = 1;
         allow_bootcode_flag = 1;
-        allow_fast = 1;
 
         if (argc < 3) {
             print_help(argv[0], stderr);
@@ -328,16 +326,14 @@ int main(int argc, const char *argv[])
             bootcode_file = argv[i];
         }
 
-        else if (allow_fast && strcmp(argv[i], "--fast") == 0) {
-            fast_mode = 1;
-        }
-
         else if (strcmp(argv[i], "--no-lfn") == 0) {
             fat_use_lfn = 0;
         } else if (strcmp(argv[i], "--read-only") == 0) {
             read_only = 1;
         } else if (strcmp(argv[i], "--force-bootsector") == 0) {
             force_bootsector = 1;
+        } else if (strcmp(argv[i], "--fast") == 0) {
+            fast_mode = 1;
         } else if (strcmp(argv[i], "--save") == 0) {
             save = 1;
         }
