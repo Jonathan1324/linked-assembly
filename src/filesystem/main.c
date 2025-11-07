@@ -20,10 +20,10 @@ typedef uint8_t FS_Action;
 void print_help(const char* name, FILE* s)
 {
     fputs("Usage:\n", s);
-    fprintf(s, "> %s create fat12|fat16|fat32 <image> [--size B/K/M/G/T] [--boot <file>] [--root <path>] [flags]\n", name);
+    fprintf(s, "> %s create fat12|fat16|fat32 <image> [--fast] [--size B/K/M/G/T] [--boot <file>] [--root <path>] [flags]\n", name);
     fprintf(s, "> %s insert <host path> <image> [--path <image path>] [flags]\n", name);
     fprintf(s, "> %s extract <image path> <image> [--path <host path>] [flags]\n", name);
-    fprintf(s, "> %s remove <image path> <image> [flags]", name);
+    fprintf(s, "> %s remove <image path> <image> [flags]\n", name);
     fprintf(s, "> %s list <image path> <image> [flags]\n", name);
     fprintf(s, "> %s listall <image> [flags]\n", name);
     fputc('\n', s);
@@ -119,6 +119,7 @@ int main(int argc, const char *argv[])
     int allow_path_flag = 0;
     int allow_root_flag = 0;
     int allow_size = 0;
+    int allow_fast = 0;
 
     const char* list_path = NULL;
 
@@ -137,11 +138,12 @@ int main(int argc, const char *argv[])
 
     if (strcmp(argv[1], "create") == 0) {
         format = 1;
-        truncate = 1;
+        //truncate = 1;
         fs_actions |= FS_CREATE;
         allow_root_flag = 1;
         allow_size = 1;
         allow_bootcode_flag = 1;
+        allow_fast = 1;
 
         if (argc < 3) {
             print_help(argv[0], stderr);
@@ -254,6 +256,7 @@ int main(int argc, const char *argv[])
     uint64_t fs_size = 0;
 
     int save = 0;
+    int fast_mode = 0;
 
     const char* bootcode_file = NULL;
     int force_bootsector = 0;
@@ -291,6 +294,10 @@ int main(int argc, const char *argv[])
                 return 1;
             }
             bootcode_file = argv[i];
+        }
+
+        else if (allow_fast && strcmp(argv[i], "--fast") == 0) {
+            fast_mode = 1;
         }
 
         else if (strcmp(argv[i], "--no-lfn") == 0) {
@@ -350,6 +357,15 @@ int main(int argc, const char *argv[])
         }
     } else {
         fs_size = disk->size;
+    }
+
+    if (fast_mode) {
+        uint8_t b = 0;
+        fseek(f, fs_size - 1, SEEK_SET);
+        fread(&b, 1, 1, f);
+        fseek(f, fs_size - 1, SEEK_SET);
+        fwrite(&b, 1, 1, f);
+        fseek(f, 0, SEEK_SET);
     }
 
     Partition* partition = Partition_Create(disk, 0, fs_size, read_only);
@@ -415,7 +431,7 @@ int main(int argc, const char *argv[])
         uint8_t media_descriptor = fat_version == FAT_VERSION_12 ? FAT_BOOTSECTOR_MEDIA_DESCRIPTOR_FLOPPY144 : FAT_BOOTSECTOR_MEDIA_DESCRIPTOR_DISK;
 
         // TODO
-        fat_fs = FAT_CreateEmptyFilesystem(partition, fat_version, (bootcode_file ? bootsector_buffer : NULL), force_bootsector,
+        fat_fs = FAT_CreateEmptyFilesystem(partition, fat_version, fast_mode, (bootcode_file ? bootsector_buffer : NULL), force_bootsector,
                                            oem_name, volume_name, volume_id,
                                            partition->size, bytes_per_sector,
                                            sectors_per_cluster, reserved_sectors,

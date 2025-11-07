@@ -59,7 +59,7 @@ int FAT_LoadFATBuffer(FAT_Filesystem* fs, uint32_t offset)
     return 0;
 }
 
-FAT_Filesystem* FAT_CreateEmptyFilesystem(Partition* partition, Fat_Version version, void* bootsector, int force_bootsector,
+FAT_Filesystem* FAT_CreateEmptyFilesystem(Partition* partition, Fat_Version version, int fast, void* bootsector, int force_bootsector,
                                           const char* oem_name, const char* volume_label, uint32_t volume_id,
                                           uint64_t total_size, uint32_t bytes_per_sector, uint8_t sectors_per_cluster,
                                           uint16_t reserved_sectors, uint8_t number_of_fats, uint16_t max_root_directory_entries,
@@ -131,18 +131,20 @@ FAT_Filesystem* FAT_CreateEmptyFilesystem(Partition* partition, Fat_Version vers
         return NULL;
     }
 
-    // fill data area
-    uint64_t offset = fs->data_offset;
-    uint8_t zero_block[CHUNK_SIZE] = {0};
-    uint32_t written = 0;
-    while (written < fs->data_size) {
-        uint32_t chunk = (fs->data_size - written) < CHUNK_SIZE ? (fs->data_size - written) : CHUNK_SIZE;
-        if (Partition_Write(fs->partition, (uint8_t*)zero_block, offset, chunk) != chunk) {
-            free(fs);
-            return NULL;
+    if (!fast) {
+        // fill data area
+        uint64_t offset = fs->data_offset;
+        uint8_t zero_block[CHUNK_SIZE] = {0};
+        uint32_t written = 0;
+        while (written < fs->data_size) {
+            uint32_t chunk = (fs->data_size - written) < CHUNK_SIZE ? (fs->data_size - written) : CHUNK_SIZE;
+            if (Partition_Write(fs->partition, (uint8_t*)zero_block, offset, chunk) != chunk) {
+                free(fs);
+                return NULL;
+            }
+            offset += chunk;
+            written += chunk;
         }
-        offset += chunk;
-        written += chunk;
     }
 
     if (FAT_LoadFATBuffer(fs, 0) != 0) {
@@ -618,6 +620,19 @@ int FAT12_FAT16_WriteBootsector(FAT_Filesystem* fs, void* bootsector, int force_
 
     //TODO: if force_bootsector check the values and warn
 
+    // Fill area until fat with zeros
+    uint64_t current_offset = 0;
+    uint64_t to_write = fs->bootsector.fat12_fat16.header.reserved_sectors * fs->bootsector.fat12_fat16.header.bytes_per_sector;
+    uint8_t zero_block[CHUNK_SIZE] = {0};
+    while (to_write > 0) {
+        uint32_t chunk = to_write < CHUNK_SIZE ? to_write : CHUNK_SIZE;
+        if (Partition_Write(fs->partition, (uint8_t*)zero_block, current_offset, chunk) != chunk) {
+            // TODO
+        }
+        current_offset += chunk;
+        to_write -= chunk;
+    }
+
     return FAT_WriteBootsector(fs);
 }
 
@@ -741,6 +756,19 @@ int FAT32_WriteBootsector(FAT_Filesystem* fs, void* bootsector, int force_bootse
     }
 
     //TODO: if force_bootsector check the values and warn
+
+    // Fill area until fat with zeros
+    uint64_t current_offset = 0;
+    uint64_t to_write = fs->bootsector.fat32.header.reserved_sectors * fs->bootsector.fat32.header.bytes_per_sector;
+    uint8_t zero_block[CHUNK_SIZE] = {0};
+    while (to_write > 0) {
+        uint32_t chunk = to_write < CHUNK_SIZE ? to_write : CHUNK_SIZE;
+        if (Partition_Write(fs->partition, (uint8_t*)zero_block, current_offset, chunk) != chunk) {
+            // TODO
+        }
+        current_offset += chunk;
+        to_write -= chunk;
+    }
 
     if (FAT_WriteBootsector(fs) != 0) return 1;
 

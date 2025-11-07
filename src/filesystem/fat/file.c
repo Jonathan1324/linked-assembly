@@ -143,7 +143,11 @@ int FAT_ReserveSpace(FAT_File* f, uint32_t extra, int update_entry_size)
         f->changed = 1;
 
         uint32_t* clusters = (uint32_t*)malloc(new_clusters * sizeof(uint32_t));
-        if (FAT_FindFreeClusters(f->fs, clusters, new_clusters) != 0) return 1;
+        if (!clusters) return 1;
+        if (FAT_FindFreeClusters(f->fs, clusters, new_clusters) != 0) {
+            free(clusters);
+            return 1;
+        }
 
         if (f->fs->version == FAT_VERSION_32) {
             f->fs->fs_info.free_cluster_count -= new_clusters;
@@ -177,6 +181,20 @@ int FAT_ReserveSpace(FAT_File* f, uint32_t extra, int update_entry_size)
         for (uint32_t i = 0; i < new_clusters; i++) {
             uint32_t next = (i + 1 < new_clusters) ? clusters[i + 1] : FAT_GetEOF(f->fs);
             FAT_WriteFATEntry(f->fs, clusters[i], next);
+
+            if (!f->is_directory) continue;
+
+            uint8_t* zero_buf = (uint8_t*)calloc(1, f->fs->cluster_size);
+            if (!zero_buf) {
+                // TODO
+            }
+
+            uint64_t cluster_offset = f->fs->data_offset + ((uint64_t)(clusters[i] - 2) * f->fs->cluster_size);
+            if (Partition_Write(f->fs->partition, zero_buf, cluster_offset, f->fs->cluster_size) != 0) {
+                // TODO
+            }
+
+            free(zero_buf);
         }
 
         free(clusters);

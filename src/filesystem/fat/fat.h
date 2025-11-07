@@ -6,7 +6,7 @@
 #include <stdlib.h>
 #include "../partition/partition.h"
 
-#define CHUNK_SIZE 512
+#define CHUNK_SIZE 4096 /*512*/
 
 #define FAT_BOOTSECTOR_MEDIA_DESCRIPTOR_FLOPPY144     0xF0 // 1.44 MB
 #define FAT_BOOTSECTOR_MEDIA_DESCRIPTOR_FLOPPY120     0xF4 // 1.2 MB
@@ -356,7 +356,7 @@ static inline uint32_t FAT_WriteToFile(FAT_File* f, uint32_t offset, void* buffe
 }
 
 // Initializes an empty FAT Filesystem
-FAT_Filesystem* FAT_CreateEmptyFilesystem(Partition* partition, Fat_Version version, void* bootsector, int force_bootsector,
+FAT_Filesystem* FAT_CreateEmptyFilesystem(Partition* partition, Fat_Version version, int fast, void* bootsector, int force_bootsector,
                                           const char* oem_name, const char* volume_label, uint32_t volume_id,
                                           uint64_t total_size, uint32_t bytes_per_sector, uint8_t sectors_per_cluster,
                                           uint16_t reserved_sectors, uint8_t number_of_fats, uint16_t max_root_directory_entries,
