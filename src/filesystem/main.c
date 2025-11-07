@@ -33,7 +33,7 @@ void print_help(const char* name, FILE* s)
     fputs("> --force-bootsector         Force the bootsector file to be written and don't override header and signature\n", s);
     fputs("> --save                     Don't delete directories recursively\n", s);
     fputc('\n', s);
-    fputs("Filesystems:\n", s);
+    fputs("Supported Filesystems:\n", s);
     fputs("> FAT12\n", s);
     fputs("> FAT16\n", s);
     fputs("> FAT32\n", s);
