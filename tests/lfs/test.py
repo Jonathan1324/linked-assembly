@@ -23,7 +23,7 @@ def test(dir: Path, log_dir: Path):
                 if   fs_type == "fat12": size = "1440K"
                 elif fs_type == "fat16": size = "16M"
                 elif fs_type == "fat32": size = "100M"
-                cmd = [str(lfs), "create", fs_type, str(out_path), "--root", str(root), "--size", size]
+                cmd = [str(lfs), "create", str(out_path), fs_type, "--root", str(root), "--size", size]
                 subprocess.run(cmd, stdout=f, stderr=f)
 
 def clean(dir: Path, log_dir: Path):

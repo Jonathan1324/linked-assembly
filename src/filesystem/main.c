@@ -20,12 +20,12 @@ typedef uint8_t FS_Action;
 void print_help(const char* name, FILE* s)
 {
     fputs("Usage:\n", s);
-    fprintf(s, "> %s create fat12|fat16|fat32 <image> [--size B/K/M/G/T] [--boot <file>] [--root <path>] [flags]\n", name);
-    fprintf(s, "> %s format fat12|fat16|fat32 <image> [--size B/K/M/G/T] [--boot <file>] [--root <path>] [flags]\n", name);
-    fprintf(s, "> %s insert <host path> <image> [--path <image path>] [flags]\n", name);
-    fprintf(s, "> %s extract <image path> <image> [--path <host path>] [flags]\n", name);
-    fprintf(s, "> %s remove <image path> <image> [flags]\n", name);
-    fprintf(s, "> %s list <image path> <image> [flags]\n", name);
+    fprintf(s, "> %s create <image> fat12|fat16|fat32 [--size B/K/M/G/T] [--boot <file>] [--root <path>] [flags]\n", name);
+    fprintf(s, "> %s format <image> fat12|fat16|fat32 [--size B/K/M/G/T] [--boot <file>] [--root <path>] [flags]\n", name);
+    fprintf(s, "> %s insert <image> <host path> [--path <image path>] [flags]\n", name);
+    fprintf(s, "> %s extract <image> <image path> [--path <host path>] [flags]\n", name);
+    fprintf(s, "> %s remove <image> <image path> [flags]\n", name);
+    fprintf(s, "> %s list <image> <image path> [flags]\n", name);
     fprintf(s, "> %s listall <image> [flags]\n", name);
     fputc('\n', s);
     fputs("Commands:\n", s);
@@ -158,9 +158,9 @@ int main(int argc, const char *argv[])
             print_help(argv[0], stderr);
             return 1;
         }
-        image_file = argv[3];
+        image_file = argv[2];
 
-        const char* fs_name = argv[2];
+        const char* fs_name = argv[3];
         if (
             (fs_name[0] == 'f' || fs_name[0] == 'F') &&
             (fs_name[1] == 'a' || fs_name[1] == 'A') &&
@@ -188,9 +188,9 @@ int main(int argc, const char *argv[])
             print_help(argv[0], stderr);
             return 1;
         }
-        image_file = argv[3];
+        image_file = argv[2];
 
-        const char* fs_name = argv[2];
+        const char* fs_name = argv[3];
         if (
             (fs_name[0] == 'f' || fs_name[0] == 'F') &&
             (fs_name[1] == 'a' || fs_name[1] == 'A') &&
@@ -215,10 +215,10 @@ int main(int argc, const char *argv[])
             print_help(argv[0], stderr);
             return 1;
         }
-        image_file = argv[3];
+        image_file = argv[2];
         
-        insert_file = argv[2];
-        path = argv[2];
+        insert_file = argv[3];
+        path = argv[3];
         allow_path_flag = 1;
 
         arg_start += 3;
@@ -231,10 +231,10 @@ int main(int argc, const char *argv[])
             print_help(argv[0], stderr);
             return 1;
         }
-        image_file = argv[3];
+        image_file = argv[2];
         
-        extract_file = argv[2];
-        path = argv[2];
+        extract_file = argv[3];
+        path = argv[3];
         allow_path_flag = 1;
 
         arg_start += 3;
@@ -247,9 +247,9 @@ int main(int argc, const char *argv[])
             print_help(argv[0], stderr);
             return 1;
         }
-        image_file = argv[3];
+        image_file = argv[2];
 
-        remove_path = argv[2];
+        remove_path = argv[3];
 
         arg_start += 3;
     } else if(strcmp(argv[1], "list") == 0) {
@@ -261,9 +261,9 @@ int main(int argc, const char *argv[])
             print_help(argv[0], stderr);
             return 1;
         }
-        image_file = argv[3];
+        image_file = argv[2];
 
-        list_path = argv[2];
+        list_path = argv[3];
 
         arg_start += 3;
     } else if(strcmp(argv[1], "listall") == 0) {
