@@ -5,17 +5,10 @@
 #include "fat/fat.h"
 #include "disk/disk.h"
 #include "filesystem/filesystem.h"
-#include "version.h"
+#include <version.h>
+#include "args.h"
 
 #include "native/directory.h"
-
-typedef uint8_t FS_Action;
-#define FS_NONE     0x00
-#define FS_CREATE   0x01
-#define FS_INSERT   0x02
-#define FS_EXTRACT  0x04
-#define FS_LIST     0x08
-#define FS_REMOVE   0x10
 
 void print_help(const char* name, FILE* s)
 {
@@ -42,7 +35,7 @@ void print_help(const char* name, FILE* s)
     fputs("> --read-only                Open image in read-only mode\n", s);
     fputs("> --force-bootsector         Force writing bootsector without overriding header and signature\n", s);
     fputs("> --fast                     Skip filling the data area with zeros\n", s);
-    fputs("> --save                     Prevent recursive deletion of directories\n", s);
+    fputs("> --safe                     Prevent recursive deletion of directories\n", s);
     fputc('\n', s);
     fputs("Supported Filesystems:\n", s);
     fputs("> FAT12\n", s);
@@ -50,55 +43,47 @@ void print_help(const char* name, FILE* s)
     fputs("> FAT32\n", s);
 }
 
-uint64_t parse_size(const char* size_str)
+typedef uint8_t FS_Actionn;
+#define FS_NONEN     0x00
+#define FS_CREATEN   0x01
+#define FS_INSERTB   0x02
+#define FS_INSERTBa  0x04
+#define FS_INSERTBaa     0x08
+#define FS_INSERTBaaasdas   0x10
+
+typedef unsigned char Subcommand;
+#define COMMAND_NONE        ((Subcommand)0)
+#define COMMAND_HELP        ((Subcommand)1)
+#define COMMAND_VERSION     ((Subcommand)2)
+#define COMMAND_CREATE      ((Subcommand)3)
+#define COMMAND_FORMAT      ((Subcommand)4)
+#define COMMAND_INSERT      ((Subcommand)5)
+#define COMMAND_EXTRACT     ((Subcommand)6)
+#define COMMAND_REMOVE      ((Subcommand)7)
+#define COMMAND_LIST        ((Subcommand)8)
+
+int main(int argc, const char* argv[])
 {
-    if (!size_str) return 0;
-
-    uint64_t len = strlen(size_str);
-    if (len == 0) return 0;
-
-    uint64_t multiplier = 1;
-    char last = size_str[len - 1];
-    switch (toupper(last)) {
-        case 'T': multiplier = 1024ULL*1024*1024*1024; len--; break;
-        case 'G': multiplier = 1024ULL*1024*1024; len--; break;
-        case 'M': multiplier = 1024ULL*1024; len--; break;
-        case 'K': multiplier = 1024ULL; len--; break;
-        case 'B': default: multiplier = 1; break;
+    if (argc < 2) {
+        print_help(argv[0], stderr);
+        return 1;
     }
 
-    uint64_t whole = 0;
-    uint64_t fraction = 0;
-    uint64_t frac_divisor = 1;
-    int after_dot = 0;
+    Subcommand command = COMMAND_NONE;
 
-    for (size_t i = 0; i < len; i++) {
-        char c = size_str[i];
-        if (c == '.') {
-            after_dot = 1;
-            continue;
-        }
-        if (!isdigit(c)) break;
+    if      (ARG_IS_HELP(1))        command = COMMAND_HELP;
+    else if (ARG_IS_VERSION(1))     command = COMMAND_VERSION;
+    else if (ARG_CMP(1, "create"))  command = COMMAND_CREATE;
+    else if (ARG_CMP(1, "format"))  command = COMMAND_FORMAT;
+    else if (ARG_CMP(1, "insert"))  command = COMMAND_INSERT;
+    else if (ARG_CMP(1, "extract")) command = COMMAND_EXTRACT;
+    else if (ARG_CMP(1, "remove"))  command = COMMAND_REMOVE;
+    else if (ARG_CMP(1, "list"))    command = COMMAND_LIST;
 
-        if (!after_dot) {
-            whole = whole * 10 + (c - '0');
-        } else {
-            if (frac_divisor < 1000000000000000000ULL) {
-                fraction = fraction * 10 + (c - '0');
-                frac_divisor *= 10;
-            }
-        }
-    }
-
-    uint64_t result = whole * multiplier;
-    if (fraction > 0) {
-        result += (fraction * multiplier) / frac_divisor;
-    }
-
-    return result;
+    return 0;
 }
 
-int main(int argc, const char *argv[])
+int main_old(int argc, const char *argv[])
 {
     for (int i = 0; i < argc; i++) {
         if (strcmp(argv[i], "-h") == 0 || strcmp(argv[i], "--help") == 0)
@@ -116,7 +101,7 @@ int main(int argc, const char *argv[])
     int format;
     int truncate;
 
-    FS_Action fs_actions = FS_NONE;
+    FS_Actionn FS_Actionns = FS_NONEN;
 
     const char* image_file = NULL;
     const char* root_file = NULL;
@@ -149,7 +134,7 @@ int main(int argc, const char *argv[])
     if (strcmp(argv[1], "create") == 0) {
         format = 1;
         truncate = 1;
-        fs_actions |= FS_CREATE;
+        FS_Actionns |= FS_CREATEN;
         allow_root_flag = 1;
         allow_size = 1;
         allow_bootcode_flag = 1;
@@ -179,7 +164,7 @@ int main(int argc, const char *argv[])
     } else if (strcmp(argv[1], "format") == 0) {
         // Doesn't truncate
         format = 1;
-        fs_actions |= FS_CREATE;
+        FS_Actionns |= FS_CREATEN;
         allow_root_flag = 1;
         allow_size = 1;
         allow_bootcode_flag = 1;
@@ -209,7 +194,7 @@ int main(int argc, const char *argv[])
     } else if (strcmp(argv[1], "insert") == 0) {
         format = 0;
         truncate = 0;
-        fs_actions |= FS_INSERT;
+        FS_Actionns |= FS_INSERTB;
 
         if (argc < 4) {
             print_help(argv[0], stderr);
@@ -225,7 +210,7 @@ int main(int argc, const char *argv[])
     } else if (strcmp(argv[1], "extract") == 0) {
         format = 0;
         truncate = 0;
-        fs_actions |= FS_EXTRACT;
+        FS_Actionns |= FS_INSERTBa;
 
         if (argc < 4) {
             print_help(argv[0], stderr);
@@ -241,7 +226,7 @@ int main(int argc, const char *argv[])
     } else if (strcmp(argv[1], "remove") == 0) {
         format = 0;
         truncate = 0;
-        fs_actions |= FS_REMOVE;
+        FS_Actionns |= FS_INSERTBaaasdas;
 
         if (argc < 4) {
             print_help(argv[0], stderr);
@@ -255,7 +240,7 @@ int main(int argc, const char *argv[])
     } else if(strcmp(argv[1], "list") == 0) {
         format = 0;
         truncate = 0;
-        fs_actions |= FS_LIST;
+        FS_Actionns |= FS_INSERTBaa;
 
         if (argc < 4) {
             print_help(argv[0], stderr);
@@ -269,7 +254,7 @@ int main(int argc, const char *argv[])
     } else if(strcmp(argv[1], "listall") == 0) {
         format = 0;
         truncate = 0;
-        fs_actions |= FS_LIST;
+        FS_Actionns |= FS_INSERTBaa;
 
         if (argc < 3) {
             print_help(argv[0], stderr);
@@ -294,7 +279,7 @@ int main(int argc, const char *argv[])
     int read_only = 0;
     uint64_t fs_size = 0;
 
-    int save = 0;
+    int safe = 0;
     int fast_mode = 0;
 
     const char* bootcode_file = NULL;
@@ -343,8 +328,8 @@ int main(int argc, const char *argv[])
             force_bootsector = 1;
         } else if (strcmp(argv[i], "--fast") == 0) {
             fast_mode = 1;
-        } else if (strcmp(argv[i], "--save") == 0) {
-            save = 1;
+        } else if (strcmp(argv[i], "--safe") == 0) {
+            safe = 1;
         }
 
         else {
@@ -500,22 +485,22 @@ int main(int argc, const char *argv[])
         }
     }
 
-    if (fs_actions & FS_INSERT) {
+    if (FS_Actionns & FS_INSERTB) {
         int result = Filesystem_SyncPathsToFS(fs->root, path, insert_file);
         if (result != 0) {
             printf("Warning: Couldn't sync '%s' to '%s'\n", insert_file, path);
         }
     }
 
-    if (fs_actions & FS_EXTRACT) {
+    if (FS_Actionns & FS_INSERTBa) {
         int result = Filesystem_SyncPathsFromFS(fs->root, extract_file, path);
         if (result != 0) {
             printf("Warning: Couldn't sync '%s' to '%s'\n", path, extract_file);
         }
     }
 
-    if (fs_actions & FS_REMOVE) {
-        int result = Filesystem_DeletePath(fs->root, remove_path, save);
+    if (FS_Actionns & FS_INSERTBaaasdas) {
+        int result = Filesystem_DeletePath(fs->root, remove_path, safe);
         if (result == 2) {
             printf("Warning: Directory '%s' isn't empty\n", remove_path);
         } else if (result != 0) {
@@ -523,7 +508,7 @@ int main(int argc, const char *argv[])
         }
     }
 
-    if (fs_actions & FS_LIST) {
+    if (FS_Actionns & FS_INSERTBaa) {
         Filesystem_File* l = Filesystem_OpenPath(fs->root, list_path, 0, 0, 0, 0, 0, 0, 0, 0);
         if (!l) {
             printf("Warning: Couldn't open '%s'\n", list_path);
