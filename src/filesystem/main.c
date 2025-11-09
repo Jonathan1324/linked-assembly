@@ -19,7 +19,6 @@ void print_help(const char* name, FILE* s)
     fprintf(s, "> %s extract <image> <image path> [--path <host path>] [flags]\n", name);
     fprintf(s, "> %s remove <image> <image path> [flags]\n", name);
     fprintf(s, "> %s list <image> <image path> [flags]\n", name);
-    fprintf(s, "> %s listall <image> [flags]\n", name);
     fputc('\n', s);
     fputs("Commands:\n", s);
     fputs("> create          Create a new image, format it, optionally set boot sector and root\n", s);
@@ -79,7 +78,146 @@ int main(int argc, const char* argv[])
     else if (ARG_CMP(1, "extract")) command = COMMAND_EXTRACT;
     else if (ARG_CMP(1, "remove"))  command = COMMAND_REMOVE;
     else if (ARG_CMP(1, "list"))    command = COMMAND_LIST;
+    else {
+        fprintf(stderr, "Unknown command '%s'\n", argv[1]);
+        return 1;
+    }
 
+    const char* image_str = argv[2];
+    char mode_str[4] = {0, '+', 'b', 0};
+
+    switch (command) {
+        case COMMAND_CREATE:
+            mode_str[0] = 'w';
+            break;
+
+        case COMMAND_FORMAT:
+        case COMMAND_INSERT: case COMMAND_EXTRACT:
+        case COMMAND_REMOVE: case COMMAND_LIST:
+            mode_str[0] = 'r';
+            break;
+
+        case COMMAND_HELP: case COMMAND_VERSION:
+        default:
+            image_str = NULL;
+            mode_str[0] = 0;
+            break;
+    }
+
+    if (mode_str[0]) {
+        if (argc < 3) {
+            print_help(argv[0], stderr);
+            return 1;
+        }
+    }
+
+    int arg_start = argc;
+    switch (command)
+    {
+        case COMMAND_HELP:    break; // TODO
+        case COMMAND_VERSION: break; // TODO
+        case COMMAND_CREATE:  arg_start = 4; break;
+        case COMMAND_FORMAT:  arg_start = 4; break;
+        case COMMAND_INSERT:  arg_start = 4; break;
+        case COMMAND_EXTRACT: arg_start = 4; break;
+        case COMMAND_REMOVE:  arg_start = 4; break;
+        case COMMAND_LIST:    arg_start = 4; break;
+    }
+
+    Arguments args = {0};
+    if (ParseArguments(argc, argv, arg_start, &args) != 0) {
+        fputs("Couldn't parse arguments\n", stderr);
+        return 1;
+    }
+
+    // Commands that don't use the image
+    switch (command)
+    {
+        case COMMAND_HELP: {
+            print_help(argv[0], stdout);
+            return 0;
+        }
+        case COMMAND_VERSION: {
+            printVersion();
+            return 0;
+        }
+    }
+
+    uint64_t image_size = 0;
+    if (mode_str[0] == "w") image_size = args.size;
+    else image_size = Path_GetSize(image_str);
+
+    FILE* image_file = fopen(image_str, mode_str);
+    if (!image_file) {
+        fputs("Couldn't open the image\n", stderr);
+        return 1;
+    }
+    Disk* disk = Disk_CreateFromFile(image_file, image_size);
+    if (!disk) {
+        fputs("Couldn't open disk\n", stderr);
+        fclose(image_file);
+        return 1;
+    }
+
+    if (args.flag_fast) {
+        uint8_t b = 0;
+        fseek(image_file, image_size - 1, SEEK_SET);
+        fread(&b, 1, 1, image_file);
+        fseek(image_file, image_size - 1, SEEK_SET);
+        fwrite(&b, 1, 1, image_file);
+        fseek(image_file, 0, SEEK_SET);
+    }
+
+    Partition* partition = Partition_Create(disk, 0, disk->size, args.flag_read_only);
+    if (!partition) {
+        fputs("Couldn't open partition\n", stderr);
+        Disk_Close(disk);
+        return 1;
+    }
+
+    Filesystem_Type fs_type;
+    if (mode_str[0] != 'w') {
+        FAT_Bootsector bootsector;
+        if (Partition_Read(partition, &bootsector, 0, sizeof(FAT_Bootsector)) != sizeof(FAT_Bootsector)) {
+            fputs("Couldn't read bootsector of file\n", stderr);
+            Partition_Close(partition);
+            Disk_Close(disk);
+            return 1;
+        }
+
+        if (memcmp(bootsector.fat12_fat16.header.filesystem_type, "FAT12", 5) == 0) {
+            fs_type = FILESYSTEM_FAT12;
+        } else if (memcmp(bootsector.fat12_fat16.header.filesystem_type, "FAT16", 5) == 0) {
+            fs_type = FILESYSTEM_FAT16;
+        } else if (memcmp(bootsector.fat32.header.filesystem_type, "FAT32", 5) == 0) {
+            fs_type = FILESYSTEM_FAT32;
+        }
+    }
+
+    switch (command)
+    {
+        case COMMAND_CREATE: {
+            
+        }
+        case COMMAND_FORMAT: {
+            
+        }
+        case COMMAND_INSERT: {
+            
+        }
+        case COMMAND_EXTRACT: {
+            
+        }
+        case COMMAND_REMOVE: {
+            
+        }
+        case COMMAND_LIST: {
+            
+        }
+    }
+
+    Partition_Close(partition);
+    Disk_Close(disk);
     return 0;
 }
 
