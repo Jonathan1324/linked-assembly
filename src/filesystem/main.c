@@ -176,7 +176,7 @@ int main(int argc, const char* argv[])
     }
 
     Filesystem_Type fs_type;
-    if (mode_str[0] != 'w') {
+    if (command != COMMAND_CREATE && command != COMMAND_FORMAT) {
         FAT_Bootsector bootsector;
         if (Partition_Read(partition, &bootsector, 0, sizeof(FAT_Bootsector)) != sizeof(FAT_Bootsector)) {
             fputs("Couldn't read bootsector of file\n", stderr);
@@ -192,33 +192,173 @@ int main(int argc, const char* argv[])
         } else if (memcmp(bootsector.fat32.header.filesystem_type, "FAT32", 5) == 0) {
             fs_type = FILESYSTEM_FAT32;
         }
+    } else {
+        const char* fs_name = argv[3];
+        if (
+            (fs_name[0] == 'f' || fs_name[0] == 'F') &&
+            (fs_name[1] == 'a' || fs_name[1] == 'A') &&
+            (fs_name[2] == 't' || fs_name[2] == 'T')
+        ) {
+            //FAT
+            if      (fs_name[3] == '1' && fs_name[4] == '2') fs_type = FILESYSTEM_FAT12;
+            else if (fs_name[3] == '1' && fs_name[4] == '6') fs_type = FILESYSTEM_FAT16;
+            else if (fs_name[3] == '3' && fs_name[4] == '2') fs_type = FILESYSTEM_FAT32;
+            else fprintf(stderr, "Unknown FS: %s\n", fs_name);
+        } else {
+            fprintf(stderr, "Unknown FS: %s\n", fs_name);
+        }
     }
+
+    Fat_Version fat_version;
+    switch (fs_type) {
+        case FILESYSTEM_FAT12: fat_version = FAT_VERSION_12; break;
+        case FILESYSTEM_FAT16: fat_version = FAT_VERSION_16; break;
+        case FILESYSTEM_FAT32: fat_version = FAT_VERSION_32; break;
+        default:
+            Partition_Close(partition);
+            Disk_Close(disk);
+            fputs("Unknown FS: internal\n", stderr);
+            return 1;
+    }
+
+    uint8_t bootsector_buffer[512];
+    if (args.boot_file) {
+        FILE* bootcode_f = fopen(args.boot_file, "rb");
+        if (!bootcode_f) {
+            Partition_Close(partition);
+            Disk_Close(disk);
+            fprintf(stderr, "Couldn't open '%s'\n", args.boot_file);
+            return 1;
+        }
+        if (fread(bootsector_buffer, sizeof(bootsector_buffer), 1, bootcode_f) != 1) {
+            Partition_Close(partition);
+            Disk_Close(disk);
+            fprintf(stderr, "Couldn't read 512 bytes of '%s'\n", args.boot_file);
+            return 1;
+        }
+        fclose(bootcode_f);
+    }
+
+    FAT_Filesystem* fat_fs = NULL;
+    if (command == COMMAND_CREATE || command == COMMAND_FORMAT) {
+        const char* oem_name = "lfs";
+        const char* volume_name = "NO NAME";
+        uint32_t volume_id = 0x12345678;
+
+        uint32_t bytes_per_sector = 512;
+        uint32_t sectors_per_cluster = fat_version == FAT_VERSION_16 ? 4 : 1;
+        uint16_t reserved_sectors;
+        switch (fat_version) {
+            case FAT_VERSION_12: reserved_sectors = 1; break;
+            case FAT_VERSION_16: reserved_sectors = 4; break;
+            case FAT_VERSION_32: reserved_sectors = 32; break;
+        }
+        uint8_t number_of_fats = 2;
+        uint16_t max_root_directory_entries;
+        switch (fat_version) {
+            case FAT_VERSION_12: max_root_directory_entries = 224; break;
+            case FAT_VERSION_16: max_root_directory_entries = 512; break;
+            case FAT_VERSION_32: max_root_directory_entries = 0; break;
+        }
+        uint16_t sectors_per_track = fat_version == FAT_VERSION_12 ? 18 : 32;
+        uint16_t number_of_heads = fat_version == FAT_VERSION_32 ? 8 : 2;
+        uint8_t drive_number = fat_version == FAT_VERSION_12 ? 0x00 : 0x80;
+        uint8_t media_descriptor = fat_version == FAT_VERSION_12 ? FAT_BOOTSECTOR_MEDIA_DESCRIPTOR_FLOPPY144 : FAT_BOOTSECTOR_MEDIA_DESCRIPTOR_DISK;
+
+        // TODO
+        printf("%llu\n", partition->size);
+        fat_fs = FAT_CreateEmptyFilesystem(partition, fat_version, args.flag_fast, (args.boot_file ? bootsector_buffer : NULL), args.flag_force_bootsector,
+                                           oem_name, volume_name, volume_id,
+                                           partition->size, bytes_per_sector,
+                                           sectors_per_cluster, reserved_sectors,
+                                           number_of_fats, max_root_directory_entries,
+                                           sectors_per_track, number_of_heads,
+                                           drive_number, media_descriptor);
+    } else {
+        fat_fs = FAT_OpenFilesystem(partition, fat_version, args.flag_read_only);
+    }
+
+    if (!fat_fs) {
+        fputs("Couldn't open FAT FS\n", stderr);
+        Partition_Close(partition);
+        Disk_Close(disk);
+        return 1;
+    }
+
+    int fat_use_lfn = !args.flag_no_lfn;
+    Filesystem* fs = Filesystem_CreateFromFAT(fat_fs, fat_use_lfn);
+    if (!fs) {
+        fputs("Couldn't open FS\n", stderr);
+        FAT_CloseFilesystem(fat_fs);
+        Partition_Close(partition);
+        Disk_Close(disk);
+        return 1;
+    }
+
+    int result = 0;
 
     switch (command)
     {
-        case COMMAND_CREATE: {
-            
-        }
-        case COMMAND_FORMAT: {
-            
+        case COMMAND_CREATE: case COMMAND_FORMAT: {
+            if (args.root_path) {
+                if (Filesystem_SyncPathsToFS(fs->root, "/", args.root_path) != 0) {
+                    fprintf(stderr, "Couldn't sync '%s' to the root\n", args.root_path);
+                    result = 1;
+                }
+            }
+            break;
         }
         case COMMAND_INSERT: {
-            
+            const char* host_path = argv[3];
+            const char* image_path = args.path ? args.path : argv[3];
+            if (Filesystem_SyncPathsToFS(fs->root, image_path, host_path) != 0) {
+                fprintf(stderr, "Couldn't sync '%s' to '%s'\n", host_path, image_path);
+                result = 1;
+            }
+            break;
         }
         case COMMAND_EXTRACT: {
-            
+            const char* host_path = args.path ? args.path : argv[3];
+            const char* image_path = argv[3];
+            if (Filesystem_SyncPathsFromFS(fs->root, image_path, host_path) != 0) {
+                fprintf(stderr, "Couldn't sync '%s' to '%s'\n", image_path, host_path);
+                result = 1;
+            }
+            break;
         }
         case COMMAND_REMOVE: {
-            
+            const char* image_path = argv[3];
+            int result = Filesystem_DeletePath(fs->root, image_path, args.flag_safe);
+            if (result == 2) {
+                fprintf(stderr, "Directory '%s' isn't empty\n", image_path);
+                result = 1;
+            } else if (result != 0) {
+                fprintf(stderr, "Couldn't remove '%s'\n", image_path);
+                result = 1;
+            }
+            break;
         }
         case COMMAND_LIST: {
-            
+            const char* image_path = argv[3];
+            Filesystem_File* image_dir = Filesystem_OpenPath(fs->root, image_path, 0, 0, 0, 0, 0, 0, 0, 0);
+            if (!image_dir) {
+                fprintf(stderr, "Couldn't open '%s'\n", image_path);
+                result = 1;
+                break;
+            }
+            if (Filesystem_PrintAll(image_dir, image_path, 0) != 0) {
+                fprintf("Couldn't list '%s'\n", image_path);
+                result = 1;
+            }
+            Filesystem_CloseEntry(image_dir);
+            break;
         }
     }
 
+    Filesystem_Close(fs);
     Partition_Close(partition);
     Disk_Close(disk);
-    return 0;
+    return result;
 }
 
 int main_old(int argc, const char *argv[])
