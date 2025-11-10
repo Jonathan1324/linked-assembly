@@ -58,10 +58,10 @@ typedef struct FAT12_FAT16_Bootsector_Header {
     uint8_t reserved;
     uint8_t boot_signature;
 
-    // Only when FAT12_BOOTSECTOR_EXTENDED_BOOT_SIGNATURE
+    // Only when FAT_BOOTSECTOR_EXTENDED_BOOT_SIGNATURE
     uint32_t volume_id;
 
-    // Only when FAT12_BOOTSECTOR_EXTENDED_BOOT_SIGNATURE or FAT12_BOOTSECTOR_EXTENDED_BOOT_SIGNATURE_OLD
+    // Only when FAT_BOOTSECTOR_EXTENDED_BOOT_SIGNATURE or FAT_BOOTSECTOR_EXTENDED_BOOT_SIGNATURE_OLD
     char volume_label[11];
     char filesystem_type[8];
 
@@ -69,16 +69,22 @@ typedef struct FAT12_FAT16_Bootsector_Header {
 
 typedef struct FAT32_Bootsector_Header {
     char     oem_name[8];
+
     uint16_t bytes_per_sector;
     uint8_t  sectors_per_cluster;
     uint16_t reserved_sectors;
+
     uint8_t  number_of_fats;
     uint16_t max_root_directory_entries;
     uint16_t total_sectors_small;
+
     uint8_t  media_descriptor;
+
     uint16_t fat_size_small;
+
     uint16_t sectors_per_track;
     uint16_t number_of_heads;
+
     uint32_t hidden_sectors;
     uint32_t total_sectors_large;
 
@@ -92,9 +98,12 @@ typedef struct FAT32_Bootsector_Header {
     uint8_t  reserved[12];
 
     uint8_t  drive_number;
+
     uint8_t  reserved1;
     uint8_t  boot_signature;
+
     uint32_t volume_id;
+    
     char     volume_label[11];
     char     filesystem_type[8];
 } __attribute__((packed)) FAT32_Bootsector_Header;
@@ -354,6 +363,8 @@ static inline uint32_t FAT_WriteToFile(FAT_File* f, uint32_t offset, void* buffe
     if (!f || f->is_directory) return 0;
     return FAT_WriteToFileRaw(f, offset, buffer, size);
 }
+
+void FAT_DumpInfo(FAT_Filesystem* fs, FILE* s);
 
 // Initializes an empty FAT Filesystem
 FAT_Filesystem* FAT_CreateEmptyFilesystem(Partition* partition, Fat_Version version, int fast, void* bootsector, int force_bootsector,

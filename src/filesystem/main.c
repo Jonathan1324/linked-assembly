@@ -18,6 +18,7 @@ void print_help(const char* name, FILE* s)
     fprintf(s, "> %s insert <image> <host path> [--path <image path>] [flags]\n", name);
     fprintf(s, "> %s extract <image> <image path> [--path <host path>] [flags]\n", name);
     fprintf(s, "> %s remove <image> <image path> [flags]\n", name);
+    fprintf(s, "> %s info <image> [flags]\n", name);
     fprintf(s, "> %s list <image> <image path> [flags]\n", name);
     fputc('\n', s);
     fputs("Commands:\n", s);
@@ -26,8 +27,8 @@ void print_help(const char* name, FILE* s)
     fputs("> insert          Insert a file or directory from the host into the image\n", s);
     fputs("> extract         Extract a file or directory from the image into the host\n", s);
     fputs("> remove          Remove a file or directory from the image\n", s);
+    fputs("> info            Print information about the FS of the image\n", s);
     fputs("> list            List files at a specific path in the image\n", s);
-    fputs("> listall         List all files in the image\n", s);
     fputc('\n', s);
     fputs("Flags:\n", s);
     fputs("> --no-lfn                   Disable long file names for FAT\n", s);
@@ -59,7 +60,8 @@ typedef unsigned char Subcommand;
 #define COMMAND_INSERT      ((Subcommand)5)
 #define COMMAND_EXTRACT     ((Subcommand)6)
 #define COMMAND_REMOVE      ((Subcommand)7)
-#define COMMAND_LIST        ((Subcommand)8)
+#define COMMAND_INFO        ((Subcommand)8)
+#define COMMAND_LIST        ((Subcommand)9)
 
 int main(int argc, const char* argv[])
 {
@@ -77,6 +79,7 @@ int main(int argc, const char* argv[])
     else if (ARG_CMP(1, "insert"))  command = COMMAND_INSERT;
     else if (ARG_CMP(1, "extract")) command = COMMAND_EXTRACT;
     else if (ARG_CMP(1, "remove"))  command = COMMAND_REMOVE;
+    else if (ARG_CMP(1, "info"))    command = COMMAND_INFO;
     else if (ARG_CMP(1, "list"))    command = COMMAND_LIST;
     else {
         fprintf(stderr, "Unknown command '%s'\n", argv[1]);
@@ -91,9 +94,9 @@ int main(int argc, const char* argv[])
             mode_str[0] = 'w';
             break;
 
-        case COMMAND_FORMAT:
-        case COMMAND_INSERT: case COMMAND_EXTRACT:
-        case COMMAND_REMOVE: case COMMAND_LIST:
+        case COMMAND_FORMAT: case COMMAND_INSERT: 
+        case COMMAND_EXTRACT: case COMMAND_REMOVE:
+        case COMMAND_LIST: case COMMAND_INFO:
             mode_str[0] = 'r';
             break;
 
@@ -121,6 +124,7 @@ int main(int argc, const char* argv[])
         case COMMAND_INSERT:  arg_start = 4; break;
         case COMMAND_EXTRACT: arg_start = 4; break;
         case COMMAND_REMOVE:  arg_start = 4; break;
+        case COMMAND_INFO:    arg_start = 3; break;
         case COMMAND_LIST:    arg_start = 4; break;
     }
 
@@ -359,6 +363,10 @@ int main(int argc, const char* argv[])
                 fprintf(stderr, "Couldn't remove '%s'\n", image_path);
                 result = 1;
             }
+            break;
+        }
+        case COMMAND_INFO: {
+            FAT_DumpInfo(fat_fs, stdout);
             break;
         }
         case COMMAND_LIST: {
