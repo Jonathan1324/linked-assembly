@@ -1,7 +1,7 @@
 #include "fat.h"
 #include <inttypes.h>
 
-void FAT_DumpInfo(FAT_Filesystem* fs, FILE* s)
+void FAT_DumpInfo(FAT_Filesystem* fs, FILE* s, int count_fat)
 {
     switch (fs->version)
     {
@@ -201,5 +201,51 @@ void FAT_DumpInfo(FAT_Filesystem* fs, FILE* s)
         fprintf(s, " (%" PRIu64 " bytes", free_bytes);
         if (size_suffix) fprintf(s, " ~ %" PRIu64 ".%" PRIu64 "%c", main, decimals, size_suffix);
         fputs(")\n", s);
+    } else if (count_fat) {
+        uint32_t free_clusters = 0;
+        uint32_t current_cluster = 2; //first 2 are reserved
+        uint32_t total_clusters = fs->data_size / fs->cluster_size;
+        while (current_cluster < total_clusters) {
+            uint32_t value = FAT_ReadFATEntry(fs, current_cluster);
+            if (FAT_ClusterType(fs, value) == FAT_CLUSTER_FREE) free_clusters++;
+            current_cluster++;
+        }
+
+        uint64_t free_bytes = free_clusters * fs->cluster_size;
+
+        char size_suffix = 0;
+        uint64_t main = 0;
+        uint64_t decimals = 0;
+
+        uint64_t mul = 1024ULL*1024*1024*1024;
+
+        while (mul > 1) {
+            decimals = ((free_bytes * precision) / mul) % precision;
+            main = free_bytes / mul;
+
+            while (decimals != 0 && decimals % 10 == 0) decimals /= 10;
+
+            if (free_bytes < mul*min && !(main >= 1 && decimals < 10)) {
+                mul /= 1024;
+                continue;
+            }
+
+            switch (mul)
+            {
+                case 1024ULL*1024*1024*1024: size_suffix = 'T'; break;
+                case 1024ULL*1024*1024: size_suffix = 'G'; break;
+                case 1024ULL*1024: size_suffix = 'M'; break;
+                case 1024ULL: size_suffix = 'K'; break;
+                default: size_suffix = 'B'; break;
+            }
+            break;
+        }
+
+        fprintf(s, " Free Cluster Count: %" PRIu32, free_clusters);
+        fprintf(s, " (%" PRIu64 " bytes", free_bytes);
+        if (size_suffix) fprintf(s, " ~ %" PRIu64 ".%" PRIu64 "%c", main, decimals, size_suffix);
+        fputs(")\n", s);
+    } else {
+        fputs(" Free Cluster Count: Not counted\n", s);
     }
 }

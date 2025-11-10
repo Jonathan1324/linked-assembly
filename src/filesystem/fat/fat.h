@@ -103,7 +103,7 @@ typedef struct FAT32_Bootsector_Header {
     uint8_t  boot_signature;
 
     uint32_t volume_id;
-    
+
     char     volume_label[11];
     char     filesystem_type[8];
 } __attribute__((packed)) FAT32_Bootsector_Header;
@@ -364,7 +364,7 @@ static inline uint32_t FAT_WriteToFile(FAT_File* f, uint32_t offset, void* buffe
     return FAT_WriteToFileRaw(f, offset, buffer, size);
 }
 
-void FAT_DumpInfo(FAT_Filesystem* fs, FILE* s);
+void FAT_DumpInfo(FAT_Filesystem* fs, FILE* s, int count_fat);
 
 // Initializes an empty FAT Filesystem
 FAT_Filesystem* FAT_CreateEmptyFilesystem(Partition* partition, Fat_Version version, int fast, void* bootsector, int force_bootsector,

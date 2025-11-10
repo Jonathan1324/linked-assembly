@@ -90,6 +90,7 @@ int ParseArguments(int argc, const char* argv[], int start, Arguments* args)
         else if (ARG_CMP(i, "--force-bootsector")) args->flag_force_bootsector = 1;
         else if (ARG_CMP(i, "--fast")) args->flag_fast = 1;
         else if (ARG_CMP(i, "--safe")) args->flag_safe = 1;
+        else if (ARG_CMP(i, "--count-clusters")) args->flag_count_clusters = 1;
 
         else {
             fprintf(stderr, "Unknown argument: %s\n", argv[i]);

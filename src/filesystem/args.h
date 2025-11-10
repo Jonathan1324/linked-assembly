@@ -16,6 +16,7 @@ typedef struct Arguments {
     int flag_force_bootsector;
     int flag_fast;
     int flag_safe;
+    int flag_count_clusters;
 } Arguments;
 
 int ParseArguments(int argc, const char* argv[], int start, Arguments* args);

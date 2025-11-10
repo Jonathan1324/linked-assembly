@@ -36,6 +36,7 @@ void print_help(const char* name, FILE* s)
     fputs("> --force-bootsector         Force writing bootsector without overriding header and signature\n", s);
     fputs("> --fast                     Skip filling the data area with zeros\n", s);
     fputs("> --safe                     Prevent recursive deletion of directories\n", s);
+    fputs("> --count-clusters           Count free clusters on FAT12 and FAT16 when using 'info'", s);
     fputc('\n', s);
     fputs("Supported Filesystems:\n", s);
     fputs("> FAT12\n", s);
@@ -366,7 +367,7 @@ int main(int argc, const char* argv[])
             break;
         }
         case COMMAND_INFO: {
-            FAT_DumpInfo(fat_fs, stdout);
+            FAT_DumpInfo(fat_fs, stdout, args.flag_count_clusters);
             break;
         }
         case COMMAND_LIST: {
