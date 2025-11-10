@@ -376,7 +376,7 @@ int main(int argc, const char* argv[])
                 break;
             }
             if (Filesystem_PrintAll(image_dir, image_path, 0) != 0) {
-                fprintf("Couldn't list '%s'\n", image_path);
+                fprintf(stderr, "Couldn't list '%s'\n", image_path);
                 result = 1;
             }
             Filesystem_CloseEntry(image_dir);
