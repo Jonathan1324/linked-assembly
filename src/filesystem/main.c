@@ -14,7 +14,7 @@ void print_help(const char* name, FILE* s)
 {
     fputs("Usage:\n", s);
     fprintf(s, "> %s create <image> fat12|fat16|fat32 [--size B/K/M/G/T] [--boot <file>] [--root <path>] [flags]\n", name);
-    fprintf(s, "> %s format <image> fat12|fat16|fat32 [--size B/K/M/G/T] [--boot <file>] [--root <path>] [flags]\n", name);
+    fprintf(s, "> %s format <image> fat12|fat16|fat32 [--boot <file>] [--root <path>] [flags]\n", name);
     fprintf(s, "> %s insert <image> <host path> [--path <image path>] [flags]\n", name);
     fprintf(s, "> %s extract <image> <image path> [--path <host path>] [flags]\n", name);
     fprintf(s, "> %s remove <image> <image path> [flags]\n", name);
@@ -144,7 +144,7 @@ int main(int argc, const char* argv[])
     }
 
     uint64_t image_size = 0;
-    if (mode_str[0] == "w") image_size = args.size;
+    if (mode_str[0] == 'w') image_size = args.size;
     else image_size = Path_GetSize(image_str);
 
     FILE* image_file = fopen(image_str, mode_str);
@@ -193,6 +193,12 @@ int main(int argc, const char* argv[])
             fs_type = FILESYSTEM_FAT32;
         }
     } else {
+        if (argc < 4) {
+            print_help(argv[0], stderr);
+            Partition_Close(partition);
+            Disk_Close(disk);
+            return 1;
+        }
         const char* fs_name = argv[3];
         if (
             (fs_name[0] == 'f' || fs_name[0] == 'F') &&
@@ -266,7 +272,6 @@ int main(int argc, const char* argv[])
         uint8_t media_descriptor = fat_version == FAT_VERSION_12 ? FAT_BOOTSECTOR_MEDIA_DESCRIPTOR_FLOPPY144 : FAT_BOOTSECTOR_MEDIA_DESCRIPTOR_DISK;
 
         // TODO
-        printf("%llu\n", partition->size);
         fat_fs = FAT_CreateEmptyFilesystem(partition, fat_version, args.flag_fast, (args.boot_file ? bootsector_buffer : NULL), args.flag_force_bootsector,
                                            oem_name, volume_name, volume_id,
                                            partition->size, bytes_per_sector,
@@ -309,6 +314,12 @@ int main(int argc, const char* argv[])
             break;
         }
         case COMMAND_INSERT: {
+            if (argc < 4) {
+                print_help(argv[0], stderr);
+                Partition_Close(partition);
+                Disk_Close(disk);
+                return 1;
+            }
             const char* host_path = argv[3];
             const char* image_path = args.path ? args.path : argv[3];
             if (Filesystem_SyncPathsToFS(fs->root, image_path, host_path) != 0) {
@@ -318,6 +329,12 @@ int main(int argc, const char* argv[])
             break;
         }
         case COMMAND_EXTRACT: {
+            if (argc < 4) {
+                print_help(argv[0], stderr);
+                Partition_Close(partition);
+                Disk_Close(disk);
+                return 1;
+            }
             const char* host_path = args.path ? args.path : argv[3];
             const char* image_path = argv[3];
             if (Filesystem_SyncPathsFromFS(fs->root, image_path, host_path) != 0) {
@@ -327,6 +344,12 @@ int main(int argc, const char* argv[])
             break;
         }
         case COMMAND_REMOVE: {
+            if (argc < 4) {
+                print_help(argv[0], stderr);
+                Partition_Close(partition);
+                Disk_Close(disk);
+                return 1;
+            }
             const char* image_path = argv[3];
             int result = Filesystem_DeletePath(fs->root, image_path, args.flag_safe);
             if (result == 2) {
@@ -339,6 +362,12 @@ int main(int argc, const char* argv[])
             break;
         }
         case COMMAND_LIST: {
+            if (argc < 4) {
+                print_help(argv[0], stderr);
+                Partition_Close(partition);
+                Disk_Close(disk);
+                return 1;
+            }
             const char* image_path = argv[3];
             Filesystem_File* image_dir = Filesystem_OpenPath(fs->root, image_path, 0, 0, 0, 0, 0, 0, 0, 0);
             if (!image_dir) {
