@@ -1,6 +1,6 @@
 #pragma once
 
-#include <IntTypes.h>
+#include <IntTypesC.h>
 #include <string>
 #include "Encoder.hpp"
 

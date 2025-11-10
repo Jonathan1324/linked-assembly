@@ -2,7 +2,7 @@
 
 #include <Architecture.hpp>
 #include <vector>
-#include <IntTypes.h>
+#include <IntTypesC.h>
 #include <unordered_set>
 #include "../Context.hpp"
 #include "../Parser/Parser.hpp"
