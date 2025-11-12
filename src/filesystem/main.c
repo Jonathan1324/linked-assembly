@@ -44,14 +44,6 @@ void print_help(const char* name, FILE* s)
     fputs("> FAT32\n", s);
 }
 
-typedef uint8_t FS_Actionn;
-#define FS_NONEN     0x00
-#define FS_CREATEN   0x01
-#define FS_INSERTB   0x02
-#define FS_INSERTBa  0x04
-#define FS_INSERTBaa     0x08
-#define FS_INSERTBaaasdas   0x10
-
 typedef unsigned char Subcommand;
 #define COMMAND_NONE        ((Subcommand)0)
 #define COMMAND_HELP        ((Subcommand)1)
