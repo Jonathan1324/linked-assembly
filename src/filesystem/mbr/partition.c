@@ -31,8 +31,6 @@ int MBR_SetPartitionRaw(MBR_Disk* mbr, uint8_t index, uint64_t start, uint64_t s
     MBR_Partition* partition = &mbr->bootsector.partitions[index];
     partition->status = bootable ? 0x80 : 0x00;
 
-    static const uint32_t sector_size = 512; // TODO
-
     if (start % sector_size != 0 || size % sector_size != 0) return 2;
 
     uint32_t start_lba = (uint32_t)(start / sector_size);
@@ -47,4 +45,20 @@ int MBR_SetPartitionRaw(MBR_Disk* mbr, uint8_t index, uint64_t start, uint64_t s
     partition->lba_size = size_lba;
 
     return 0;
+}
+
+Partition* MBR_GetPartitionRaw(MBR_Disk* mbr, uint8_t index, int read_only)
+{
+    if (!mbr || index >= 4) return NULL;
+
+    MBR_Partition* partition = &mbr->bootsector.partitions[index];
+
+    if (partition->type == MBR_TYPE_UNUSED) return NULL;
+
+    uint64_t start = partition->lba_first * sector_size;
+    uint64_t size = partition->lba_size * sector_size;
+    Partition* part = Partition_Create(mbr->disk, start, size, read_only);
+    if (!part) return NULL;
+
+    return part;
 }

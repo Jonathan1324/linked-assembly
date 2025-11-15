@@ -2,6 +2,9 @@
 
 #include <stdint.h>
 #include "../disk/disk.h"
+#include "../partition/partition.h"
+
+static const uint32_t sector_size = 512; // TODO
 
 #define MBR_TYPE_UNUSED         0x00
 
@@ -57,6 +60,7 @@ MBR_Disk* MBR_OpenDisk(Disk* disk);
 void MBR_CloseDisk(MBR_Disk* mbr);
 
 int MBR_SetPartitionRaw(MBR_Disk* mbr, uint8_t index, uint64_t start, uint64_t size, uint8_t type, int bootable);
+Partition* MBR_GetPartitionRaw(MBR_Disk* mbr, uint8_t index, int read_only);
 
 int MBR_WriteBootsector(MBR_Disk* mbr);
 int MBR_ReadBootsector(MBR_Disk* mbr);

@@ -4,6 +4,9 @@
 #include <stdint.h>
 #include "../disk/disk.h"
 
+typedef unsigned char Partition_Type;
+#define PARTITION_MBR   ((Partition_Type)1)
+
 typedef struct Partition {
     Disk* disk;
 
