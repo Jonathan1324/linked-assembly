@@ -5,6 +5,7 @@
 #include "fat/fat.h"
 #include "disk/disk.h"
 #include "filesystem/filesystem.h"
+#include "mbr/mbr.h"
 #include <version.h>
 #include "args.h"
 
@@ -58,6 +59,55 @@ typedef unsigned char Subcommand;
 
 int main(int argc, const char* argv[])
 {
+    const char* file1 = "test.img";
+    const char* file2 = "test2.img";
+    int swap = 0;
+
+    FILE* tmp_image_file_1 = fopen(swap ? file2 : file1, "w+b");
+    if (!tmp_image_file_1) {
+        fputs("Couldn't open the image\n", stderr);
+        return 1;
+    }
+    Disk* tmp_disk1 = Disk_CreateFromFile(tmp_image_file_1, 1073741824);
+    if (!tmp_disk1) {
+        fputs("Couldn't open disk\n", stderr);
+        fclose(tmp_image_file_1);
+        return 1;
+    }
+
+    MBR_Disk* mbr1 = MBR_CreateDisk(tmp_disk1);
+    if (!mbr1) {
+        fputs("Couldn't create mbr\n", stderr);
+        Disk_Close(tmp_disk1);
+        return 1;
+    }
+
+    FILE* tmp_image_file_2 = fopen(swap ? file1 : file2, "r+b");
+    if (!tmp_image_file_2) {
+        fputs("Couldn't open the image2\n", stderr);
+        return 1;
+    }
+    Disk* tmp_disk2 = Disk_CreateFromFile(tmp_image_file_2, 1073741824);
+    if (!tmp_disk2) {
+        fputs("Couldn't open disk2\n", stderr);
+        fclose(tmp_image_file_2);
+        return 1;
+    }
+
+    MBR_Disk* mbr2 = MBR_OpenDisk(tmp_disk2);
+    if (!mbr2) {
+        fputs("Couldn't open mbr2\n", stderr);
+        Disk_Close(tmp_disk2);
+        return 1;
+    }
+
+    MBR_SetPartitionRaw(mbr1, 0, 2048 * 512, 1024 * 512, MBR_TYPE_FAT32_LBA, 1);
+
+    MBR_CloseDisk(mbr1);
+    MBR_CloseDisk(mbr2);
+    return 0;
+
+
     if (argc < 2) {
         print_help(argv[0], stderr);
         return 1;
