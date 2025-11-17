@@ -14,13 +14,13 @@
 void print_help(const char* name, FILE* s)
 {
     fputs("Usage:\n", s);
-    fprintf(s, "> %s create <image> fat12|fat16|fat32 [--size B/K/M/G/T] [--boot <file>] [--root <path>] [flags]\n", name);
-    fprintf(s, "> %s format <image> fat12|fat16|fat32 [--boot <file>] [--root <path>] [flags]\n", name);
-    fprintf(s, "> %s insert <image> <host path> [--path <image path>] [flags]\n", name);
-    fprintf(s, "> %s extract <image> <image path> [--path <host path>] [flags]\n", name);
-    fprintf(s, "> %s remove <image> <image path> [flags]\n", name);
-    fprintf(s, "> %s info <image> [flags]\n", name);
-    fprintf(s, "> %s list <image> <image path> [flags]\n", name);
+    fprintf(s, "> %s create <image>(:<part>) mbr | fat12|fat16|fat32 [--size B/K/M/G/T] [--boot <file>] [--root <path>] [flags]\n", name);
+    fprintf(s, "> %s format <image>(:<part>) mbr | fat12|fat16|fat32 [--boot <file>] [--root <path>] [flags]\n", name);
+    fprintf(s, "> %s insert <image>:<part> <host path> [--path <image path>] [flags]\n", name);
+    fprintf(s, "> %s extract <image>:<part> <image path> [--path <host path>] [flags]\n", name);
+    fprintf(s, "> %s remove <image>:<part> <image path> [flags]\n", name);
+    fprintf(s, "> %s info <image>(:<part>) [flags]\n", name);
+    fprintf(s, "> %s list <image>(:<part>) <image path> [flags]\n", name);
     fputc('\n', s);
     fputs("Commands:\n", s);
     fputs("> create          Create a new image, format it, optionally set boot sector and root\n", s);
@@ -39,6 +39,8 @@ void print_help(const char* name, FILE* s)
     fputs("> --safe                     Prevent recursive deletion of directories\n", s);
     fputs("> --count-clusters           Count free clusters on FAT12 and FAT16 when using 'info'\n", s);
     fputc('\n', s);
+    fputs("Supported Partitions:\n", s);
+    fputs("> MBR\n", s);
     fputs("Supported Filesystems:\n", s);
     fputs("> FAT12\n", s);
     fputs("> FAT16\n", s);
@@ -101,6 +103,28 @@ int main(int argc, const char* argv[])
             break;
     }
 
+    const char* p_name = image_str ? strrchr(image_str, ':') : NULL;
+    uint64_t partition_number = 0;
+    if (p_name) {
+        const char* p_num = p_name + 1;
+        uint64_t image_len = p_name - image_str;
+
+        char* image_name = (char*)malloc(image_len + 1);
+        if (!image_name) {
+            fputs("Couldn't allocate memory for name\n", stderr);
+            return 1;
+        }
+
+        memcpy(image_name, image_str, image_len);
+        image_name[image_len] = '\0';
+
+        image_str = image_name;
+
+        mode_str[0] = 'r';
+
+        partition_number = atoll(p_num);
+    }
+
     if (mode_str[0]) {
         if (argc < 3) {
             print_help(argv[0], stderr);
@@ -151,6 +175,8 @@ int main(int argc, const char* argv[])
         return 1;
     }
 
+    if (p_name) free(image_str);
+
     { // Set size
         uint8_t b = 0;
         fseek(image_file, image_size - 1, SEEK_SET);
@@ -177,22 +203,93 @@ int main(int argc, const char* argv[])
             return 1;
         }
 
-        {
-            FAT_Bootsector* fat_bootsector = (FAT_Bootsector*)&bootsector;
-            if (memcmp(fat_bootsector->fat12_fat16.header.filesystem_type, "FAT12", 5) == 0) {
-                is_fs_image = 1;
-            } else if (memcmp(fat_bootsector->fat12_fat16.header.filesystem_type, "FAT16", 5) == 0) {
-                is_fs_image = 1;
-            } else if (memcmp(fat_bootsector->fat32.header.filesystem_type, "FAT32", 5) == 0) {
-                is_fs_image = 1;
-            }
+        FAT_Bootsector* fat_bootsector = (FAT_Bootsector*)&bootsector;
+        if (memcmp(fat_bootsector->fat12_fat16.header.filesystem_type, "FAT12", 5) == 0) {
+            is_fs_image = 1;
+        } else if (memcmp(fat_bootsector->fat12_fat16.header.filesystem_type, "FAT16", 5) == 0) {
+            is_fs_image = 1;
+        } else if (memcmp(fat_bootsector->fat32.header.filesystem_type, "FAT32", 5) == 0) {
+            is_fs_image = 1;
         }
     } else {
-        // TODO
+        if (argc < 4) {
+            print_help(argv[0], stderr);
+            Disk_Close(disk);
+            return 1;
+        }
+        const char* name_o = argv[3];
+
+        uint64_t name_len = strlen(name_o);
+        char* name = (char*)malloc(name_len + 1);
+        if (!name) {
+            fputs("Couldn't allocate memory for name\n", stderr);
+            Disk_Close(disk);
+            return 1;
+        }
+        memcpy(name, name_o, name_len);
+        name[name_len] = '\0';
+
+        if (strcmp(name, "fat12") == 0)
+            is_fs_image = 1;
+        else if (strcmp(name, "fat16") == 0)
+            is_fs_image = 1;
+        else if (strcmp(name, "fat32") == 0)
+            is_fs_image = 1;
+        
+        else if (strcmp(name, "mbr") == 0)
+            is_fs_image = 0;
+
+        else {
+            fprintf(stderr, "Unknown FS: %s\n", name_o);
+        }
+
+        free(name);
+    }
+
+    int bootable = args.boot_file != NULL;
+    Partition* partition = NULL;
+
+    if (p_name) {
+        MBR_Disk* mbr = MBR_OpenDisk(disk);
+        if (!mbr) {
+            fputs("Couldn't open mbr\n", stderr);
+            Disk_Close(disk);
+            return 1;
+        }
+        // FIXME
+        if (command != COMMAND_CREATE) {
+            partition = MBR_GetPartitionRaw(mbr, partition_number - 1, args.flag_read_only);
+        } else {
+            Partition* tmp = MBR_GetPartitionRaw(mbr, partition_number - 1, args.flag_read_only);
+            if (tmp) {
+                fputs("Partition already exists\n", stderr);
+                Partition_Close(partition);
+                MBR_CloseDisk(mbr);
+                return 1;
+            }
+
+            uint8_t p_type = MBR_TYPE_FAT12; // TODO: placeholder
+
+            uint64_t start = MBR_GetNextFreeRegion(mbr, 2048 * 512, args.size);
+            int result = MBR_SetPartitionRaw(mbr, partition_number - 1, start, args.size, p_type, bootable);
+            if (result != 0) {
+                fputs("Couldn't create partition\n", stderr);
+                Partition_Close(partition);
+                MBR_CloseDisk(mbr);
+                return 1;
+            }
+
+            partition = MBR_GetPartitionRaw(mbr, partition_number - 1, args.flag_read_only);
+        }
+
+        MBR_WriteBootsector(mbr);
+        
+        is_fs_image = 1;
+    } else {
+        partition = Partition_Create(disk, 0, disk->size, args.flag_read_only);
     }
 
     if (is_fs_image) {
-        Partition* partition = Partition_Create(disk, 0, disk->size, args.flag_read_only);
         if (!partition) {
             fputs("Couldn't open partition\n", stderr);
             Disk_Close(disk);
@@ -303,6 +400,25 @@ int main(int argc, const char* argv[])
                                             number_of_fats, max_root_directory_entries,
                                             sectors_per_track, number_of_heads,
                                             drive_number, media_descriptor);
+
+            if (p_name) {
+                // FIXME: Memory leak
+                MBR_Disk* mbr = MBR_OpenDisk(disk);
+
+                uint8_t p_type;
+                switch (fs_type) { // TODO
+                    case FILESYSTEM_FAT12: p_type = MBR_TYPE_FAT12; break;
+                    case FILESYSTEM_FAT16: p_type = MBR_TYPE_FAT16_LBA; break;
+                    case FILESYSTEM_FAT32: p_type = MBR_TYPE_FAT32_LBA; break;
+                }
+
+                int result = MBR_SetPartitionRaw(mbr, partition_number - 1, partition->offset, partition->size, p_type, bootable);
+                if (result != 0) {
+                    fputs("Warning: Couldn't update partition entry\n", stderr);
+                }
+
+                MBR_WriteBootsector(mbr);
+            }
         } else {
             fat_fs = FAT_OpenFilesystem(partition, fat_version, args.flag_read_only);
         }
@@ -417,8 +533,67 @@ int main(int argc, const char* argv[])
         Disk_Close(disk);
         return result;
     } else {
-        fputs("Partitions not supported yet\n", stdout);
-        Disk_Close(disk);
+        uint8_t bootsector_buffer[512];
+        if (args.boot_file) {
+            FILE* bootcode_f = fopen(args.boot_file, "rb");
+            if (!bootcode_f) {
+                fprintf(stderr, "Couldn't open '%s'\n", args.boot_file);
+                Disk_Close(disk);
+                return 1;
+            }
+            if (fread(bootsector_buffer, sizeof(bootsector_buffer), 1, bootcode_f) != 1) {
+                fprintf(stderr, "Couldn't read first 512 bytes of '%s'\n", args.boot_file);
+                Disk_Close(disk);
+                return 1;
+            }
+            fclose(bootcode_f);
+        }
+
+        MBR_Partition* mbr = NULL;
+        if (command != COMMAND_CREATE && command != COMMAND_FORMAT) {
+            mbr = MBR_OpenDisk(disk);
+        } else {
+            mbr = MBR_CreateDisk(disk, (args.boot_file ? bootsector_buffer : NULL), args.flag_force_bootsector);
+        }
+        if (!mbr) {
+            fputs("Couldn't open mbr\n", stderr);
+            Disk_Close(disk);
+            return 1;
+        }
+
+        switch (command)
+        {
+            case COMMAND_CREATE: case COMMAND_FORMAT: {
+                break;
+            }
+
+            case COMMAND_INSERT: {
+                fputs("Can't use insert on a disk with partitions\n", stderr);
+                break;
+            }
+
+            case COMMAND_EXTRACT: {
+                fputs("Can't use extract on a disk with partitions\n", stderr);
+                break;
+            }
+
+            case COMMAND_REMOVE: {
+                fputs("Can't use remove on a disk with partitions\n", stderr);
+                break;
+            }
+
+            case COMMAND_INFO: {
+                // TODO
+                break;
+            }
+
+            case COMMAND_LIST: {
+                MBR_PrintAll(mbr, image_str);
+                break;
+            }
+        }
+
+        MBR_CloseDisk(mbr);
         return 0;
     }
 }

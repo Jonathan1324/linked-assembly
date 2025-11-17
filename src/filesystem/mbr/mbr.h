@@ -55,7 +55,7 @@ typedef struct MBR_Disk {
     MBR_Bootsector bootsector;
 } MBR_Disk;
 
-MBR_Disk* MBR_CreateDisk(Disk* disk);
+MBR_Disk* MBR_CreateDisk(Disk* disk, void* bootsector, int force_bootsector);
 MBR_Disk* MBR_OpenDisk(Disk* disk);
 void MBR_CloseDisk(MBR_Disk* mbr);
 
@@ -64,3 +64,22 @@ Partition* MBR_GetPartitionRaw(MBR_Disk* mbr, uint8_t index, int read_only);
 
 int MBR_WriteBootsector(MBR_Disk* mbr);
 int MBR_ReadBootsector(MBR_Disk* mbr);
+
+uint64_t MBR_GetNextFreeRegion(MBR_Disk* mbr, uint64_t start, uint64_t size);
+
+int MBR_PrintAll(MBR_Disk* mbr, const char* name);
+
+static inline uint64_t MBR_GetPartitionStart(const MBR_Partition* partition)
+{
+    return partition->lba_first * sector_size;
+}
+
+static inline uint64_t MBR_GetPartitionSize(const MBR_Partition* partition)
+{
+    return partition->lba_size * sector_size;
+}
+
+static inline uint64_t MBR_GetPartitionEnd(const MBR_Partition* partition)
+{
+    return MBR_GetPartitionStart(partition) + MBR_GetPartitionSize(partition);
+}

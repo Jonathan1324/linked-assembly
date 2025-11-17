@@ -82,7 +82,40 @@ void FAT_DumpInfo(FAT_Filesystem* fs, FILE* s, int count_fat)
         if (media_descriptor_name) fprintf(s, " (%s)", media_descriptor_name);
         fputc('\n', s);
 
-        fprintf(s, " Fat size: %" PRIu32 "\n", (uint32_t)(header->fat_size_32 ? header->fat_size_32 : header->fat_size_small));
+        uint32_t fat_sectors = (header->fat_size_32 ? header->fat_size_32 : header->fat_size_small);
+        total_bytes = (uint64_t)fat_sectors*header->bytes_per_sector;
+
+        size_suffix = 0;
+        main = 0;
+        decimals = 0;
+
+        mul = 1024ULL*1024*1024*1024;
+
+        while (mul > 1) {
+            decimals = ((total_bytes * precision) / mul) % precision;
+            main = total_bytes / mul;
+
+            while (decimals != 0 && decimals % 10 == 0) decimals /= 10;
+
+            if (total_bytes < mul*min && !(main >= 1 && decimals < 10)) {
+                mul /= 1024;
+                continue;
+            }
+
+            switch (mul)
+            {
+                case 1024ULL*1024*1024*1024: size_suffix = 'T'; break;
+                case 1024ULL*1024*1024: size_suffix = 'G'; break;
+                case 1024ULL*1024: size_suffix = 'M'; break;
+                case 1024ULL: size_suffix = 'K'; break;
+                default: size_suffix = 'B'; break;
+            }
+            break;
+        }
+
+        fprintf(s, " Fat size: %" PRIu32 " Sectors (%" PRIu64 " bytes", fat_sectors, total_bytes);
+        if (size_suffix) fprintf(s, " ~ %" PRIu64 ".%" PRIu64 "%c", main, decimals, size_suffix);
+        fputs(")\n", s);
 
         fprintf(s, " Sectors per track: %" PRIu16 "\n", header->sectors_per_track);
         fprintf(s, " Number of heads: %" PRIu16 "\n", header->number_of_heads);
@@ -158,7 +191,40 @@ void FAT_DumpInfo(FAT_Filesystem* fs, FILE* s, int count_fat)
         if (media_descriptor_name) fprintf(s, " (%s)", media_descriptor_name);
         fputc('\n', s);
 
-        fprintf(s, " Fat size: %" PRIu16 "\n", header->fat_size);
+        uint32_t fat_sectors = (uint32_t)header->fat_size;
+        total_bytes = (uint64_t)fat_sectors*header->bytes_per_sector;
+
+        size_suffix = 0;
+        main = 0;
+        decimals = 0;
+
+        mul = 1024ULL*1024*1024*1024;
+
+        while (mul > 1) {
+            decimals = ((total_bytes * precision) / mul) % precision;
+            main = total_bytes / mul;
+
+            while (decimals != 0 && decimals % 10 == 0) decimals /= 10;
+
+            if (total_bytes < mul*min && !(main >= 1 && decimals < 10)) {
+                mul /= 1024;
+                continue;
+            }
+
+            switch (mul)
+            {
+                case 1024ULL*1024*1024*1024: size_suffix = 'T'; break;
+                case 1024ULL*1024*1024: size_suffix = 'G'; break;
+                case 1024ULL*1024: size_suffix = 'M'; break;
+                case 1024ULL: size_suffix = 'K'; break;
+                default: size_suffix = 'B'; break;
+            }
+            break;
+        }
+
+        fprintf(s, " Fat size: %" PRIu32 " Sectors (%" PRIu64 " bytes", fat_sectors, total_bytes);
+        if (size_suffix) fprintf(s, " ~ %" PRIu64 ".%" PRIu64 "%c", main, decimals, size_suffix);
+        fputs(")\n", s);
 
         fprintf(s, " Sectors per track: %" PRIu16 "\n", header->sectors_per_track);
         fprintf(s, " Number of heads: %" PRIu16 "\n", header->number_of_heads);
