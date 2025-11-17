@@ -16,9 +16,9 @@ void print_help(const char* name, FILE* s)
     fputs("Usage:\n", s);
     fprintf(s, "> %s create <image>(:<part>) mbr | fat12|fat16|fat32 [--size B/K/M/G/T] [--boot <file>] [--root <path>] [flags]\n", name);
     fprintf(s, "> %s format <image>(:<part>) mbr | fat12|fat16|fat32 [--boot <file>] [--root <path>] [flags]\n", name);
-    fprintf(s, "> %s insert <image>:<part> <host path> [--path <image path>] [flags]\n", name);
-    fprintf(s, "> %s extract <image>:<part> <image path> [--path <host path>] [flags]\n", name);
-    fprintf(s, "> %s remove <image>:<part> <image path> [flags]\n", name);
+    fprintf(s, "> %s insert <image>(:<part>) <host path> [--path <image path>] [flags]\n", name);
+    fprintf(s, "> %s extract <image>(:<part>) <image path> [--path <host path>] [flags]\n", name);
+    fprintf(s, "> %s remove <image>(:<part>) <image path> [flags]\n", name);
     fprintf(s, "> %s info <image>(:<part>) [flags]\n", name);
     fprintf(s, "> %s list <image>(:<part>) <image path> [flags]\n", name);
     fputc('\n', s);
