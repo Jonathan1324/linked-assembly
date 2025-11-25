@@ -1,5 +1,7 @@
 #include "mbr.h"
 
+#include <string.h>
+
 // TODO: better way
 #define HEADS 255
 #define SECTORS 63
@@ -61,4 +63,17 @@ Partition* MBR_GetPartitionRaw(MBR_Disk* mbr, uint8_t index, int read_only)
     if (!part) return NULL;
 
     return part;
+}
+
+int MBR_DeletePartition(MBR_Disk* mbr, uint8_t index)
+{
+    if (!mbr || index >= 4) return 1;
+
+    MBR_Partition* partition = &mbr->bootsector.partitions[index];
+
+    if (partition->type == MBR_TYPE_UNUSED) return 2;
+
+    memset(partition, 0, sizeof(MBR_Partition));
+
+    return 0;
 }

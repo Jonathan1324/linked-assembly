@@ -2,6 +2,7 @@
 #include <stdlib.h>
 #include <string.h>
 #include <ctype.h>
+#include <inttypes.h>
 #include "fat/fat.h"
 #include "disk/disk.h"
 #include "filesystem/filesystem.h"
@@ -567,6 +568,38 @@ int main(int argc, const char* argv[])
                 break;
             }
 
+            case COMMAND_REMOVE: {
+                if (argc < 4) {
+                    print_help(argv[0], stderr);
+                    Disk_Close(disk);
+                    return 1;
+                }
+                const char* num_str = argv[3];
+
+                uint64_t p_num = (uint64_t)strtoull(num_str, NULL, 10);
+                if (p_num == 0 || p_num > 4) {
+                    fprintf(stderr, "Invalid partition %" PRIu64 "\n", p_num);
+                    Disk_Close(disk);
+                    return 1;
+                }
+
+                int result = MBR_DeletePartition(mbr, (uint8_t)(p_num - 1)) != 0;
+                if (result == 2) {
+                    fprintf(stderr, "Partition %" PRIu64 " doesn't exist\n", p_num);
+                } else if (result != 0) {
+                    fprintf(stderr, "Couldn't delete partition %" PRIu64 "\n", p_num);
+                    Disk_Close(disk);
+                    return 1;
+                }
+
+                break;
+            }
+
+            case COMMAND_INFO: case COMMAND_LIST: {
+                MBR_PrintAll(mbr, image_str);
+                break;
+            }
+
             case COMMAND_INSERT: {
                 fputs("Can't use insert on a disk with partitions\n", stderr);
                 break;
@@ -574,21 +607,6 @@ int main(int argc, const char* argv[])
 
             case COMMAND_EXTRACT: {
                 fputs("Can't use extract on a disk with partitions\n", stderr);
-                break;
-            }
-
-            case COMMAND_REMOVE: {
-                fputs("Can't use remove on a disk with partitions\n", stderr);
-                break;
-            }
-
-            case COMMAND_INFO: {
-                // TODO
-                break;
-            }
-
-            case COMMAND_LIST: {
-                MBR_PrintAll(mbr, image_str);
                 break;
             }
         }
