@@ -130,6 +130,30 @@ uint64_t MBR_GetNextFreeRegion(MBR_Disk* mbr, uint64_t start, uint64_t size)
     return (last_end < start) ? start : last_end;
 }
 
+uint64_t MBR_GetEndOfUsedRegion(MBR_Disk* mbr, uint64_t start)
+{
+    MBR_Partition* partitions = (MBR_Partition*)malloc(4 * sizeof(MBR_Partition));
+    if (!partitions) {
+        return 0;
+    }
+    memcpy(partitions, mbr->bootsector.partitions, 4 * sizeof(MBR_Partition));
+    qsort(partitions, 4, sizeof(MBR_Partition), MBR_ComparePartitions);
+
+    uint64_t last_end = start;
+
+    for (int i = 0; i < 4; i++) {
+        uint64_t part_start = MBR_GetPartitionStart(&partitions[i]);
+        uint64_t part_end   = MBR_GetPartitionEnd(&partitions[i]);
+
+        if (part_end > start && part_end > last_end) {
+            last_end = part_end;
+        }
+    }
+
+    free(partitions);
+    return last_end;
+}
+
 int MBR_PrintAll(MBR_Disk* mbr, const char* name)
 {
     if (!mbr || !name) return 1;
