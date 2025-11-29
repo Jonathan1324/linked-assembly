@@ -98,6 +98,7 @@ int ParseArguments(int argc, const char* argv[], int start, Arguments* args)
         else if (ARG_CMP(i, "--fast")) args->flag_fast = 1;
         else if (ARG_CMP(i, "--safe")) args->flag_safe = 1;
         else if (ARG_CMP(i, "--count-clusters")) args->flag_count_clusters = 1;
+        else if (ARG_CMP(i, "--dont-update-part-entry")) args->flag_dont_update_partition_entry = 1;
 
         else {
             fprintf(stderr, "Unknown argument: %s\n", argv[i]);

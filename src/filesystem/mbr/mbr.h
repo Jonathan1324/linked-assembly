@@ -9,6 +9,7 @@
 static const uint32_t sector_size = 512; // TODO
 
 #define MBR_TYPE_UNUSED         0x00
+#define MBR_TYPE_UNDEFINED      0x7F
 
 #define MBR_TYPE_FAT12          0x01
 #define MBR_TYPE_FAT16_L32      0x04

@@ -205,6 +205,8 @@ int MBR_PrintAll(MBR_Disk* mbr, const char* name)
             if (size_suffix) fprintf(stdout, " ~ %" PRIu64 ".%" PRIu64 "%c", main, decimals, size_suffix);
             fputs(")\n", stdout);
 
+            const char* type_undefined = "UNDEFINED";
+
             const char* type_fat12 = "FAT12";
             const char* type_fat16_chs = "FAT16 CHS";
             const char* type_fat16 = "FAT16";
@@ -230,6 +232,8 @@ int MBR_PrintAll(MBR_Disk* mbr, const char* name)
 
             const char* type_str = NULL;
             switch (partition->type) {
+                case MBR_TYPE_UNDEFINED: type_str = type_undefined; break;
+
                 case MBR_TYPE_FAT12: type_str = type_fat12; break;
                 case MBR_TYPE_FAT16_L32: case MBR_TYPE_FAT16_M32: type_str = type_fat16_chs; break;
                 case MBR_TYPE_FAT16_LBA: type_str = type_fat16; break;

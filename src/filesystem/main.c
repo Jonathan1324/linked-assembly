@@ -43,6 +43,7 @@ void print_help(const char* name, FILE* s)
     fputs("> --fast                     Prevent overriding image/partition\n", s);
     fputs("> --safe                     Prevent recursive deletion of directories\n", s);
     fputs("> --count-clusters           Count free clusters on FAT12 and FAT16 when using 'info'\n", s);
+    fputs("> --dont-update-part-entry   Prevent updating of the partition entry\n", s);
     fputc('\n', s);
     fputs("Supported Partitions:\n", s);
     fputs("> MBR\n", s);
@@ -273,7 +274,7 @@ int main(int argc, const char* argv[])
                 return 1;
             }
 
-            uint8_t p_type = MBR_TYPE_FAT12; // TODO: placeholder
+            uint8_t p_type = MBR_TYPE_UNDEFINED;
 
             uint64_t start_of_search = args.start ? args.start : 1024 * 1024;
 
@@ -424,7 +425,7 @@ int main(int argc, const char* argv[])
                                             sectors_per_track, number_of_heads,
                                             drive_number, media_descriptor);
 
-            if (p_name) {
+            if (p_name && !args.flag_dont_update_partition_entry) {
                 MBR_Disk* mbr = MBR_OpenDisk(disk);
 
                 uint8_t p_type;

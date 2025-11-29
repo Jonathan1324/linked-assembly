@@ -18,6 +18,7 @@ typedef struct Arguments {
     int flag_fast;
     int flag_safe;
     int flag_count_clusters;
+    int flag_dont_update_partition_entry;
 } Arguments;
 
 int ParseArguments(int argc, const char* argv[], int start, Arguments* args);
