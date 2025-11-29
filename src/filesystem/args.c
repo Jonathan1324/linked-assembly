@@ -83,6 +83,13 @@ int ParseArguments(int argc, const char* argv[], int start, Arguments* args)
                 return 1;
             }
             args->size = parse_size(argv[i]);
+        } else if (ARG_CMP(i, "--start")) {
+            i++;
+            if (argc <= i) {
+                fputs("No size after '--start'\n", stderr);
+                return 1;
+            }
+            args->start = parse_size(argv[i]);
         }
 
         else if (ARG_CMP(i, "--no-lfn")) args->flag_no_lfn = 1;

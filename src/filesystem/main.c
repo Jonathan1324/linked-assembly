@@ -15,7 +15,7 @@
 void print_help(const char* name, FILE* s)
 {
     fputs("Usage: ( <fs>: <image>(:<part>) | <disk>: <image> )\n", s);
-    fprintf(s, "> %s create <fs/disk> mbr | fat12|fat16|fat32 [--size B/K/M/G/T] [--boot <file>] [--root <path>] [flags]\n", name);
+    fprintf(s, "> %s create <fs/disk> mbr | fat12|fat16|fat32 [--size B/K/M/G/T] [--boot <file>] [--root <path>] [--start B/K/M/G/T] [flags]\n", name);
     fprintf(s, "> %s format <fs/disk> mbr | fat12|fat16|fat32 [--boot <file>] [--root <path>] [flags]\n", name);
     fprintf(s, "> %s insert <fs> <host path> [--path <image path>] [flags]\n", name);
     fprintf(s, "> %s extract <fs> <image path> [--path <host path>] [flags]\n", name);
@@ -273,13 +273,17 @@ int main(int argc, const char* argv[])
 
             uint8_t p_type = MBR_TYPE_FAT12; // TODO: placeholder
 
+            uint64_t start_of_search = args.start ? args.start : 1024 * 1024;
+
+            if (start_of_search < 512) start_of_search = 512;
+
             if (!args.size) {
-                uint64_t free_start = MBR_GetEndOfUsedRegion(mbr, 2048 * 512);
+                uint64_t free_start = MBR_GetEndOfUsedRegion(mbr, start_of_search);
                 uint64_t free_end = disk->size;
                 args.size = free_end - free_start;
             }
 
-            uint64_t start = MBR_GetNextFreeRegion(mbr, 2048 * 512, args.size);
+            uint64_t start = MBR_GetNextFreeRegion(mbr, start_of_search, args.size);
             int result = MBR_SetPartitionRaw(mbr, partition_number - 1, start, args.size, p_type, bootable);
             if (result != 0) {
                 fputs("Couldn't create partition\n", stderr);

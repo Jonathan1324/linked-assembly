@@ -11,6 +11,7 @@ typedef struct Arguments {
     const char* root_path;
     const char* path;
     uint64_t size;
+    uint64_t start;
     int flag_no_lfn;
     int flag_read_only;
     int flag_force_bootsector;
