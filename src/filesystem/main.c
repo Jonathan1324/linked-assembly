@@ -549,7 +549,7 @@ int main(int argc, const char* argv[])
             fclose(bootcode_f);
         }
 
-        MBR_Partition* mbr = NULL;
+        MBR_Disk* mbr = NULL;
         if (command != COMMAND_CREATE && command != COMMAND_FORMAT) {
             mbr = MBR_OpenDisk(disk);
         } else {
