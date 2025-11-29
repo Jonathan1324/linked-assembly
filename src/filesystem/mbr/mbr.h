@@ -72,6 +72,7 @@ int MBR_WriteBootsector(MBR_Disk* mbr);
 int MBR_ReadBootsector(MBR_Disk* mbr);
 
 uint64_t MBR_GetNextFreeRegion(MBR_Disk* mbr, uint64_t start, uint64_t size);
+uint64_t MBR_GetEndOfUsedRegion(MBR_Disk* mbr, uint64_t start);
 
 int MBR_PrintAll(MBR_Disk* mbr, const char* name);
 

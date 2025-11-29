@@ -14,14 +14,16 @@
 
 void print_help(const char* name, FILE* s)
 {
-    fputs("Usage:\n", s);
-    fprintf(s, "> %s create <image>(:<part>) mbr | fat12|fat16|fat32 [--size B/K/M/G/T] [--boot <file>] [--root <path>] [flags]\n", name);
-    fprintf(s, "> %s format <image>(:<part>) mbr | fat12|fat16|fat32 [--boot <file>] [--root <path>] [flags]\n", name);
-    fprintf(s, "> %s insert <image>(:<part>) <host path> [--path <image path>] [flags]\n", name);
-    fprintf(s, "> %s extract <image>(:<part>) <image path> [--path <host path>] [flags]\n", name);
-    fprintf(s, "> %s remove <image>(:<part>) <image path> [flags]\n", name);
-    fprintf(s, "> %s info <image>(:<part>) [flags]\n", name);
-    fprintf(s, "> %s list <image>(:<part>) <image path> [flags]\n", name);
+    fputs("Usage: ( <fs>: <image>(:<part>) | <disk>: <image> )\n", s);
+    fprintf(s, "> %s create <fs/disk> mbr | fat12|fat16|fat32 [--size B/K/M/G/T] [--boot <file>] [--root <path>] [flags]\n", name);
+    fprintf(s, "> %s format <fs/disk> mbr | fat12|fat16|fat32 [--boot <file>] [--root <path>] [flags]\n", name);
+    fprintf(s, "> %s insert <fs> <host path> [--path <image path>] [flags]\n", name);
+    fprintf(s, "> %s extract <fs> <image path> [--path <host path>] [flags]\n", name);
+    fprintf(s, "> %s remove <fs> <image path> [flags]\n", name);
+    fprintf(s, "> %s remove <disk> <part> [flags]\n", name);
+    fprintf(s, "> %s info <fs/disk> [flags]\n", name);
+    fprintf(s, "> %s list <fs> <image path> [flags]\n", name);
+    fprintf(s, "> %s list <disk> [flags]\n", name);
     fputc('\n', s);
     fputs("Commands:\n", s);
     fputs("> create          Create a new image, format it, optionally set boot sector and root\n", s);
@@ -270,6 +272,12 @@ int main(int argc, const char* argv[])
             }
 
             uint8_t p_type = MBR_TYPE_FAT12; // TODO: placeholder
+
+            if (!args.size) {
+                uint64_t free_start = MBR_GetEndOfUsedRegion(mbr, 2048 * 512);
+                uint64_t free_end = disk->size;
+                args.size = free_end - free_start;
+            }
 
             uint64_t start = MBR_GetNextFreeRegion(mbr, 2048 * 512, args.size);
             int result = MBR_SetPartitionRaw(mbr, partition_number - 1, start, args.size, p_type, bootable);
@@ -553,6 +561,11 @@ int main(int argc, const char* argv[])
         if (command != COMMAND_CREATE && command != COMMAND_FORMAT) {
             mbr = MBR_OpenDisk(disk);
         } else {
+            if (args.size < 512) {
+                fputs("MBR needs at least 512 byte to even get it's initial structure\n", stderr);
+                Disk_Close(disk);
+                return 1;
+            }
             mbr = MBR_CreateDisk(disk, args.flag_fast, (args.boot_file ? bootsector_buffer : NULL), args.flag_force_bootsector);
         }
         if (!mbr) {
