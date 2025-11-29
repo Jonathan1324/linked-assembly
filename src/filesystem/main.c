@@ -283,7 +283,7 @@ int main(int argc, const char* argv[])
             partition = MBR_GetPartitionRaw(mbr, partition_number - 1, args.flag_read_only);
         }
 
-        MBR_WriteBootsector(mbr);
+        MBR_Close(mbr, 0);
         
         is_fs_image = 1;
     } else {
@@ -403,7 +403,6 @@ int main(int argc, const char* argv[])
                                             drive_number, media_descriptor);
 
             if (p_name) {
-                // FIXME: Memory leak
                 MBR_Disk* mbr = MBR_OpenDisk(disk);
 
                 uint8_t p_type;
@@ -418,7 +417,7 @@ int main(int argc, const char* argv[])
                     fputs("Warning: Couldn't update partition entry\n", stderr);
                 }
 
-                MBR_WriteBootsector(mbr);
+                MBR_Close(mbr, 0);
             }
         } else {
             fat_fs = FAT_OpenFilesystem(partition, fat_version, args.flag_read_only);
@@ -571,7 +570,7 @@ int main(int argc, const char* argv[])
             case COMMAND_REMOVE: {
                 if (argc < 4) {
                     print_help(argv[0], stderr);
-                    Disk_Close(disk);
+                    MBR_CloseDisk(mbr);
                     return 1;
                 }
                 const char* num_str = argv[3];
@@ -579,7 +578,7 @@ int main(int argc, const char* argv[])
                 uint64_t p_num = (uint64_t)strtoull(num_str, NULL, 10);
                 if (p_num == 0 || p_num > 4) {
                     fprintf(stderr, "Invalid partition %" PRIu64 "\n", p_num);
-                    Disk_Close(disk);
+                    MBR_CloseDisk(mbr);
                     return 1;
                 }
 
@@ -595,7 +594,7 @@ int main(int argc, const char* argv[])
                     fprintf(stderr, "Partition %" PRIu64 " doesn't exist\n", p_num);
                 } else if (result != 0) {
                     fprintf(stderr, "Couldn't delete partition %" PRIu64 "\n", p_num);
-                    Disk_Close(disk);
+                    MBR_CloseDisk(mbr);
                     return 1;
                 }
 

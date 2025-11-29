@@ -59,7 +59,8 @@ typedef struct MBR_Disk {
 
 MBR_Disk* MBR_CreateDisk(Disk* disk, int fast, void* bootsector, int force_bootsector);
 MBR_Disk* MBR_OpenDisk(Disk* disk);
-void MBR_CloseDisk(MBR_Disk* mbr);
+void MBR_Close(MBR_Disk* mbr, int close_disk);
+static inline void MBR_CloseDisk(MBR_Disk* mbr) { MBR_Close(mbr, 1); }
 
 int MBR_DeletePartition(MBR_Disk* mbr, uint8_t index);
 int MBR_ClearPartition(MBR_Disk* mbr, uint8_t index);

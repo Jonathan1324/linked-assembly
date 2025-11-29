@@ -53,7 +53,7 @@ MBR_Disk* MBR_OpenDisk(Disk* disk)
     return mbr;
 }
 
-void MBR_CloseDisk(MBR_Disk* mbr)
+void MBR_Close(MBR_Disk* mbr, int close_disk)
 {
     if (!mbr) return;
 
@@ -61,7 +61,7 @@ void MBR_CloseDisk(MBR_Disk* mbr)
         // TODO
     }
 
-    Disk_Close(mbr->disk);
+    if (close_disk) Disk_Close(mbr->disk);
 
     free(mbr);
 }
