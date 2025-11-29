@@ -4,6 +4,8 @@
 #include "../disk/disk.h"
 #include "../partition/partition.h"
 
+#define CHUNK_SIZE 16384 /*512*/
+
 static const uint32_t sector_size = 512; // TODO
 
 #define MBR_TYPE_UNUSED         0x00
@@ -55,11 +57,12 @@ typedef struct MBR_Disk {
     MBR_Bootsector bootsector;
 } MBR_Disk;
 
-MBR_Disk* MBR_CreateDisk(Disk* disk, void* bootsector, int force_bootsector);
+MBR_Disk* MBR_CreateDisk(Disk* disk, int fast, void* bootsector, int force_bootsector);
 MBR_Disk* MBR_OpenDisk(Disk* disk);
 void MBR_CloseDisk(MBR_Disk* mbr);
 
 int MBR_DeletePartition(MBR_Disk* mbr, uint8_t index);
+int MBR_ClearPartition(MBR_Disk* mbr, uint8_t index);
 
 int MBR_SetPartitionRaw(MBR_Disk* mbr, uint8_t index, uint64_t start, uint64_t size, uint8_t type, int bootable);
 Partition* MBR_GetPartitionRaw(MBR_Disk* mbr, uint8_t index, int read_only);

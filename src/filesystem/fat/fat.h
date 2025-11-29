@@ -6,7 +6,7 @@
 #include <stdlib.h>
 #include "../partition/partition.h"
 
-#define CHUNK_SIZE 4096 /*512*/
+#define CHUNK_SIZE 16384 /*512*/
 
 #define FAT_BOOTSECTOR_MEDIA_DESCRIPTOR_FLOPPY144     0xF0 // 1.44 MB
 #define FAT_BOOTSECTOR_MEDIA_DESCRIPTOR_FLOPPY120     0xF4 // 1.2 MB

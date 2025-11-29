@@ -3,7 +3,7 @@
 #include <string.h>
 #include <inttypes.h>
 
-MBR_Disk* MBR_CreateDisk(Disk* disk, void* bootsector, int force_bootsector)
+MBR_Disk* MBR_CreateDisk(Disk* disk, int fast, void* bootsector, int force_bootsector)
 {
     if (!disk) return NULL;
 
@@ -20,6 +20,18 @@ MBR_Disk* MBR_CreateDisk(Disk* disk, void* bootsector, int force_bootsector)
     if (MBR_WriteBootsector(mbr) != 0) {
         free(mbr);
         return NULL;
+    }
+
+    if (!fast) {
+        uint64_t offset = 512;
+        uint8_t zero_block[CHUNK_SIZE] = {0};
+        while (offset < disk->size) {
+            uint32_t chunk = (disk->size - offset) < CHUNK_SIZE ? (disk->size - offset) : CHUNK_SIZE;
+            if (Disk_Write(disk, (uint8_t*)zero_block, offset, chunk) != chunk) {
+                // TODO
+            }
+            offset += chunk;
+        }
     }
 
     return mbr;

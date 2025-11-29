@@ -554,7 +554,7 @@ int main(int argc, const char* argv[])
         if (command != COMMAND_CREATE && command != COMMAND_FORMAT) {
             mbr = MBR_OpenDisk(disk);
         } else {
-            mbr = MBR_CreateDisk(disk, (args.boot_file ? bootsector_buffer : NULL), args.flag_force_bootsector);
+            mbr = MBR_CreateDisk(disk, args.flag_fast, (args.boot_file ? bootsector_buffer : NULL), args.flag_force_bootsector);
         }
         if (!mbr) {
             fputs("Couldn't open mbr\n", stderr);
@@ -583,7 +583,14 @@ int main(int argc, const char* argv[])
                     return 1;
                 }
 
-                int result = MBR_DeletePartition(mbr, (uint8_t)(p_num - 1)) != 0;
+                if (!args.flag_fast) {
+                    int result = MBR_ClearPartition(mbr, (uint8_t)(p_num - 1));
+                    if (result != 0) {
+                        // TODO
+                    }
+                }
+
+                int result = MBR_DeletePartition(mbr, (uint8_t)(p_num - 1));
                 if (result == 2) {
                     fprintf(stderr, "Partition %" PRIu64 " doesn't exist\n", p_num);
                 } else if (result != 0) {

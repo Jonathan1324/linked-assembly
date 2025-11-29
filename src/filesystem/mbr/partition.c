@@ -77,3 +77,28 @@ int MBR_DeletePartition(MBR_Disk* mbr, uint8_t index)
 
     return 0;
 }
+
+int MBR_ClearPartition(MBR_Disk* mbr, uint8_t index)
+{
+    if (!mbr || index >= 4) return 1;
+
+    MBR_Partition* partition = &mbr->bootsector.partitions[index];
+
+    if (partition->type == MBR_TYPE_UNUSED) return 2;
+
+    uint64_t offset = partition->lba_first * sector_size;
+    uint64_t size = partition->lba_size * sector_size;
+
+    uint8_t zero_block[CHUNK_SIZE] = {0};
+    uint64_t written = 0;
+    while (written < size) {
+        uint64_t chunk = (size - written) < CHUNK_SIZE ? (size - written) : CHUNK_SIZE;
+        if (Disk_Write(mbr->disk, (uint8_t*)zero_block, offset, chunk) != chunk) {
+            //TODO
+        }
+        offset += chunk;
+        written += chunk;
+    }
+
+    return 0;
+}
