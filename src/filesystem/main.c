@@ -286,6 +286,14 @@ int main(int argc, const char* argv[])
             }
 
             uint64_t start = MBR_GetNextFreeRegion(mbr, start_of_search, args.size);
+            
+            if (start + args.size > disk->size) {
+                fputs("Not enough space\n", stderr);
+                Partition_Close(partition);
+                MBR_CloseDisk(mbr);
+                return 1;
+            }
+
             int result = MBR_SetPartitionRaw(mbr, partition_number - 1, start, args.size, p_type, bootable);
             if (result != 0) {
                 fputs("Couldn't create partition\n", stderr);

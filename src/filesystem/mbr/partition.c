@@ -36,7 +36,7 @@ int MBR_SetPartitionRaw(MBR_Disk* mbr, uint8_t index, uint64_t start, uint64_t s
     if (start % sector_size != 0 || size % sector_size != 0) return 2;
 
     uint32_t start_lba = (uint32_t)(start / sector_size);
-    uint32_t size_lba  = (uint32_t)(size  / sector_size);
+    uint32_t size_lba  = (uint32_t)((size + sector_size - 1)  / sector_size);
 
     LBA_to_CHS(start_lba, partition->chs_first);
     LBA_to_CHS(start_lba + size_lba - 1, partition->chs_last);
