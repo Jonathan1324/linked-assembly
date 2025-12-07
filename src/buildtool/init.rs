@@ -1,4 +1,4 @@
-use std::fs::File;
+use std::fs::{self, File};
 use std::path::Path;
 use std::io::Write;
 
@@ -14,8 +14,8 @@ default_target = "build"
 
 [tools]
 default = "default"
-toolchains = ["build_toolchains.yaml"]
-formats = ["build_formats.yaml"]
+toolchains = ["build-config/build_toolchains.yaml"]
+formats = ["build-config/build_formats.yaml"]
 
 [targets.run]
 before = ["build"]
@@ -137,11 +137,15 @@ pub fn init() -> Result<(), std::io::Error> {
     let mut config = File::create(path)?; // Default
     config.write_all(DEFAULT_CONFIG.as_bytes())?;
 
+    if !std::path::Path::new("build-config").exists() {
+      fs::create_dir("build-config")?;
+    }
+
     // TODO
-    let mut toolchains = File::create("build_toolchains.yaml")?;
+    let mut toolchains = File::create("build-config/build_toolchains.yaml")?;
     toolchains.write_all(DEFAULT_TOOLCHAIN.as_bytes())?;
 
-    let mut formats = File::create("build_formats.yaml")?;
+    let mut formats = File::create("build-config/build_formats.yaml")?;
     formats.write_all(DEFAULT_FORMATS.as_bytes())?;
     
     Ok(())
