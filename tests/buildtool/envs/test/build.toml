@@ -4,20 +4,25 @@ version = "1.0.0"
 description = "A project!"
 
 [build]
-dir = "build"
+dir = "build/debug"
 default_target = "build"
 
 [tools]
-default = "default"
+default_toolchain = "default"
+default_mode = "debug"
 toolchains = ["toolchains.yaml"]
 formats = ["formats.yaml"]
 
+[flags.release]
+build_dir = "build/release"
+build_mode = "release"
+
 [targets.run]
 before = ["build"]
-run = "execute build/main"
+run = "execute ${BUILD_DIR}/main"
 
 [targets.clean]
-run = "delete build"
+run = "delete ${BUILD_DIR}"
 
 [targets.build]
 description = "Build the project"

@@ -5,13 +5,18 @@ description = "A test project to test this buildtool"           # optional
 internal_dump = false                                           # defaults to false
 
 [build]
-dir = "build"                                                   # defaults to "build"
+dir = "build/debug"                                             # defaults to "build"
 default_target = "build"                                        # optional
 
 [tools]
-default = "default"                                             # required
+default_toolchain = "default"                                   # required
+default_mode = "debug"                                          # required
 toolchains = ["toolchains.yaml"]                                # optional
 formats = ["formats.yaml"]                                      # optional
+
+[flags.release]
+build_dir = "build/release"                                     # optional
+build_mode = "release"                                          # optional
 
 [targets.build]
 description = "Build the project"                               # optional
@@ -33,11 +38,11 @@ files = "*.c"                                                   # optional (allo
 
 [targets.clean]
 description = "Clean the project"                               # optional
-run = "delete build"                                            # optional
+run = "delete ${BUILD_DIR}"                                     # optional
 #optional: message: String
 #optional: depends
 
 [targets.run]
 description = "Run the project"                                 # optional
 before = ["build"]                                              # optional
-run = "execute ./build/main"                                    # optional
+run = "execute ${BUILD_DIR}/main"                               # optional

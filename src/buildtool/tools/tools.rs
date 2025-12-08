@@ -5,18 +5,26 @@ use std::collections::HashMap;
 pub struct Toolchain {
     pub tools: HashMap<String, Tool>,
     pub flags: HashMap<String, Flags>,
+    pub flagsets: HashMap<String, Vec<String>>,
 }
 
 #[derive(Clone, Debug, Deserialize)]
 pub struct Flags {
-    #[serde(default)]
-    pub default: Vec<String>,
-    #[serde(default)]
-    pub windows: Vec<String>,
-    #[serde(default)]
-    pub macos: Vec<String>,
-    #[serde(default)]
-    pub linux: Vec<String>,
+    pub global: FlagsSpecific,
+    pub platforms: Option<FlagsPlatform>,
+}
+
+#[derive(Clone, Debug, Deserialize)]
+pub struct FlagsPlatform {
+    pub windows: Option<FlagsSpecific>,
+    pub linux: Option<FlagsSpecific>,
+    pub macos: Option<FlagsSpecific>,
+}
+
+#[derive(Clone, Debug, Deserialize)]
+pub struct FlagsSpecific {
+    pub always: Vec<String>,
+    pub modes: HashMap<String, Vec<String>>,
 }
 
 #[derive(Clone, Debug, Deserialize)]
@@ -95,22 +103,79 @@ pub fn print_toolchains(toolchains: &HashMap<String, Toolchain>) {
 
         println!(" Flags: ");
         for (flag_name, flag) in &toolchain.flags {
-            println!("    {}: ", flag_name);
-            println!("      Default:");
-            for default in &flag.default {
-                println!("      - {}", default);
+            println!("    {}:", flag_name);
+
+            println!("      global:");
+            println!("        always:");
+            for flagset in &flag.global.always {
+                println!("        - {}", flagset);
             }
-            println!("      Windows:");
-            for windows in &flag.windows {
-                println!("      - {}", windows);
+            println!("        modes:");
+            for (mode_name, mode) in &flag.global.modes {
+                println!("          {}:", mode_name);
+                for flags in mode {
+                    println!("          - {}", flags);
+                }
             }
-            println!("      Linux:");
-            for linux in &flag.linux {
-                println!("      - {}", linux);
+
+            if let Some(platforms) = &flag.platforms {
+                println!("      platforms:");
+
+                if let Some(windows) = &platforms.windows {
+                    println!("        windows:");
+
+                    println!("          always:");
+                    for flagset in &windows.always {
+                        println!("          - {}", flagset);
+                    }
+                    println!("          modes:");
+                    for (mode_name, mode) in &windows.modes {
+                        println!("          {}:", mode_name);
+                        for flags in mode {
+                            println!("            - {}", flags);
+                        }
+                    }
+                }
+
+                if let Some(linux) = &platforms.linux {
+                    println!("        linux:");
+
+                    println!("          always:");
+                    for flagset in &linux.always {
+                        println!("          - {}", flagset);
+                    }
+                    println!("          modes:");
+                    for (mode_name, mode) in &linux.modes {
+                        println!("          {}:", mode_name);
+                        for flags in mode {
+                            println!("            - {}", flags);
+                        }
+                    }
+                }
+
+                if let Some(macos) = &platforms.macos {
+                    println!("        macos:");
+
+                    println!("          always:");
+                    for flagset in &macos.always {
+                        println!("          - {}", flagset);
+                    }
+                    println!("          modes:");
+                    for (mode_name, mode) in &macos.modes {
+                        println!("          {}:", mode_name);
+                        for flags in mode {
+                            println!("            - {}", flags);
+                        }
+                    }
+                }
             }
-            println!("      macOS:");
-            for macos in &flag.macos {
-                println!("      - {}", macos);
+        }
+
+        println!(" FlagSets: ");
+        for (flagset_name, flagset) in &toolchain.flagsets {
+            println!("    {}: ", flagset_name);
+            for flag in flagset {
+                println!("      - '{}'", flag);
             }
         }
     }

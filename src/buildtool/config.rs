@@ -11,6 +11,9 @@ pub struct Config {
 
     #[serde(default)]
     pub targets: HashMap<String, Target>,
+
+    #[serde(default)]
+    pub flags: HashMap<String, Flags>,
 }
 
 #[derive(Debug, Deserialize)]
@@ -35,7 +38,9 @@ fn default_build_dir() -> String { "build".to_string() }
 
 #[derive(Debug, Deserialize)]
 pub struct Tools {
-    pub default: String,
+    pub default_toolchain: String,
+    pub default_mode: Option<String>,
+
     #[serde(default)]
     pub toolchains: Vec<String>,
     #[serde(default)]
@@ -99,6 +104,12 @@ pub struct Target {
     pub run: Option<String>,
 }
 
+#[derive(Debug, Deserialize)]
+pub struct Flags {
+    pub build_dir: Option<String>,
+    pub build_mode: Option<String>,
+}
+
 fn default_target_out() -> OutputKind { OutputKind::Known(KnownOutputKind::Undefined) }
 
 fn default_target_path() -> String { ".".to_string() }
@@ -121,7 +132,10 @@ impl Config {
         }
 
         println!("[TOOLS]");
-        println!("  Default: {}", self.tools.default);
+        println!("  Default Toolchain: {}", self.tools.default_toolchain);
+        if let Some(default_mode) = &self.tools.default_mode {
+            println!("  Default Mode: {}", default_mode);
+        }
         println!("  Toolchains:");
         for toolchain in &self.tools.toolchains {
             println!("  - {}", toolchain);

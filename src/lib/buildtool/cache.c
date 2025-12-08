@@ -207,9 +207,6 @@ uint8_t readBuffer(CacheBuffer* buffer, FILE* f)
         buffer->entries[i].value_length = value_len;
         memcpy(buffer->entries[i].value, &value_table[raw_entries[i].ValueIndex], value_len);
 
-        buffer->entries[i].used = 0;
-        buffer->entries[i].file = 1;
-
         hashInsert(buffer, buffer->entries[i].name, buffer->entries[i].name_length, i);
     }
 
@@ -257,8 +254,6 @@ void AddToCache(uint64_t buf_ptr, const char* name, uint64_t name_length, const 
         buffer->entries[index].value = (char*)malloc(value_length);
         memcpy(buffer->entries[index].value, value, value_length);
         buffer->entries[index].value_length = value_length;
-        buffer->entries[index].used = 1;
-        buffer->entries[index].file = 1;
         return;
     }
 
@@ -279,9 +274,6 @@ void AddToCache(uint64_t buf_ptr, const char* name, uint64_t name_length, const 
     memcpy(buffer->entries[count].value, value, value_length);
     buffer->entries[count].value_length = value_length;
 
-    buffer->entries[count].used = 1;
-    buffer->entries[count].file = 1;
-
     hashInsert(buffer, buffer->entries[count].name, name_length, count);
 
     buffer->headerBuffer->CacheHeaderEntryCount++;
@@ -295,7 +287,6 @@ const char* ReadFromCache(uint64_t buf_ptr, const char* name, uint64_t name_leng
     uint64_t index = hashLookup(buffer, name, name_length);
     if (index != UINT64_MAX) {
         if (value_length) *value_length = buffer->entries[index].value_length;
-        buffer->entries[index].used = 1;
         return buffer->entries[index].value;
     }
 
@@ -322,11 +313,9 @@ void WriteCacheFile(uint64_t buf_ptr, const char* path)
 
     for (uint32_t i = 0; i < entry_count; ++i)
     {
-        if (buffer->entries[i].file != 0) {
-            used_count++;
-            if (buffer->entries[i].name) name_table_size += buffer->entries[i].name_length;
-            if (buffer->entries[i].value) value_table_size += buffer->entries[i].value_length;
-        }
+        used_count++;
+        if (buffer->entries[i].name) name_table_size += buffer->entries[i].name_length;
+        if (buffer->entries[i].value) value_table_size += buffer->entries[i].value_length;
     }
 
     header.CacheHeaderEntryCount = used_count;
@@ -343,8 +332,6 @@ void WriteCacheFile(uint64_t buf_ptr, const char* path)
     uint64_t current_value_index = 0;
     for (uint32_t i = 0; i < entry_count; ++i)
     {
-        if (buffer->entries[i].file == 0) continue;
-
         CacheTableEntry entry;
         entry.NameIndex = current_name_index;
         entry.NameLength  = buffer->entries[i].name_length;
@@ -358,7 +345,6 @@ void WriteCacheFile(uint64_t buf_ptr, const char* path)
 
     for (uint32_t i = 0; i < entry_count; ++i)
     {
-        if (buffer->entries[i].file == 0) continue;
         if (buffer->entries[i].name)
         {
             fwrite(buffer->entries[i].name, buffer->entries[i].name_length, 1, f);
@@ -367,7 +353,6 @@ void WriteCacheFile(uint64_t buf_ptr, const char* path)
 
     for (uint32_t i = 0; i < entry_count; ++i)
     {
-        if (buffer->entries[i].file == 0) continue;
         if (buffer->entries[i].value)
         {
             fwrite(buffer->entries[i].value, buffer->entries[i].value_length, 1, f);
@@ -416,8 +401,5 @@ void CleanCache(uint64_t buf_ptr)
     CacheBuffer* buffer = (CacheBuffer*)(uintptr_t)buf_ptr;
     if (!buffer) return;
 
-    for (uint32_t i = 0; i < buffer->headerBuffer->CacheHeaderEntryCount; ++i)
-    {
-        if (buffer->entries[i].used == 0) buffer->entries[i].file = 0;
-    }
+    // TODO
 }

@@ -9,20 +9,25 @@ version = "1.0.0"
 description = "A project!"
 
 [build]
-dir = "build"
+dir = "build/debug"
 default_target = "build"
 
 [tools]
-default = "default"
+default_toolchain = "default"
+default_mode = "debug"
 toolchains = ["build-config/build_toolchains.yaml"]
 formats = ["build-config/build_formats.yaml"]
 
+[flags.release]
+build_dir = "build/release"
+build_mode = "release"
+
 [targets.run]
 before = ["build"]
-run = "execute build/main"
+run = "execute ${BUILD_DIR}/main"
 
 [targets.clean]
-run = "delete build"
+run = "delete ${BUILD_DIR}"
 
 [targets.build]
 description = "Build the project"
@@ -84,31 +89,117 @@ r#"default:
       - ar ${ FLAGS } ${ OUTPUT } ${ INPUT }
       message: Creating static library ${ OUTPUT }
 
+  flagsets:
+    GCC_ALWAYS:
+    - "-Wall"
+    - "-Wextra"
+    - "-Wpedantic"
+    - "-Wconversion"
+
+    GCC_DEBUG:
+    - "-g"
+    - "-O0"
+    - "-fsanitize=address,undefined"
+    - "-fno-omit-frame-pointer"
+
+    GCC_RELEASE:
+    - "-O3"
+    - "-DNDEBUG"
+    - "-flto"
+
+    C_ALWAYS:
+    - "-std=c11"
+
+    CXX_ALWAYS:
+    - "-std=c++17"
+
+    AR_ALWAYS:
+    - "rcs"
+
+    GCC_WARNINGS_EXTRA:
+    - "-Wshadow"
+    - "-Wformat=2"
+    - "-Wundef"
+    - "-Wunreachable-code"
+
+    GCC_SANITIZERS:
+    - "-fsanitize=address"
+    - "-fsanitize=undefined"
+    - "-fno-omit-frame-pointer"
+
   flags:
     C_FLAGS:
-      default:
-      windows:
-      linux:
-      macos:
+      global:
+        always:
+        - GCC_ALWAYS
+        - C_ALWAYS
+        modes:
+          debug:
+          - GCC_DEBUG
+          release:
+          - GCC_RELEASE
+      platforms:
+        windows:
+          always: []
+          modes: {}
+        linux:
+          always: []
+          modes: {}
+        macos:
+          always: []
+          modes: {}
 
     CXX_FLAGS:
-      default:
-      windows:
-      linux:
-      macos:
+      global:
+        always:
+        - GCC_ALWAYS
+        - CXX_ALWAYS
+        modes:
+          debug:
+          - GCC_DEBUG
+          release:
+          - GCC_RELEASE
+      platforms:
+        windows:
+          always: []
+          modes: {}
+        linux:
+          always: []
+          modes: {}
+        macos:
+          always: []
+          modes: {}
 
     LD_FLAGS:
-      default:
-      windows:
-      linux:
-      macos:
+      global:
+        always: []
+        modes: {}
+      platforms:
+        windows:
+          always: []
+          modes: {}
+        linux:
+          always: []
+          modes: {}
+        macos:
+          always: []
+          modes: {}
 
     AR_FLAGS:
-      default:
-      - rcs
-      windows:
-      linux:
-      macos:
+      global:
+        always:
+        - AR_ALWAYS
+        modes: {}
+      platforms:
+        windows:
+          always: []
+          modes: {}
+        linux:
+          always: []
+          modes: {}
+        macos:
+          always: []
+          modes: {}
 "#;
 
 const DEFAULT_FORMATS: &str =

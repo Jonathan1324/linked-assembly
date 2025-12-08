@@ -5,9 +5,10 @@ use std::process::Command;
 use std::{fs, io};
 
 use crate::cache::cache;
+use crate::tools::tools::FlagsSpecific;
 use crate::util::{get_format, get_toolchain};
 
-fn replace_placeholders(s: &str, replacements: &HashMap<String, String>) -> Result<String, std::io::Error> {
+pub fn replace_placeholders(s: &str, replacements: &HashMap<String, String>) -> Result<String, std::io::Error> {
     let mut result = String::new();
     let mut chars = s.chars().peekable();
 
@@ -43,13 +44,15 @@ pub fn execute(
     toolchains: &HashMap<String, crate::tools::tools::Toolchain>,
     formats: &HashMap<String, crate::tools::tools::Format>,
     cache: &cache::CacheBuffer,
+    mode: &Option<String>,
+    toolchain: &String,
     mut force_rebuild: bool,
 ) -> Result<bool, std::io::Error> {
     if !output.exists() {
         force_rebuild = true;
     }
 
-    let toolchain = get_toolchain(&config.tools.default, toolchains)?;
+    let toolchain = get_toolchain(toolchain, toolchains)?;
 
     let input_strs: Vec<String> = inputs.iter()
         .map(|p| p.display().to_string())
@@ -88,14 +91,64 @@ pub fn execute(
                 )
             })?;
 
-            flags.extend(flags_set.default.clone());
-            let os_flags = match std::env::consts::OS {
-                "windows" => &flags_set.windows,
-                "linux" => &flags_set.linux,
-                "macos" => &flags_set.macos,
-                _ => &Vec::new(),
-            };
-            flags.extend(os_flags.clone());
+            for flagset_name in &flags_set.global.always {
+                let flagset = toolchain.flagsets.get(flagset_name).ok_or_else(|| {
+                    io::Error::new(
+                        io::ErrorKind::NotFound,
+                        format!("FlagSet '{}' not found", flagset_name)
+                    )
+                })?;
+                flags.extend(flagset.iter().cloned());
+            }
+
+            if let Some(mode_str) = mode {
+                if let Some(mode_set) = flags_set.global.modes.get(mode_str) {
+                    for flagset_name in mode_set {
+                        let flagset = toolchain.flagsets.get(flagset_name).ok_or_else(|| {
+                            io::Error::new(
+                                io::ErrorKind::NotFound,
+                                format!("FlagSet '{}' not found", flagset_name)
+                            )
+                        })?;
+                        flags.extend(flagset.iter().cloned());
+                    }
+                }
+            }
+
+            if let Some(platforms) = &flags_set.platforms {
+                let platform_option = match std::env::consts::OS {
+                    "windows" => &platforms.windows,
+                    "linux" => &platforms.linux,
+                    "macos" => &platforms.macos,
+                    _ => &None,
+                };
+
+                if let Some(platform) = &platform_option {
+                    for flagset_name in &platform.always {
+                        let flagset = toolchain.flagsets.get(flagset_name).ok_or_else(|| {
+                            io::Error::new(
+                                io::ErrorKind::NotFound,
+                                format!("FlagSet '{}' not found", flagset_name)
+                            )
+                        })?;
+                        flags.extend(flagset.iter().cloned());
+                    }
+
+                    if let Some(mode_str) = mode {
+                        if let Some(mode_set) = platform.modes.get(mode_str) {
+                            for flagset_name in mode_set {
+                                let flagset = toolchain.flagsets.get(flagset_name).ok_or_else(|| {
+                                    io::Error::new(
+                                        io::ErrorKind::NotFound,
+                                        format!("FlagSet '{}' not found", flagset_name)
+                                    )
+                                })?;
+                                flags.extend(flagset.iter().cloned());
+                            }
+                        }
+                    }
+                }
+            }
         }
         replacements.insert("flags".to_string(), flags.join(" "));
 

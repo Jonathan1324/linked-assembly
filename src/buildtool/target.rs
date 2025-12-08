@@ -10,6 +10,7 @@ use std::env;
 use std::path::{Path, PathBuf};
 use std::process::Command;
 use crate::cache::cache;
+use crate::context::Context;
 
 fn copy_dir_all(src: &Path, dst: &Path) -> io::Result<()> {
     if !dst.exists() {
@@ -63,6 +64,7 @@ pub fn execute_target(
     executed: &mut HashMap<String, Vec<PathBuf>>,
     build_dir: &Path,
     cache: &cache::CacheBuffer,
+    context: &Context,
 ) -> Result<Vec<PathBuf>, std::io::Error> {
     if let Some(existing_outputs) = executed.get(name) {
         return Ok(existing_outputs.clone());
@@ -74,7 +76,7 @@ pub fn execute_target(
         let mut inputs = Vec::new();
 
         for dep in &target.before {
-            let result = execute_target(dep, config, toolchains, formats, executed, build_dir, cache);
+            let result = execute_target(dep, config, toolchains, formats, executed, build_dir, cache, context);
             if let Err(e) = result {
                 return Err(io::Error::new(
                     io::ErrorKind::Other,
@@ -84,7 +86,7 @@ pub fn execute_target(
         }
         
         for dep in &target.depends {
-            let dep_outputs = execute_target(dep, config, toolchains, formats, executed, build_dir, cache);
+            let dep_outputs = execute_target(dep, config, toolchains, formats, executed, build_dir, cache, context);
             if let Err(e) = dep_outputs {
                 return Err(io::Error::new(
                     io::ErrorKind::Other,
@@ -174,11 +176,11 @@ pub fn execute_target(
 
                     let temp_inputs: Vec<&Path> = vec![input];
 
-                    let result = execute::execute(temp_inputs, &output_path, &target.out, config, toolchains, formats, cache, false); //TODO
+                    let result = execute::execute(temp_inputs, &output_path, &target.out, config, toolchains, formats, cache, &context.mode, &config.tools.default_toolchain, context.rebuild);
                     if result.is_err() {
                         return Err(io::Error::new(
                             io::ErrorKind::Other,
-                            format!("Execution of {} failed", input.display()),
+                            format!("Execution of {} failed: {}", input.display(), result.err().unwrap()),
                         ));
                     }
 
@@ -234,7 +236,7 @@ pub fn execute_target(
                 }
 
                 let temp_inputs: Vec<&Path> = inputs.iter().map(|p| p.as_path()).collect();
-                let result = execute::execute(temp_inputs, &output_path, &target.out, config, toolchains, formats, cache, false); //TODO
+                let result = execute::execute(temp_inputs, &output_path, &target.out, config, toolchains, formats, cache, &context.mode, &config.tools.default_toolchain, context.rebuild);
                 if result.is_err() {
                     return Err(io::Error::new(
                         io::ErrorKind::Other,
@@ -247,8 +249,12 @@ pub fn execute_target(
         }
 
         if let Some(command) = &target.run {
+            let mut replacements = HashMap::new();
+            replacements.insert("build_dir".to_string(), build_dir.to_string_lossy().to_string());
+
+            let cmd = crate::execute::replace_placeholders(command, &replacements)?;
             // run
-            if let Some(parts) = shlex::split(command) {
+            if let Some(parts) = shlex::split(&cmd) {
                 if let Some(command) = parts.first() {
                     let result = match command.as_str() {
                         "execute" => {

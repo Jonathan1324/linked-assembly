@@ -2,6 +2,7 @@ use std::collections::HashMap;
 use std::path::{Path, PathBuf};
 use std::fs;
 use std::env;
+use std::task::Context;
 use serde_yaml;
 
 mod tools {
@@ -12,10 +13,16 @@ mod cache {
     pub mod cache;
 }
 
+mod vscode {
+    pub mod vscode;
+}
+
 pub mod init;
 pub mod config;
 pub mod execute;
 pub mod target;
+
+pub mod context;
 
 pub mod util;
 
@@ -40,6 +47,21 @@ fn main() {
         std::process::exit(0);
     }
 
+    let current_dir = env::current_dir().unwrap_or_else(|err | {
+        eprintln!("Error: Couldn't get current dir: {}", err);
+        std::process::exit(1);
+    });
+
+    let mut user_flags = Vec::new();
+    for arg in args {
+        let s = arg.as_str();
+        let mut chars = s.chars();
+
+        if s.starts_with('-') && !s.starts_with("--") {
+            user_flags.push(arg.clone().split_off(1));
+        }
+    }
+
     let config_path = Path::new("build.toml");
     if !config_path.exists() {
         eprintln!("Error: build.toml not found!");
@@ -55,6 +77,29 @@ fn main() {
         eprintln!("Error: Failed to parse build.toml: {}", err);
         std::process::exit(1);
     });
+
+    let mut build_dir_name = &config.build.dir;
+    let mut build_mode = None;
+
+    for user_flag in &user_flags {
+        if let Some(flags) = config.flags.get(user_flag) {
+            if let Some(new_build_dir) = &flags.build_dir {
+                build_dir_name = new_build_dir;
+            }
+            if let Some(new_build_mode) = &flags.build_mode {
+                build_mode = Some(new_build_mode);
+            }
+        } else {
+            eprintln!("Unknown flag '{}'", user_flag);
+        }
+    }
+
+    let context: context::Context = context::Context {
+        rebuild: false,
+        mode: build_mode.map(|s| s.to_owned()),
+    };
+
+    let build_dir = current_dir.join(build_dir_name.clone());
 
     let mut targets = Vec::new();
     for arg in env::args().skip(1) {
@@ -120,16 +165,11 @@ fn main() {
         eprintln!("Error: Couldn't create cache buffer");
         std::process::exit(1);
     });
-
-    let current_dir = env::current_dir().unwrap_or_else(|err | {
-        eprintln!("Error: Couldn't get current dir: {}", err);
-        std::process::exit(1);
-    });
-    let build_dir = current_dir.join(config.build.dir.clone());
+    
     let mut executed = HashMap::new();
     let mut error = false;
     for target_name in targets {
-        let result = target::execute_target(&target_name, &config, &toolchains, &formats, &mut executed, &build_dir, &cache);
+        let result = target::execute_target(&target_name, &config, &toolchains, &formats, &mut executed, &build_dir, &cache, &context);
         if result.is_err() {
             eprintln!("Target {} failed: {}", target_name, result.err().unwrap());
             error = true;

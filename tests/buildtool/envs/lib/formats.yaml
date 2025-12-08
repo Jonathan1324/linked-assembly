@@ -1,4 +1,4 @@
-gcc_deps:
+default_gcc_deps:
   split: " "
 
   start:

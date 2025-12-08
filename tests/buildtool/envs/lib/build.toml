@@ -8,14 +8,15 @@ dir = "build"
 default_target = "build"
 
 [tools]
-default = "test"
+default_toolchain = "default"
+default_mode = "debug"
 toolchains = ["toolchains.yaml"]
 formats = ["formats.yaml"]
 
 [targets.run]
 description = "Run the project"
 before = ["build"]
-run = "execute build/main"
+run = "execute ${BUILD_DIR}/main"
 
 [targets.build]
 description = "Build the project"
@@ -45,4 +46,4 @@ files = "*.c"
 
 [targets.clean]
 description = "Clean the project"
-run = "delete build"
+run = "delete ${BUILD_DIR}"
