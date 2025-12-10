@@ -4,7 +4,7 @@
 
 HCB
 
-#define VERSION "commit"
+#define VERSION "v0.1.0-alpha.4"
 
 void printVersion();
 
