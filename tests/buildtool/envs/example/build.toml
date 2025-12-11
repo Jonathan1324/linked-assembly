@@ -24,7 +24,7 @@ out = "executable"                                              # defaults to "U
 for_each = false                                                # defaults when out
                                                                 #   Executable, StaticLibrary => true
                                                                 #   Object, _ => false
-name = "main"                                                   # optional
+out_path = "main"                                               # defaults to "${INPUT}"
 depends = ["compile_src"]                                       # optional
 message = "Building the project"                                # optional
 
@@ -33,6 +33,7 @@ description = "Compile files in src"                            # optional
 out = "object"                                                  # defaults to "Undefined"
 path = "src"                                                    # defaults to "."
 files = "*.c"                                                   # optional (allows both String and Vector<String>
+out_path = "${INPUT}.o"                                         # defaults to "${INPUT}"
 #optional: message: String
 #optional: depends
 

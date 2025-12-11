@@ -99,7 +99,7 @@ fn main() {
         mode: build_mode.map(|s| s.to_owned()),
     };
 
-    let build_dir = current_dir.join(build_dir_name.clone());
+    let build_dir = PathBuf::from(build_dir_name);
 
     let mut targets = Vec::new();
     for arg in env::args().skip(1) {

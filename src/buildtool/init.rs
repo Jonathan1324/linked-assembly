@@ -31,11 +31,12 @@ run = "delete ${BUILD_DIR}"
 
 [targets.build]
 description = "Build the project"
-depends = ["compile_c_cpp_srcs"]
 out = "executable"
-name = "main"
+out_path = "main"
+depends = ["compile_c_cpp_srcs"]
 
 [targets.compile_c_cpp_srcs] #example
+out_path = "${INPUT}.o"
 out = "object"
 path = "src" # change it
 files = ["*.c", "*.cpp"]

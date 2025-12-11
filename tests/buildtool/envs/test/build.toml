@@ -28,9 +28,10 @@ run = "delete ${BUILD_DIR}"
 description = "Build the project"
 depends = ["compile_c_cpp_srcs"]
 out = "executable"
-name = "main"
+out_path = "main"
 
 [targets.compile_c_cpp_srcs]
 out = "object"
 path = "src"
 files = ["*.c", "*.cpp"]
+out_path = "${INPUT}.o"

@@ -21,7 +21,7 @@ run = "execute ${BUILD_DIR}/main"
 [targets.build]
 description = "Build the project"
 out = "executable"
-name = "main"
+out_path = "main"
 depends = ["compile_src", "lib"]
 message = "Building the project"
 
@@ -30,11 +30,12 @@ description = "Compile files in src"
 out = "object"
 path = "src/exe"
 files = "*.c"
+out_path = "${INPUT}.o"
 
 [targets.lib]
 description = "Link the static library"
 out = "static-library"
-name = "libcore.a"
+out_path = "libcore.a"
 depends = ["compile_lib_srcs"]
 message = "Building the library"
 
@@ -43,6 +44,7 @@ description = "Compile sources in src/lib"
 out = "object"
 path = "src/lib"
 files = "*.c"
+out_path = "${INPUT}.o"
 
 [targets.clean]
 description = "Clean the project"

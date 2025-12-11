@@ -90,7 +90,8 @@ pub struct Target {
     #[serde(default)]
     pub before: Vec<String>,
 
-    pub name: Option<String>,
+    #[serde(default = "default_out_path")]
+    pub out_path: String,
 
     pub for_each: Option<bool>,
 
@@ -109,6 +110,8 @@ pub struct Flags {
     pub build_dir: Option<String>,
     pub build_mode: Option<String>,
 }
+
+fn default_out_path() -> String { "{INPUT}".to_string() }
 
 fn default_target_out() -> OutputKind { OutputKind::Known(KnownOutputKind::Undefined) }
 

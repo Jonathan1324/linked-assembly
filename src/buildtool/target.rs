@@ -100,11 +100,7 @@ pub fn execute_target(
             println!("{}", message);
         }
 
-        let target_path = if Path::new(&target.path).is_absolute() {
-            PathBuf::from(&target.path)
-        } else {
-            env::current_dir()?.join(&target.path)
-        };
+        let target_path = PathBuf::from(&target.path);
 
         if let Some(files_sov) = &target.files {
             let files = files_sov.into_vec();
@@ -142,37 +138,12 @@ pub fn execute_target(
         if !inputs.is_empty() {
             if for_each {
                 for input in &inputs {
-                    let mut output_path = build_dir.join(input.strip_prefix(env::current_dir()?).map_err(|e| io::Error::new(io::ErrorKind::Other, e))?);
-                    let file_name = if let Some(name) = &target.name {
-                        name.clone().into()
-                    } else {
-                        match &target.out {
-                            OutputKind::Known(kind) => match kind {
-                                KnownOutputKind::Object => {
-                                    let mut name = output_path.file_name().ok_or_else(|| {
-                                        io::Error::new(io::ErrorKind::Other, "Couldn't get filename of output")
-                                    })?.to_os_string();
-                                    name.push(".o");
-                                    name
-                                }
-                                _ => {
-                                    Path::new(output_path.file_name().ok_or_else(|| {
-                                        io::Error::new(io::ErrorKind::Other, "Couldn't get filename of output")
-                                    })?).file_stem().ok_or_else(|| {
-                                        io::Error::new(io::ErrorKind::Other, "Couldn't get filestem of output")
-                                    })?.to_os_string()
-                                }
-                            },
-                            OutputKind::Custom(_) => {
-                                Path::new(output_path.file_name().ok_or_else(|| {
-                                    io::Error::new(io::ErrorKind::Other, "Couldn't get filename of output")
-                                })?).file_stem().ok_or_else(|| {
-                                    io::Error::new(io::ErrorKind::Other, "Couldn't get filestem of output")
-                                })?.to_os_string()
-                            }
-                        }
-                    };
-                    output_path.set_file_name(file_name);
+                    let mut replacements = HashMap::new();
+                    let rel_path = format!("{}/", target_path.display());
+                    let input_name = input.to_string_lossy().to_string();
+                    replacements.insert("input".to_string(), input_name.strip_prefix(&rel_path).unwrap_or("").to_string());
+                    let rel_output_path = crate::execute::replace_placeholders(&target.out_path, &replacements)?;
+                    let mut output_path = build_dir.join(rel_output_path);
 
                     let temp_inputs: Vec<&Path> = vec![input];
 
@@ -187,37 +158,12 @@ pub fn execute_target(
                     outputs.push(output_path);
                 }
             } else {
-                let mut output_path = build_dir.join(inputs[0].strip_prefix(env::current_dir()?).map_err(|e| io::Error::new(io::ErrorKind::Other, e))?);
-                if let Some(name) = &target.name {
-                    output_path = build_dir.to_path_buf().join(name);
-                } else {
-                    let filename = match &target.out {
-                        OutputKind::Known(kind) => match kind {
-                            KnownOutputKind::Object => {
-                                let mut name = output_path.file_name().ok_or_else(|| {
-                                    io::Error::new(io::ErrorKind::Other, "Couldn't get filename of output")
-                                })?.to_os_string();
-                                name.push(".o");
-                                name
-                            }
-                            _ => {
-                                Path::new(output_path.file_name().ok_or_else(|| {
-                                    io::Error::new(io::ErrorKind::Other, "Couldn't get filename of output")
-                                })?).file_stem().ok_or_else(|| {
-                                    io::Error::new(io::ErrorKind::Other, "Couldn't get filestem of output")
-                                })?.to_os_string()
-                            }
-                        },
-                        OutputKind::Custom(_) => {
-                            Path::new(output_path.file_name().ok_or_else(|| {
-                                io::Error::new(io::ErrorKind::Other, "Couldn't get filename of output")
-                            })?).file_stem().ok_or_else(|| {
-                                io::Error::new(io::ErrorKind::Other, "Couldn't get filestem of output")
-                            })?.to_os_string()
-                        }
-                    };
-                    output_path.set_file_name(filename);
-                }
+                let mut replacements = HashMap::new();
+                let rel_path = format!("{}/", target_path.display());
+                let input_name = inputs[0].to_string_lossy().to_string();
+                replacements.insert("input".to_string(), input_name.strip_prefix(&rel_path).unwrap_or("").to_string());
+                let rel_output_path = crate::execute::replace_placeholders(&target.out_path, &replacements)?;
+                let mut output_path = build_dir.join(rel_output_path);
 
                 // TODO: not always .exe
                 if matches!(target.out, OutputKind::Known(KnownOutputKind::Executable)) {
