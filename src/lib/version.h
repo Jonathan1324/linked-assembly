@@ -4,7 +4,7 @@
 
 HCB
 
-#define VERSION "v0.1.0-alpha.4b"
+#define VERSION "v0.1.0-alpha.4b-after"
 
 void printVersion();
 
