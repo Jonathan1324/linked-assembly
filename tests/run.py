@@ -2,10 +2,16 @@ from pathlib import Path
 import logging
 import os
 import sys
-import lasmp.test as lasmp
+
 import assembler.test as assembler
+import lasmp.test as lasmp
+
+import lnk.test as lnk
+
 import buildtool.test as buildtool
+
 import lbf.test as lbf
+
 import lfs.test as lfs
 
 # Paths
@@ -32,11 +38,14 @@ console_handler.setFormatter(console_formatter)
 logger.addHandler(console_handler)
 
 def main():
+    assembler_dir = dir / "assembler"
+    assembler_log_dir = log_dir / "assembler"
+
     lasmp_dir = dir / "lasmp"
     lasmp_log_dir = log_dir / "lasmp"
 
-    assembler_dir = dir / "assembler"
-    assembler_log_dir = log_dir / "assembler"
+    lnk_dir = dir / "lnk"
+    lnk_log_dir = log_dir / "lnk"
 
     buildtool_dir = dir / "buildtool"
     buildtool_log_dir = log_dir / "buildtool"
@@ -48,22 +57,39 @@ def main():
     lfs_log_dir = log_dir / "lfs"
     
     if "-c" in sys.argv[1:]:
-        lasmp.clean(lasmp_dir, lasmp_log_dir)
         assembler.clean(assembler_dir, assembler_log_dir)
+        lasmp.clean(lasmp_dir, lasmp_log_dir)
+
+        lnk.clean(lnk_dir, lnk_log_dir)
+
         buildtool.clean(buildtool_dir, buildtool_log_dir)
+
         lbf.clean(lbf_dir, lbf_log_dir)
+
         lfs.clean(lfs_dir, lfs_log_dir)
+
         logs.unlink(missing_ok=True)
     else:
-        lasmp_log_dir.mkdir(parents=True, exist_ok=True)
         assembler_log_dir.mkdir(parents=True, exist_ok=True)
+        lasmp_log_dir.mkdir(parents=True, exist_ok=True)
+
+        lnk_log_dir.mkdir(parents=True, exist_ok=True)
+
         buildtool_log_dir.mkdir(parents=True, exist_ok=True)
+
         lbf_log_dir.mkdir(parents=True, exist_ok=True)
 
-        lasmp.test(lasmp_dir, lasmp_log_dir)
+        lfs_log_dir.mkdir(parents=True, exist_ok=True)
+
         assembler.test(assembler_dir, assembler_log_dir)
+        lasmp.test(lasmp_dir, lasmp_log_dir)
+
+        lnk.test(lnk_dir, lnk_log_dir)
+        
         buildtool.test(buildtool_dir, buildtool_log_dir)
+
         lbf.test(lbf_dir, lbf_log_dir)
+
         lfs.test(lfs_dir, lfs_log_dir)
 
 if __name__ == "__main__":

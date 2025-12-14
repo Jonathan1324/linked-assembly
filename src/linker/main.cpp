@@ -4,8 +4,6 @@
 #include <fstream>
 #include <string>
 
-#include "architecture/architecture.hpp"
-
 #include "cli/help.h"
 #include "arguments.hpp"
 #include "Context.hpp"
@@ -65,12 +63,6 @@ int main(int argc, const char *argv[])
             return 1;
         }
         catch(const std::exception& e) { handleError(e); }
-
-        char buffer[4];
-
-        file->read(buffer, 4);
-
-        Format format = getFormat(buffer);
 
         if (inputFile != "-")
             delete file;

@@ -15,7 +15,7 @@ ASM_OBJS = $(patsubst %.asm, $(BUILD_DIR)/%.asm.o, $(ASM_SRCS))
 
 DEPS := $(C_OBJS:.o=.d) $(CPP_OBJS:.o=.d) $(ASM_OBJS:.o=.d)
 
-TARGET = $(BUILD_DIR)/lli$(EXE_EXT)
+TARGET = $(BUILD_DIR)/lnk$(EXE_EXT)
 
 
 CFLAGS	 += -I$(SRC_DIR)

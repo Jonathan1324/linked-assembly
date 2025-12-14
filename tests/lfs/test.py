@@ -12,7 +12,7 @@ def test(dir: Path, log_dir: Path):
     roots = [p for p in root_dir.iterdir() if p.is_dir() and p.name != ".ignore"]
     for root in roots:
         for fs_type in ["fat12", "fat16", "fat32"]:
-            log_path = Path(f"{log_dir}/{root.name}-{fs_type}.txt")
+            log_path = Path(f"{log_dir}/{root.name}/{fs_type}.txt")
             log_path.parent.mkdir(parents=True, exist_ok=True)
 
             out_path = Path(f"{dir}/build/{root.name}/{fs_type}.img")
@@ -29,3 +29,8 @@ def test(dir: Path, log_dir: Path):
 def clean(dir: Path, log_dir: Path):
     if log_dir.exists() and log_dir.is_dir():
         shutil.rmtree(log_dir)
+
+    build_dir = dir / "build"
+
+    if build_dir.exists() and build_dir.is_dir():
+        shutil.rmtree(build_dir)
