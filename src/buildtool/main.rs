@@ -36,7 +36,7 @@ fn main() {
         std::process::exit(0);
     }
     if args.iter().any(|a| a == "-h" || a == "--help") {
-        //args::args::print_help();
+        println!("Usage: {} (--init)/(<target>)", args[0]);
         std::process::exit(0);
     }
     if args.iter().any(|a | a == "--init") {

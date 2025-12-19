@@ -5,10 +5,9 @@
 #include <version.h>
 #include <util/string.hpp>
 
-void printHelp()
+void printHelp(const char* name, std::ostream& s)
 {
-    //TODO
-    fflush(stdout);
+    s << "Usage: " << name << " (-o <output>)" << std::endl;
 }
 
 bool parseArguments(int argc, const char *argv[], std::string& input, std::string& output, bool& debug, const Context& context)
@@ -25,7 +24,7 @@ bool parseArguments(int argc, const char *argv[], std::string& input, std::strin
     }
     else if (strcmp(argv[1], "--help") == 0 || strcmp(argv[1], "-h") == 0)
     {
-        printHelp();
+        printHelp(argv[0], std::cout);
         return true;
     }
 

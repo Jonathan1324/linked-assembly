@@ -14,7 +14,7 @@
 
 void print_help(const char* name, FILE* s)
 {
-    fputs("Usage: ( <fs>: <image>(:<part>) | <disk>: <image> )\n", s);
+    fputs("Usage: %s ( <fs>: <image>(:<part>) | <disk>: <image> )\n", s);
     fprintf(s, "> %s create <fs/disk> mbr | fat12|fat16|fat32 [--size B/K/M/G/T] [--boot <file>] [--root <path>] [--start B/K/M/G/T] [flags]\n", name);
     fprintf(s, "> %s format <fs/disk> mbr | fat12|fat16|fat32 [--boot <file>] [--root <path>] [flags]\n", name);
     fprintf(s, "> %s insert <fs> <host path> [--path <image path>] [flags]\n", name);

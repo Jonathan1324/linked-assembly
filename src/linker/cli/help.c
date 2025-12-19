@@ -4,6 +4,5 @@
 
 void printHelp()
 {
-    //TODO
-    fflush(stdout);
+    fputs("The linker isn't implemented yet. :(\n", stdout);
 }

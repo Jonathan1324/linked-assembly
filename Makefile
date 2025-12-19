@@ -27,9 +27,9 @@ LIB_DIR=$(BUILD_DIR)/libs
 LDFLAGSSRC = -L$(LIB_DIR) -lcore -lrust
 RUSTLDFLAGS = -lstatic=core -lstatic=rust
 
-.PHONY: all clean libcore librust buildtool asmp assembler linker
+.PHONY: all clean libcore librust lbf buildtool asmp assembler linker lfs ljoke
 
-all: libcore librust lbf buildtool asmp assembler linker lfs
+all: libcore librust lbf buildtool asmp assembler linker lfs ljoke
 
 libcore:
 	@$(MAKE) -C $(SRC_DIR)/lib 				\
@@ -86,6 +86,21 @@ lbf: libcore librust
 		STRIPFLAGS="$(STRIPFLAGS)"			\
 		SRC_DIR=$(SRC_DIR)/lbf		 		\
 		BUILD_DIR=$(BUILD_DIR)/lbf			\
+		BIN_DIR=$(BIN_DIR)					\
+		LIB_DIR=$(LIB_DIR)					\
+		EXE_EXT=$(EXE_EXT)
+
+ljoke: libcore librust
+	@$(MAKE) -C $(SRC_DIR)/ljoke  			\
+		DEBUG=$(DEBUG)						\
+											\
+		AS=$(AS) ASFLAGS="$(ASFLAGS)"		\
+		CC=$(CC) CFLAGS="$(CFLAGS)" 		\
+		CXX=$(CXX) CXXFLAGS="$(CXXFLAGS)"	\
+		LDFLAGS="$(LDFLAGSSRC) $(LDFLAGS)"	\
+		STRIPFLAGS="$(STRIPFLAGS)"			\
+		SRC_DIR=$(SRC_DIR)/ljoke		 	\
+		BUILD_DIR=$(BUILD_DIR)/ljoke		\
 		BIN_DIR=$(BIN_DIR)					\
 		LIB_DIR=$(LIB_DIR)					\
 		EXE_EXT=$(EXE_EXT)

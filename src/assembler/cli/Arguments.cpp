@@ -5,10 +5,17 @@
 #include <version.h>
 #include <util/string.hpp>
 
-void printHelp()
+void printHelp(const char* name, std::ostream& s)
 {
-    //TODO
-    fflush(stdout);
+    s << "Usage: " << name << "<inputs> (-o <output>) (--arch <x86>) (--format <bin/elf>) (--bits <16/32/64>) (--debug) (--no-preprocess)" << std::endl;
+
+    s << std::endl << "Flags:" << std::endl;
+    s << "> --arch <arch>             Set architecture" << std::endl;
+    s << "> --format <format>         Set output format" << std::endl;
+    s << "> --bits <16/32/64>         Set bit mode" << std::endl;
+    s << "> --debug                   Print debug information" << std::endl;
+    s << "> --no-preprocess           Don't execute the preprocessor" << std::endl;
+    
 }
 
 bool parseArguments(int argc, const char *argv[],
@@ -60,7 +67,7 @@ bool parseArguments(int argc, const char *argv[],
     }
     else if (std::strcmp(argv[1], "--help") == 0 || std::strcmp(argv[1], "-h") == 0)
     {
-        printHelp();
+        printHelp(argv[0], std::cout);
         return true;
     }
     
