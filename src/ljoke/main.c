@@ -2,6 +2,7 @@
 #include <stdlib.h>
 #include <time.h>
 #include <version.h>
+#include <string.h>
 
 #include "jokes.h"
 
