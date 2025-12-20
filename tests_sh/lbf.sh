@@ -1,5 +1,3 @@
-python3 -m ci.ci --no-test
-
 cd tests/lbf/srcs
 
 ../../../dist/bin/lbf $@ main.xbf

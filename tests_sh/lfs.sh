@@ -1,7 +1,3 @@
-#!/bin/sh
-
-python3 -m ci.ci
-
 cd tests/lfs
 
 mkdir -p build/test_mkfs

@@ -1,7 +1,3 @@
-#!/bin/sh
-
-python3 -m ci.ci
-
 find "tests/assembler/build/x86/lasm" -type f -name "*.o" | while read -r file; do
     prefix="tests/assembler/build/x86/lasm"
     parent_dir_all="$(dirname "$file")"
