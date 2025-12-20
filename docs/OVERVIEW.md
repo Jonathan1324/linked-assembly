@@ -2,15 +2,7 @@
 
 Docs aren't implemented yet
 
-## Buildtool
-
-Docs are planned
-
 ## Assembler / Preprocessor
-
-Docs are planned
-
-## Brainfuck Interpreter
 
 Docs are planned
 
@@ -18,6 +10,18 @@ Docs are planned
 
 Docs are planned
 
+## Buildtool
+
+Docs are planned
+
 ## Filesystem Tool
+
+Docs are planned
+
+## Joke Tool
+
+Docs are planned
+
+## Brainfuck Interpreter
 
 Docs are planned
