@@ -372,7 +372,7 @@ FAT_Filesystem* FAT_CreateEmptyFilesystem(Partition* partition, Fat_Version vers
                                           uint64_t total_size, uint32_t bytes_per_sector, uint8_t sectors_per_cluster,
                                           uint16_t reserved_sectors, uint8_t number_of_fats, uint16_t max_root_directory_entries,
                                           uint16_t sectors_per_track, uint16_t number_of_heads, uint8_t drive_number,
-                                          uint8_t media_descriptor );
+                                          uint8_t media_descriptor, uint32_t hidden_sectors);
 
 // Reads an existing FAT Filesystem
 FAT_Filesystem* FAT_OpenFilesystem(Partition* partition, Fat_Version version, int read_only);
@@ -400,14 +400,14 @@ int FAT12_FAT16_WriteBootsector(FAT_Filesystem* fs, void* bootsector, int force_
                                 uint64_t total_size, uint32_t bytes_per_sector, uint8_t sectors_per_cluster,
                                 uint16_t reserved_sectors, uint8_t number_of_fats, uint16_t max_root_directory_entries,
                                 uint16_t sectors_per_track, uint16_t number_of_heads, uint8_t drive_number,
-                                uint8_t media_descriptor);
+                                uint8_t media_descriptor, uint32_t hidden_sectors);
 
 int FAT32_WriteBootsector(FAT_Filesystem* fs, void* bootsector, int force_bootsector,
                           const char* oem_name, const char* volume_label, uint32_t volume_id,
                           uint64_t total_size, uint32_t bytes_per_sector, uint8_t sectors_per_cluster,
                           uint16_t reserved_sectors, uint8_t number_of_fats, uint16_t max_root_directory_entries,
                           uint16_t sectors_per_track, uint16_t number_of_heads, uint8_t drive_number,
-                          uint8_t media_descriptor);
+                          uint8_t media_descriptor, uint32_t hidden_sectors);
 
 // Seeks to fs->fat_offset and writes FAT
 // Parameters:

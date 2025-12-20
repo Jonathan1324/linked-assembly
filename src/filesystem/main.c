@@ -416,6 +416,8 @@ int main(int argc, const char* argv[])
             uint8_t drive_number = fat_version == FAT_VERSION_12 ? 0x00 : 0x80;
             uint8_t media_descriptor = fat_version == FAT_VERSION_12 ? FAT_BOOTSECTOR_MEDIA_DESCRIPTOR_FLOPPY144 : FAT_BOOTSECTOR_MEDIA_DESCRIPTOR_DISK;
 
+            uint32_t hidden_sectors = partition->offset / bytes_per_sector;
+
             // TODO
             fat_fs = FAT_CreateEmptyFilesystem(partition, fat_version, args.flag_fast, (args.boot_file ? bootsector_buffer : NULL), args.flag_force_bootsector,
                                             oem_name, volume_name, volume_id,
@@ -423,7 +425,7 @@ int main(int argc, const char* argv[])
                                             sectors_per_cluster, reserved_sectors,
                                             number_of_fats, max_root_directory_entries,
                                             sectors_per_track, number_of_heads,
-                                            drive_number, media_descriptor);
+                                            drive_number, media_descriptor, hidden_sectors);
 
             if (p_name && !args.flag_dont_update_partition_entry) {
                 MBR_Disk* mbr = MBR_OpenDisk(disk);

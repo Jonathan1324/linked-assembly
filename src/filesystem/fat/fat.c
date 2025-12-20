@@ -64,7 +64,7 @@ FAT_Filesystem* FAT_CreateEmptyFilesystem(Partition* partition, Fat_Version vers
                                           uint64_t total_size, uint32_t bytes_per_sector, uint8_t sectors_per_cluster,
                                           uint16_t reserved_sectors, uint8_t number_of_fats, uint16_t max_root_directory_entries,
                                           uint16_t sectors_per_track, uint16_t number_of_heads, uint8_t drive_number,
-                                          uint8_t media_descriptor )
+                                          uint8_t media_descriptor, uint32_t hidden_sectors)
 {
     if (!partition || !oem_name || !volume_label) return NULL;
     if (version != FAT_VERSION_12 && version != FAT_VERSION_16 && version != FAT_VERSION_32) return NULL;
@@ -76,7 +76,7 @@ FAT_Filesystem* FAT_CreateEmptyFilesystem(Partition* partition, Fat_Version vers
     if (fs->version == FAT_VERSION_12 || fs->version == FAT_VERSION_16) {
         if (FAT12_FAT16_WriteBootsector(fs, bootsector, force_bootsector, oem_name, volume_label, volume_id, total_size, bytes_per_sector, sectors_per_cluster,
                                         reserved_sectors, number_of_fats, max_root_directory_entries, sectors_per_track,
-                                        number_of_heads, drive_number, media_descriptor) != 0) {
+                                        number_of_heads, drive_number, media_descriptor, hidden_sectors) != 0) {
             free(fs);
             return NULL;
         }
@@ -96,7 +96,7 @@ FAT_Filesystem* FAT_CreateEmptyFilesystem(Partition* partition, Fat_Version vers
     } else {
         if (FAT32_WriteBootsector(fs, bootsector, force_bootsector, oem_name, volume_label, volume_id, total_size, bytes_per_sector, sectors_per_cluster,
                                   reserved_sectors, number_of_fats, max_root_directory_entries, sectors_per_track,
-                                  number_of_heads, drive_number, media_descriptor) != 0) {
+                                  number_of_heads, drive_number, media_descriptor, hidden_sectors) != 0) {
             free(fs);
             return NULL;
         }
@@ -509,7 +509,7 @@ int FAT12_FAT16_WriteBootsector(FAT_Filesystem* fs, void* bootsector, int force_
                              uint64_t total_size, uint32_t bytes_per_sector, uint8_t sectors_per_cluster,
                              uint16_t reserved_sectors, uint8_t number_of_fats, uint16_t max_root_directory_entries,
                              uint16_t sectors_per_track, uint16_t number_of_heads, uint8_t drive_number,
-                             uint8_t media_descriptor)
+                             uint8_t media_descriptor, uint32_t hidden_sectors)
 {
     if (!fs || fs->read_only) return 1;
     if (fs->version != FAT_VERSION_12 && fs->version != FAT_VERSION_16) return 1;
@@ -572,7 +572,7 @@ int FAT12_FAT16_WriteBootsector(FAT_Filesystem* fs, void* bootsector, int force_
         fs->bootsector.fat12_fat16.header.fat_size = fat_sectors;
         fs->bootsector.fat12_fat16.header.sectors_per_track = sectors_per_track;
         fs->bootsector.fat12_fat16.header.number_of_heads = number_of_heads;
-        fs->bootsector.fat12_fat16.header.hidden_sectors = 0;
+        fs->bootsector.fat12_fat16.header.hidden_sectors = hidden_sectors;
         fs->bootsector.fat12_fat16.header.large_total_sectors = use_large_total_sectors ? total_sectors : 0;
         fs->bootsector.fat12_fat16.header.drive_number = drive_number;
         fs->bootsector.fat12_fat16.header.reserved = 0;
@@ -641,7 +641,7 @@ int FAT32_WriteBootsector(FAT_Filesystem* fs, void* bootsector, int force_bootse
                           uint64_t total_size, uint32_t bytes_per_sector, uint8_t sectors_per_cluster,
                           uint16_t reserved_sectors, uint8_t number_of_fats, uint16_t max_root_directory_entries,
                           uint16_t sectors_per_track, uint16_t number_of_heads, uint8_t drive_number,
-                          uint8_t media_descriptor)
+                          uint8_t media_descriptor, uint32_t hidden_sectors)
 {
     if (!fs || fs->read_only) return 1;
     if (fs->version != FAT_VERSION_32) return 1;
@@ -701,7 +701,7 @@ int FAT32_WriteBootsector(FAT_Filesystem* fs, void* bootsector, int force_bootse
         fs->bootsector.fat32.header.fat_size_small = 0; //FAT32
         fs->bootsector.fat32.header.sectors_per_track = sectors_per_track;
         fs->bootsector.fat32.header.number_of_heads = number_of_heads;
-        fs->bootsector.fat32.header.hidden_sectors = 0;
+        fs->bootsector.fat32.header.hidden_sectors = hidden_sectors;
         fs->bootsector.fat32.header.total_sectors_large = use_large_total_sectors ? total_sectors : 0;
         fs->bootsector.fat32.header.drive_number = drive_number;
         fs->bootsector.fat32.header.reserved1 = 0;
