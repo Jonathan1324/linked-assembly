@@ -14,6 +14,8 @@ MBR_Disk* MBR_CreateDisk(Disk* disk, int fast, void* bootsector, int force_boots
     if (bootsector) memcpy(&mbr->bootsector, bootsector, sizeof(MBR_Bootsector));
 
     if (!force_bootsector) {
+        memset(mbr->bootsector.partitions, 0, sizeof(mbr->bootsector.partitions));
+
         mbr->bootsector.signature = 0xAA55;
     }
 
