@@ -10,7 +10,7 @@ fi
 name="$1"
 shift
 
-script="./tests_sh/${name}.sh"
+script="./tests/shell/${name}.sh"
 
 if [ ! -x "$script" ]; then
     echo "Error: $script not found or not executable"
