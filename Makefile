@@ -39,7 +39,7 @@ libcore:
 		CC=$(CC) CFLAGS="$(CFLAGS)" 		\
 		CXX=$(CXX) CXXFLAGS="$(CXXFLAGS)"	\
 		AR=$(AR) ARFLAGS=$(ARFLAGS)			\
-		LDFLAGS=$(LDFLAGS)					\
+		LDFLAGS="$(LDFLAGS)"				\
 		STRIPFLAGS="$(STRIPFLAGS)"			\
 		RANLIB=$(RANLIB)					\
 		SRC_DIR=$(SRC_DIR)/lib 				\

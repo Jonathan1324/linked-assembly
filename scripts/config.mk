@@ -31,6 +31,8 @@ RUSTLIBFLAGS = --crate-type staticlib
 RUSTFLAGS =
 STRIPFLAGS =
 
+STATIC_FLAGS = -static -static-libgcc -static-libstdc++
+
 ifeq ($(OS_NAME),linux)
 	LDFLAGS += -Wl,--gc-sections
 	CFLAGS += -ffunction-sections -fdata-sections
@@ -45,6 +47,10 @@ endif
 ifeq ($(DEBUG),0)
 	CFLAGS += -DVERSION=\"$(VERSION)\"
 	CXXFLAGS += -DVERSION=\"$(VERSION)\"
+
+	ifneq ($(OS_NAME),macos)
+		LDFLAGS += $(STATIC_FLAGS)
+	endif
 endif
 
 ifeq (${DEBUG},1)
