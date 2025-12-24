@@ -12,6 +12,7 @@ shift
 
 script="./tests/shell/${name}.sh"
 
+chmod +x "$script"
 if [ ! -x "$script" ]; then
     echo "Error: $script not found or not executable"
     exit 2
