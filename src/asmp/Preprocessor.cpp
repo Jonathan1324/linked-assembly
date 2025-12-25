@@ -5,6 +5,7 @@
 #include <sstream>
 #include <limits>
 #include <io/file.hpp>
+#include <unordered_set>
 
 PreProcessor::PreProcessor(const Context& _context)
     : context(_context)
@@ -117,12 +118,49 @@ void PreProcessor::Process(std::ostream* output, std::istream* input, const std:
                 }
 
                 std::string filename = rest.substr(firstPos + 1, secondPos - firstPos - 1);
+                std::ifstream input;
+                std::filesystem::path resolvedPath;
+                std::filesystem::path requested(filename);
+
+                if (requested.is_absolute())
+                {
+                    if (std::filesystem::exists(requested) &&
+                        std::filesystem::is_regular_file(requested))
+                    {
+                        input.open(requested);
+                        if (input)
+                            resolvedPath = requested;
+                    }
+                }
+                else
+                {
+                    for (const std::filesystem::path& base : context.include_paths)
+                    {
+                        std::filesystem::path candidate = base / filename;
+
+                        if (std::filesystem::exists(candidate) && std::filesystem::is_regular_file(candidate))
+                        {
+                            input.open(candidate);
+                            if (input)
+                            {
+                                resolvedPath = candidate;
+                                break;
+                            }
+                        }
+                    }
+                }
 
                 std::ostringstream buffer;
-                std::ifstream input(filename);
-                if (!input) throw Exception::IOError("Could not open include file: " + filename, -1, -1);
+                if (!input.is_open())
+                {
+                    throw Exception::IOError(
+                        "Could not open include file: " + filename,
+                        -1,
+                        -1
+                    );
+                }
 
-                Process(&buffer, &input, filename);
+                Process(&buffer, &input, resolvedPath.string());
 
                 (*output) << buffer.str();
 
@@ -151,59 +189,66 @@ size_t countTrailingBackslashes(const std::ostringstream& oss)
 
 std::string PreProcessor::ProcessLine(const std::string& line)
 {
-    std::ostringstream result;
-    std::istringstream stream(line);
-    std::string word;
-    bool inString = false;
-    char ch;
-    std::string currentToken;
+    std::string current = line;
+    std::unordered_set<std::string> seen;
 
-    while (stream.get(ch))
+    while (true)
     {
-        if (ch == '"')
-        {
-            size_t bsCount = countTrailingBackslashes(result);
-            bool escaped = (bsCount % 2 == 1);
+        if (!seen.insert(current).second)
+            throw Exception::InternalError("Cyclic %define expansion detected", -1, -1);
 
-            if (!escaped) inString = !inString;
-            result << ch;
-            continue;
-        }
+        std::ostringstream result;
+        std::istringstream stream(current);
+        bool inString = false;
+        char ch;
+        std::string currentToken;
 
-        if (inString)
+        while (stream.get(ch))
         {
-            result << ch;
-            continue;
-        }
-
-        if (std::isspace(ch) || ch == '%' || ch == ',' || ch == ';')
-        {
-            if (!currentToken.empty())
+            if (ch == '"')
             {
-                auto it = definitions.find(currentToken);
-                if (it != definitions.end())
-                    result << it->second.value;
-                else
-                    result << currentToken;
-                currentToken.clear();
+                size_t bsCount = countTrailingBackslashes(result);
+                bool escaped = (bsCount % 2 == 1);
+
+                if (!escaped) inString = !inString;
+                result << ch;
+                continue;
             }
 
-            result << ch;
+            if (inString)
+            {
+                result << ch;
+                continue;
+            }
+
+            if (std::isspace(ch) || ch == '%' || ch == ',' || ch == ';')
+            {
+                if (!currentToken.empty())
+                {
+                    auto it = definitions.find(currentToken);
+                    result << (it != definitions.end() ? it->second.value : currentToken);
+                    currentToken.clear();
+                }
+
+                result << ch;
+            }
+            else
+                currentToken += ch;
         }
-        else
-            currentToken += ch;
-    }
 
-    if (!currentToken.empty())
-    {
-        auto it = definitions.find(currentToken);
-        if (it != definitions.end())
-            result << it->second.value;
-        else
-            result << currentToken;
-    }
+        if (!currentToken.empty())
+        {
+            auto it = definitions.find(currentToken);
+            result << (it != definitions.end() ? it->second.value : currentToken);
+        }
 
-    return result.str();
+        std::string expanded = result.str();
+
+        if (expanded == current)
+            return expanded;
+
+        current = expanded;
+    }
 }
 
 void PreProcessor::Print()

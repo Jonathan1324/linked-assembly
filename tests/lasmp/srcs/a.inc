@@ -1,0 +1,3 @@
+abc
+
+%define ABC 0x10, 0x00
