@@ -4,4 +4,4 @@
 
 section .data
 
-msg db "Hello, World", A##ABC
+msg db "Hello, World", ABC
