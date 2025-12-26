@@ -8,8 +8,7 @@
 
 void printHelp(const char* programName)
 {
-    puts("This is a brainfuck interpreter.");
-    fprintf(stdout, "Usage: %s [-c] <input.bf> [-o output.bf]\n", programName);
+    fprintf(stdout, "Usage: %s <input.bf>\n", programName);
 }
 
 int main(int argc, const char *argv[])

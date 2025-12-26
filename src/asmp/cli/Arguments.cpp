@@ -7,7 +7,7 @@
 
 void printHelp(const char* name, std::ostream& s)
 {
-    s << "Usage: " << name << " (-o <output>)" << std::endl;
+    s << "Usage: " << name << " <input> (-o <output>)" << std::endl;
 }
 
 bool parseArguments(int argc, const char *argv[], std::string& input, std::string& output, bool& debug, const Context& context)

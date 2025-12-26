@@ -7,7 +7,7 @@
 
 void printHelp(const char* name, std::ostream& s)
 {
-    s << "Usage: " << name << "<inputs> (-o <output>) (--arch <x86>) (--format <bin/elf>) (--bits <16/32/64>) (--debug) (--no-preprocess)" << std::endl;
+    s << "Usage: " << name << " <inputs> (-o <output>) (--arch <x86>) (--format <bin/elf>) (--bits <16/32/64>) (--debug) (--no-preprocess)" << std::endl;
 
     s << std::endl << "Flags:" << std::endl;
     s << "> --arch <arch>             Set architecture" << std::endl;
