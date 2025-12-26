@@ -1,4 +1,6 @@
-%define ENDL 0x10, 0x00
+%define ENDL ABC
+
+%include "a.inc"
 
 section .data
 

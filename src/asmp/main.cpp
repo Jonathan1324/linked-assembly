@@ -1,5 +1,6 @@
 #include <iostream>
 #include <fstream>
+#include <filesystem>
 
 #include <io/file.hpp>
 #include <Exception.hpp>
@@ -40,6 +41,11 @@ int main(int argc, const char *argv[])
         std::istream* input = openIstream(inputFile);
 
         context.filename = inputFile;
+        context.include_paths.clear();
+        
+        std::filesystem::path inputPath(inputFile);
+        
+        context.include_paths.push_back(inputPath.parent_path());
 
         PreProcessor preprocessor(context);
         preprocessor.Process(output, input, context.filename);
