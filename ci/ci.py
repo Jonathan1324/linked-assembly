@@ -145,7 +145,7 @@ if __name__ == "__main__":
         logger.addHandler(console_handler)
 
     logger.debug(f"Debug: {args.debug}, Clean: {args.clean}, Build: {args.build}, Test: {args.test}, Archive: {args.archive}")
-    archive_name = args.archive_name or "linked-assembly"
+    archive_name = args.archive_name or "lct"
     logger.debug(f"Archive name: {archive_name}")
 
     os: OS
