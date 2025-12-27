@@ -51,9 +51,9 @@ jobs:
       - name: Build the project
         run: |
           if [ "${{ matrix.os_name }}" = "windows" ]; then
-            python -m ci.ci --no-test --no-log -a -A linked-assembly-${{ matrix.os_name }}-${{ matrix.arch }} --os ${{ matrix.os_name }} --arch ${{ matrix.arch }}
+            python -m ci.ci --no-test --no-log -a -A lct-${{ matrix.os_name }}-${{ matrix.arch }} --os ${{ matrix.os_name }} --arch ${{ matrix.arch }}
           else
-            python3 -m ci.ci --no-test --no-log -a -A linked-assembly-${{ matrix.os_name }}-${{ matrix.arch }} --os ${{ matrix.os_name }} --arch ${{ matrix.arch }}
+            python3 -m ci.ci --no-test --no-log -a -A lct-${{ matrix.os_name }}-${{ matrix.arch }} --os ${{ matrix.os_name }} --arch ${{ matrix.arch }}
           fi
         shell: bash
 
@@ -61,5 +61,5 @@ jobs:
         uses: softprops/action-gh-release@v2
         with:
           files: |
-            archives/${{ matrix.os_name == 'windows' && format('linked-assembly-{0}-{1}.zip', matrix.os_name, matrix.arch) || format('linked-assembly-{0}-{1}.tar.gz', matrix.os_name, matrix.arch) }}
+            archives/${{ matrix.os_name == 'windows' && format('lct-{0}-{1}.zip', matrix.os_name, matrix.arch) || format('lct-{0}-{1}.tar.gz', matrix.os_name, matrix.arch) }}
           token: ${{ secrets.GITHUB_TOKEN }}

@@ -127,7 +127,7 @@ jobs:
 
       - name: Build the project
         run: |
-          FLAGS="-a -A linked-assembly-${{ matrix.os_name }}-${{ matrix.arch }} "
+          FLAGS="-a -A lct-${{ matrix.os_name }}-${{ matrix.arch }} "
           FLAGS+="--os ${{ matrix.os_name }} --arch ${{ matrix.arch }} "
           if [ "${{ needs.planner.outputs.run_tests }}" != "true" ]; then
             FLAGS+="--no-test "
@@ -143,11 +143,11 @@ jobs:
       - name: Upload binaries as artifact
         uses: actions/upload-artifact@v4
         with:
-          name: linked-assembly-${{ matrix.os_name }}-${{ matrix.arch }}
+          name: lct-${{ matrix.os_name }}-${{ matrix.arch }}
           path: dist/
 
       - name: Upload logs as artifact
         uses: actions/upload-artifact@v4
         with:
-          name: linked-assembly-${{ matrix.os_name }}-${{ matrix.arch }}-logs
+          name: lct-${{ matrix.os_name }}-${{ matrix.arch }}-logs
           path: logs/
