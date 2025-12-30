@@ -139,8 +139,7 @@ pub fn execute_target(
             if for_each {
                 for input in &inputs {
                     let mut replacements = HashMap::new();
-                    let input_path = &inputs[0];
-                    let rel = input_path.strip_prefix(&target_path).unwrap_or(input_path);
+                    let rel = input.strip_prefix(&target_path).unwrap_or(input);
                     replacements.insert("input".to_string(), rel.to_string_lossy().to_string());
                     let rel_output_path = crate::execute::replace_placeholders(&target.out_path, &replacements)?;
                     let mut output_path = build_dir.join(rel_output_path);
