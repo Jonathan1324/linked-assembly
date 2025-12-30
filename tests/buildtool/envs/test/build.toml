@@ -1,10 +1,10 @@
 [project]
-name = "Project"
-version = "1.0.0"
-description = "A project!"
+name = "TestProject"
+version = "0.1.0"
+description = "A test project to test this buildtool"
 
 [build]
-dir = "build/debug"
+dir = "build"
 default_target = "build"
 
 [tools]
@@ -13,25 +13,39 @@ default_mode = "debug"
 toolchains = ["toolchains.yaml"]
 formats = ["formats.yaml"]
 
-[flags.release]
-build_dir = "build/release"
-build_mode = "release"
-
 [targets.run]
+description = "Run the project"
 before = ["build"]
 run = "execute ${BUILD_DIR}/main"
 
-[targets.clean]
-run = "delete ${BUILD_DIR}"
-
 [targets.build]
 description = "Build the project"
-depends = ["compile_c_cpp_srcs"]
 out = "executable"
 out_path = "main"
+depends = ["compile_src", "lib"]
+message = "Building the project"
 
-[targets.compile_c_cpp_srcs]
+[targets.compile_src]
+description = "Compile files in src"
 out = "object"
-path = "src"
-files = ["*.c", "*.cpp"]
-out_path = "${INPUT}.o"
+path = "src/exe"
+files = "*.c"
+out_path = "exe/${INPUT}.o"
+
+[targets.lib]
+description = "Link the static library"
+out = "static-library"
+out_path = "libcore.a"
+depends = ["compile_lib_srcs"]
+message = "Building the library"
+
+[targets.compile_lib_srcs]
+description = "Compile sources in src/lib"
+out = "object"
+path = "src/lib"
+files = "*.c"
+out_path = "lib/${INPUT}.o"
+
+[targets.clean]
+description = "Clean the project"
+run = "delete ${BUILD_DIR}"

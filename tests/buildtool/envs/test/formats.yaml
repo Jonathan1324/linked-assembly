@@ -3,7 +3,9 @@ default_gcc_deps:
 
   start:
     ignore_lines: 1
-  
+    trim:
+      if: "  "
+      remove: 2
   end:
     ignore_lines: 0
     trim:

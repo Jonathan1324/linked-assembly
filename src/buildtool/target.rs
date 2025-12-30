@@ -139,9 +139,9 @@ pub fn execute_target(
             if for_each {
                 for input in &inputs {
                     let mut replacements = HashMap::new();
-                    let rel_path = format!("{}/", target_path.display());
-                    let input_name = input.to_string_lossy().to_string();
-                    replacements.insert("input".to_string(), input_name.strip_prefix(&rel_path).unwrap_or("").to_string());
+                    let input_path = &inputs[0];
+                    let rel = input_path.strip_prefix(&target_path).unwrap_or(input_path);
+                    replacements.insert("input".to_string(), rel.to_string_lossy().to_string());
                     let rel_output_path = crate::execute::replace_placeholders(&target.out_path, &replacements)?;
                     let mut output_path = build_dir.join(rel_output_path);
 
@@ -159,9 +159,9 @@ pub fn execute_target(
                 }
             } else {
                 let mut replacements = HashMap::new();
-                let rel_path = format!("{}/", target_path.display());
-                let input_name = inputs[0].to_string_lossy().to_string();
-                replacements.insert("input".to_string(), input_name.strip_prefix(&rel_path).unwrap_or("").to_string());
+                let input_path = &inputs[0];
+                let rel = input_path.strip_prefix(&target_path).unwrap_or(input_path);
+                replacements.insert("input".to_string(), rel.to_string_lossy().to_string());
                 let rel_output_path = crate::execute::replace_placeholders(&target.out_path, &replacements)?;
                 let mut output_path = build_dir.join(rel_output_path);
 
