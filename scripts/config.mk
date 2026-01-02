@@ -1,13 +1,8 @@
-UNAME_S := $(shell uname -s)
-UNAME_M := $(shell uname -m)
-
-AS = nasm
-ASFLAGS = 
-
 CC = gcc
 CXX = g++
 AR = ar
 RANLIB = ranlib
+STRIP = strip
 
 ARFLAGS = r
 
@@ -67,33 +62,30 @@ ifeq ($(OS_NAME),macos)
 	CC = clang
 	CXX = clang++
 	
-	ASFLAGS += -f macho64
 	CFLAGS += -arch $(ARCH)
 	CXXFLAGS += -arch $(ARCH)
 else
-	ASFLAGS += -f elf64
-
 #	ARM
-	ifneq (,$(filter arm64 aarch64,$(UNAME_M)))
-		CFLAGS += -march=armv8-a
-		CXXFLAGS += -march=armv8-a
-	else ifneq (,$(filter armv7l armhf,$(UNAME_M)))
-		CFLAGS += -march=armv7-a -mfloat-abi=hard -mfpu=neon
-		CXXFLAGS += -march=armv7-a -mfloat-abi=hard -mfpu=neon
-	else ifneq (,$(filter armv6l,$(UNAME_M)))
-		CFLAGS += -march=armv6 -mfloat-abi=hard -mfpu=vfp
-		CXXFLAGS += -march=armv6 -mfloat-abi=hard -mfpu=vfp
+#	ifneq (,$(filter arm64 aarch64,$(UNAME_M)))
+#		CFLAGS += -march=armv8-a
+#		CXXFLAGS += -march=armv8-a
+#	else ifneq (,$(filter armv7l armhf,$(UNAME_M)))
+#		CFLAGS += -march=armv7-a -mfloat-abi=hard -mfpu=neon
+#		CXXFLAGS += -march=armv7-a -mfloat-abi=hard -mfpu=neon
+#	else ifneq (,$(filter armv6l,$(UNAME_M)))
+#		CFLAGS += -march=armv6 -mfloat-abi=hard -mfpu=vfp
+#		CXXFLAGS += -march=armv6 -mfloat-abi=hard -mfpu=vfp
 
 #	x86
- 	else ifneq (,$(filter x86_64,$(UNAME_M)))
-		CFLAGS += -m64
-		CXXFLAGS += -m64
-	else ifneq (,$(filter i686 i386,$(UNAME_M)))
-		CFLAGS += -m32
-		CXXFLAGS += -m32
+# 	else ifneq (,$(filter x86_64,$(UNAME_M)))
+#		CFLAGS += -m64
+#		CXXFLAGS += -m64
+#	else ifneq (,$(filter i686 i386,$(UNAME_M)))
+#		CFLAGS += -m32
+#		CXXFLAGS += -m32
 
 #	Unknown
-	else
-		$(warning Unknown architecture: $(UNAME_M))
-	endif
+#	else
+#		$(warning Unknown architecture: $(UNAME_M))
+#	endif
 endif
