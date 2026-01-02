@@ -32,10 +32,12 @@ ifeq ($(OS_NAME),linux)
     endif
 endif
 
-ifeq ($(OS),Windows_NT)
-	WINDOWS_NATIVE = 1
-else
+ifeq ($(origin SHELL), environment)
+  ifneq (,$(findstring bash,$(SHELL)))
     WINDOWS_NATIVE = 0
+  else
+    WINDOWS_NATIVE = 1
+  endif
 endif
 
 ifeq ($(WINDOWS_NATIVE),1)
