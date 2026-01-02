@@ -32,17 +32,13 @@ ifeq ($(OS_NAME),linux)
     endif
 endif
 
-ifeq ($(origin SHELL), environment)
-  ifneq (,$(findstring bash,$(SHELL)))
-    WINDOWS_NATIVE = 0
-  else
-    WINDOWS_NATIVE = 1
-  endif
+UNAME_RESULT := $(shell uname 2>/dev/null || echo NOT_FOUND)
+WINDOWS_NATIVE := 0
+ifeq ($(UNAME_RESULT),NOT_FOUND)
+    WINDOWS_NATIVE := 1
 endif
 
 ifeq ($(WINDOWS_NATIVE),1)
-    SHELL := cmd.exe
-
     PWD = cd
     LIST = $(shell $(PWD))/scripts/list.bat
     MKDIR = $(shell $(PWD))/scripts/mkdir.bat
