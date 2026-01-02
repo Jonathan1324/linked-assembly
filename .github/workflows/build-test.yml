@@ -126,6 +126,7 @@ jobs:
         if: ${{ matrix.os_name == 'windows' }}
         run: |
           python scripts/install_build_deps.py
+        shell: cmd
 
       - name: Build on Linux/macOS
         if: ${{ matrix.os_name != 'windows' }}
@@ -144,6 +145,7 @@ jobs:
           set FLAGS=%FLAGS% --os ${{ matrix.os_name }} --arch ${{ matrix.arch }}
           if not "${{ needs.planner.outputs.run_tests }}"=="true" set FLAGS=%FLAGS% --no-test
           python -m ci.ci %FLAGS%
+        shell: cmd
 
       - name: Upload binaries as artifact
         uses: actions/upload-artifact@v4
