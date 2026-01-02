@@ -2,10 +2,10 @@
 
 #include <fstream>
 #include <string>
-#include <vector>
 #include <variant>
 #include <unordered_map>
 #include <Architecture.hpp>
+#include <vector>
 #include "../Context.hpp"
 #include "Tokenizer.hpp"
 
