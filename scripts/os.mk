@@ -32,7 +32,13 @@ ifeq ($(OS_NAME),linux)
     endif
 endif
 
-ifeq ($(OS_NAME),windows)
+ifeq ($(OS),Windows_NT)
+	WINDOWS_NATIVE = 1
+else
+    WINDOWS_NATIVE = 0
+endif
+
+ifeq ($(WINDOWS_NATIVE),1)
     SHELL := cmd.exe
 
     PWD = cd
@@ -40,14 +46,12 @@ ifeq ($(OS_NAME),windows)
     MKDIR = $(shell $(PWD))/scripts/mkdir.bat
     RM = $(shell $(PWD))/scripts/rm.bat
     APPEND = $(shell $(PWD))/scripts/append.bat
-
-    ARGS_OS = PWD="$(PWD)" LIST="$(LIST)" MKDIR="$(MKDIR)" RM="$(RM)" APPEND="$(APPEND)"
 else
     PWD = pwd
     LIST = $(shell $(PWD))/scripts/list.sh
     MKDIR = mkdir -p
     RM = rm -rf
     APPEND = $(shell $(PWD))/scripts/append.sh
-
-    ARGS_OS = PWD="$(PWD)" LIST="$(LIST)" MKDIR="$(MKDIR)" RM="$(RM)" APPEND="$(APPEND)"
 endif
+
+ARGS_OS = WINDOWS_NATIVE="$(WINDOWS_NATIVE)" PWD="$(PWD)" LIST="$(LIST)" MKDIR="$(MKDIR)" RM="$(RM)" APPEND="$(APPEND)"
