@@ -123,7 +123,6 @@ jobs:
           else
             python3 scripts/install_build_deps.py
           fi
-        shell: bash
 
       - name: Build the project
         run: |
@@ -138,7 +137,6 @@ jobs:
           else
             python -m ci.ci $FLAGS
           fi
-        shell: bash
 
       - name: Upload binaries as artifact
         uses: actions/upload-artifact@v4
