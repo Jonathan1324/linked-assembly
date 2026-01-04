@@ -18,22 +18,18 @@ def stage(debug: bool) -> bool:
 
     build_type = "debug" if debug else "release"
     binaries = Path(f"build/{build_type}/binaries.txt")
-    licenses = Path(f"build/{build_type}/licenses.txt")
+    licenses = Path(f"build/{build_type}/third_party_licenses/")
+
+    licenses_dist = dist_dir / "THIRD_PARTY_LICENSES"
 
     if licenses.exists():
-        with third_party_license_file.open("w", encoding="utf-8") as out_f:
-            for line in licenses.read_text(encoding="utf-8").splitlines():
-                license_path = Path(line.strip())
-                if license_path.is_file():
-                    content = license_path.read_text(encoding="utf-8")
-                    out_f.write(content)
-                    out_f.write("\n\n")
-                    logger.debug(f"Copied content of {license_path} to {third_party_license_file}")
-                else:
-                    logger.warning(f"{license_path} does not exist")
-
-        licenses.unlink()
-        logger.debug(f"Deleted {licenses}")
+        licenses_dist.mkdir(parents=True, exist_ok=True)
+        for item in licenses.iterdir():
+            dest = licenses_dist / item.name
+            if item.is_dir():
+                shutil.copytree(item, dest, dirs_exist_ok=True)
+            else:
+                shutil.copy2(item, dest)
     
     if not binaries.exists():
         logger.warning(f"{binaries} does not exist")
@@ -54,6 +50,12 @@ def stage(debug: bool) -> bool:
                     logger.debug(f"Set executable permission for {dst}")
             else:
                 logger.warning(f"{binary} does not exist")
+
+    project_license = Path("LICENSE")
+    license_dist = dist_dir / "LICENSE"
+
+    if project_license.exists():
+        shutil.copy2(project_license, license_dist)
     
     logger.info(f"Staged {len(list(dist_bin.iterdir()))} binaries in dist/bin")
 

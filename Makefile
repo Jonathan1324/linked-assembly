@@ -21,6 +21,7 @@ endif
 SRC_DIR := $(shell $(PWD))/$(SRC_DIR)
 BUILD_DIR := $(shell $(PWD))/$(BUILD_DIR)
 BIN_DIR := $(BUILD_DIR)
+LICENSE_DIR := $(BUILD_DIR)/third_party_licenses
 
 LIB_DIR=$(BUILD_DIR)/libs
 
@@ -49,6 +50,7 @@ libcore:
 		LIB=core							\
 		BUILD_DIR="$(BUILD_DIR)/libs/core"	\
 		BIN_DIR="$(BIN_DIR)"				\
+		LICENSE_DIR="$(LICENSE_DIR)"		\
 		$(ARGS_OS)
 
 librust:
@@ -65,6 +67,7 @@ librust:
 		LIB=rust							\
 		BUILD_DIR=$(BUILD_DIR)/libs/rust	\
 		BIN_DIR=$(BIN_DIR)					\
+		LICENSE_DIR="$(LICENSE_DIR)"		\
 		$(ARGS_OS)
 
 lasm: libcore librust
@@ -79,6 +82,8 @@ lasm: libcore librust
 		SRC_DIR=$(SRC_DIR)/tools/lasm 		\
 		BUILD_DIR=$(BUILD_DIR)/tools/lasm	\
 		BIN_DIR=$(BIN_DIR)					\
+		LICENSE_DIR="$(LICENSE_DIR)"		\
+		TPL_TXT="$(LICENSE_DIR)/lasm.txt"	\
 		LIB_DIR=$(LIB_DIR)					\
 		EXE_EXT=$(EXE_EXT)					\
 		$(ARGS_OS)
@@ -95,6 +100,8 @@ lasmp: libcore librust
 		SRC_DIR=$(SRC_DIR)/tools/lasmp		\
 		BUILD_DIR=$(BUILD_DIR)/tools/lasmp	\
 		BIN_DIR=$(BIN_DIR)					\
+		LICENSE_DIR="$(LICENSE_DIR)"		\
+		TPL_TXT="$(LICENSE_DIR)/lasmp.txt"	\
 		LIB_DIR=$(LIB_DIR)					\
 		EXE_EXT=$(EXE_EXT)					\
 		$(ARGS_OS)
@@ -111,6 +118,8 @@ lnk: libcore librust
 		SRC_DIR=$(SRC_DIR)/tools/lnk 		\
 		BUILD_DIR=$(BUILD_DIR)/tools/lnk	\
 		BIN_DIR=$(BIN_DIR)					\
+		LICENSE_DIR="$(LICENSE_DIR)"		\
+		TPL_TXT="$(LICENSE_DIR)/lnk.txt"	\
 		LIB_DIR=$(LIB_DIR)					\
 		EXE_EXT=$(EXE_EXT)					\
 		$(ARGS_OS)
@@ -125,6 +134,8 @@ lbt: libcore librust
 		SRC_DIR=$(SRC_DIR)/tools/lbt 		\
 		BUILD_DIR=$(BUILD_DIR)/tools/lbt	\
 		BIN_DIR=$(BIN_DIR)					\
+		LICENSE_DIR="$(LICENSE_DIR)"		\
+		TPL_TXT="$(LICENSE_DIR)/lbt.txt"	\
 		LIB_DIR=$(LIB_DIR)					\
 		EXE_EXT=$(EXE_EXT)					\
 		$(ARGS_OS)
@@ -141,6 +152,8 @@ lfs: libcore librust
 		SRC_DIR=$(SRC_DIR)/tools/lfs 		\
 		BUILD_DIR=$(BUILD_DIR)/tools/lfs	\
 		BIN_DIR=$(BIN_DIR)					\
+		LICENSE_DIR="$(LICENSE_DIR)"		\
+		TPL_TXT="$(LICENSE_DIR)/lfs.txt"	\
 		LIB_DIR=$(LIB_DIR)					\
 		EXE_EXT=$(EXE_EXT)					\
 		$(ARGS_OS)
@@ -157,6 +170,8 @@ lbf: libcore librust
 		SRC_DIR=$(SRC_DIR)/tools/lbf		\
 		BUILD_DIR=$(BUILD_DIR)/tools/lbf	\
 		BIN_DIR=$(BIN_DIR)					\
+		LICENSE_DIR="$(LICENSE_DIR)"		\
+		TPL_TXT="$(LICENSE_DIR)/lbf.txt"	\
 		LIB_DIR=$(LIB_DIR)					\
 		EXE_EXT=$(EXE_EXT)					\
 		$(ARGS_OS)
@@ -173,6 +188,8 @@ ljoke: libcore librust
 		SRC_DIR=$(SRC_DIR)/tools/ljoke		\
 		BUILD_DIR=$(BUILD_DIR)/tools/ljoke	\
 		BIN_DIR=$(BIN_DIR)					\
+		LICENSE_DIR="$(LICENSE_DIR)"		\
+		TPL_TXT="$(LICENSE_DIR)/ljoke.txt"	\
 		LIB_DIR=$(LIB_DIR)					\
 		EXE_EXT=$(EXE_EXT)					\
 		$(ARGS_OS)
@@ -189,6 +206,8 @@ lhoho: libcore librust
 		SRC_DIR=$(SRC_DIR)/tools/lhoho		\
 		BUILD_DIR=$(BUILD_DIR)/tools/lhoho	\
 		BIN_DIR=$(BIN_DIR)					\
+		LICENSE_DIR="$(LICENSE_DIR)"		\
+		TPL_TXT="$(LICENSE_DIR)/lhoho.txt"	\
 		LIB_DIR=$(LIB_DIR)					\
 		EXE_EXT=$(EXE_EXT)					\
 		$(ARGS_OS)

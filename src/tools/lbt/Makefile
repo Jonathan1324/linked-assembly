@@ -25,15 +25,14 @@ endif
 #	Rust just uses one file and modules inside of it
 
 record:
-	@$(MKDIR) $(BUILD_DIR)
+	@$(MKDIR) $(LICENSE_DIR)
 	
 ifeq ($(WINDOWS_NATIVE),1)
-	@cmd /C "cargo license --do-not-bundle | findstr /V \"linked-assembly-buildtool\"" > "$(BUILD_DIR)/LICENSES.txt"
+	@cmd /C "cargo license --do-not-bundle | findstr /V \"lbt\"" > "$(TPL_TXT)"
 else
-	@cargo license --do-not-bundle | grep -v "linked-assembly-buildtool" > "$(BUILD_DIR)/LICENSES.txt"
+	@cargo license --do-not-bundle | grep -v "lbt" > "$(TPL_TXT)"
 endif
 
-	@$(APPEND) "$(BUILD_DIR)/LICENSES.txt" "$(BIN_DIR)/licenses.txt"
 	@$(APPEND) "$(TARGET)" "$(BIN_DIR)/binaries.txt"
 
 clean:
