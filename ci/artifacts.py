@@ -20,23 +20,24 @@ def stage(debug: bool) -> bool:
     binaries = Path(f"build/{build_type}/binaries.txt")
     licenses = Path(f"build/{build_type}/licenses.txt")
 
-    with third_party_license_file.open("w", encoding="utf-8") as out_f:
-        for line in licenses.read_text(encoding="utf-8").splitlines():
-            license_path = Path(line.strip())
-            if license_path.is_file():
-                content = license_path.read_text(encoding="utf-8")
-                out_f.write(content)
-                out_f.write("\n\n")
-                logger.debug(f"Copied content of {license_path} to {third_party_license_file}")
-            else:
-                logger.warning(f"{license_path} does not exist")
+    if licenses.exists():
+        with third_party_license_file.open("w", encoding="utf-8") as out_f:
+            for line in licenses.read_text(encoding="utf-8").splitlines():
+                license_path = Path(line.strip())
+                if license_path.is_file():
+                    content = license_path.read_text(encoding="utf-8")
+                    out_f.write(content)
+                    out_f.write("\n\n")
+                    logger.debug(f"Copied content of {license_path} to {third_party_license_file}")
+                else:
+                    logger.warning(f"{license_path} does not exist")
 
-    licenses.unlink()
-    logger.debug(f"Deleted {licenses}")
+        licenses.unlink()
+        logger.debug(f"Deleted {licenses}")
     
     if not binaries.exists():
-        logger.error(f"{binaries} does not exist")
-        return False
+        logger.warning(f"{binaries} does not exist")
+        return True
     
     with binaries.open() as f:
         for line in f:

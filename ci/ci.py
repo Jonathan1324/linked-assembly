@@ -80,6 +80,12 @@ parser.add_argument(
     help="windows, macos or linux"
 )
 
+parser.add_argument(
+    "tools",
+    nargs="*",
+    help="Tools which need to be compiled"
+)
+
 trash = Path("build/trash")
 
 def main(args, os: OS, arch: ARCH) -> bool:
@@ -100,7 +106,7 @@ def main(args, os: OS, arch: ARCH) -> bool:
         logger.debug("Stopping before building")
         return False
 
-    result: bool = build.build(debug=args.debug, os=os, arch=arch)
+    result: bool = build.build(debug=args.debug, os=os, arch=arch, tools=args.tools)
     if (not result):
         logger.error("Building failed")
         return False

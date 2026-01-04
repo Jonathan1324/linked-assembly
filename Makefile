@@ -29,7 +29,9 @@ RUSTLDFLAGS = -lstatic=core -lstatic=rust
 
 .PHONY: all clean libcore librust lasm lasmp lnk lbt lfs lbf ljoke lhoho
 
-all: libcore librust lasm lasmp lnk lbt lfs lbf ljoke lhoho
+all:
+
+all_tools: libcore librust lasm lasmp lnk lbt lfs lbf ljoke lhoho
 
 libcore:
 	@"$(MAKE)" -C $(SRC_DIR)/libs/core 		\
