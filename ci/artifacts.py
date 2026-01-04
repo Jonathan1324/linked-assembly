@@ -14,7 +14,6 @@ def stage(debug: bool) -> bool:
 
     dist_bin = Path(f"{dist_dir}/bin")
     dist_bin.mkdir(parents=True, exist_ok=True)
-    third_party_license_file = Path(f"{dist_dir}/THIRD_PARTY_LICENSES.txt")
 
     build_type = "debug" if debug else "release"
     binaries = Path(f"build/{build_type}/binaries.txt")
