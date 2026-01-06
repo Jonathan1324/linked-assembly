@@ -7,7 +7,11 @@ import json
 import shutil
 import logging
 from os import environ
-import tomllib
+
+try:
+    import tomllib
+except ModuleNotFoundError:
+    import tomli as tomllib 
 
 from ci.os import OS, ARCH, getOS, getArch
 
