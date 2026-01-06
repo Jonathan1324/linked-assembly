@@ -30,7 +30,7 @@ class BuildCache:
     def save(self):
         self.cache_file.write_text(json.dumps(self.hashes, indent=4, ensure_ascii=False))
 
-    def get(self, target: Path) -> str | None:
+    def get(self, target: Path) -> Optional[str]:
         return self.hashes.get(str(target))
 
     def update(self, target: Path, hash_value: str):
