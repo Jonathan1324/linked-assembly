@@ -56,6 +56,7 @@ class Toolchain:
     Library_Flags: list[str] = field(default_factory=list)
 
     Libs: list[Path] = field(default_factory=list)
+    Lib_Names: list[str] = field(default_factory=list)
 
     Ar: Optional[str] = None
     Ar_Flags: list[str] = field(default_factory=list)
@@ -231,7 +232,8 @@ def build_tool(debug: bool, os: OS, toolchain: Toolchain, buildCache: BuildCache
         flags = toolchain.Rust_Flags
 
         env = environ.copy()
-        env["LIB_DIR"] = str(lib_dir)
+        env["LIB_DIR"] = str(lib_dir.absolute())
+        env["STATIC_LIBS"] = ",".join(map(str, toolchain.Lib_Names))
         env["RUSTFLAGS"] = " ".join(flags)
         env["CARGO_TARGET_DIR"] = str(build_dir)
 
@@ -365,11 +367,7 @@ def build(debug: bool, os: OS, arch: ARCH, tools: list[str]) -> bool:
         toolchain.Compiler_CPP = "g++"
         toolchain.Linker = "g++"
 
-    Include_Paths = [Path("src/libs/core"), Path("src/libs/rust")]
-    Include_Flags: list[str] = []
-    for path in Include_Paths:
-        full = path.absolute()
-        Include_Flags.append(f"-I{str(full)}")
+    
 
     Warning_Flags = ["-Wall", "-Wextra"]
     Optimize_Flags = ["-O2"]
@@ -379,10 +377,8 @@ def build(debug: bool, os: OS, arch: ARCH, tools: list[str]) -> bool:
     Static_Flags = ["-static", "-static-libgcc", "-static-libstdc++"]
 
     # FLAGS
-    toolchain.Compiler_C_Flags.extend(Include_Flags)
     toolchain.Compiler_C_Flags.extend(Warning_Flags)
 
-    toolchain.Compiler_CPP_Flags.extend(Include_Flags)
     toolchain.Compiler_CPP_Flags.append("-std=c++17")
     toolchain.Compiler_CPP_Flags.extend(Warning_Flags)
 
@@ -474,6 +470,17 @@ def build(debug: bool, os: OS, arch: ARCH, tools: list[str]) -> bool:
 
     # Libraries
     libs: list[Path] = [lib for lib in libs_srcs.iterdir() if lib.is_dir()]
+
+    ## Include
+    Include_Flags: list[str] = []
+    for lib in libs:
+        path = lib.absolute()
+        Include_Flags.append(f"-I{str(path)}")
+
+    toolchain.Compiler_C_Flags.extend(Include_Flags)
+    toolchain.Compiler_CPP_Flags.extend(Include_Flags)
+
+    ## Compiling
     for lib in libs:
         name = lib.relative_to(libs_srcs)
         name = str(name)
@@ -485,12 +492,14 @@ def build(debug: bool, os: OS, arch: ARCH, tools: list[str]) -> bool:
             result = build_lib(toolchain, cache, lib_build_dir, lib, out)
             if result:
                 toolchain.Library_Flags.append(f"-l{name}")
+                toolchain.Lib_Names.append(name)
                 toolchain.Libs.append(out)
 
         except Exception as e:
             cache.save()
             logger.error(f"Building {lib} failed: {e}")
             return False
+
 
     # Tools
     tool_paths: list[Path] = [tool for tool in tools_srcs.iterdir() if tool.is_dir()]
@@ -511,6 +520,7 @@ def build(debug: bool, os: OS, arch: ARCH, tools: list[str]) -> bool:
             cache.save()
             logger.error(f"Building {tool} failed: {e}")
             return False
+
 
     cache.save()
 
