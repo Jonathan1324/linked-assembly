@@ -93,14 +93,15 @@ def main(args, os: OS, arch: ARCH) -> bool:
         print("Windows ARM isn't supported")
         exit(1)
 
+    # Always clear dist
+    shutil.rmtree("dist", ignore_errors=True)
+    shutil.rmtree("archives", ignore_errors=True)
+
     if (args.clean):
         build.clean(debug=args.debug, os=os, arch=arch)
         if trash.exists() and trash.is_dir:
             shutil.rmtree(trash)
-        shutil.rmtree("dist", ignore_errors=True)
-        shutil.rmtree("archives", ignore_errors=True)
         subprocess.run([sys.executable, "tests/run.py", "-c"])
-        log_path.unlink(missing_ok=True)
 
     if (not args.build):
         logger.debug("Stopping before building")
@@ -134,6 +135,8 @@ if __name__ == "__main__":
     if any(arg.startswith("-h") or arg in ("--h", "--he", "--hel", "--help") for arg in sys.argv[1:]):
         help = True
     args = parser.parse_args()
+
+    log_path.unlink(missing_ok=True)
 
     if args.log:
         Path("logs").mkdir(exist_ok=True)

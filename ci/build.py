@@ -453,9 +453,13 @@ def build(debug: bool, os: OS, arch: ARCH, tools: list[str]) -> bool:
 
 
     build_dir = Path("build") / ("debug" if debug else "release")
+    
     lib_out_dir = build_dir / "libs"
     tools_build_dir = build_dir / "tools"
+
     tpl_build_dir = build_dir / "third_party_licenses"
+    shutil.rmtree(tpl_build_dir, ignore_errors=True)
+    tpl_build_dir.mkdir(parents=True, exist_ok=True)
 
     source_dir = Path("src")
     libs_srcs = source_dir / "libs"

@@ -22,8 +22,8 @@ def stage(debug: bool) -> bool:
     licenses_dist = dist_dir / "THIRD_PARTY_LICENSES"
 
     if licenses.exists():
-        licenses_dist.mkdir(parents=True, exist_ok=True)
         for item in licenses.iterdir():
+            licenses_dist.mkdir(parents=True, exist_ok=True)
             dest = licenses_dist / item.name
             if item.is_dir():
                 shutil.copytree(item, dest, dirs_exist_ok=True)
