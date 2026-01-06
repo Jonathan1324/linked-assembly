@@ -1,0 +1,9 @@
+Compiling src\tools\lasmp\Preprocessor.cpp -> build\release\tools\lasmp\Preprocessor.o
+during RTL pass: jump2
+src\tools\lasmp\Preprocessor.cpp: In member function 'std::string PreProcessor::ProcessLine(const std::string&)':
+src\tools\lasmp\Preprocessor.cpp:252:1: internal compiler error: in try_forward_edges, at cfgcleanup.cc:580
+  252 | }
+      | ^
+Please submit a full bug report, with preprocessed source (by using -freport-bug).
+See <https://github.com/msys2/MINGW-packages/issues> for instructions.
+Error: Compilation failed for src\tools\lasmp\Preprocessor.cpp
