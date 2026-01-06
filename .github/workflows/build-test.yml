@@ -125,6 +125,7 @@ jobs:
       - name: Install build dependencies on Windows
         if: ${{ matrix.os_name == 'windows' }}
         run: |
+          pip install tomli
           python scripts/install_build_deps.py
         shell: cmd
 
