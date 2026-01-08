@@ -1,22 +1,20 @@
-from assembler.assembler import Format, Bits, Arch, arch_map, bits_map, format_map
-from assembler.lasm import run_lasm
-from assembler.nasm import run_nasm
+from tests.lasm.assembler import Format, Bits, Arch, arch_map, bits_map, format_map
+from tests.lasm.lasm import run_lasm
+from tests.lasm.nasm import run_nasm
+
 from pathlib import Path
 import logging
 import shutil
-from typing import List
 
 logger = logging.getLogger("tests")
 
-def test_assembler(log_dir: Path, src_dir: Path, build_dir: Path, arch: Arch, glob: str, name: str, run_function) -> List[Path]:
+def test_assembler(log_dir: Path, src_dir: Path, build_dir: Path, arch: Arch, glob: str, name: str, run_function) -> list[Path]:
     outputs = []
     for asmfile in src_dir.rglob(glob):
-        asmfile_parent = asmfile.parent.parts
-
-        dst_path = Path(build_dir, name, *asmfile_parent[3:], asmfile.name)
+        dst_path = build_dir / name / asmfile.relative_to(src_dir)
         dst_path.parent.mkdir(parents=True, exist_ok=True)
         
-        log_path = Path(log_dir, name, *asmfile_parent[3:])
+        log_path = log_dir / name / asmfile.relative_to(src_dir)
         log_path.mkdir(parents=True, exist_ok=True)
 
         formats = []
@@ -122,7 +120,7 @@ def check_if_files_equal(p1: Path, p2: Path, blocksize: int = 8192) -> bool:
             if not b1:
                 return True
 
-def write_cmp_file(cmp_file: Path, content: List[List[Path]]):
+def write_cmp_file(cmp_file: Path, content: list[list[Path]]):
     cmp_file.write_text("")
 
     num_cols = max(len(content) for cmp in content)
@@ -139,35 +137,66 @@ def write_cmp_file(cmp_file: Path, content: List[List[Path]]):
                     f.write("  ")
             f.write("\n")
 
+assemblers = {
+    "lasm": run_lasm,
+    "nasm": run_nasm
+}
+
 def test(dir: Path, log_dir: Path):
     build_dir = dir / "build"
+    srcs_dir = dir / "srcs"
 
-    test_assembler(log_dir / "x86", dir / "x86", build_dir / "x86",
-                  Arch.X86,
-                  "*.asm", "lasm", run_lasm)
-    
-    nasm_log_dir = log_dir / "nasm"
-    nasm_source_dir = dir / "nasm"
-    nasm_build_dir = build_dir / "nasm"
-    nasm_cmp_file = nasm_log_dir / "cmp.log"
-    nasm_lasm_outs: List[Path] = test_assembler(nasm_log_dir, nasm_source_dir, nasm_build_dir,
-                                                Arch.X86,
-                                                "*.asm", "lasm", run_lasm)
-    nasm_nasm_outs: List[Path] = test_assembler(nasm_log_dir, nasm_source_dir, nasm_build_dir,
-                                                Arch.X86,
-                                                "*.asm", "nasm", run_nasm)
-    nasm_cmp_file_content: List[List[str]] = []
-    for nasm_lasm_out, nasm_nasm_out in zip(nasm_lasm_outs, nasm_nasm_outs):
-        equal = check_if_files_equal(nasm_lasm_out, nasm_nasm_out)
-        nasm_cmp_file_content.append([
-            str(nasm_lasm_out).removeprefix("tests/assembler/build/nasm/"),
-            "-",
-            str(nasm_nasm_out).removeprefix("tests/assembler/build/nasm/"),
-            ":",
-            'equal' if equal else 'different'
-        ])
-    write_cmp_file(nasm_cmp_file, nasm_cmp_file_content)
+    test_dirs = [src for src in srcs_dir.iterdir() if src.is_dir()]
 
+    for test_dir in test_dirs:
+        test_name = test_dir.relative_to(srcs_dir)
+
+        info_file = test_dir / "test.info"
+        info_content = info_file.read_text(encoding="utf-8").strip()
+
+        test_assemblers_raw = info_content.split(",")
+        test_assemblers: list[str] = []
+        for test_assembler_raw in test_assemblers_raw:
+            if test_assembler_raw in assemblers:
+                if shutil.which(test_assembler_raw):
+                    test_assemblers.append(test_assembler_raw)
+                else:
+                    logger.warning(f"{test_assembler_raw} couldn't be found")
+            else:
+                logger.error(f"Unknown assembler: {test_assembler_raw}")
+
+        if len(test_assemblers) > 2:
+            logger.warning(f"More than two assemblers listed in {info_file}")
+            continue
+
+        assembler_functions = []
+        for test_assembler_name in test_assemblers:
+            assembler_functions.append(assemblers[test_assembler_name])
+
+        test_build_dir = build_dir / test_name
+        test_log_dir = log_dir / test_name
+
+        assembler_outs: list[list[Path]] = []
+        for assembler_name, assembler_function in zip(test_assemblers, assembler_functions):
+            arch = Arch.X86 # TODO: hardcoded
+            outs = test_assembler(test_log_dir, test_dir, test_build_dir, arch, "*.asm", assembler_name, assembler_function)
+            assembler_outs.append(outs)
+
+        test_cmp_file = test_log_dir / "cmp.log"
+        if len(test_assemblers) > 1: # == 2
+            test_cmp_file_content: list[list[str]] = []
+            for as1_out, as2_out in zip(assembler_outs[0], assembler_outs[1]):
+                equal = check_if_files_equal(as1_out, as2_out)
+                test_cmp_file_content.append([
+                    str(as1_out.relative_to(test_build_dir)),
+                    "-",
+                    str(as2_out.relative_to(test_build_dir)),
+                    ":",
+                    "equal" if equal else "different"
+                ])
+            write_cmp_file(test_cmp_file, test_cmp_file_content)
+
+    return True
 
 def clean(dir: Path, log_dir: Path):
     if log_dir.exists() and log_dir.is_dir():

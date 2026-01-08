@@ -1,8 +1,7 @@
-from assembler.assembler import Format, Bits, Arch, arch_map, bits_map, format_map
+from tests.lasm.assembler import Format, Bits, Arch, arch_map, bits_map, format_map
 from pathlib import Path
 import logging
 import subprocess
-from typing import List
 
 logger = logging.getLogger("tests")
 

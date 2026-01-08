@@ -1,8 +1,10 @@
 import ci.build as build
 import ci.artifacts as artifacts
 import ci.archive as archive
-
 from ci.os import OS, ARCH, getOS, getArch
+
+import tests.tests as tests
+
 from pathlib import Path
 import argparse
 import logging
@@ -101,13 +103,17 @@ def main(args, os: OS, arch: ARCH) -> bool:
         build.clean(debug=args.debug, os=os, arch=arch)
         if trash.exists() and trash.is_dir:
             shutil.rmtree(trash)
-        subprocess.run([sys.executable, "tests/run.py", "-c"])
+        tests.clean()
 
     if (not args.build):
         logger.debug("Stopping before building")
         return False
+    
+    tools = args.tools
+    if not tools:
+        tools = build.get_all_tools()
 
-    result: bool = build.build(debug=args.debug, os=os, arch=arch, tools=args.tools)
+    result: bool = build.build(debug=args.debug, os=os, arch=arch, tools=tools)
     if (not result):
         logger.error("Building failed")
         return False
@@ -122,8 +128,8 @@ def main(args, os: OS, arch: ARCH) -> bool:
         return True
 
     logger.info("Starting tests")
-    ret = subprocess.run([sys.executable, "tests/run.py"])
-    if ret.returncode != 0:
+    ret = tests.test(tools=tools)
+    if not ret:
         logger.error("Tests failed")
         return False
     logger.info("Finished tests")
