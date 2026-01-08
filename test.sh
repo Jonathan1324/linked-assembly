@@ -1,5 +1,6 @@
 #!/bin/sh
 
+set -e
 python3 -m ci.ci
 
 if [ $# -lt 1 ]; then
@@ -12,10 +13,9 @@ shift
 
 script="./tests/shell/${name}.sh"
 
-chmod +x "$script"
-if [ ! -x "$script" ]; then
-    echo "Error: $script not found or not executable"
+if [ ! -f "$script" ]; then
+    echo "Error: $script not found"
     exit 2
 fi
 
-/bin/sh "$script" "$@"
+sh "$script" "$@"

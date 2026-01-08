@@ -73,6 +73,13 @@ pub fn execute_target(
     let mut outputs = Vec::new();
 
     if let Some(target) = config.targets.get(name) {
+        if let Some(os_list) = &target.os {
+            let current_os = env::consts::OS; // "windows", "macos", "linux"
+            if !os_list.iter().any(|os| os.to_lowercase() == current_os) {
+                return Ok(outputs);
+            }
+        }
+
         let mut inputs = Vec::new();
 
         for dep in &target.before {

@@ -1,8 +1,9 @@
 #include <stdio.h>
 
 int TestFunc();
+int testos();
 
 int main() {
-    printf("Hello, World!\n%i\n", TestFunc());
+    printf("Hello, World!\nLib: %i\nOS: %i\n", TestFunc(), testos());
     return 0;
 }

@@ -22,7 +22,7 @@ run = "execute ${BUILD_DIR}/main"
 description = "Build the project"
 out = "executable"
 out_path = "main"
-depends = ["compile_src", "lib"]
+depends = ["compile_src", "lib", "compile_windows_srcs", "compile_linux_srcs", "compile_macos_srcs"]
 message = "Building the project"
 
 [targets.compile_src]
@@ -45,6 +45,27 @@ out = "object"
 path = "src/lib"
 files = "*.c"
 out_path = "lib/${INPUT}.o"
+
+[targets.compile_windows_srcs]
+os = ["windows"]
+out = "object"
+path = "src/windows"
+files = "*.c"
+out_path = "windows/${INPUT}.o"
+
+[targets.compile_linux_srcs]
+os = ["linux"]
+out = "object"
+path = "src/linux"
+files = "*.c"
+out_path = "linux/${INPUT}.o"
+
+[targets.compile_macos_srcs]
+os = ["macos"]
+out = "object"
+path = "src/macos"
+files = "*.c"
+out_path = "macos/${INPUT}.o"
 
 [targets.clean]
 description = "Clean the project"

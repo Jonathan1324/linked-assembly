@@ -90,6 +90,8 @@ pub struct Target {
     #[serde(default)]
     pub before: Vec<String>,
 
+    pub os: Option<Vec<String>>,
+
     #[serde(default = "default_out_path")]
     pub out_path: String,
 

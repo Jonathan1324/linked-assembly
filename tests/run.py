@@ -38,6 +38,8 @@ console_handler.setFormatter(console_formatter)
 logger.addHandler(console_handler)
 
 def main():
+    return
+
     assembler_dir = dir / "assembler"
     assembler_log_dir = log_dir / "assembler"
 
