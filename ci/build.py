@@ -17,6 +17,10 @@ from ci.os import OS, ARCH, getOS, getArch
 
 logger = logging.getLogger("ci")
 
+source_dir = Path("src")
+libs_srcs = source_dir / "libs"
+tools_srcs = source_dir / "tools"
+
 class BuildCache:
     def __init__(self, cache_file: Path):
         self.cache_file = cache_file
@@ -461,10 +465,6 @@ def build(debug: bool, os: OS, arch: ARCH, tools: list[str]) -> bool:
     shutil.rmtree(tpl_build_dir, ignore_errors=True)
     tpl_build_dir.mkdir(parents=True, exist_ok=True)
 
-    source_dir = Path("src")
-    libs_srcs = source_dir / "libs"
-    tools_srcs = source_dir / "tools"
-
     binaries_txt = build_dir / "binaries.txt"
     binaries_txt.parent.mkdir(parents=True, exist_ok=True)
 
@@ -506,11 +506,17 @@ def build(debug: bool, os: OS, arch: ARCH, tools: list[str]) -> bool:
 
 
     # Tools
-    tool_paths: list[Path] = [tool for tool in tools_srcs.iterdir() if tool.is_dir()]
-    for tool in tool_paths:
-        name = tool.relative_to(tools_srcs)
-        name = str(name)
-        if tools and name not in tools: continue
+    for name in tools:
+        tool = tools_srcs / name
+
+        if not tool.exists():
+            logger.warning(f"{tool} doesn't exist")
+            continue
+        if not tool.is_dir():
+            logger.warning(f"{tool} isn't a directory")
+            continue
+
+        if name not in tools: continue
 
         tool_build_dir = tools_build_dir / name
 
@@ -538,3 +544,13 @@ def clean(debug: bool, os: OS, arch: ARCH) -> bool:
     if build_dir.exists(): shutil.rmtree(str(build_dir), ignore_errors=True)
 
     return True
+
+def get_all_tools() -> list[str]:
+    tools: list[str] = []
+
+    tool_paths: list[Path] = [tool for tool in tools_srcs.iterdir() if tool.is_dir()]
+    for tool in tool_paths:
+        name = tool.relative_to(tools_srcs)
+        tools.append(str(name))
+
+    return tools
