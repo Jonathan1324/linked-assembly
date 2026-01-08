@@ -17,6 +17,23 @@ void Encoder::Encoder::Encode()
 {
     std::vector<Parser::Section> parsedSections = parser->getSections();
 
+    /* TODO:
+    
+    Turn every instruction type into a class which then saves enough data, then first assume always the biggets size.
+    1. Calculate the offsets and save them in each class
+    2. Get smaller variant if possible
+    3. Return if it changed
+    4. Repeat until nothing changes anymore
+
+    */
+    for (const auto& section : parsedSections)
+    {
+        for (size_t i = 0; i < section.entries.size(); i++)
+        {
+            const Parser::SectionEntry& entry = section.entries[i];
+        }
+    }
+
     ResolveConstantsPrePass(parsedSections);
 
     if (OptimizeOffsets(parsedSections))
